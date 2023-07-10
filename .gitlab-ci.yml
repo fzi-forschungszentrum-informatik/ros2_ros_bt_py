@@ -4,7 +4,7 @@ variables:
 
 include:
   - project: 'continuous_integration/ci_scripts'
-    ref: ros2_parallel_via_reference
+    ref:  dev
     file: '/gitlab-ci-yml/ros2_pipeline_v3.yml'
 
   - project: 'continuous_integration/ci_scripts'
