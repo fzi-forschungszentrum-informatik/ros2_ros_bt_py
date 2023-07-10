@@ -1,0 +1,5 @@
+NodeDataWiring[] wirings
+bool ignore_failure
+---
+bool success
+string error_message

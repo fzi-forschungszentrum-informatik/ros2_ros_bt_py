@@ -1,0 +1,5 @@
+bool simulate_tick
+bool succeed_always
+---
+bool success
+string error_message

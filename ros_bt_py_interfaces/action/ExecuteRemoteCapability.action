@@ -1,0 +1,9 @@
+CapabilityInterface interface
+string implementation_name
+string node_id
+---
+string error_message
+bool success
+bool no_executor_available
+---
+float64 completion_progress

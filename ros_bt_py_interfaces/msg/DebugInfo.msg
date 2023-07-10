@@ -1,0 +1,3 @@
+uint32 current_recursion_depth
+uint32 max_recursion_depth
+Tree[] subtree_states

@@ -1,0 +1,7 @@
+# This can be a fully populated message, or one that has the "path" member set
+# to a file:// or package:// URI
+Tree tree
+bool permissive
+---
+bool success
+string error_message

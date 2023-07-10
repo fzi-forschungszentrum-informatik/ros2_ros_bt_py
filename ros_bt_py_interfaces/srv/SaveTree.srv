@@ -1,0 +1,10 @@
+# Filename can contain a relative path starting from the package root
+string filename
+string package
+Tree tree
+bool allow_overwrite
+bool allow_rename
+---
+bool success
+string error_message
+string file_path

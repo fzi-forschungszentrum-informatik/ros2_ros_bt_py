@@ -1,0 +1,5 @@
+string old_node_name
+string new_node_name
+---
+bool success
+string error_message

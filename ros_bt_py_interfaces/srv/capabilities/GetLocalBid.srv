@@ -1,0 +1,8 @@
+CapabilityInterface interface
+string node_id
+string implementation_tags_dict
+---
+string implementation_name
+float64 bid
+bool success
+string error_message

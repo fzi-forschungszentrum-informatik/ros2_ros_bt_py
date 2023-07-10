@@ -1,0 +1,10 @@
+# Remove all breakpoints. This is executed before adding any new ones
+bool remove_all
+# Remove the breakpoints in this list
+string[] remove
+# Add the breakpoints in this list - takes precedence over remove!
+string[] add
+---
+string[] current_breakpoints
+bool success
+string error_message

@@ -1,0 +1,12 @@
+string parent_name
+Node node
+# If this is true, rename the node to name_N if one or more
+# nodes with the same name / prefix exist already.
+bool allow_rename
+# Follows Python convention, i.e. can be negative to count from the
+# end of the children list.
+int32 new_child_index
+---
+bool success
+string actual_node_name
+string error_message

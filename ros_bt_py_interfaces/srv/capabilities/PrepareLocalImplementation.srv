@@ -1,0 +1,6 @@
+string implementation_name
+CapabilityInterface interface
+---
+bool success
+string error_message
+Tree implementation_subtree

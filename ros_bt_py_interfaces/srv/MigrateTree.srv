@@ -1,0 +1,9 @@
+# This can be a fully populated message, or one that has the "path" member set
+# to a file:// or package:// URI
+Tree tree
+---
+Tree tree
+# Indicates if the tree was migrated or not
+bool migrated
+bool success
+string error_message

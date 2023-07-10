@@ -1,0 +1,13 @@
+bool can_execute
+
+bool has_upper_bound_success
+float64 upper_bound_success
+
+bool has_lower_bound_success
+float64 lower_bound_success
+
+bool has_upper_bound_failure
+float64 upper_bound_failure
+
+bool has_lower_bound_failure
+float64 lower_bound_failure

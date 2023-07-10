@@ -1,0 +1,7 @@
+# Python package names that contain Node classes. If this is empty,
+# fall back to a list of packages provided by a ROS parameter.
+string[] node_modules
+---
+DocumentedNode[] available_nodes
+bool success
+string error_message

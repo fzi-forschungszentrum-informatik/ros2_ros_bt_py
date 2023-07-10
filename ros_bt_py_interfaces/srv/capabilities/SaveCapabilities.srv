@@ -1,0 +1,5 @@
+# Saves capability interfaces to a specific package. All other files in the capabilities folder in the top level of the pacakge are removed.
+string package
+---
+bool success
+string error_message

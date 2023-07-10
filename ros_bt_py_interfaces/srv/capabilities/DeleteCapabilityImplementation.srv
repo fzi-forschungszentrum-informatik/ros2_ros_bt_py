@@ -1,0 +1,5 @@
+CapabilityInterface interface
+string implementation_name
+---
+bool success
+string error_message

@@ -1,0 +1,5 @@
+bool single_step
+bool collect_performance_data
+bool publish_subtrees
+bool collect_node_diagnostics
+string[] breakpoint_names

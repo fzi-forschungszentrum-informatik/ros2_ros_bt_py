@@ -1,0 +1,6 @@
+# path can be a file:// or package:// URI
+string path
+bool permissive
+---
+bool success
+string error_message

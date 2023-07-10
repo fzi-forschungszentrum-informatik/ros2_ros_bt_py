@@ -1,0 +1,7 @@
+# Name of the node to remove
+string node_name
+# If false, the node's children will be orphaned.
+bool remove_children
+---
+bool success
+string error_message

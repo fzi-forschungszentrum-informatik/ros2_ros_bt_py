@@ -1,0 +1,6 @@
+CapabilityInterface interface
+Tree implementation_tree
+string node_id
+---
+bool success
+string error_message

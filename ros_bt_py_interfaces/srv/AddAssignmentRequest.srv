@@ -1,0 +1,6 @@
+#Requests a new assignment of a implementation to a capability interface.
+CapabilityInterface requested_interface
+---
+string auction_id
+bool success
+string error_message

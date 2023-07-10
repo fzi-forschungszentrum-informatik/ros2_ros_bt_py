@@ -1,0 +1,40 @@
+[tool.black]
+py36 = true
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  # The following are specific to Black, you probably don't want those.
+  | blib2to3
+  | tests/data
+)/
+'''
+[tool.coverage.run]
+omit='''
+  /usr*
+  /opt*
+  */devel*
+  *test/*
+  *tests/*
+  */.local*
+  */install*
+'''
+[tool.coverage.paths]
+library='''
+  ros_bt_py/
+  /builds/*/ros_bt_py/ros_bt_py
+  /root/target_ws/src/ros_bt_py/ros_bt_py
+'''
+interfaces='''
+  ros_bt_py_interfaces/
+  /builds/*/ros_bt_py/ros_bt_py_interfaces
+  /root/target_ws/src/ros_bt_py/ros_bt_py_interfaces
+'''

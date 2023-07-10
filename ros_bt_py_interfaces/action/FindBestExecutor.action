@@ -1,0 +1,9 @@
+# goal
+Tree tree
+---
+# result
+bool local_is_best # if true, it's best to execute tree locally
+string best_executor_namespace # contains the BT services and actions
+---
+# feedback
+string[] checked_namespaces

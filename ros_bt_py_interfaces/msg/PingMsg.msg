@@ -1,0 +1,2 @@
+string node_id
+builtin_interfaces/Time timestamp

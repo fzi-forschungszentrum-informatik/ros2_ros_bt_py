@@ -1,0 +1,5 @@
+# Put the provided interfaces into the local repository of this node.
+CapabilityInterface[] capabilities
+---
+bool success
+string error_message

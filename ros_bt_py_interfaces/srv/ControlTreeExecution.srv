@@ -1,0 +1,15 @@
+uint8 command
+float64 tick_frequency_hz
+
+uint8 DO_NOTHING = 0
+uint8 TICK_ONCE = 1
+uint8 TICK_PERIODICALLY = 2
+uint8 TICK_UNTIL_RESULT = 3
+uint8 STOP = 4
+uint8 RESET = 5
+uint8 SHUTDOWN = 6
+uint8 SETUP_AND_SHUTDOWN = 7
+---
+bool success
+string error_message
+string tree_state

@@ -1,0 +1,2 @@
+string msg
+bool service

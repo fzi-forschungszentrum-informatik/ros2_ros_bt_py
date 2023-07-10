@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>ros_bt_py</name>
+  <version>0.1.0</version>
+  <description>A type-safe Behavior Tree library (until the wheels fall off)</description>
+  <maintainer email="oberacker@fzi.de">David Oberacker</maintainer>
+  <license>TODO: License declaration</license>
+
+  <depend>ros_bt_py_interfaces</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <exec_depend>python3-jsonpickle</exec_depend>
+  <exec_depend>python3-requests</exec_depend>
+  <exec_depend>python3-simplejson</exec_depend>
+  <exec_depend>rosbridge_suite</exec_depend>
+  <exec_depend>rosbridge_server</exec_depend>
+  <exec_depend>rqt_console</exec_depend>
+  <depend>rclpy</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

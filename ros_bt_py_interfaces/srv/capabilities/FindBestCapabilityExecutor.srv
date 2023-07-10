@@ -1,0 +1,12 @@
+CapabilityInterface capability
+string node_id
+string mission_control_name
+string implementation_tags_dict
+---
+# result
+bool success
+string error_message
+bool execute_local
+string executor_mission_control_topic
+string implementation_name
+float64 max_allowed_costs

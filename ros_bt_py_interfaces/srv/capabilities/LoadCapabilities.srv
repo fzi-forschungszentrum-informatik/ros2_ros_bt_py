@@ -1,0 +1,6 @@
+# Load capability interfaces from a the capabilities folder in a specific package.
+string package
+---
+bool success
+string error_message
+CapabilityInterface[] interfaces

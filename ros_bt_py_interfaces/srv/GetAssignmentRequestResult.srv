@@ -1,0 +1,7 @@
+string auction_id
+---
+string assigned_mission_controller_topic
+string assigned_implementation_name
+
+bool success
+string error_message

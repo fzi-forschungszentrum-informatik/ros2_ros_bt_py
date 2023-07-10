@@ -1,0 +1,6 @@
+string auction_id
+---
+bool complete
+string status_message
+bool success
+string error_message

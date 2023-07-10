@@ -1,0 +1,5 @@
+# Returns the loaded capability definitions
+---
+bool success
+string error_message
+CapabilityInterface[] interfaces

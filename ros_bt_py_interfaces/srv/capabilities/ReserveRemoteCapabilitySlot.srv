@@ -1,0 +1,6 @@
+string remote_mission_control
+string implementation_name
+float64 reauction_threshold
+---
+bool success
+string error

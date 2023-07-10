@@ -1,0 +1,11 @@
+CapabilityInterface capability
+string node_id
+bool require_local_execution
+# Dictionary containing all relevant values from the user inputs.
+string implementation_tags_dict
+---
+bool success
+string error_message
+bool execute_local
+string implementation_name
+string remote_mission_controller_topic

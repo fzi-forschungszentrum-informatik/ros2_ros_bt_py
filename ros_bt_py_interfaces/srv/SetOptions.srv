@@ -1,0 +1,7 @@
+string node_name
+bool rename_node
+string new_name
+NodeData[] options
+---
+bool success
+string error_message

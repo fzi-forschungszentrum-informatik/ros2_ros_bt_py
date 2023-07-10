@@ -1,0 +1,12 @@
+variables:
+  CI_SCRIPTS_BRANCH: dev
+  DOCS_SOURCE: "ros_bt_py/doc/source"
+
+include:
+  - project: 'continuous_integration/ci_scripts'
+    ref: ros2_parallel_via_reference
+    file: '/gitlab-ci-yml/ros2_pipeline_v3.yml'
+
+  - project: 'continuous_integration/ci_scripts'
+    ref: dev
+    file: '/gitlab-ci-yml/doc_sphinx.yml'

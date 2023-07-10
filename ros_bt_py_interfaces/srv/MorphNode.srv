@@ -1,0 +1,5 @@
+string node_name
+Node new_node
+---
+bool success
+string error_message
