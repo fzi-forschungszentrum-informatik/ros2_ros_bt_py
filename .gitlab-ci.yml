@@ -2,6 +2,20 @@ variables:
   CI_SCRIPTS_BRANCH: dev
   DOCS_SOURCE: "ros_bt_py/doc/source"
 
+stages:
+  - check
+  - build
+  - upload
+  - deploy
+
+.build_matrix:
+  parallel:
+    matrix:
+      - ROS_DISTRO: humble
+        CI_IMAGE: ids-git.fzi.de:5555/continuous_integration/ci_docker_images/ubuntu_22.04_ros2:humble
+
+      - ROS_DISTRO: rolling
+        CI_IMAGE: ids-git.fzi.de:5555/continuous_integration/ci_docker_images/ubuntu_22.04_ros2:rolling
 include:
   - project: 'continuous_integration/ci_scripts'
     ref:  dev
@@ -10,3 +24,17 @@ include:
   - project: 'continuous_integration/ci_scripts'
     ref: dev
     file: '/gitlab-ci-yml/doc_sphinx.yml'
+
+pre-commit:
+  image: $CI_IMAGE
+  stage: check
+  variables:
+    PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+  script:
+    - source /opt/ros/${ROS_DISTRO}/setup.bash
+    - pip3 install pre-commit # install pre-commit
+    - pre-commit run -a
+  cache:
+    paths:
+      - ${PRE_COMMIT_HOME}
+  parallel: !reference [.build_matrix, parallel]
