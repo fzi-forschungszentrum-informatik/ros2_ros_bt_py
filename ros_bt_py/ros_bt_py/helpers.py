@@ -1,6 +1,5 @@
 # Copyright 2023 FZI Forschungszentrum Informatik
 
-import sys
 import jsonpickle
 import logging
 
@@ -15,7 +14,8 @@ from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
 def loglevel_is(level):
-    """Determine the current logging level of the default ROS logger
+    """
+    Determine the current logging level of the default ROS logger.
 
     Useful to guard log statements that would incur a performance
     penalty if they ran when the log isn't published.
@@ -48,7 +48,8 @@ def rospy_log_level_to_logging_log_level(rospy_level):
 
 def fix_yaml(request: FixYaml.Request) -> FixYaml.Response:
     """
-    Fixes a yaml file and ensures it conforms to the expected format for ros msg de-/serializing.
+    Fix a yaml file and ensures it conforms to the expected format for ros msg de-/serializing.
+
     :param request: The ros service request containing the yaml file.
     :return: Always returns successfully.
     """
@@ -108,7 +109,9 @@ def fix_yaml(request: FixYaml.Request) -> FixYaml.Response:
 
 
 def remove_input_output_values(tree):
-    """Removes all input and output values from the tree nodes.
+    """
+    Remove all input and output values from the tree nodes.
+
     This is achieved by replacing every nodes input/output serialized_value with "null"
     """
     for node in tree.nodes:
@@ -161,12 +164,12 @@ def get_default_value(data_type, ros=False):
 
 
 def json_encode(data):
-    """Wrapper for jsonpickle.encode"""
+    """Wrap the call to jsonpickle.encode."""
     return jsonpickle.encode(data)
 
 
 def json_decode(data):
-    """Wrapper for jsonpickle.decode"""
+    """Wrap the call to jsonpickle.decode."""
     return jsonpickle.decode(data)
 
 
@@ -191,9 +194,7 @@ class MathUnaryOperandType(object):
 
 
 class HashableCapabilityInterface:
-    """
-    Wrapper class to allow for the hashing of capability interfaces.
-    """
+    """Wrapper class to allow for the hashing of capability interfaces."""
 
     def __init__(self, interface: CapabilityInterface):
         self.interface: CapabilityInterface = interface

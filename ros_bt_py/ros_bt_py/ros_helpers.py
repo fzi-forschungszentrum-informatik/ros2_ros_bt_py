@@ -25,7 +25,7 @@ class EnumValue(object):
 
 
 def get_message_constant_fields(message_class):
-    """Returns all constant fields of a message as a list"""
+    """Return all constant fields of a message as a list."""
     if inspect.isclass(message_class):
         # This is highly dependend on the ROS message class generation.
         members = [
