@@ -10,7 +10,7 @@ setup(
     packages=[package_name],
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
-        ("share/" + package_name, ["package.xml", "resource/flake8.ini"]),
+        ("share/" + package_name, ["package.xml"]),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
