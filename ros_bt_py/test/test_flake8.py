@@ -13,13 +13,18 @@
 # limitations under the License.
 
 from ament_flake8.main import main_with_errors
+from ament_index_python.packages import get_package_share_directory
 import pytest
 
 
 @pytest.mark.flake8
 @pytest.mark.linter
 def test_flake8():
-    rc, errors = main_with_errors(argv=[])
+    package_share_directory = get_package_share_directory("ros_bt_py")
+
+    rc, errors = main_with_errors(
+        argv=[f"--config={package_share_directory}/flake8.ini"]
+    )
     assert rc == 0, "Found %d code style errors / warnings:\n" % len(
         errors
     ) + "\n".join(errors)

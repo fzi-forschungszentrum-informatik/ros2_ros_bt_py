@@ -28,6 +28,7 @@ repos:
     hooks:
     - id: flake8
       additional_dependencies: [flake8-docstrings]
+      args: [--config, ./ros_bt_py/resource/flake8.ini]
   - repo: local
     hooks:
     #- id: ament_copyright
@@ -50,6 +51,7 @@ repos:
       entry: ament_flake8
       language: system
       files: \.(py)$
+      args: ["--config=./ros_bt_py/resource/flake8.ini"]
     - id: ament_pep257
       name: ament_pep257
       description: Static code analysis of Python files with pep257.
