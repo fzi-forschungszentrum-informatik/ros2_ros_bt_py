@@ -13,7 +13,8 @@ def from_string(data_type, string_value, static=False):
 
 
 class NodeData(object):
-    """Represents a piece of data (input, output or option) held by a Node
+    """
+    Represent a piece of data (input, output or option) held by a Node.
 
     Each `NodeData` object is typed and will only accept new data (via its
     :meth:`set` method) if it is of the correct type.
@@ -52,7 +53,7 @@ class NodeData(object):
         return not self == other
 
     def takes(self, new_value):
-        """Check whether `new_value` has a type that matches this NodeData object"""
+        """Check whether `new_value` has a type that matches this NodeData object."""
         if self._static and self.updated:
             return False
 
@@ -66,7 +67,8 @@ class NodeData(object):
         return False
 
     def set(self, new_value):
-        """Set a new value
+        """
+        Set a new value.
 
         After calling this successfully, :py:attribute:: updated is `True`.
         :param new_value:
@@ -98,7 +100,8 @@ class NodeData(object):
         self.set_updated()
 
     def get(self):
-        """Get the current value
+        """
+        Get the current value.
 
         Will log a warning if the value has not been updated since the
         last call of :meth:`reset_updated` (unless this piece of data is
@@ -124,7 +127,8 @@ class NodeData(object):
 
 
 class NodeDataMap(object):
-    """Custom container class that hides :meth:`NodeData.get` and :meth:`NodeData.set`
+    """
+    Custom container class that hides :meth:`NodeData.get` and :meth:`NodeData.set`.
 
     Acts like a regular dict, with three caveats:
 
@@ -143,7 +147,8 @@ class NodeDataMap(object):
         self.callbacks = {}
 
     def subscribe(self, key, callback, subscriber_name=""):
-        """Subscribe to changes in the value at `key`.
+        """
+        Subscribe to changes in the value at `key`.
 
         :param str key: the key you want to subscribe to
 
@@ -168,7 +173,8 @@ class NodeDataMap(object):
         self.callbacks[key].append((callback, subscriber_name))
 
     def unsubscribe(self, key, callback=None):
-        """Remove the given subscriber callback from `key`'s subscriber list.
+        """
+        Remove the given subscriber callback from `key`'s subscriber list.
 
         :param str key: The key that `callback` is currently subscribed to
         :param callback: The callback to remove - if `None`, remove all callbacks
@@ -206,7 +212,8 @@ class NodeDataMap(object):
             self.callbacks[key] = []
 
     def handle_subscriptions(self):
-        """Execute the callbacks registered by :meth:`subscribe`:
+        """
+        Execute the callbacks registered by :meth:`subscribe`: .
 
         Only executes a callback if the corresponding piece of data has
         been updated since the last call of
@@ -225,6 +232,8 @@ class NodeDataMap(object):
 
     def add(self, key, value):
         """
+        Add a new key value pair to the node data.
+
         :param basestring key: The key for the new data object
         :param NodeData value: The value of the new data object
 
@@ -239,8 +248,8 @@ class NodeDataMap(object):
         self._map[key] = value
 
     def is_updated(self, key):
-        """Check whether the data at the given key has been updated since the `updated` property
-        was last reset
+        """
+        Check whether the data at the given key has been updated since the last reset of `updated`.
 
         :param basestring key: Key for the data object whose updated status we want to check
 
@@ -249,7 +258,7 @@ class NodeDataMap(object):
         return self._map[key].updated
 
     def set_updated(self, key):
-        """Set the `updated` property for the given datum"""
+        """Set the `updated` property for the given datum."""
         if key in self._map:
             self._map[key].set_updated()
         else:
@@ -261,7 +270,8 @@ class NodeDataMap(object):
             self._map[key].reset_updated()
 
     def get_callback(self, key):
-        """Return the setter function for the :class:NodeData object at the given key.
+        """
+        Return the setter function for the :class:NodeData object at the given key.
 
         The usual reason to use this is wanting to wire inputs and
         outputs (see :meth:`Node.subscribe and :meth:`Node._wire_input`).
@@ -273,31 +283,25 @@ class NodeDataMap(object):
         return self._map[key].set
 
     def get_serialized(self, key):
-        """
-        Return the jsonpickle'd value of the NodeData object at `key`
-        """
+        """Return the jsonpickle'd value of the NodeData object at `key`."""
         if key not in self._map:
             raise KeyError(f"No member named {key}")
         return self._map[key].get_serialized()
 
     def get_serialized_type(self, key):
-        """
-        Return the jsonpickle'd type of the NodeData object at `key`
-        """
+        """Return the jsonpickle'd type of the NodeData object at `key`."""
         if key not in self._map:
             raise KeyError(f"No member named {key}")
         return self._map[key].get_serialized_type()
 
     def get_type(self, key):
-        """
-        Return the type of the NodeData object at `key`
-        """
+        """Return the type of the NodeData object at `key`."""
         if key not in self._map:
             raise KeyError(f"No member named {key}")
         return self._map[key].data_type
 
     def compatible(self, key, new_val):
-        """Check if `new_val` can be put into the :class:`NodeData` at `key`"""
+        """Check if `new_val` can be put into the :class:`NodeData` at `key`."""
         return self._map[key].takes(new_val)
 
     def __len__(self):

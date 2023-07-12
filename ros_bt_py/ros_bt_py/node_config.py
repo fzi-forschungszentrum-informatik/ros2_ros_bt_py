@@ -4,7 +4,8 @@ from typing import Dict, Optional, List
 
 
 class OptionRef(object):
-    """Marks an input or output type as dependent on an option value.
+    """
+    Mark an input or output type as dependent on an option value.
 
     Can be used instead of an actual type in the maps passed to a
     :class:NodeConfig
@@ -37,7 +38,8 @@ class NodeConfig(object):
         version: str = "",
         tags: Optional[List[str]] = None,
     ):
-        """Describes the interface of a :class:ros_bt_py.node.Node
+        """
+        Describe the interface of a :class:ros_bt_py.node.Node .
 
         :type options Dict[str, type]
         :param options
@@ -106,7 +108,8 @@ class NodeConfig(object):
         return not self == other
 
     def extend(self, other):
-        """Extend the input, output and option dicts with values from `other`
+        """
+        Extend the input, output and option dicts with values from `other`.
 
         :raises: KeyError, ValueError
           If any of the dicts in `other` contains keys that already exist,

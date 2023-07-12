@@ -83,7 +83,8 @@ def _connect_wirings(data_wirings: List, type: str) -> Dict:
 
 
 def _required(meth):
-    """Mark a method as required.
+    """
+    Mark a method as required.
 
     Not using :module:`abc` here because a subclass with missing
     methods could still be instantiated and used, just not as part of
@@ -94,7 +95,8 @@ def _required(meth):
 
 
 def define_bt_node(node_config):
-    """Provide information about this Node's interface.
+    """
+    Provide information about this Node's interface.
 
     Every class that derives, directly or indirectly, from :class:`Node`,
     must be decorated with this!
@@ -193,7 +195,8 @@ def define_bt_node(node_config):
 
 
 class NodeMeta(type):
-    """Override the __doc__ property to add a list of BT params.
+    """
+    Override the __doc__ property to add a list of BT params.
 
     (inputs, outputs and options) to every node class.
     """
@@ -259,7 +262,8 @@ class NodeMeta(type):
 
 
 class Node(object):
-    """Base class for Behavior Tree nodes.
+    """
+    Base class for Behavior Tree nodes.
 
     Each node has a set of inputs, outputs and options. At every tick
     (usually somewhere between 10 and 30 times a second),
@@ -306,7 +310,8 @@ class Node(object):
         succeed_always: bool = False,
         simulate_tick: bool = False,
     ):
-        """Prepare class members.
+        """
+        Prepare class members.
 
         After this finishes, the Node is *not* ready to run. You still
         need to do your own initialization in :meth:`_do_setup`.
@@ -406,7 +411,8 @@ class Node(object):
         self._state = new_state
 
     def setup(self):
-        """Prepare the node to be ticked for the first time.
+        """
+        Prepare the node to be ticked for the first time.
 
         This is called after all the input, output and option values
         have been registered (and in the case of options, populated), so
@@ -434,7 +440,8 @@ class Node(object):
 
     @_required
     def _do_setup(self):
-        """Use this to do custom node setup.
+        """
+        Use this to do custom node setup.
 
         Note that this will be called once, when the tree is first
         started, before the first call of :meth:`tick`.
@@ -451,7 +458,8 @@ class Node(object):
         raise NotImplementedError(msg)
 
     def _handle_inputs(self):
-        """Execute the callbacks registered by :meth:`_wire_input`.
+        """
+        Execute the callbacks registered by :meth:`_wire_input`.
 
         But only if an input has been updated since the last tick.
 
@@ -471,7 +479,8 @@ class Node(object):
         self.inputs.handle_subscriptions()
 
     def _handle_outputs(self):
-        """Execute the callbacks registered by :meth:`NodeDataMap.subscribe`: .
+        """
+        Execute the callbacks registered by :meth:`NodeDataMap.subscribe`: .
 
         But only if the output has changed during this tick (see where
         the :meth:`NodeDataMap.reset_updated` is called in
@@ -480,7 +489,8 @@ class Node(object):
         self.outputs.handle_subscriptions()
 
     def tick(self):
-        """Handle node on tick action everytime this is called (at ~10-20Hz, usually).
+        """
+        Handle node on tick action everytime this is called (at ~10-20Hz, usually).
 
         You should not need to override this method, but instead
         implement :meth:`_do_tick` in your own class.
@@ -571,7 +581,8 @@ class Node(object):
         raise NotImplementedError(msg)
 
     def untick(self):
-        """Signal a node that it should stop any background tasks.
+        """
+        Signal a node that it should stop any background tasks.
 
         A new tick has started and this node has **not** been ticked.
         The node's state should be `IDLE` after calling this.
@@ -603,7 +614,8 @@ class Node(object):
 
     @_required
     def _do_untick(self):
-        """Abstract method used to implement the actual untick operations.
+        """
+        Abstract method used to implement the actual untick operations.
 
         This is called by :meth:`untick` - override it!
 
@@ -618,7 +630,8 @@ class Node(object):
         raise NotImplementedError(msg)
 
     def reset(self):
-        """Reset a node completly.
+        """
+        Reset a node completly.
 
         Whereas :meth:`untick` / :meth:`_do_untick` only pauses
         execution, ready to be resumed, :meth:`reset` means returning
@@ -672,7 +685,8 @@ class Node(object):
         raise NotImplementedError(msg)
 
     def shutdown(self):
-        """Prepare a node for deletion.
+        """
+        Prepare a node for deletion.
 
         This method just calls :meth:`_do_shutdown`, which any
         subclass must override.
@@ -717,7 +731,8 @@ class Node(object):
 
     @_required
     def _do_shutdown(self):
-        """Abstract method implementing the shutdown action.
+        """
+        Abstract method implementing the shutdown action.
 
         Implement this in your node class and release any resources you
         might be holding (file pointers, ROS topic subscriptions etc.)
@@ -729,7 +744,8 @@ class Node(object):
         raise NotImplementedError(msg)
 
     def calculate_utility(self):
-        """Calculate the utility bounds for this node.
+        """
+        Calculate the utility bounds for this node.
 
         Unlike the other node functions, there is a default
         implementation for the corresponding method,
@@ -744,7 +760,8 @@ class Node(object):
         return self._do_calculate_utility()
 
     def _do_calculate_utility(self):
-        """Calculate utility values. This is a default implementation.
+        """
+        Calculate utility values. This is a default implementation.
 
         :returns:
 
@@ -765,7 +782,8 @@ class Node(object):
         )
 
     def get_child_index(self, child_name):
-        """Get the index in the `children` array of the child with the given name.
+        """
+        Get the index in the `children` array of the child with the given name.
 
         This is useful if you want to replace a child with another node.
 
@@ -781,7 +799,8 @@ class Node(object):
             return None
 
     def add_child(self, child, at_index=None):
-        """Add a child to this node at the given index.
+        """
+        Add a child to this node at the given index.
 
         :raises: BehaviorTreeException, KeyError
 
@@ -816,7 +835,8 @@ class Node(object):
         return self
 
     def remove_child(self, child_name):
-        """Remove the child with the given name and return it.
+        """
+        Remove the child with the given name and return it.
 
         :param basestring child_name: The name of the child to remove
 
@@ -864,7 +884,8 @@ class Node(object):
     def _register_node_data(
         self, source_map, target_map, values=None, permissive=False
     ):
-        """Register a number of typed :class:`NodeData` in the given map.
+        """
+        Register a number of typed :class:`NodeData` in the given map.
 
         Note that when using :class:`OptionRef`, the option keys
         referenced by any :class:`OptionRef` objects must exist and be
@@ -990,7 +1011,8 @@ class Node(object):
         return not self == other
 
     def get_data_map(self, data_kind):
-        """Return one of our NodeDataMaps by string name.
+        """
+        Return one of our NodeDataMaps by string name.
 
         :param basestring data_kind:
           One of the constants in :class:`ros_bt_py_msgs.msg.NodeDataLocation`
@@ -1012,35 +1034,40 @@ class Node(object):
     # name and type of the node so it's easier to trace errors.
 
     def logdebug(self, message):
-        """Wrap call to :func:rospy.logdebug.
+        """
+        Wrap call to :func:rclpy.logger.get_logger(...).debug.
 
         Adds this node's name and type to the given message
         """
         rclpy.logging.get_logger(self.name).debug("{message}")
 
     def loginfo(self, message):
-        """Wrap call to :func:rospy.loginfo.
+        """
+        Wrap call to :func:rclpy.logging.get_logger(...).info.
 
         Adds this node's name and type to the given message
         """
         rclpy.logging.get_logger(self.name).info("{message}")
 
     def logwarn(self, message):
-        """Wrap call to :func:rospy.logwarn.
+        """
+        Wrap call to :func:rclpy.logging.get_logger(...).warn.
 
         Adds this node's name and type to the given message
         """
         rclpy.logging.get_logger(self.name).warn("{message}")
 
     def logerr(self, message):
-        """Wrap call to :func:rospy.logerr.
+        """
+        Wrap call to :func:rclpy.logging.get_logger(...).error.
 
         Adds this node's name and type to the given message
         """
         rclpy.logging.get_logger(self.name).error("{message}")
 
     def logfatal(self, message):
-        """Wrap call to :func:rospy.logfatal.
+        """
+        Wrap call to :func:rclpy.logging.get_logger(...).fatal.
 
         Adds this node's name and type to the given message
         """
@@ -1053,7 +1080,8 @@ class Node(object):
         debug_manager: Optional[DebugManager] = None,
         permissive: bool = False,
     ):
-        """Construct a Node from the given ROS message.
+        """
+        Construct a Node from the given ROS message.
 
         This will try to import the requested node class, instantiate it
         and populate its `name`, `options`, `input` and `output` members
@@ -1171,7 +1199,8 @@ class Node(object):
                 yield child_rec
 
     def get_subtree_msg(self):
-        """Populate a TreeMsg with the subtree rooted at this node.
+        """
+        Populate a TreeMsg with the subtree rooted at this node.
 
         This can be used to "shove" a subtree to a different host, by
         using that host's load_tree service.
@@ -1276,7 +1305,8 @@ class Node(object):
         return subtree, incoming_connections, outgoing_connections
 
     def find_node(self, other_name):
-        """Try to find the node with the given name in the tree.
+        """
+        Try to find the node with the given name in the tree.
 
         This is not a particularly cheap operation, since it ascends
         the tree up to the root and then recursively descends back
@@ -1296,7 +1326,8 @@ class Node(object):
         return None
 
     def _subscribe(self, wiring, new_cb, expected_type):
-        """Subscribe to a piece of Nodedata this node has.
+        """
+        Subscribe to a piece of Nodedata this node has.
 
         Call this on a node to *subscribe to NodeData **from** that
         node*!
@@ -1367,7 +1398,8 @@ class Node(object):
         self.subscribers.append((deepcopy(wiring), new_cb, expected_type))
 
     def wire_data(self, wiring):
-        """Wire a piece of Nodedata from another node to this node.
+        """
+        Wire a piece of Nodedata from another node to this node.
 
         Call this on a node to *connect it to NodeData from
         **another** node*!
@@ -1440,7 +1472,8 @@ class Node(object):
         self.subscriptions.append(deepcopy(wiring))
 
     def _unsubscribe(self, wiring):
-        """Unsubscribe from a piece of NodeData this node has.
+        """
+        Unsubscribe from a piece of NodeData this node has.
 
         Call this to undo a call to `Node._subscribe()'
 
@@ -1471,7 +1504,8 @@ class Node(object):
         ]
 
     def unwire_data(self, wiring):
-        """Unwire the given wiring.
+        """
+        Unwire the given wiring.
 
         This entails finding the source of the wiring, calling its
         :meth:`Node._unsubscribe` method and removing the wiring from
@@ -1514,7 +1548,8 @@ class Node(object):
                 self.options[wiring.target.data_key] = None
 
     def to_msg(self):
-        """Populate a ROS message with the information from this Node.
+        """
+        Populate a ROS message with the information from this Node.
 
         Round-tripping the result through :meth:`Node.from_msg` should
         yield a working node object, with the caveat that state will not
@@ -1567,7 +1602,8 @@ class Node(object):
 
 
 def load_node_module(package_name):
-    """Import the named module at run-time.
+    """
+    Import the named module at run-time.
 
     If the module contains any (properly decorated) node classes,
     they will be registered and available to load via the other
@@ -1584,7 +1620,8 @@ def load_node_module(package_name):
 
 
 def increment_name(name):
-    """If `name` does not already end in a number, add "_2" to it.
+    """
+    If `name` does not already end in a number, add "_2" to it.
 
     Otherwise, increase the number after the underscore.
     """
@@ -1601,7 +1638,8 @@ def increment_name(name):
 
 @define_bt_node(NodeConfig(options={}, inputs={}, outputs={}, max_children=1))
 class Decorator(Node):
-    """Base class for Decorator nodes.
+    """
+    Base class for Decorator nodes.
 
     Decorators have exactly one child and somehow modify that child's
     output. Subclasses can add inputs, outputs and options, but never
@@ -1623,7 +1661,8 @@ class Decorator(Node):
 
 @define_bt_node(NodeConfig(options={}, inputs={}, outputs={}, max_children=0))
 class Leaf(Node):
-    """Base class for leaf nodes in the tree.
+    """
+    Base class for leaf nodes in the tree.
 
     Leaf nodes have no children. Subclasses can define inputs, outputs
     and options, but never change `max_children`.
@@ -1632,7 +1671,8 @@ class Leaf(Node):
 
 @define_bt_node(NodeConfig(options={}, inputs={}, outputs={}, max_children=None))
 class FlowControl(Node):
-    """Base class for flow control nodes.
+    """
+    Base class for flow control nodes.
 
     Flow control nodes (mostly Sequence, Fallback and their derivatives)
     can have an unlimited number of children and each have a unique set
@@ -1642,7 +1682,8 @@ class FlowControl(Node):
 
 @define_bt_node(NodeConfig(options={}, inputs={}, outputs={}, max_children=0))
 class IO(Node):
-    """Base class for IO nodes in the tree.
+    """
+    Base class for IO nodes in the tree.
 
     IO nodes have no children. Subclasses can define inputs, outputs
     and options, but never change `max_children`.
