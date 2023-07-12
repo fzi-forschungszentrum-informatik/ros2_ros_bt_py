@@ -1,5 +1,8 @@
 [flake8]
-ignore = E203, E266, W503, F403, F401
+ignore = E203,E266,W503,F403,F401,B902,C816,D100,D101,D102,D103,D104,D105,D106,D107,D203,D212,D404,I202
 max-line-length = 99
 max-complexity = 18
 select = B,C,E,F,W,T4,B9
+import-order-style = google
+show-source = true
+statistics = true
