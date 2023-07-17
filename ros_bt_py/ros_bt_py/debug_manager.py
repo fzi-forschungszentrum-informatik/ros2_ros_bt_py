@@ -6,7 +6,7 @@ import inspect
 from sys import getrecursionlimit
 from threading import Event, Lock
 
-import rclpy
+import rclpy.node
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py_interfaces.msg import DebugInfo, DebugSettings, Node, NodeDiagnostics
@@ -15,7 +15,7 @@ from ros_bt_py_interfaces.msg import DebugInfo, DebugSettings, Node, NodeDiagnos
 class DebugManager(object):
     def __init__(
         self,
-        ros_node: rclpy.Node,
+        ros_node: rclpy.node.Node,
         debug_info_publish_callback=None,
         debug_settings_publish_callback=None,
         node_diagnostics_publish_callback=None,
