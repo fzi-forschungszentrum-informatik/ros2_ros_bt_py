@@ -238,7 +238,7 @@ class TreeNode(rclpy.Node):
             ),
         )
 
-        self.debug_manager = DebugManager()
+        self.debug_manager = DebugManager(ros_node=self)
         self.tree_manager = TreeManager(
             ros_node=self,
             module_list=node_module_names,

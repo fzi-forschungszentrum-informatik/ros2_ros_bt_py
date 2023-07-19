@@ -9,11 +9,13 @@ from threading import Thread, Lock, RLock
 from typing import Callable, Optional, List
 
 import rclpy
+import rclpy.node
 from rclpy.duration import Duration
 from rclpy.logging import get_logger
 
 import yaml
 import yaml.scanner
+from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import (
     DebugInfo,
@@ -91,7 +93,7 @@ def is_edit_service(func):
     """
 
     @wraps(func)
-    def service_handler(self, request, **kwds):
+    def service_handler(self, request, response, **kwds):
         tree_state = self.get_state()
         if tree_state != Tree.EDITABLE:
             return {
@@ -100,12 +102,14 @@ def is_edit_service(func):
                 f"You need to shut down the tree to enable editing.",
             }
         with self._edit_lock:
-            return func(self, request, **kwds)
+            return func(self, request, response, **kwds)
 
     return service_handler
 
 
-def parse_tree_yaml(tree_yaml):
+@typechecked
+def parse_tree_yaml(tree_yaml: str) -> MigrateTree.Response:
+
     response = MigrateTree.Response()
 
     data = yaml.safe_load_all(tree_yaml)
@@ -138,6 +142,7 @@ def parse_tree_yaml(tree_yaml):
     return response
 
 
+@typechecked
 def load_tree_from_file(
     request: MigrateTree.Request, response: MigrateTree.Response
 ) -> MigrateTree.Response:
@@ -209,6 +214,7 @@ def load_tree_from_file(
     return response
 
 
+@typechecked
 def get_available_nodes(
     request: GetAvailableNodes.Request, response: GetAvailableNodes.Response
 ) -> Optional[GetAvailableNodes.Response]:
@@ -264,6 +270,7 @@ def get_available_nodes(
     return response
 
 
+@typechecked
 class TreeManager:
     """
     Provide methods to manage a Behavior Tree.
@@ -273,7 +280,7 @@ class TreeManager:
 
     def __init__(
         self,
-        ros_node: rclpy.Node,
+        ros_node: rclpy.node.Node,
         name: Optional[str] = None,
         module_list: Optional[List[str]] = None,
         debug_manager: Optional[DebugManager] = None,
@@ -292,7 +299,7 @@ class TreeManager:
         show_traceback_on_exception: bool = False,
         simulate_tick: bool = False,
         succeed_always: bool = False,
-    ):
+    ) -> None:
         self.ros_node = ros_node
         self.name = name
         self.publish_tree = publish_tree_callback
@@ -337,7 +344,7 @@ class TreeManager:
                 "Tree manager instantiated without explicit debug manager "
                 "- building our own with default parameters"
             )
-            self.debug_manager = DebugManager()
+            self.debug_manager = DebugManager(ros_node=self.ros_node)
 
         self.show_traceback_on_exception = show_traceback_on_exception
 
@@ -631,7 +638,9 @@ class TreeManager:
     ####################
 
     @is_edit_service
-    def clear(self, request: Optional[ClearTree.Request], response: ClearTree.Response):
+    def clear(
+        self, request: Optional[ClearTree.Request], response: ClearTree.Response
+    ) -> ClearTree.Response:
         response.success = True
         try:
             root = self.find_root()
@@ -662,15 +671,17 @@ class TreeManager:
 
     @is_edit_service
     def load_tree_from_path(
-        self, request: LoadTreeFromPath.Request
+        self, request: LoadTreeFromPath.Request, response: LoadTreeFromPath.Response
     ) -> LoadTreeFromPath.Response:
         """Wrap around load_tree for convenience."""
         tree = Tree()
         tree.path = request.path
         load_tree_request = LoadTree.Request(tree=tree, permissive=request.permissive)
-        load_tree_response = self.load_tree(request=load_tree_request)
+        load_tree_response = LoadTree.Response()
+        load_tree_response = self.load_tree(
+            request=load_tree_request, response=load_tree_response
+        )
 
-        response = LoadTreeFromPath.Response()
         response.success = load_tree_response.success
         response.error_message = load_tree_response.error_message
 
@@ -678,7 +689,7 @@ class TreeManager:
 
     @is_edit_service
     def load_tree(  # noqa: C901
-        self, request: LoadTree.Request, prefix=None
+        self, request: LoadTree.Request, response: LoadTree.Response, prefix=None
     ) -> LoadTree.Response:
         """
         Load a tree from the given message (which may point to a file).
@@ -703,12 +714,13 @@ class TreeManager:
         """
         if prefix is None:
             prefix = ""
-        response = LoadTree.Response()
 
         migrate_tree_request = MigrateTree.Request()
         migrate_tree_request.tree = request.tree
-
-        load_response = load_tree_from_file(migrate_tree_request)
+        load_response = MigrateTree.Response()
+        load_response = load_tree_from_file(
+            request=migrate_tree_request, response=load_response
+        )
         if not load_response.success:
             response.error_message = load_response.error_message
             return response
@@ -740,7 +752,7 @@ class TreeManager:
                 return response
 
         # Clear existing tree, then replace it with the message's contents
-        self.clear(None)
+        self.clear(None, ClearTree.Response())
         # add nodes whose children exist already, until all nodes are there
         while len(self.nodes) != len(tree.nodes):
             added = 0
@@ -775,8 +787,10 @@ class TreeManager:
                 return response
 
         # All nodes are added, now do the wiring
+        wire_response = WireNodeData.Response()
         wire_response = self.wire_data(
-            WireNodeData.Request(wirings=tree.data_wirings, ignore_failure=True)
+            WireNodeData.Request(wirings=tree.data_wirings, ignore_failure=True),
+            response=wire_response,
         )
         if not get_success(wire_response):
             response.success = False
@@ -816,7 +830,9 @@ class TreeManager:
         return response
 
     def set_execution_mode(
-        self, request: SetExecutionMode.Request
+        self,
+        request: SetExecutionMode.Request,
+        response: SetExecutionMode.Response,
     ) -> SetExecutionMode.Response:
         """
         Set the parameters of our :class:`DebugManager`.
@@ -833,14 +849,17 @@ class TreeManager:
             self.control_execution(
                 ControlTreeExecution.Request(
                     command=ControlTreeExecution.Request.SETUP_AND_SHUTDOWN
-                )
+                ),
+                ControlTreeExecution.Response(),
             )
         else:
             self.debug_manager.clear_subtrees()
             self.publish_info(self.debug_manager.get_debug_info_msg())
-        return SetExecutionMode.Response()
+        return response
 
-    def debug_step(self, _):
+    def debug_step(
+        self, request: Continue.Request, response: Continue.Response
+    ) -> Continue.Response:
         """
         Continue execution.
 
@@ -854,15 +873,18 @@ class TreeManager:
         self.debug_manager.continue_debug()
         return Continue.Response(success=True)
 
-    def modify_breakpoints(self, request):
-        return ModifyBreakpoints.Response(
-            current_breakpoints=self.debug_manager.modify_breakpoints(
-                add=request.add, remove=request.remove, remove_all=request.remove_all
-            )
+    def modify_breakpoints(
+        self, request: ModifyBreakpoints.Request, response: ModifyBreakpoints.Response
+    ) -> ModifyBreakpoints.Response:
+        response.current_breakpoints = self.debug_manager.modify_breakpoints(
+            add=request.add, remove=request.remove, remove_all=request.remove_all
         )
+        return response
 
     def control_execution(  # noqa: C901 # TODO: Remove this and simplfy the method.
-        self, request: ControlTreeExecution.Request
+        self,
+        request: ControlTreeExecution.Request,
+        response: ControlTreeExecution.Response,
     ) -> ControlTreeExecution.Response:
         """
         Control tree execution.
@@ -874,8 +896,7 @@ class TreeManager:
         stop or reset the entire tree.
 
         """
-        response = ControlTreeExecution.Response(success=False)
-
+        response.success = False
         if self._tick_thread is not None:
             is_idle = self.get_state() == Tree.IDLE
             if is_idle and self._tick_thread.is_alive():
@@ -1198,7 +1219,9 @@ class TreeManager:
 
     @is_edit_service
     def set_simulate_tick(
-        self, request: SetSimulateTick.Request
+        self,
+        request: SetSimulateTick.Request,
+        response: SetSimulateTick.Response,
     ) -> SetSimulateTick.Response:
         """
         Set the simulate tick status to allows to simulate ticks without causing actual actions.
@@ -1209,12 +1232,13 @@ class TreeManager:
         self.simulate_tick = request.simulate_tick
         self.succeed_always = request.succeed_always
 
-        response = SetSimulateTick.Response()
         response.success = True
         return response
 
     @is_edit_service
-    def add_node(self, request: AddNode.Request) -> AddNode.Response:
+    def add_node(
+        self, request: AddNode.Request, response: AddNode.Response
+    ) -> AddNode.Response:
         """
         Add the node in this request to the tree.
 
@@ -1227,18 +1251,19 @@ class TreeManager:
             allow_rename=request.allow_rename,
             new_child_index=-1,
         )
-        internal_response = self.add_node_at_index(request=internal_request)
-
-        response = AddNode.Response(
-            success=internal_response.success,
-            error_message=internal_response.error_message,
-            actual_node_name=internal_response.actual_node_name,
+        internal_response = AddNodeAtIndex.Response()
+        internal_response = self.add_node_at_index(
+            request=internal_request, response=internal_response
         )
+
+        response.success = internal_response.success
+        response.error_message = internal_response.error_message
+        response.actual_node_name = internal_response.actual_node_name
         return response
 
     @is_edit_service
     def add_node_at_index(
-        self, request: AddNodeAtIndex.Request
+        self, request: AddNodeAtIndex.Request, response: AddNodeAtIndex.Response
     ) -> AddNodeAtIndex.Response:
         """
         Add the node in this request to the tree.
@@ -1246,7 +1271,6 @@ class TreeManager:
         :param ros_bt_py_msgs.srv.AddNodeAtIndexRequest request:
             A request describing the node to add.
         """
-        response = AddNodeAtIndex.Response()
         try:
             instance = self.instantiate_node_from_msg(
                 request.node, request.allow_rename
@@ -1318,11 +1342,15 @@ class TreeManager:
         return response
 
     @is_edit_service
-    def reload_tree(self, request: Optional[ReloadTree.Request]) -> ReloadTree.Response:
+    def reload_tree(
+        self, request: Optional[ReloadTree.Request], response: ReloadTree.Response
+    ) -> ReloadTree.Response:
         """Reload the currently loaded tree."""
-        load_response = self.load_tree(request=LoadTree.Request(tree=self.tree_msg))
+        load_response = LoadTree.Response()
+        load_response = self.load_tree(
+            request=LoadTree.Request(tree=self.tree_msg), response=load_response
+        )
 
-        response = ReloadTree.Response()
         response.success = load_response.success
         response.error_message = load_response.error_message
 
@@ -1330,20 +1358,21 @@ class TreeManager:
 
     @is_edit_service
     def change_tree_name(
-        self, request: ChangeTreeName.Request
+        self, request: ChangeTreeName.Request, response: ChangeTreeName.Response
     ) -> ChangeTreeName.Response:
         """Change the name of the currently loaded tree."""
         self.tree_msg.name = request.name
 
         self.publish_info(self.debug_manager.get_debug_info_msg())
 
-        response = ChangeTreeName.Response()
         response.success = True
 
         return response
 
     @is_edit_service
-    def remove_node(self, request: RemoveNode.Request) -> RemoveNode.Response:
+    def remove_node(
+        self, request: RemoveNode.Request, response: RemoveNode.Response
+    ) -> RemoveNode.Response:
         """
         Remove the node identified by `request.node_name` from the tree.
 
@@ -1351,9 +1380,6 @@ class TreeManager:
         take on all of the removed node's children, it will. Otherwise,
         children will be orphaned.
         """
-        # TODO(nberg): handle subtrees
-        response = RemoveNode.Response()
-
         if request.node_name not in self.nodes:
             response.success = False
             response.error_message = (
@@ -1408,11 +1434,9 @@ class TreeManager:
                 # the node is one of a list of children
                 parent_name = self.nodes[name].parent.name
                 get_logger("tree_manager").warn(
-                    "Node %s was not shut down. Check parent node %s (%s) "
-                    "for proper implementation of _do_shutdown()",
-                    name,
-                    parent_name,
-                    type(self.nodes[parent_name]).__name__,
+                    f"Node {name} was not shut down. Check parent node {parent_name} "
+                    f"({type(self.nodes[parent_name]).__name__}) "
+                    f"for proper implementation of _do_shutdown()",
                 )
                 self.nodes[name].shutdown()
 
@@ -1455,10 +1479,10 @@ class TreeManager:
         return response
 
     @is_edit_service
-    def morph_node(self, request: MorphNode.Request) -> MorphNode.Response:
+    def morph_node(
+        self, request: MorphNode.Request, response: MorphNode.Response
+    ) -> MorphNode.Response:
         """Morphs the flow control node into the new node provided in `request.new_node`."""
-        response = MorphNode.Response()
-
         if request.node_name not in self.nodes:
             response.success = False
             response.error_message = (
@@ -1563,7 +1587,7 @@ class TreeManager:
 
     @is_edit_service
     def set_options(  # noqa: C901
-        self, request: SetOptions.Request
+        self, request: SetOptions.Request, response: SetOptions.Response
     ) -> SetOptions.Response:
         """
         Set the option values of a given node.
@@ -1838,7 +1862,9 @@ class TreeManager:
         return SetOptions.Response(success=True)
 
     @is_edit_service
-    def move_node(self, request: MoveNode.Request) -> MoveNode.Response:
+    def move_node(
+        self, request: MoveNode.Request, response: MoveNode.Response
+    ) -> MoveNode.Response:
         """Move the named node to a different parent and insert it at the given index."""
         if request.node_name not in self.nodes:
             return MoveNode.Response(
@@ -1907,7 +1933,9 @@ class TreeManager:
         return MoveNode.Response(success=True)
 
     @is_edit_service
-    def replace_node(self, request: ReplaceNode.Request) -> ReplaceNode.Response:
+    def replace_node(
+        self, request: ReplaceNode.Request, response: ReplaceNode.Response
+    ) -> ReplaceNode.Response:
         """
         Replace the named node with `new_node`.
 
@@ -2006,8 +2034,10 @@ class TreeManager:
                 new_node.add_child(child)
         # Remove the old node (we just moved the children, so we can
         # set remove_children to True)
+        res = RemoveNode.Response()
         res = self.remove_node(
-            RemoveNode.Request(node_name=request.old_node_name, remove_children=True)
+            RemoveNode.Request(node_name=request.old_node_name, remove_children=True),
+            res,
         )
 
         if not get_success(res):
@@ -2026,14 +2056,17 @@ class TreeManager:
                     node_name=request.new_node_name,
                     new_parent_name=old_node_parent.name,
                     new_child_index=old_node_child_index,
-                )
+                ),
+                MoveNode.Response(),
             )
 
         self.publish_info(self.debug_manager.get_debug_info_msg())
         return ReplaceNode.Response(success=True)
 
     @is_edit_service
-    def wire_data(self, request: WireNodeData.Request) -> WireNodeData.Response:
+    def wire_data(
+        self, request: WireNodeData.Request, response: WireNodeData.Response
+    ) -> WireNodeData.Response:
         """
         Connect the given pairs of node data to one another.
 
@@ -2044,7 +2077,7 @@ class TreeManager:
 
         :returns: :class:`ros_bt_py_msgs.src.WireNodeDataResponse` or `None`
         """
-        response = WireNodeData.Response(success=True)
+        response.success = True
         try:
             root = self.find_root()
             if not root:
@@ -2104,7 +2137,9 @@ class TreeManager:
         return response
 
     @is_edit_service
-    def unwire_data(self, request: WireNodeData.Request) -> WireNodeData.Response:
+    def unwire_data(
+        self, request: WireNodeData.Request, response: WireNodeData.Response
+    ) -> WireNodeData.Response:
         """
         Disconnect the given pairs of node data.
 
@@ -2115,7 +2150,7 @@ class TreeManager:
 
         :returns: :class:`ros_bt_py_msgs.src.WireNodeDataResponse` or `None`
         """
-        response = WireNodeData.Response(success=True)
+        response.success = True
         try:
             root = self.find_root()
             if not root:
@@ -2195,7 +2230,7 @@ class TreeManager:
             )
 
     def generate_subtree(
-        self, request: GenerateSubtree.Request
+        self, request: GenerateSubtree.Request, response: GenerateSubtree.Response
     ) -> GenerateSubtree.Response:
         """
         Generate a subtree generated from the provided list of nodes and the loaded tree.
@@ -2203,8 +2238,6 @@ class TreeManager:
         This also adds all relevant parents to the tree message, resulting in a tree that is
         executable and does not contain any orpahned nodes.
         """
-        response = GenerateSubtree.Response()
-
         whole_tree = deepcopy(self.tree_msg)
 
         root = self.find_root()

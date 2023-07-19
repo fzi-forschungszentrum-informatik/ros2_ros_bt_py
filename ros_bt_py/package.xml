@@ -12,6 +12,7 @@
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>python3-toml</depend>
+  <depend>python3-typeguard</depend>
   <depend>rclpy_message_converter</depend>
 
   <exec_depend>python3-jsonpickle</exec_depend>

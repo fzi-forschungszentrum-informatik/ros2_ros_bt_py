@@ -46,15 +46,13 @@ def rospy_log_level_to_logging_log_level(rospy_level):
         return logging.FATAL
 
 
-def fix_yaml(request: FixYaml.Request) -> FixYaml.Response:
+def fix_yaml(request: FixYaml.Request, response: FixYaml.Response) -> FixYaml.Response:
     """
     Fix a yaml file and ensures it conforms to the expected format for ros msg de-/serializing.
 
     :param request: The ros service request containing the yaml file.
     :return: Always returns successfully.
     """
-    response = FixYaml.Response()
-
     tree_yaml = request.broken_yaml
 
     last_index = 0
