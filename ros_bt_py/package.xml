@@ -7,17 +7,18 @@
   <maintainer email="oberacker@fzi.de">David Oberacker</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>rclpy</depend>
   <depend>ros_bt_py_interfaces</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>python3-toml</depend>
+
   <exec_depend>python3-jsonpickle</exec_depend>
   <exec_depend>python3-requests</exec_depend>
   <exec_depend>python3-simplejson</exec_depend>
   <exec_depend>rosbridge_suite</exec_depend>
   <exec_depend>rosbridge_server</exec_depend>
   <exec_depend>rqt_console</exec_depend>
-  <depend>rclpy</depend>
-
 
   <test_depend>sensor_msgs</test_depend>
   <test_depend>ament_copyright</test_depend>
