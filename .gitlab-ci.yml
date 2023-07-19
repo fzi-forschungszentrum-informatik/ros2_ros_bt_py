@@ -1,6 +1,7 @@
 variables:
   CI_SCRIPTS_BRANCH: dev
   DOCS_SOURCE: "ros_bt_py/doc/source"
+  AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
 
 stages:
   - check
