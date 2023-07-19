@@ -4,3 +4,4 @@ ros_bt_py/doc/build/
 .vscode/
 .idea/
 ros_bt_py/capabilities/
+.coverage
