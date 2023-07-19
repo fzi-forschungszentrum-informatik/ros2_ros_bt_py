@@ -31,15 +31,13 @@ from ros_bt_py.ros_helpers import get_message_constant_fields
 
 
 class PackageManager(object):
-    """Provide functionality to interact with ROS messages and catkin packages."""
+    """Provide functionality to interact with ROS messages and colcon packages."""
 
     def __init__(
         self,
         publish_message_list_callback: Optional[rclpy.publisher.Publisher] = None,
         publish_packages_list_callback: Optional[rclpy.publisher.Publisher] = None,
     ):
-        # using rospkg is nice because it provides path resolution and honors CATKIN_IGNORE file
-        # so we do not have to do this manually
         self.item_id = 0
 
         self.message_list_pub = publish_message_list_callback
@@ -86,9 +84,10 @@ class PackageManager(object):
         msg.messages = messages
         self.message_list_pub.publish(msg)
 
-    def get_message_fields(self, request: GetMessageFields.Request):
+    def get_message_fields(
+        self, request: GetMessageFields.Request, response: GetMessageFields.Response
+    ):
         """Return the jsonpickled fields of the provided message type."""
-        response = GetMessageFields.Response()
         try:
             message_class = None
             if request.service:
@@ -110,8 +109,9 @@ class PackageManager(object):
             )
         return response
 
-    def get_message_constant_fields_handler(self, request: GetMessageFields.Request):
-        response = GetMessageFields.Response()
+    def get_message_constant_fields_handler(
+        self, request: GetMessageFields.Request, response: GetMessageFields.Response
+    ):
         if request.service:
             # not supported yet
             response.success = False
@@ -138,9 +138,6 @@ class PackageManager(object):
                 "No callback for publishing packages list data provided."
             )
             return
-        # get source_paths, which allows us to restrict the package list to packages
-        # within the source space
-        # this is needed because we should only ever add files to packages in the source space
         self.package_paths = []
         list_of_packages = Packages()
         for package, prefix in ament_index_python.get_packages_with_prefixes():
