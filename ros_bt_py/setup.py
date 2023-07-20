@@ -20,6 +20,6 @@ setup(
     license="TODO: License declaration",
     tests_require=["pytest", "pytest-cov"],
     entry_points={
-        "console_scripts": [],
+        "console_scripts": ["tree_node = ros_bt_py.tree_node:main"],
     },
 )

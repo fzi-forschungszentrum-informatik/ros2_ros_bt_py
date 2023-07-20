@@ -500,7 +500,7 @@ class TreeNode(rclpy.Node):
                 )
 
 
-if __name__ == "__main__":
+def main():
     rclpy.init()
     try:
 
@@ -516,3 +516,7 @@ if __name__ == "__main__":
             tree_node.destroy_node()
     finally:
         rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()
