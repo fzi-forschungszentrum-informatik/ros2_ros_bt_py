@@ -18,7 +18,7 @@ setup(
     maintainer_email="oberacker@fzi.de",
     description="TODO: Package description",
     license="TODO: License declaration",
-    tests_require=["pytest"],
+    tests_require=["pytest", "pytest-cov"],
     entry_points={
         "console_scripts": [],
     },
