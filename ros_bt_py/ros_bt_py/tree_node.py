@@ -6,7 +6,7 @@
 from rcl_interfaces.msg import ParameterType
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.node import ParameterDescriptor, ReentrantCallbackGroup
+from rclpy.node import ParameterDescriptor, ReentrantCallbackGroup, Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
     QoSHistoryPolicy,
@@ -62,19 +62,19 @@ from ros_bt_py.package_manager import PackageManager
 from ros_bt_py.helpers import fix_yaml
 
 
-class TreeNode(rclpy.Node):
+class TreeNode(Node):
     """ROS node running a single behavior tree."""
 
-    def __init__(self):
+    def __init__(self, tree_name: str = "BehaviorTree"):
         """Create a new Behavior Tree Node with all required publishers and subscribers."""
+        super().__init__(tree_name)
         self.get_logger().info("initializing tree node...")
-        self.declare_parameter("~node_modules", rclpy.Parameter.Type.STRING_ARRAY)
         self.declare_parameters(
-            namespace="~",
+            namespace="",
             parameters=[
                 (
                     "node_modules",
-                    [],
+                    [""],
                     ParameterDescriptor(
                         name="node_modules",
                         type=ParameterType.PARAMETER_STRING_ARRAY,
@@ -88,6 +88,15 @@ class TreeNode(rclpy.Node):
                         name="show_traceback_on_exception",
                         type=ParameterType.PARAMETER_BOOL,
                         description="Show error traceback on exception!",
+                    ),
+                ),
+                (
+                    "load_default_tree",
+                    False,
+                    ParameterDescriptor(
+                        name="load_default_tree",
+                        type=ParameterType.PARAMETER_BOOL,
+                        description="Allow permissive loading of default BT",
                     ),
                 ),
                 (
@@ -137,7 +146,7 @@ class TreeNode(rclpy.Node):
                 ),
             ],
         )
-        node_module_names = self.get_parameter("~node_modules")
+        node_module_names = self.get_parameter("node_modules").value
         if isinstance(node_module_names, str):
             if "," in node_module_names:
                 # Try to parse comma-separated list of modules
@@ -153,27 +162,27 @@ class TreeNode(rclpy.Node):
             )
 
         show_traceback_on_exception = bool(
-            self.get_parameter("~show_traceback_on_exception").value
+            self.get_parameter("show_traceback_on_exception").value
         )
-        load_default_tree = str(self.get_parameter("~load_default_tree").value)
+        load_default_tree = bool(self.get_parameter("load_default_tree").value)
         load_default_tree_permissive = bool(
-            self.get_parameter("~load_default_tree_permissive").value
+            self.get_parameter("load_default_tree_permissive").value
         )
-        default_tree_path = str(self.get_parameter("~default_tree_path").value)
+        default_tree_path = str(self.get_parameter("default_tree_path").value)
         default_tree_tick_frequency_hz = int(
-            self.get_parameter("~default_tree_tick_frequency_hz").value
+            self.get_parameter("default_tree_tick_frequency_hz").value
         )
         default_tree_diagnostics_frequency_hz = int(
-            self.get_parameter("~default_tree_diagnostics_frequency_hz").value
+            self.get_parameter("default_tree_diagnostics_frequency_hz").value
         )
         default_tree_control_command = int(
-            self.get_parameter("~default_tree_control_command").value
+            self.get_parameter("default_tree_control_command").value
         )
 
         self.publisher_callback_group = ReentrantCallbackGroup()
         self.tree_pub = self.create_publisher(
             Tree,
-            "~tree",
+            "~/tree",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -184,7 +193,7 @@ class TreeNode(rclpy.Node):
         )
         self.debug_info_pub = self.create_publisher(
             DebugInfo,
-            "~debug/debug_info",
+            "~/debug/debug_info",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -195,7 +204,7 @@ class TreeNode(rclpy.Node):
         )
         self.debug_settings_pub = self.create_publisher(
             DebugSettings,
-            "~debug/debug_settings",
+            "~/debug/debug_settings",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -206,7 +215,7 @@ class TreeNode(rclpy.Node):
         )
         self.node_diagnostics_pub = self.create_publisher(
             NodeDiagnostics,
-            "~debug/node_diagnostics",
+            "~/debug/node_diagnostics",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -217,7 +226,7 @@ class TreeNode(rclpy.Node):
         )
         self.tick_frequency_pub = self.create_publisher(
             Float64,
-            "~debug/tick_frequency",
+            "~/debug/tick_frequency",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -228,7 +237,7 @@ class TreeNode(rclpy.Node):
         )
         self.ros_diagnostics_pub = self.create_publisher(
             DiagnosticArray,
-            f"/diagnostics/{self.get_name()}",
+            "/diagnostics",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -256,133 +265,133 @@ class TreeNode(rclpy.Node):
 
         self.add_node_service = self.create_service(
             AddNode,
-            "~add_node",
+            "~/add_node",
             callback=self.tree_manager.add_node,
             callback_group=self.service_callback_group,
         )
         self.add_node_at_index_service = self.create_service(
             AddNodeAtIndex,
-            "~add_node_at_index",
+            "~/add_node_at_index",
             callback=self.tree_manager.add_node_at_index,
             callback_group=self.service_callback_group,
         )
         self.remove_node_service = self.create_service(
             RemoveNode,
-            "~remove_node",
+            "~/remove_node",
             callback=self.tree_manager.remove_node,
             callback_group=self.service_callback_group,
         )
         self.morph_node_service = self.create_service(
             MorphNode,
-            "~morph_node",
+            "~/morph_node",
             callback=self.tree_manager.morph_node,
             callback_group=self.service_callback_group,
         )
         self.wire_data_service = self.create_service(
             WireNodeData,
-            "~wire_data",
+            "~/wire_data",
             callback=self.tree_manager.wire_data,
             callback_group=self.service_callback_group,
         )
         self.unwire_data_service = self.create_service(
             WireNodeData,
-            "~unwire_data",
+            "~/unwire_data",
             callback=self.tree_manager.unwire_data,
             callback_group=self.service_callback_group,
         )
         self.modify_breakpoints_service = self.create_service(
             ModifyBreakpoints,
-            "~debug/modify_breakpoints",
+            "~/debug/modify_breakpoints",
             callback=self.tree_manager.modify_breakpoints,
             callback_group=self.service_callback_group,
         )
         self.control_tree_execution_service = self.create_service(
             ControlTreeExecution,
-            "~control_tree_execution",
+            "~/control_tree_execution",
             callback=self.tree_manager.control_execution,
             callback_group=self.service_callback_group,
         )
         self.get_available_nodes_service = self.create_service(
             GetAvailableNodes,
-            "~get_available_nodes",
+            "~/get_available_nodes",
             callback=get_available_nodes,
             callback_group=self.service_callback_group,
         )
         self.get_subtree_service = self.create_service(
             GetSubtree,
-            "~get_subtree",
+            "~/get_subtree",
             callback=self.tree_manager.get_subtree,
             callback_group=self.service_callback_group,
         )
         self.generate_subtree_service = self.create_service(
             GenerateSubtree,
-            "~generate_subtree",
+            "~/generate_subtree",
             callback=self.tree_manager.generate_subtree,
             callback_group=self.service_callback_group,
         )
         self.set_execution_mode_service = self.create_service(
             SetExecutionMode,
-            "~debug/set_execution_mode",
+            "~/debug/set_execution_mode",
             callback=self.tree_manager.set_execution_mode,
             callback_group=self.service_callback_group,
         )
         self.set_options_service = self.create_service(
             SetOptions,
-            "~set_options",
+            "~/set_options",
             callback=self.tree_manager.set_options,
             callback_group=self.service_callback_group,
         )
         self.move_node_service = self.create_service(
             MoveNode,
-            "~move_node",
+            "~/move_node",
             callback=self.tree_manager.move_node,
             callback_group=self.service_callback_group,
         )
         self.replace_node_service = self.create_service(
             ReplaceNode,
-            "~replace_node",
+            "~/replace_node",
             callback=self.tree_manager.replace_node,
             callback_group=self.service_callback_group,
         )
         self.continue_service = self.create_service(
             Continue,
-            "~debug/continue",
+            "~/debug/continue",
             callback=self.tree_manager.debug_step,
             callback_group=self.service_callback_group,
         )
         self.load_tree_service = self.create_service(
             LoadTree,
-            "~load_tree",
+            "~/load_tree",
             callback=self.tree_manager.load_tree,
             callback_group=self.service_callback_group,
         )
         self.load_tree_from_path_service = self.create_service(
             LoadTreeFromPath,
-            "~load_tree_from_path",
+            "~/load_tree_from_path",
             callback=self.tree_manager.load_tree_from_path,
             callback_group=self.service_callback_group,
         )
         self.clear_service = self.create_service(
             ClearTree,
-            "~clear",
+            "~/clear",
             callback=self.tree_manager.clear,
             callback_group=self.service_callback_group,
         )
         self.reload_service = self.create_service(
             ReloadTree,
-            "~reload",
+            "~/reload",
             callback=self.tree_manager.reload_tree,
             callback_group=self.service_callback_group,
         )
         self.change_tree_name_service = self.create_service(
             ChangeTreeName,
-            "~change_tree_name",
+            "~/change_tree_name",
             callback=self.tree_manager.change_tree_name,
             callback_group=self.service_callback_group,
         )
         self.fix_yaml_service = self.create_service(
             FixYaml,
-            "~fix_yaml",
+            "~/fix_yaml",
             callback=fix_yaml,
             callback_group=self.service_callback_group,
         )
@@ -418,18 +427,18 @@ class TreeNode(rclpy.Node):
         # self.migration_manager = MigrationManager(tree_manager=self.tree_manager)
 
         # self.check_node_versions_service = rospy.Service(
-        #    "~check_node_versions", MigrateTree, check_node_versions
+        #    "~/check_node_versions", MigrateTree, check_node_versions
         # )
 
         # self.migrate_tree_service = rospy.Service(
-        #    "~migrate_tree", MigrateTree, self.migration_manager.migrate_tree
+        #    "~/migrate_tree", MigrateTree, self.migration_manager.migrate_tree
         # )
         # self.get_logger().info("initialized migration manager")
 
         self.get_logger().info("initializing package manager...")
         self.message_list_pub = self.create_publisher(
             Messages,
-            "~messages",
+            "~/messages",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -440,7 +449,7 @@ class TreeNode(rclpy.Node):
         )
         self.packages_list_pub = self.create_publisher(
             Packages,
-            "~packages",
+            "~/packages",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -458,25 +467,25 @@ class TreeNode(rclpy.Node):
         self.package_manager.publish_packages_list()
         self.get_message_fields_service = self.create_service(
             GetMessageFields,
-            "~get_message_fields",
+            "~/get_message_fields",
             callback=self.package_manager.get_message_fields,
             callback_group=self.service_callback_group,
         )
         self.get_message_constant_fields_service = self.create_service(
             GetMessageFields,
-            "~get_message_constant_fields",
+            "~/get_message_constant_fields",
             callback=self.package_manager.get_message_constant_fields_handler,
             callback_group=self.service_callback_group,
         )
         self.get_package_structure_service = self.create_service(
             GetPackageStructure,
-            "~get_package_structure",
+            "~/get_package_structure",
             callback=self.package_manager.get_package_structure,
             callback_group=self.service_callback_group,
         )
         self.save_tree_service = self.create_service(
             SaveTree,
-            "~save_tree",
+            "~/save_tree",
             callback=self.package_manager.save_tree,
             callback_group=self.service_callback_group,
         )
@@ -500,8 +509,8 @@ class TreeNode(rclpy.Node):
                 )
 
 
-def main():
-    rclpy.init()
+def main(argv=None):
+    rclpy.init(args=argv)
     try:
 
         tree_node = TreeNode()
@@ -519,4 +528,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(sys.argv)

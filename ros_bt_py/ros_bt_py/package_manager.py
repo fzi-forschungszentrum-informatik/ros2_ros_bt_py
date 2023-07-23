@@ -60,21 +60,21 @@ class PackageManager(object):
         packages = list(ament_index_python.get_packages_with_prefixes().keys())
         for package, package_messages in rosidl_runtime_py.get_message_interfaces(
             packages
-        ):
+        ).items():
             for message in package_messages:
                 messages.append(
                     Message(msg=package + "/" + message, service=False, action=False)
                 )
         for package, package_services in rosidl_runtime_py.get_service_interfaces(
             packages
-        ):
+        ).items():
             for service in package_services:
                 messages.append(
                     Message(msg=package + "/" + service, service=True, action=False)
                 )
         for package, package_actions in rosidl_runtime_py.get_action_interfaces(
             packages
-        ):
+        ).items():
             for action in package_actions:
                 messages.append(
                     Message(msg=package + "/" + action, service=False, action=True)
@@ -140,7 +140,7 @@ class PackageManager(object):
             return
         self.package_paths = []
         list_of_packages = Packages()
-        for package, prefix in ament_index_python.get_packages_with_prefixes():
+        for package, prefix in ament_index_python.get_packages_with_prefixes().items():
             self.package_paths.append(prefix)
             if not prefix.startswith("/opt/ros"):
                 package_msg = Package()

@@ -447,7 +447,7 @@ class TreeManager:
         if self.publish_diagnostic is None:
             return
         if self.get_state() == Tree.TICKING:
-            self.diagnostic_status.level = 0
+            self.diagnostic_status.level = DiagnosticStatus.OK
             self.diagnostic_status.message = "Ticking"
             # self.tick_stat.values = [KeyValue(key = 'Ticking', value = 'True')]
         elif self.get_state() in (
@@ -456,11 +456,11 @@ class TreeManager:
             Tree.WAITING_FOR_TICK,
             Tree.STOP_REQUESTED,
         ):
-            self.diagnostic_status.level = 1
+            self.diagnostic_status.level = DiagnosticStatus.WARN
             self.diagnostic_status.message = "Not ticking"
             # self.tick_stat.values = [KeyValue(key = 'Ticking', value = 'False')]
         elif self.get_state() == Tree.ERROR:
-            self.diagnostic_status.level = 2
+            self.diagnostic_status.level = DiagnosticStatus.ERROR
             self.diagnostic_status.message = "Error in Behavior Tree"
         self.publish_diagnostic(self.diagnostic_array)
 
