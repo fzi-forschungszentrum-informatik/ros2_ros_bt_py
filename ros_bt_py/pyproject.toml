@@ -38,3 +38,11 @@ interfaces = [
   "/builds/*/ros_bt_py/ros_bt_py_interfaces",
   "/root/target_ws/src/ros_bt_py/ros_bt_py_interfaces"
 ]
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+testpaths = [
+    "tests",
+]
+minversion = "6.0"

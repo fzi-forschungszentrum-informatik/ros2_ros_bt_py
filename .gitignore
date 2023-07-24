@@ -5,3 +5,4 @@ ros_bt_py/doc/build/
 .idea/
 ros_bt_py/capabilities/
 .coverage
+parameters.py

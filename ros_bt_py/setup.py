@@ -29,6 +29,7 @@ setup(
         ),
     ],
     install_requires=["setuptools"],
+    package_dir={"": "src/"},
     zip_safe=True,
     maintainer="David Oberacker",
     maintainer_email="oberacker@fzi.de",
