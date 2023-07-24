@@ -41,3 +41,12 @@ pre-commit:
     paths:
       - ${PRE_COMMIT_HOME}
   parallel: !reference [.build_matrix, parallel]
+
+industrial_ci:
+  artifacts:
+    when: always
+    reports:
+      junit: build/**/*(pytest|.xunit).xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage_*.xml
