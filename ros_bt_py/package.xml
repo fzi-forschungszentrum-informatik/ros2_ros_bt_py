@@ -14,6 +14,7 @@
   <depend>python3-toml</depend>
   <depend>python3-typeguard</depend>
   <depend>rclpy_message_converter</depend>
+  <depend>generate_parameter_library</depend>
 
   <exec_depend>python3-jsonpickle</exec_depend>
   <exec_depend>python3-requests</exec_depend>

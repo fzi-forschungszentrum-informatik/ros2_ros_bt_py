@@ -1,0 +1,62 @@
+tree_node_parameters:
+  node_modules: {
+    type: string_array,
+    default_value: ["ros_bt_py.nodes", "ros_bt_py.ros_nodes"],
+    description: "Python modules containing nodes to load on startup.",
+    read_only: True,
+    validation: {
+      size_gt<>: [0]
+    }
+  }
+  show_traceback_on_exception: {
+    type: bool,
+    default_value: False,
+    read_only: True,
+    description: "Show error traceback on exception"
+  }
+  diagnostics_frequency_hz: {
+    type: double,
+    default_value: 1.0,
+    read_only: True,
+    description: "Default frequency to publish diagnostics updates",
+    validation: {
+      gt<>: [0.0]
+    }
+  }
+  default_tree:
+    load_default_tree: {
+      type: bool,
+      default_value: False,
+      read_only: True,
+      description: "Load default BT on startup"
+    }
+    load_default_tree_permissive: {
+      type: bool,
+      default_value: False,
+      read_only: True,
+      description: "Allow permissive loading of default BT"
+    }
+    tick_frequency_hz: {
+      type: double,
+      default_value: 10.0,
+      read_only: True,
+      description: "Tick frequency of the default BT",
+      validation: {
+        gt<>: [0.0]
+      }
+    }
+    tree_path: {
+      type: string,
+      default_value: "",
+      read_only: True,
+      description: "Path to the BT to load on startup!"
+    }
+    control_command: {
+      type: int,
+      default_value: 2,
+      description: "Default command when running the default tree!",
+      read_only: True,
+      validation: {
+        one_of<>: [[0, 1, 2, 3, 4, 5, 6, 7]]
+      }
+    }

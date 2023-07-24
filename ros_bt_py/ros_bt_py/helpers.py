@@ -51,6 +51,7 @@ def fix_yaml(request: FixYaml.Request, response: FixYaml.Response) -> FixYaml.Re
     Fix a yaml file and ensures it conforms to the expected format for ros msg de-/serializing.
 
     :param request: The ros service request containing the yaml file.
+    :param response: The ros service response containing the fixed yaml.
     :return: Always returns successfully.
     """
     tree_yaml = request.broken_yaml
