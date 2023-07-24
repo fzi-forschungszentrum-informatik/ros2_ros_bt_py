@@ -60,21 +60,21 @@ class PackageManager(object):
         packages = list(ament_index_python.get_packages_with_prefixes().keys())
         for package, package_messages in rosidl_runtime_py.get_message_interfaces(
             packages
-        ):
+        ).items():
             for message in package_messages:
                 messages.append(
                     Message(msg=package + "/" + message, service=False, action=False)
                 )
         for package, package_services in rosidl_runtime_py.get_service_interfaces(
             packages
-        ):
+        ).items():
             for service in package_services:
                 messages.append(
                     Message(msg=package + "/" + service, service=True, action=False)
                 )
         for package, package_actions in rosidl_runtime_py.get_action_interfaces(
             packages
-        ):
+        ).items():
             for action in package_actions:
                 messages.append(
                     Message(msg=package + "/" + action, service=False, action=True)
@@ -140,7 +140,7 @@ class PackageManager(object):
             return
         self.package_paths = []
         list_of_packages = Packages()
-        for package, prefix in ament_index_python.get_packages_with_prefixes():
+        for package, prefix in ament_index_python.get_packages_with_prefixes().items():
             self.package_paths.append(prefix)
             if not prefix.startswith("/opt/ros"):
                 package_msg = Package()
@@ -176,13 +176,16 @@ class PackageManager(object):
             d["type"] = "file"
         return d
 
-    def get_package_structure(self, request: GetPackageStructure.Request):
+    def get_package_structure(
+        self,
+        request: GetPackageStructure.Request,
+        response: GetPackageStructure.Response,
+    ) -> GetPackageStructure.Response:
         """
         Return a listing of files and subdirectories of a ROS package as a jsonpickled string.
 
         Hides hidden files by default, unless show_hidden is set to true.
         """
-        response = GetPackageStructure.Response()
         try:
             package_path = ament_index_python.get_package_share_directory(
                 request.package
@@ -206,7 +209,9 @@ class PackageManager(object):
             name = increment_name(name)
         return name + extension
 
-    def save_tree(self, request):
+    def save_tree(
+        self, request: SaveTree.Request, response: SaveTree.Response
+    ) -> SaveTree.Response:
         """
         Save a tree message in the given package.
 
@@ -222,8 +227,6 @@ class PackageManager(object):
         Always returns the path under which the tree was saved
         in response.file_path in the package:// style
         """
-        response = SaveTree.Response()
-
         # remove input and output values from nodes
         request.tree = remove_input_output_values(tree=request.tree)
         if not os.path.exists(request.filepath):

@@ -1,0 +1,61 @@
+<launch>
+  <arg name="robot_namespace" default="/" />
+  <arg name="node_modules" default="ros_bt_py.nodes,ros_bt_py.nodes.log" />
+
+  <!-- start web interface by default -->
+  <arg name="web_interface" default="false" />
+
+  <!-- port of the editor web interface -->
+  <arg name="port" default="8085" />
+
+  <arg name="load_default_tree" default="false" />
+  <!-- loads the default tree in permissive mode which can mitigate some errors in the saved tree -->
+  <arg name="load_default_tree_permissive" default="false" />
+  <arg name="default_tree_path" default="package://ros_bt_py/etc/trees/examples/file_example.yaml" />
+  <arg name="default_tree_tick_frequency_hz" default="1.0" />
+  <!-- available commands are:
+    DO_NOTHING = 0
+    TICK_ONCE = 1
+    TICK_PERIODICALLY = 2
+    TICK_UNTIL_RESULT = 3
+  -->
+  <arg name="default_tree_control_command" default="0" />
+
+  <arg name="show_traceback_on_exception" default="false" />
+  <arg name="diagnostics_frequency_hz" default="1.0" />
+
+  <group>
+    <push_ros_namespace namespace="$(var robot_namespace)"/>
+
+    <!--<group if="$(arg web_interface)">
+      <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+        <arg name="services_glob" default="[*/rosapi/*, */tree_node/*, */tree_node_dual/* ,  */capabilities/*]" />
+      </include>
+
+      <include file="$(find ros_bt_py_web_server)/launch/web_server.launch">
+        <arg name="port" value="$(arg port)" />
+        <arg name="cache_static_files" value="false" />
+        <arg name="packages" value="[
+            {
+                package: ros_bt_py,
+                directory: html
+            }
+          ]" />
+      </include>
+    </group>-->
+
+    <!-- behavior tree backend, responsible for executing the tree -->
+    <node name="tree_node" pkg="ros_bt_py" exec="tree_node" output="log"
+          respawn="false">
+      <!-- a list of modules that are availble in the editor web interface -->
+      <param name="node_modules" value="$(var node_modules)" value-sep=","/>
+      <param name="show_traceback_on_exception" value="$(var show_traceback_on_exception)" />
+      <param name="diagnostics_frequency_hz" value="$(var diagnostics_frequency_hz)" />
+      <param name="default_tree/load_default_tree" value="$(var load_default_tree)" />
+      <param name="default_tree/load_default_tree_permissive" value="$(var load_default_tree_permissive)" />
+      <param name="default_tree/tree_path" value="$(var default_tree_path)" />
+      <param name="default_tree/tick_frequency_hz" value="$(var default_tree_tick_frequency_hz)" />
+      <param name="default_tree/control_command" value="$(var default_tree_control_command)" />
+    </node>
+  </group>
+</launch>

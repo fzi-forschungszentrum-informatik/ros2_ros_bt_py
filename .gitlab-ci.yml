@@ -2,6 +2,8 @@ variables:
   CI_SCRIPTS_BRANCH: dev
   DOCS_SOURCE: "ros_bt_py/doc/source"
   AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
+  UPSTREAM_WORKSPACE: "upstream_workspace.yaml"
+  DEB_BUILD: "false"
 
 stages:
   - check
@@ -39,3 +41,12 @@ pre-commit:
     paths:
       - ${PRE_COMMIT_HOME}
   parallel: !reference [.build_matrix, parallel]
+
+industrial_ci:
+  artifacts:
+    when: always
+    reports:
+      junit: [build/**/*pytest.xml, build/**/*.xunit.xml]
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage_*.xml
