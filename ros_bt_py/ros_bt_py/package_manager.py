@@ -176,13 +176,16 @@ class PackageManager(object):
             d["type"] = "file"
         return d
 
-    def get_package_structure(self, request: GetPackageStructure.Request):
+    def get_package_structure(
+        self,
+        request: GetPackageStructure.Request,
+        response: GetPackageStructure.Response,
+    ) -> GetPackageStructure.Response:
         """
         Return a listing of files and subdirectories of a ROS package as a jsonpickled string.
 
         Hides hidden files by default, unless show_hidden is set to true.
         """
-        response = GetPackageStructure.Response()
         try:
             package_path = ament_index_python.get_package_share_directory(
                 request.package
@@ -206,7 +209,9 @@ class PackageManager(object):
             name = increment_name(name)
         return name + extension
 
-    def save_tree(self, request):
+    def save_tree(
+        self, request: SaveTree.Request, response: SaveTree.Response
+    ) -> SaveTree.Response:
         """
         Save a tree message in the given package.
 
@@ -222,8 +227,6 @@ class PackageManager(object):
         Always returns the path under which the tree was saved
         in response.file_path in the package:// style
         """
-        response = SaveTree.Response()
-
         # remove input and output values from nodes
         request.tree = remove_input_output_values(tree=request.tree)
         if not os.path.exists(request.filepath):
