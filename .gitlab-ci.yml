@@ -46,7 +46,7 @@ industrial_ci:
   artifacts:
     when: always
     reports:
-      junit: build/**/*(pytest|.xunit).xml
+      junit: [build/**/*pytest.xml, build/**/*.xunit.xml]
       coverage_report:
         coverage_format: cobertura
         path: coverage_*.xml
