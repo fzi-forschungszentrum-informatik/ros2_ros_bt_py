@@ -9,9 +9,10 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>rosbridge_suite</depend>
-  <depend>rosbridge_server</depend>
-  <depend>ros2launch</depend>
+  <exec_depend>rosbridge_suite</exec_depend>
+  <exec_depend>rosbridge_server</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>ros_bt_py_interfaces</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
