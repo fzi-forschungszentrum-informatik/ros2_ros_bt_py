@@ -392,7 +392,7 @@ class ServiceForSetType(ABC, Leaf):
             succeed_always=succeed_always,
             simulate_tick=simulate_tick,
         )
-
+        self._service_client: Optional[Client] = None
         self._service_name = self.options["service_name"]
         self.set_service_type()
 
@@ -458,10 +458,7 @@ class ServiceForSetType(ABC, Leaf):
             and not self._service_request_future.done()
         ):
             self._service_request_future.cancel()
-            self._lservice_request_future = None
-        if self._service_client is not None:
-            self._service_client.destroy()
-            self._service_client = None
+        self._service_request_future = None
         self._last_service_call_time = None
         self._last_request = None
         self._reported_result: bool = False
@@ -486,6 +483,7 @@ class ServiceForSetType(ABC, Leaf):
             or self._service_request_future.cancelled()
         ):
             self._reported_result = False
+            self.set_request()
             self._last_service_call_time = self.ros_node.get_clock().now()
             self._service_request_future = self._service_client.call_async(
                 self._last_request
@@ -505,10 +503,10 @@ class ServiceForSetType(ABC, Leaf):
 
             seconds_since_call: Tuple[int, int] = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
-            ).nanoseconds * 1e9
+            ).nanoseconds / 1e9
             if seconds_since_call > self.options["wait_for_response_seconds"]:
                 self.logerr(
-                    f"Service call to {self.inputs['service_name']} with request "
+                    f"Service call to {self.options['service_name']} with request "
                     f"{self._last_request} timed out"
                 )
                 self._service_request_future.cancel()
@@ -536,20 +534,22 @@ class ServiceForSetType(ABC, Leaf):
         return NodeMsg.IDLE
 
     def _do_shutdown(self):
+        self._do_reset()
         if self._service_client is not None:
             self._service_client.destroy()
+        self._service_client = None
 
     def _do_calculate_utility(self):
         if not self.has_ros_node or self._service_client is None:
             self.loginfo(
-                f"Unable to check for service {self.inputs['service_name']}: "
+                f"Unable to check for service {self.options['service_name']}: "
                 "No ros node available!"
             )
-            return UtilityBounds()
+            return UtilityBounds(can_execute=False)
 
         if self._service_client.service_is_ready():
             self.loginfo(
-                f"Found service {self.inputs['service_name']} with correct type, returning "
+                f"Found service {self.options['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
             return UtilityBounds(
@@ -560,7 +560,7 @@ class ServiceForSetType(ABC, Leaf):
                 has_upper_bound_failure=True,
             )
 
-        self.loginfo(f"Service {self.inputs['service_name']} is unavailable")
+        self.loginfo(f"Service {self.options['service_name']} is unavailable")
         return UtilityBounds(can_execute=False)
 
 
