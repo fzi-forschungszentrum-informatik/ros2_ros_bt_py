@@ -769,7 +769,7 @@ class TreeManager:
                     instance = self.instantiate_node_from_msg(
                         node, allow_rename=False, permissive=request.permissive
                     )
-
+                    instance.ros_node = self.ros_node
                     instance.simulate_tick = self.simulate_tick
                     instance.succeed_always = self.succeed_always
 

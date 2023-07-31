@@ -11,6 +11,7 @@ from typing import Type, List, Dict, Optional
 
 import rclpy
 import rclpy.logging
+from rclpy.node import Node as ROSNode
 
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import NodeData as NodeDataMsg
@@ -307,6 +308,7 @@ class Node(object):
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         name: Optional[str] = None,
+        ros_node: Optional[ROSNode] = None,
         succeed_always: bool = False,
         simulate_tick: bool = False,
     ):
@@ -346,6 +348,7 @@ class Node(object):
         self.subscriptions = []
         self.subscribers = []
 
+        self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager = debug_manager
 
         self.succeed_always = succeed_always
@@ -409,6 +412,28 @@ class Node(object):
     @state.setter
     def state(self, new_state: str):
         self._state = new_state
+
+    @property
+    def has_ros_node(self) -> bool:
+        return self._ros_node is not None
+
+    @property
+    def ros_node(self) -> ROSNode:
+        """
+        Return the associated ROS node instance.
+
+        If no instance is present an
+        """
+        if self._ros_node is not None:
+            return self.ros_node
+        else:
+            error_msg = f"{self.name} nodes not have ROS node reference!"
+            self.logerr(error_msg)
+            raise RuntimeError(error_msg)
+
+    @ros_node.setter
+    def ros_node(self, new_ros_node: ROSNode):
+        self._ros_node = new_ros_node
 
     def setup(self):
         """
