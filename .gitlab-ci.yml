@@ -1,5 +1,5 @@
 variables:
-  CI_SCRIPTS_BRANCH: dev
+  CI_SCRIPTS_BRANCH: master
   DOCS_SOURCE: "ros_bt_py/doc/source"
   AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
   UPSTREAM_WORKSPACE: "upstream_workspace.yaml"
@@ -16,16 +16,17 @@ stages:
     matrix:
       - ROS_DISTRO: humble
         CI_IMAGE: ids-git.fzi.de:5555/continuous_integration/ci_docker_images/ubuntu_22.04_ros2:humble
-
+      - ROS_DISTRO: iron
+        CI_IMAGE: ids-git.fzi.de:5555/continuous_integration/ci_docker_images/ubuntu_22.04_ros2:iron
       - ROS_DISTRO: rolling
         CI_IMAGE: ids-git.fzi.de:5555/continuous_integration/ci_docker_images/ubuntu_22.04_ros2:rolling
 include:
   - project: 'continuous_integration/ci_scripts'
-    ref:  dev
-    file: '/gitlab-ci-yml/ros2_pipeline_v3.yml'
+    ref:  master
+    file: '/gitlab-ci-yml/ros2_pipeline.yml'
 
   - project: 'continuous_integration/ci_scripts'
-    ref: dev
+    ref: master
     file: '/gitlab-ci-yml/doc_sphinx.yml'
 
 pre-commit:
@@ -41,12 +42,3 @@ pre-commit:
     paths:
       - ${PRE_COMMIT_HOME}
   parallel: !reference [.build_matrix, parallel]
-
-industrial_ci:
-  artifacts:
-    when: always
-    reports:
-      junit: [build/**/*pytest.xml, build/**/*.xunit.xml]
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage_*.xml
