@@ -425,7 +425,7 @@ class Node(object):
         If no instance is present an
         """
         if self._ros_node is not None:
-            return self.ros_node
+            return self._ros_node
         else:
             error_msg = f"{self.name} nodes not have ROS node reference!"
             self.logerr(error_msg)
@@ -1064,7 +1064,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).debug("{message}")
+        rclpy.logging.get_logger(self.name).debug(f"{message}")
 
     def loginfo(self, message):
         """
@@ -1072,7 +1072,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).info("{message}")
+        rclpy.logging.get_logger(self.name).info(f"{message}")
 
     def logwarn(self, message):
         """
@@ -1080,7 +1080,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).warn("{message}")
+        rclpy.logging.get_logger(self.name).warn(f"{message}")
 
     def logerr(self, message):
         """
@@ -1088,7 +1088,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).error("{message}")
+        rclpy.logging.get_logger(self.name).error(f"{message}")
 
     def logfatal(self, message):
         """
@@ -1096,7 +1096,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).fatal("{message}")
+        rclpy.logging.get_logger(self.name).fatal(f"{message}")
 
     @classmethod
     def from_msg(

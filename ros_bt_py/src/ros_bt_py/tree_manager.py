@@ -1277,7 +1277,7 @@ class TreeManager:
             )
             response.success = True
             response.actual_node_name = instance.name
-        except BehaviorTreeException as exc:
+        except Exception as exc:
             response.success = False
             response.error_message = str(exc)
             return response
