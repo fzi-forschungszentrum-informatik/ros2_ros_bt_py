@@ -238,10 +238,11 @@ class WaitForService(Leaf):
                 return NodeMsg.RUNNING
 
     def _do_untick(self):
+        self._last_service_call_time = None
         return NodeMsg.IDLE
 
     def _do_reset(self):
-        self._service_client.destroy()
+        self._last_service_call_time = None
         return NodeMsg.IDLE
 
     def _do_shutdown(self):
@@ -299,15 +300,18 @@ class WaitForServiceInput(Leaf):
                 return NodeMsg.RUNNING
 
     def _do_untick(self):
+        self._last_service_call_time = None
         return NodeMsg.IDLE
 
     def _do_reset(self):
         if self._service_client is not None:
             self._service_client.destroy()
             self._service_client = None
+        self._last_service_call_time = None
         return NodeMsg.IDLE
 
     def _do_shutdown(self):
+        self._last_service_call_time = None
         if self._service_client is not None:
             self._service_client.destroy()
             self._service_client = None
