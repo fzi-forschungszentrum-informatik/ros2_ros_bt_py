@@ -2,6 +2,7 @@
 
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
+from ros_bt_py.exceptions import BehaviorTreeException
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
@@ -24,19 +25,24 @@ class RosParamOption(Leaf):
     """Read a parameter from the ROS parameter server."""
 
     def _do_setup(self):
-        pass
+        if not self.has_ros_node:
+            error_msg = (
+                f"RosParamOption node {self.name} does not have ROS node reference!"
+            )
+            self.logerr(error_msg)
+            raise BehaviorTreeException(error_msg)
 
     def _do_tick(self):
         if not self.ros_node.has_parameter(self.options["param_name"]):
-            self.outputs["param"] = self.options["default_value"]
-            return NodeMsg.SUCCEEDED
+            return NodeMsg.FAILURE
         else:
             param = self.ros_node.get_parameter(self.options["param_name"])
             param_value = param.value
             if param_value is None:
                 self.outputs["param"] = self.options["default_value"]
+                return NodeMsg.SUCCEEDED
             else:
-                if isinstance(param, self.options["param_type"]):
+                if isinstance(param_value, self.options["param_type"]):
                     self.outputs["param"] = param_value
                     return NodeMsg.SUCCEEDED
                 else:
@@ -73,19 +79,26 @@ class RosParamOptionDefaultInput(Leaf):
     """Read a parameter from the ROS parameter server."""
 
     def _do_setup(self):
-        pass
+        if not self.has_ros_node:
+            error_msg = (
+                f"RosParamOptionDefaultInput node {self.name} "
+                "does not have ROS node reference!"
+            )
+            self.logerr(error_msg)
+            raise BehaviorTreeException(error_msg)
 
     def _do_tick(self):
         if not self.ros_node.has_parameter(self.options["param_name"]):
             self.outputs["param"] = self.inputs["default_value"]
-            return NodeMsg.SUCCEEDED
+            return NodeMsg.FAILURE
         else:
             param = self.ros_node.get_parameter(self.options["param_name"])
             param_value = param.value
             if param_value is None:
                 self.outputs["param"] = self.inputs["default_value"]
+                return NodeMsg.SUCCEEDED
             else:
-                if isinstance(param, self.options["param_type"]):
+                if isinstance(param_value, self.options["param_type"]):
                     self.outputs["param"] = param_value
                     return NodeMsg.SUCCEEDED
                 else:
@@ -117,19 +130,25 @@ class RosParamInput(Leaf):
     """Read a parameter from the ROS parameter server."""
 
     def _do_setup(self):
-        pass
+        if not self.has_ros_node:
+            error_msg = (
+                f"RosParamInput node {self.name} does not have ROS node reference!"
+            )
+            self.logerr(error_msg)
+            raise BehaviorTreeException(error_msg)
 
     def _do_tick(self):
         if not self.ros_node.has_parameter(self.inputs["param_name"]):
             self.outputs["param"] = self.options["default_value"]
-            return NodeMsg.SUCCEEDED
+            return NodeMsg.FAILURE
         else:
             param = self.ros_node.get_parameter(self.inputs["param_name"])
             param_value = param.value
             if param_value is None:
                 self.outputs["param"] = self.options["default_value"]
+                return NodeMsg.SUCCEEDED
             else:
-                if isinstance(param, self.options["param_type"]):
+                if isinstance(param_value, self.options["param_type"]):
                     self.outputs["param"] = param_value
                     return NodeMsg.SUCCEEDED
                 else:
