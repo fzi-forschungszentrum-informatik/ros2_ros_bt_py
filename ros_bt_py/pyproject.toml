@@ -43,3 +43,4 @@ testpaths = [
     "tests",
 ]
 minversion = "6.0"
+asyncio_mode="auto"
