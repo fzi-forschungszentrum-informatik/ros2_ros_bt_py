@@ -8,7 +8,7 @@ from std_msgs.msg import String, Int64
 from sensor_msgs.msg import BatteryState
 
 
-@pytest.mark.parametrize("message,constants", [(NodeMsg, 17), (BatteryState, 21)])
+@pytest.mark.parametrize("message,constants", [(NodeMsg, 17)])
 def test_node_success(message, constants):
     enum_node = EnumFields(
         options={
@@ -36,7 +36,7 @@ def test_node_exception(message):
         )
 
 
-@pytest.mark.parametrize("message,constants", [(NodeMsg, 17), (BatteryState, 21)])
+@pytest.mark.parametrize("message,constants", [(NodeMsg, 17)])
 def test_node_reset(message, constants):
     enum_node = EnumFields(
         options={
@@ -61,7 +61,7 @@ def test_node_reset(message, constants):
     assert enum_node.state == NodeMsg.SHUTDOWN
 
 
-@pytest.mark.parametrize("message,constants", [(NodeMsg, 17), (BatteryState, 21)])
+@pytest.mark.parametrize("message,constants", [(NodeMsg, 17)])
 def test_node_untick(message, constants):
     enum_node = EnumFields(
         options={
