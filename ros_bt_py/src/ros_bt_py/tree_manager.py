@@ -80,16 +80,15 @@ def is_edit_service(func):
     """
     Decorate tree editing service handlers to prohibit them from editing while the active tree.
 
-     This allows the common behavior of responding with a response that
-     has success=False and an error_message if the tree is not
-     currently editable, relying on all editing service responses to
-     have at least those two members.
+    This allows the common behavior of responding with a response that
+    has success=False and an error_message if the tree is not
+    currently editable, relying on all editing service responses to
+    have at least those two members.
 
-     It also ensures that all edits are atomic, i.e. external service
-     calls cannot interweave. The lock used to ensure this is a
+    It also ensures that all edits are atomic, i.e. external service
+    calls cannot interweave. The lock used to ensure this is a
     `threading.RLock`, which means the service handlers *can* call
-     each other if need be.
-
+    each other if need be.
     """
 
     @wraps(func)
