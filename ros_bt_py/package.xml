@@ -23,6 +23,7 @@
   <exec_depend>rosbridge_server</exec_depend>
   <exec_depend>rqt_console</exec_depend>
   <exec_depend>ros2launch</exec_depend>
+  <exec_depend>ros_bt_py_web_gui</exec_depend>
 
   <test_depend>sensor_msgs</test_depend>
   <test_depend>ament_copyright</test_depend>

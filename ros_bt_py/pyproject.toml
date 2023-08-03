@@ -21,22 +21,19 @@ exclude = '''
 omit = [
   "/usr*",
   "/opt*",
-  "*/devel*",
   "*test/*",
   "*tests/*",
-  "*/.local*",
-  "*/install*"
+  "*.local/*",
+  "*setup.py"
 ]
+relative_files=false
+source_pkgs=["ros_bt_py"]
 [tool.coverage.paths]
 library = [
-  "ros_bt_py/",
+  "ros_bt_py",
+  "**/install/ros_bt_py/lib/*/site-packages/ros_bt_py",
   "/builds/*/ros_bt_py/ros_bt_py",
   "/root/target_ws/src/ros_bt_py/ros_bt_py"
-]
-interfaces = [
-  "ros_bt_py_interfaces/",
-  "/builds/*/ros_bt_py/ros_bt_py_interfaces",
-  "/root/target_ws/src/ros_bt_py/ros_bt_py_interfaces"
 ]
 [tool.pytest.ini_options]
 addopts = [

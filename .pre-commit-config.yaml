@@ -4,6 +4,7 @@ repos:
     rev: v4.1.0
     hooks:
       - id: check-added-large-files
+        exclude: ((trees/)|(html/))
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
