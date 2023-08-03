@@ -270,7 +270,6 @@ def get_available_nodes(
     return response
 
 
-@typechecked
 class TreeManager:
     """
     Provide methods to manage a Behavior Tree.
