@@ -4,12 +4,11 @@
 from typing import List
 import rclpy
 from rclpy.node import Node
-from rclpy.task import Future
 
 from netifaces import interfaces, ifaddresses, AF_INET
 
 
-def ip4_addresses():
+def ip4_addresses() -> List[str]:
     ip_list: List[str] = []
     for interface in interfaces():
         try:
@@ -53,7 +52,7 @@ def print_url_future(node: Node) -> None:
     node.get_logger().info(padding_str)
 
 
-def main():
+def main() -> None:
     rclpy.init()
 
     node = Node("url_printer")
@@ -66,8 +65,6 @@ def main():
     )
 
     print_url_future(node=node)
-
-    return 0
 
 
 if __name__ == "__main__":
