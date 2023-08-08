@@ -1,8 +1,5 @@
 # Welcome to ros_bt_py!
 
-![pipeline](https://ids-git.fzi.de/ros2/ros_bt_py/badges/main/pipeline.svg?ignore_skipped=true)
-![coverage](https://ids-git.fzi.de/ros2/ros_bt_py/badges/main/coverage.svg)
-
 This is a [Behavior Tree](https://en.wikipedia.org/wiki/Behavior_tree_(artificial_intelligence,_robotics_and_control)) library meant to be an alternative to [SMACH](http://wiki.ros.org/smach), [FlexBE](http://wiki.ros.org/flexbe) and the like.
 
 It includes a ReactJS-based web GUI and all the building blocks you need to build moderately advanced mission control Behavior Trees without writing a single line of code!

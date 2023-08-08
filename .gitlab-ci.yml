@@ -29,6 +29,29 @@ include:
     ref: master
     file: '/gitlab-ci-yml/doc_sphinx.yml'
 
+build_sphinx_doc:
+  stage: build
+  needs: []
+  image: ids-git.fzi.de:5555/continuous_integration/ci_docker_images/ubuntu_22.04_ros2:iron
+  script:
+    - export LC_ALL=C.UTF-8
+    - export LC_LANG=C.UTF-8
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update
+    - apt-get install -y python3-pip python3-sphinx-autodoc-typehints
+    - pip3 install -U sphinx furo
+    - apt-get install -f -y
+    - source /opt/ros/iron/setup.sh
+    - rosdep update
+    - rosdep install --from-paths . --ignore-src -r -y
+    - colcon build --packages-up-to ros_bt_py
+    - source install/setup.sh
+    - if [ ! -z "$PYTHON_INSTALL_PACKAGE_PATH" ]; then pip install --user -e $PYTHON_INSTALL_PACKAGE_PATH; fi
+    - sphinx-build -b html $DOCS_SOURCE doc_public
+  artifacts:
+    paths:
+      - doc_public
+
 pre-commit:
   image: $CI_IMAGE
   stage: check
