@@ -767,9 +767,11 @@ class TreeManager:
             ):
                 try:
                     instance = self.instantiate_node_from_msg(
-                        node, allow_rename=False, permissive=request.permissive
+                        node_msg=node,
+                        ros_node=self.ros_node,
+                        allow_rename=False,
+                        permissive=request.permissive,
                     )
-                    instance.ros_node = self.ros_node
                     instance.simulate_tick = self.simulate_tick
                     instance.succeed_always = self.succeed_always
 
@@ -1273,7 +1275,9 @@ class TreeManager:
         """
         try:
             instance = self.instantiate_node_from_msg(
-                request.node, request.allow_rename
+                node_msg=request.node,
+                ros_node=self.ros_node,
+                allow_rename=request.allow_rename,
             )
             response.success = True
             response.actual_node_name = instance.name
@@ -1729,6 +1733,7 @@ class TreeManager:
             options=deserialized_options,
             name=request.new_name if request.rename_node else node.name,
             debug_manager=node.debug_manager,
+            ros_node=self.ros_node,
         )
 
         # Use this request to unwire any data connections the existing
@@ -2320,10 +2325,19 @@ class TreeManager:
     # Service Handlers Done #
     #########################
 
-    def instantiate_node_from_msg(self, node_msg, allow_rename, permissive=False):
+    def instantiate_node_from_msg(
+        self,
+        node_msg: NodeMsg,
+        allow_rename: bool,
+        ros_node: rclpy.node.Node,
+        permissive: bool = False,
+    ) -> Node:
         try:
             node_instance = Node.from_msg(
-                node_msg, debug_manager=self.debug_manager, permissive=permissive
+                node_msg,
+                ros_node,
+                debug_manager=self.debug_manager,
+                permissive=permissive,
             )
         except TypeError as exc:
             raise BehaviorTreeException(str(exc))

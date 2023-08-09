@@ -414,7 +414,8 @@ class Node(object):
 
     @property
     def has_ros_node(self) -> bool:
-        return self._ros_node is not None
+        available = self._ros_node is not None
+        return available
 
     @property
     def ros_node(self) -> ROSNode:
@@ -432,6 +433,7 @@ class Node(object):
 
     @ros_node.setter
     def ros_node(self, new_ros_node: ROSNode):
+        self.logfatal("Setting new ROS node.")
         self._ros_node = new_ros_node
 
     def setup(self):
@@ -1101,6 +1103,7 @@ class Node(object):
     def from_msg(
         cls,
         msg: NodeMsg,
+        ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
         permissive: bool = False,
     ):
@@ -1203,11 +1206,14 @@ class Node(object):
         node_class.permissive = permissive
         if msg.name:
             node_instance = node_class(
-                name=msg.name, options=options_dict, debug_manager=debug_manager
+                name=msg.name,
+                options=options_dict,
+                debug_manager=debug_manager,
+                ros_node=ros_node,
             )
         else:
             node_instance = node_class(
-                options=options_dict, debug_manager=debug_manager
+                options=options_dict, debug_manager=debug_manager, ros_node=ros_node
             )
 
         _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)

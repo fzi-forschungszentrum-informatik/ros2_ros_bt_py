@@ -492,6 +492,7 @@ class ServiceForSetType(ABC, Leaf):
             self._service_request_future = self._service_client.call_async(
                 self._last_request
             )
+            self.logdebug(f"Request future: {self._service_request_future}")
 
         if self._service_request_future is not None and not (
             self._service_request_future.done()
