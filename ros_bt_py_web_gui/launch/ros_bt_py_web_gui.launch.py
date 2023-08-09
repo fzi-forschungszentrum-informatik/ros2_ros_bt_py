@@ -8,6 +8,7 @@ from launch.actions import ExecuteProcess
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -52,11 +53,23 @@ def generate_launch_description():
         )
     )
 
+    print_editor_url_node = Node(
+        package="ros_bt_py_web_gui",
+        namespace="ros_bt_py_web_gui",
+        executable="show_editor_url.py",
+        name="show_editor_url",
+        parameters=[
+            {"hostname": web_server_address_value},
+            {"port": web_server_port_value},
+        ],
+    )
+
     return LaunchDescription(
         [
             web_server_address_launch_arg,
             web_server_port_launch_arg,
             web_server,
             rosbridge_server,
+            print_editor_url_node,
         ]
     )

@@ -9,6 +9,9 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclpy</depend>
+  <depend>python3-netifaces</depend>
+
   <exec_depend>rosbridge_suite</exec_depend>
   <exec_depend>rosbridge_server</exec_depend>
   <exec_depend>ros2launch</exec_depend>
