@@ -27,7 +27,7 @@ omit = [
   "*setup.py"
 ]
 relative_files=false
-source_pkgs=["ros_bt_py", "ros_bt_py.ros_nodes"]
+source_pkgs=["ros_bt_py", "ros_bt_py.nodes", "ros_bt_py.ros_nodes"]
 [tool.coverage.paths]
 library = [
   "ros_bt_py",

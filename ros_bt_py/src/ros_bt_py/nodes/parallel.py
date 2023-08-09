@@ -2,7 +2,6 @@
 
 import math
 
-import rospy
 
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
