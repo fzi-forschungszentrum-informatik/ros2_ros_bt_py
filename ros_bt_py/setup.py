@@ -17,7 +17,7 @@ setup(
     version="0.1.0",
     packages=[
         "ros_bt_py",
-        #        "ros_bt_py.nodes",
+        "ros_bt_py.nodes",
         "ros_bt_py.ros_nodes",
     ],
     data_files=[

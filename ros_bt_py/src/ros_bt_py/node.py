@@ -116,7 +116,6 @@ def define_bt_node(node_config):
                 f"cannot apply define_bt_node decorator!"
             )
             raise TypeError()
-
         # Merge supplied node config with those of base classes
         for base in node_class.__bases__:
             if hasattr(base, "_node_config") and base._node_config:

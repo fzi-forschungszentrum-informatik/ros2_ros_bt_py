@@ -197,8 +197,10 @@ def load_tree_from_file(
                 # ScannerError most likely means that the tree was created
                 # with PyYAML 5 and genpy <0.6.10
                 # fix this by correctly indenting the broken lists
+                fix_yaml_response = FixYaml.Response()
                 fix_yaml_response = fix_yaml(
-                    request=FixYaml.Request(broken_yaml=tree_yaml)
+                    request=FixYaml.Request(broken_yaml=tree_yaml),
+                    response=fix_yaml_response,
                 )
 
                 # try parsing again with fixed tree_yaml:
@@ -1293,7 +1295,10 @@ class TreeManager:
                 )
                 # Remove node from tree
                 self.remove_node(
-                    RemoveNode.Request(node_name=instance.name, remove_children=False)
+                    request=RemoveNode.Request(
+                        node_name=instance.name, remove_children=False
+                    ),
+                    response=RemoveNode.Response(),
                 )
                 return response
             self.nodes[request.parent_name].add_child(
@@ -1315,7 +1320,10 @@ class TreeManager:
             )
             # Remove node from tree to restore state before insertion attempt
             self.remove_node(
-                RemoveNode.Request(node_name=instance.name, remove_children=False)
+                request=RemoveNode.Request(
+                    node_name=instance.name, remove_children=False
+                ),
+                response=RemoveNode.Response(),
             )
 
         nodes_in_cycles = self.find_nodes_in_cycles()
@@ -1333,7 +1341,10 @@ class TreeManager:
 
             # Then remove the node from the tree
             self.remove_node(
-                RemoveNode.Request(node_name=instance.name, remove_children=False)
+                request=RemoveNode.Request(
+                    node_name=instance.name, remove_children=False
+                ),
+                response=RemoveNode.Response(),
             )
             return response
         self.publish_info(self.debug_manager.get_debug_info_msg())
@@ -1454,7 +1465,8 @@ class TreeManager:
                         or wiring.target.node_name in names_to_remove
                     )
                 ]
-            )
+            ),
+            WireNodeData.Response(),
         )
 
         # Keep tree_msg up-to-date
@@ -1506,7 +1518,8 @@ class TreeManager:
             ]
         )
 
-        unwire_resp = self.unwire_data(wire_request)
+        unwire_resp = WireNodeData.Response()
+        unwire_resp = self.unwire_data(request=wire_request, response=unwire_resp)
         if not get_success(unwire_resp):
             return MorphNode.Response(
                 success=False,
@@ -1540,7 +1553,10 @@ class TreeManager:
                 )
                 try:
                     parent.add_child(old_node, at_index=old_child_index)
-                    rewire_resp = self.wire_data(wire_request)
+                    rewire_resp = WireNodeData.Response()
+                    rewire_resp = self.wire_data(
+                        request=wire_request, response=rewire_resp
+                    )
                     if not get_success(rewire_resp):
                         error_message += (
                             f"\nAlso failed to restore data wirings: "
@@ -1570,7 +1586,8 @@ class TreeManager:
         # FIXME: this should be a best-effort rewiring, only re-wire identical input/outputs
         new_wire_request = deepcopy(wire_request)
 
-        rewire_resp = self.wire_data(new_wire_request)
+        rewire_resp = WireNodeData.Response()
+        rewire_resp = self.wire_data(request=new_wire_request, response=rewire_resp)
         if not get_success(rewire_resp):
             response.error_message = (
                 f"Failed to re-wire data to new node {new_node.name}:"
@@ -1728,7 +1745,8 @@ class TreeManager:
             ]
         )
 
-        unwire_resp = self.unwire_data(wire_request)
+        unwire_resp = WireNodeData.Response()
+        unwire_resp = self.unwire_data(request=wire_request, response=unwire_resp)
         if not get_success(unwire_resp):
             return SetOptions.Response(
                 success=False,
@@ -1760,7 +1778,8 @@ class TreeManager:
                 error_message = (
                     f"Failed to remove old instance of node {node.name}: {str(ex)}"
                 )
-                rewire_resp = self.wire_data(wire_request)
+                rewire_resp = WireNodeData.Response()
+                rewire_resp = self.wire_data(request=wire_request, response=rewire_resp)
                 if not get_success(rewire_resp):
                     error_message += (
                         "\nAlso failed to restore data wirings: "
@@ -1779,7 +1798,10 @@ class TreeManager:
                 )
                 try:
                     parent.add_child(node, at_index=old_child_index)
-                    rewire_resp = self.wire_data(wire_request)
+                    rewire_resp = WireNodeData.Response()
+                    rewire_resp = self.wire_data(
+                        request=wire_request, response=rewire_resp
+                    )
                     if not get_success(rewire_resp):
                         error_message += (
                             f"\nAlso failed to restore data wirings: "
@@ -1808,7 +1830,8 @@ class TreeManager:
                 if wiring.target.node_name == node.name:
                     wiring.target.node_name = new_node.name
 
-        rewire_resp = self.wire_data(new_wire_request)
+        rewire_resp = WireNodeData.Response()
+        rewire_resp = self.wire_data(request=new_wire_request, response=rewire_resp)
         if not get_success(rewire_resp):
             error_message = (
                 f"Failed to re-wire data to new node {new_node.name}: "
@@ -1827,7 +1850,10 @@ class TreeManager:
                     error_message += f"\nError restoring old node: {str(ex)}"
 
             # Now try to re-do the wirings
-            recovery_wire_response = self.wire_data(wire_request)
+            recovery_wire_response = WireNodeData.Response()
+            recovery_wire_response = self.wire_data(
+                request=wire_request, response=recovery_wire_response
+            )
             if not get_success(recovery_wire_response):
                 error_message += (
                     f"\nFailed to re-wire data to restored node {node.name}: "
@@ -2265,17 +2291,21 @@ class TreeManager:
                 publish_tree_callback=lambda *args: None,
                 publish_debug_info_callback=lambda *args: None,
                 publish_debug_settings_callback=lambda *args: None,
-                debug_manager=DebugManager(),
+                debug_manager=DebugManager(ros_node=self.ros_node),
             )
 
+            load_response = LoadTree.Response()
             load_response = manager.load_tree(
-                request=LoadTree.Request(tree=whole_tree), prefix=""
+                request=LoadTree.Request(tree=whole_tree),
+                response=load_response,
+                prefix="",
             )
 
             if load_response.success:
                 for node_name in nodes_to_remove:
                     manager.remove_node(
-                        RemoveNode.Request(node_name=node_name, remove_children=False)
+                        RemoveNode.Request(node_name=node_name, remove_children=False),
+                        RemoveNode.Response(),
                     )
                 root = manager.find_root()
                 if not root:
