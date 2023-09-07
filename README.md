@@ -27,9 +27,11 @@ $ rosdep install --from-paths src --ignore-src -r -y
 
 Then you can just build the package with your prefered method i.e. `colcon build`
 
+**Note**: Do not build the workspace using `--symlink-install` as this is currently not working
+with generate_parameter_library. You will get an error when running `ModuleNotFoundError: No module named 'ros_bt_py.parameters'`.
+
 ## Running
 
-After installing the dependencies, simply run `colcon build` and you're good to go!
 The command
 ```bash
 $ ros2 launch ros_bt_py ros_bt_py.launch.py enable_web_interface:=True
