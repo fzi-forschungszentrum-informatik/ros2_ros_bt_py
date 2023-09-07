@@ -25,19 +25,13 @@ $ cd colcon_workspace
 $ rosdep install --from-paths src --ignore-src -r -y
 ```
 
-**Warning**
-rosapi <=0.11.9 has issues with service calls with non empty requests on python3.
-The following error in the terminal window where your started ros_bt_py is a indication of this issue:
-` Error processing request: field services must be a list or tuple type`
-As of August 2020, mitigating this means using the latest git version of the rosbridge_suite, of which rosapi is a part of.
-```bash
-git clone https://github.com/RobotWebTools/rosbridge_suite.git
-```
 Then you can just build the package with your prefered method i.e. `colcon build`
+
+**Note**: Do not build the workspace using `--symlink-install` as this is currently not working
+with generate_parameter_library. You will get an error when running `ModuleNotFoundError: No module named 'ros_bt_py.parameters'`.
 
 ## Running
 
-After installing the dependencies, simply run `colcon build` and you're good to go!
 The command
 ```bash
 $ ros2 launch ros_bt_py ros_bt_py.launch.py enable_web_interface:=True
