@@ -7,3 +7,4 @@ from . import messages_from_dict
 from . import param
 from . import subtree
 from . import throttle
+from . import topic

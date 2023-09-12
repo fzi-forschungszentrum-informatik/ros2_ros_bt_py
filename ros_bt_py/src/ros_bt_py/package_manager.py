@@ -95,12 +95,19 @@ class PackageManager(object):
                     request.message_type
                 )
             else:
-                message_class = rosidl_runtime_py.utilities.get_message(
-                    request.message_type
-                )
-            for field in str(message_class()).split("\n"):
-                response.field_names.append(field.split(":")[0].strip())
-            response.fields = json_encode(message_class())
+                if request.action:
+                    message_class = rosidl_runtime_py.utilities.get_action(
+                        request.message_type
+                    )
+                else:
+                    message_class = rosidl_runtime_py.utilities.get_message(
+                        request.message_type
+                    )
+            for field in message_class._fields_and_field_types:
+                response.field_names.append(field.strip())
+            response.fields = json_encode(
+                rosidl_runtime_py.message_to_ordereddict(message_class())
+            )
             response.success = True
         except Exception as e:
             response.success = False
@@ -112,7 +119,7 @@ class PackageManager(object):
     def get_message_constant_fields_handler(
         self, request: GetMessageFields.Request, response: GetMessageFields.Response
     ):
-        if request.service:
+        if request.service or request.action:
             # not supported yet
             response.success = False
             response.error_message = (

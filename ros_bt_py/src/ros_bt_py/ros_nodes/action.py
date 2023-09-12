@@ -64,9 +64,6 @@ class ActionForSetType(ABC, Leaf):
                     self._result_type = MyActionResult
 
                     self._action_name = self.options['MyAction']
-                    self._output_feedback = self._action_name + '/feedback'
-                    self._output_goal_status = self._action_name + '/status'
-                    self._output_result = self._action_name + '/result'
 
                 # set the action goal
                 def set_goal(self):
@@ -84,8 +81,6 @@ class ActionForSetType(ABC, Leaf):
         self._result_type = "ENTER_RESULT_TYPE"
 
         self._action_name = self.options["action_name"]
-        self._output_feedback = "ENTER_OUTPUT_FEEDBACK"
-        self._output_result = "ENTER_OUTPUT_RESULT"
 
     def set_input(self):
         pass
@@ -363,9 +358,6 @@ class Action(ActionForSetType):
         self._result_type = self.options["result_type"]
 
         self._action_name = self.options["action_name"]
-        self._output_feedback = self.options["action_name"] + "/feedback"
-        self._output_goal_status = self.options["action_name"] + "/status"
-        self._output_result = self.options["action_name"] + "/result"
 
     def set_goal(self):
         self._input_goal = self.inputs["goal"]

@@ -481,11 +481,8 @@ class ServiceForSetType(ABC, Leaf):
             return NodeMsg.FAILED
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
-        if (
-            self._service_request_future is None
-            or self._service_request_future.done()
-            or self._service_request_future.cancelled()
-        ):
+        if self._service_request_future is None:
+            self.logerr("Future is None, starting new request!")
             self._reported_result = False
             self.set_request()
             self._last_service_call_time = self.ros_node.get_clock().now()
@@ -494,10 +491,16 @@ class ServiceForSetType(ABC, Leaf):
             )
             self.logdebug(f"Request future: {self._service_request_future}")
 
-        if self._service_request_future is not None and not (
-            self._service_request_future.done()
-            or self._service_request_future.cancelled()
-        ):
+        if self._service_request_future is None:
+            self.logerr("Service request future is unexpecedly none!")
+            return NodeMsg.FAILED
+
+        if self._service_request_future.cancelled():
+            self.logwarn("Service request was cancelled!")
+            self._service_request_future = None
+            return NodeMsg.FAILURE
+
+        if not self._service_request_future.done():
             # If the call takes longer than the specified timeout, abort the
             # call and return FAILED
             if self._last_service_call_time is None:
@@ -515,22 +518,21 @@ class ServiceForSetType(ABC, Leaf):
                     f"{self._last_request} timed out"
                 )
                 self._service_request_future.cancel()
+                self._service_request_future = None
                 return NodeMsg.FAILED
 
             return NodeMsg.RUNNING
         else:
-            new_state = NodeMsg.SUCCEEDED
-            if self._service_request_future.done():
-                if self.set_outputs():
-                    new_state = NodeMsg.SUCCEEDED
-
-            if self._service_request_future.cancelled():
+            if self.set_outputs():
+                new_state = NodeMsg.SUCCEEDED
+            else:
                 new_state = NodeMsg.FAILED
-
             self._reported_result = True
+            self._service_request_future = None
             return new_state
 
     def _do_untick(self):
+        self.logerr("Unticking")
         if (
             self._service_request_future is not None
             and not self._service_request_future.done()

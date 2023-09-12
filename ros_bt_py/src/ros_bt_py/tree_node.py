@@ -74,7 +74,7 @@ class TreeNode(Node):
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
-                durability=QoSDurabilityPolicy.VOLATILE,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
             ),
@@ -394,7 +394,6 @@ def shutdown(self):
 def main(argv=None):
     rclpy.init(args=argv)
     try:
-
         tree_node = TreeNode(node_name="BehaviorTreeNode")
         param_listener = tree_node_parameters.ParamListener(tree_node)
         params = param_listener.get_params()

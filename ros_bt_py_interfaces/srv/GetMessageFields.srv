@@ -1,5 +1,6 @@
 string message_type
 bool service
+bool action
 ---
 string fields
 string[] field_names

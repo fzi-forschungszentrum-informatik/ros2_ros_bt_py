@@ -95,11 +95,12 @@ def is_edit_service(func):
     def service_handler(self, request, response, **kwds):
         tree_state = self.get_state()
         if tree_state != Tree.EDITABLE:
-            return {
-                "success": False,
-                "error_message": f"Cannot edit tree in state {tree_state}."
-                f"You need to shut down the tree to enable editing.",
-            }
+            response.success = False
+            response.error_message = (
+                f"Cannot edit tree in state {tree_state}."
+                f"You need to shut down the tree to enable editing."
+            )
+            return response
         with self._edit_lock:
             return func(self, request, response, **kwds)
 
@@ -108,7 +109,6 @@ def is_edit_service(func):
 
 @typechecked
 def parse_tree_yaml(tree_yaml: str) -> MigrateTree.Response:
-
     response = MigrateTree.Response()
 
     data = yaml.safe_load_all(tree_yaml)
@@ -246,8 +246,8 @@ def get_available_nodes(
             for (name, type_or_ref) in data_map.items()
         ]
 
-    for (module, nodes) in Node.node_classes.items():
-        for (class_name, node_classes) in nodes.items():
+    for module, nodes in Node.node_classes.items():
+        for class_name, node_classes in nodes.items():
             for node_class in node_classes:
                 max_children = node_class._node_config.max_children
                 max_children = -1 if max_children is None else max_children
@@ -1507,7 +1507,7 @@ class TreeManager:
         old_node = self.nodes[request.node_name]
 
         try:
-            new_node = Node.from_msg(request.new_node)
+            new_node = Node.from_msg(request.new_node, ros_node=self.ros_node)
         except (TypeError, BehaviorTreeException) as exc:
             response.success = False
             response.error_message = f"Error instantiating node {str(exc)}"
@@ -1681,7 +1681,9 @@ class TreeManager:
                     if other_type == our_type:
                         incompatible = False
                     elif inspect.isclass(other_type):
-                        message_converter.convert_dictionary_to_ros_message(
+                        deserialized_options[
+                            key
+                        ] = message_converter.convert_dictionary_to_ros_message(
                             other_type, deserialized_options[key]
                         )
                         incompatible = False
