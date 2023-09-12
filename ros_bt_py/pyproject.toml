@@ -27,7 +27,7 @@ omit = [
   "*setup.py"
 ]
 relative_files=false
-source_pkgs=["ros_bt_py"]
+source_pkgs=["ros_bt_py", "ros_bt_py.nodes", "ros_bt_py.ros_nodes"]
 [tool.coverage.paths]
 library = [
   "ros_bt_py",
@@ -43,3 +43,4 @@ testpaths = [
     "tests",
 ]
 minversion = "6.0"
+asyncio_mode="auto"

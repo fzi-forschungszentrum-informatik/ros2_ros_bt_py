@@ -16,7 +16,7 @@
   <!-- ROS dependencies -->
   <depend>rclpy</depend>
   <depend>rclpy_message_converter</depend>
-  <depend>generate_parameter_library</depend>
+  <depend version_gte="0.3.4">generate_parameter_library_py</depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>ros_bt_py_web_gui</exec_depend>
 

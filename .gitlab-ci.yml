@@ -65,3 +65,11 @@ pre-commit:
     paths:
       - ${PRE_COMMIT_HOME}
   parallel: !reference [.build_matrix, parallel]
+
+industrial_ci:
+    after_script:
+    - ${HOME}/ci_scripts/catkin_build_scripts/python_coverage.sh "/root/target_ws/build" || true
+    - ${HOME}/ci_scripts/catkin_build_scripts/combine_coverage.sh "/root/target_ws" || true
+    - gcovr --xml-pretty --exclude-unreachable-branches -o coverage_cpp.xml -e ".*test/.*" -e ".*devel/.*" -e ".*tests/.*" --root /root/target_ws || true
+    - cp -r /root/target_ws/build ./build
+    - sed -i 's/\/root\/target_ws\/install\/ros_bt_py\/lib\/python3.10\/site-packages/ros_bt_py\/src/g' coverage_python.xml

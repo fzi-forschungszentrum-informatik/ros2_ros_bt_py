@@ -11,6 +11,7 @@ from typing import Type, List, Dict, Optional
 
 import rclpy
 import rclpy.logging
+from rclpy.node import Node as ROSNode
 
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import NodeData as NodeDataMsg
@@ -115,7 +116,6 @@ def define_bt_node(node_config):
                 f"cannot apply define_bt_node decorator!"
             )
             raise TypeError()
-
         # Merge supplied node config with those of base classes
         for base in node_class.__bases__:
             if hasattr(base, "_node_config") and base._node_config:
@@ -307,6 +307,7 @@ class Node(object):
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         name: Optional[str] = None,
+        ros_node: Optional[ROSNode] = None,
         succeed_always: bool = False,
         simulate_tick: bool = False,
     ):
@@ -346,6 +347,7 @@ class Node(object):
         self.subscriptions = []
         self.subscribers = []
 
+        self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager = debug_manager
 
         self.succeed_always = succeed_always
@@ -409,6 +411,30 @@ class Node(object):
     @state.setter
     def state(self, new_state: str):
         self._state = new_state
+
+    @property
+    def has_ros_node(self) -> bool:
+        available = self._ros_node is not None
+        return available
+
+    @property
+    def ros_node(self) -> ROSNode:
+        """
+        Return the associated ROS node instance.
+
+        If no instance is present an
+        """
+        if self._ros_node is not None:
+            return self._ros_node
+        else:
+            error_msg = f"{self.name} nodes not have ROS node reference!"
+            self.logerr(error_msg)
+            raise RuntimeError(error_msg)
+
+    @ros_node.setter
+    def ros_node(self, new_ros_node: ROSNode):
+        self.logfatal("Setting new ROS node.")
+        self._ros_node = new_ros_node
 
     def setup(self):
         """
@@ -1039,7 +1065,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).debug("{message}")
+        rclpy.logging.get_logger(self.name).debug(f"{message}")
 
     def loginfo(self, message):
         """
@@ -1047,7 +1073,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).info("{message}")
+        rclpy.logging.get_logger(self.name).info(f"{message}")
 
     def logwarn(self, message):
         """
@@ -1055,7 +1081,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).warn("{message}")
+        rclpy.logging.get_logger(self.name).warn(f"{message}")
 
     def logerr(self, message):
         """
@@ -1063,7 +1089,7 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).error("{message}")
+        rclpy.logging.get_logger(self.name).error(f"{message}")
 
     def logfatal(self, message):
         """
@@ -1071,12 +1097,13 @@ class Node(object):
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).fatal("{message}")
+        rclpy.logging.get_logger(self.name).fatal(f"{message}")
 
     @classmethod
     def from_msg(
         cls,
         msg: NodeMsg,
+        ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
         permissive: bool = False,
     ):
@@ -1179,11 +1206,14 @@ class Node(object):
         node_class.permissive = permissive
         if msg.name:
             node_instance = node_class(
-                name=msg.name, options=options_dict, debug_manager=debug_manager
+                name=msg.name,
+                options=options_dict,
+                debug_manager=debug_manager,
+                ros_node=ros_node,
             )
         else:
             node_instance = node_class(
-                options=options_dict, debug_manager=debug_manager
+                options=options_dict, debug_manager=debug_manager, ros_node=ros_node
             )
 
         _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)

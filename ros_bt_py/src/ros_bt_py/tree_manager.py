@@ -95,11 +95,12 @@ def is_edit_service(func):
     def service_handler(self, request, response, **kwds):
         tree_state = self.get_state()
         if tree_state != Tree.EDITABLE:
-            return {
-                "success": False,
-                "error_message": f"Cannot edit tree in state {tree_state}."
-                f"You need to shut down the tree to enable editing.",
-            }
+            response.success = False
+            response.error_message = (
+                f"Cannot edit tree in state {tree_state}."
+                f"You need to shut down the tree to enable editing."
+            )
+            return response
         with self._edit_lock:
             return func(self, request, response, **kwds)
 
@@ -108,7 +109,6 @@ def is_edit_service(func):
 
 @typechecked
 def parse_tree_yaml(tree_yaml: str) -> MigrateTree.Response:
-
     response = MigrateTree.Response()
 
     data = yaml.safe_load_all(tree_yaml)
@@ -197,8 +197,10 @@ def load_tree_from_file(
                 # ScannerError most likely means that the tree was created
                 # with PyYAML 5 and genpy <0.6.10
                 # fix this by correctly indenting the broken lists
+                fix_yaml_response = FixYaml.Response()
                 fix_yaml_response = fix_yaml(
-                    request=FixYaml.Request(broken_yaml=tree_yaml)
+                    request=FixYaml.Request(broken_yaml=tree_yaml),
+                    response=fix_yaml_response,
                 )
 
                 # try parsing again with fixed tree_yaml:
@@ -244,8 +246,8 @@ def get_available_nodes(
             for (name, type_or_ref) in data_map.items()
         ]
 
-    for (module, nodes) in Node.node_classes.items():
-        for (class_name, node_classes) in nodes.items():
+    for module, nodes in Node.node_classes.items():
+        for class_name, node_classes in nodes.items():
             for node_class in node_classes:
                 max_children = node_class._node_config.max_children
                 max_children = -1 if max_children is None else max_children
@@ -269,7 +271,6 @@ def get_available_nodes(
     return response
 
 
-@typechecked
 class TreeManager:
     """
     Provide methods to manage a Behavior Tree.
@@ -766,9 +767,11 @@ class TreeManager:
             ):
                 try:
                     instance = self.instantiate_node_from_msg(
-                        node, allow_rename=False, permissive=request.permissive
+                        node_msg=node,
+                        ros_node=self.ros_node,
+                        allow_rename=False,
+                        permissive=request.permissive,
                     )
-
                     instance.simulate_tick = self.simulate_tick
                     instance.succeed_always = self.succeed_always
 
@@ -1272,11 +1275,13 @@ class TreeManager:
         """
         try:
             instance = self.instantiate_node_from_msg(
-                request.node, request.allow_rename
+                node_msg=request.node,
+                ros_node=self.ros_node,
+                allow_rename=request.allow_rename,
             )
             response.success = True
             response.actual_node_name = instance.name
-        except BehaviorTreeException as exc:
+        except Exception as exc:
             response.success = False
             response.error_message = str(exc)
             return response
@@ -1294,7 +1299,10 @@ class TreeManager:
                 )
                 # Remove node from tree
                 self.remove_node(
-                    RemoveNode.Request(node_name=instance.name, remove_children=False)
+                    request=RemoveNode.Request(
+                        node_name=instance.name, remove_children=False
+                    ),
+                    response=RemoveNode.Response(),
                 )
                 return response
             self.nodes[request.parent_name].add_child(
@@ -1316,7 +1324,10 @@ class TreeManager:
             )
             # Remove node from tree to restore state before insertion attempt
             self.remove_node(
-                RemoveNode.Request(node_name=instance.name, remove_children=False)
+                request=RemoveNode.Request(
+                    node_name=instance.name, remove_children=False
+                ),
+                response=RemoveNode.Response(),
             )
 
         nodes_in_cycles = self.find_nodes_in_cycles()
@@ -1334,7 +1345,10 @@ class TreeManager:
 
             # Then remove the node from the tree
             self.remove_node(
-                RemoveNode.Request(node_name=instance.name, remove_children=False)
+                request=RemoveNode.Request(
+                    node_name=instance.name, remove_children=False
+                ),
+                response=RemoveNode.Response(),
             )
             return response
         self.publish_info(self.debug_manager.get_debug_info_msg())
@@ -1455,7 +1469,8 @@ class TreeManager:
                         or wiring.target.node_name in names_to_remove
                     )
                 ]
-            )
+            ),
+            WireNodeData.Response(),
         )
 
         # Keep tree_msg up-to-date
@@ -1492,7 +1507,7 @@ class TreeManager:
         old_node = self.nodes[request.node_name]
 
         try:
-            new_node = Node.from_msg(request.new_node)
+            new_node = Node.from_msg(request.new_node, ros_node=self.ros_node)
         except (TypeError, BehaviorTreeException) as exc:
             response.success = False
             response.error_message = f"Error instantiating node {str(exc)}"
@@ -1507,7 +1522,8 @@ class TreeManager:
             ]
         )
 
-        unwire_resp = self.unwire_data(wire_request)
+        unwire_resp = WireNodeData.Response()
+        unwire_resp = self.unwire_data(request=wire_request, response=unwire_resp)
         if not get_success(unwire_resp):
             return MorphNode.Response(
                 success=False,
@@ -1541,7 +1557,10 @@ class TreeManager:
                 )
                 try:
                     parent.add_child(old_node, at_index=old_child_index)
-                    rewire_resp = self.wire_data(wire_request)
+                    rewire_resp = WireNodeData.Response()
+                    rewire_resp = self.wire_data(
+                        request=wire_request, response=rewire_resp
+                    )
                     if not get_success(rewire_resp):
                         error_message += (
                             f"\nAlso failed to restore data wirings: "
@@ -1571,7 +1590,8 @@ class TreeManager:
         # FIXME: this should be a best-effort rewiring, only re-wire identical input/outputs
         new_wire_request = deepcopy(wire_request)
 
-        rewire_resp = self.wire_data(new_wire_request)
+        rewire_resp = WireNodeData.Response()
+        rewire_resp = self.wire_data(request=new_wire_request, response=rewire_resp)
         if not get_success(rewire_resp):
             response.error_message = (
                 f"Failed to re-wire data to new node {new_node.name}:"
@@ -1661,7 +1681,9 @@ class TreeManager:
                     if other_type == our_type:
                         incompatible = False
                     elif inspect.isclass(other_type):
-                        message_converter.convert_dictionary_to_ros_message(
+                        deserialized_options[
+                            key
+                        ] = message_converter.convert_dictionary_to_ros_message(
                             other_type, deserialized_options[key]
                         )
                         incompatible = False
@@ -1713,6 +1735,7 @@ class TreeManager:
             options=deserialized_options,
             name=request.new_name if request.rename_node else node.name,
             debug_manager=node.debug_manager,
+            ros_node=self.ros_node,
         )
 
         # Use this request to unwire any data connections the existing
@@ -1729,7 +1752,8 @@ class TreeManager:
             ]
         )
 
-        unwire_resp = self.unwire_data(wire_request)
+        unwire_resp = WireNodeData.Response()
+        unwire_resp = self.unwire_data(request=wire_request, response=unwire_resp)
         if not get_success(unwire_resp):
             return SetOptions.Response(
                 success=False,
@@ -1761,7 +1785,8 @@ class TreeManager:
                 error_message = (
                     f"Failed to remove old instance of node {node.name}: {str(ex)}"
                 )
-                rewire_resp = self.wire_data(wire_request)
+                rewire_resp = WireNodeData.Response()
+                rewire_resp = self.wire_data(request=wire_request, response=rewire_resp)
                 if not get_success(rewire_resp):
                     error_message += (
                         "\nAlso failed to restore data wirings: "
@@ -1780,7 +1805,10 @@ class TreeManager:
                 )
                 try:
                     parent.add_child(node, at_index=old_child_index)
-                    rewire_resp = self.wire_data(wire_request)
+                    rewire_resp = WireNodeData.Response()
+                    rewire_resp = self.wire_data(
+                        request=wire_request, response=rewire_resp
+                    )
                     if not get_success(rewire_resp):
                         error_message += (
                             f"\nAlso failed to restore data wirings: "
@@ -1809,7 +1837,8 @@ class TreeManager:
                 if wiring.target.node_name == node.name:
                     wiring.target.node_name = new_node.name
 
-        rewire_resp = self.wire_data(new_wire_request)
+        rewire_resp = WireNodeData.Response()
+        rewire_resp = self.wire_data(request=new_wire_request, response=rewire_resp)
         if not get_success(rewire_resp):
             error_message = (
                 f"Failed to re-wire data to new node {new_node.name}: "
@@ -1828,7 +1857,10 @@ class TreeManager:
                     error_message += f"\nError restoring old node: {str(ex)}"
 
             # Now try to re-do the wirings
-            recovery_wire_response = self.wire_data(wire_request)
+            recovery_wire_response = WireNodeData.Response()
+            recovery_wire_response = self.wire_data(
+                request=wire_request, response=recovery_wire_response
+            )
             if not get_success(recovery_wire_response):
                 error_message += (
                     f"\nFailed to re-wire data to restored node {node.name}: "
@@ -2266,17 +2298,21 @@ class TreeManager:
                 publish_tree_callback=lambda *args: None,
                 publish_debug_info_callback=lambda *args: None,
                 publish_debug_settings_callback=lambda *args: None,
-                debug_manager=DebugManager(),
+                debug_manager=DebugManager(ros_node=self.ros_node),
             )
 
+            load_response = LoadTree.Response()
             load_response = manager.load_tree(
-                request=LoadTree.Request(tree=whole_tree), prefix=""
+                request=LoadTree.Request(tree=whole_tree),
+                response=load_response,
+                prefix="",
             )
 
             if load_response.success:
                 for node_name in nodes_to_remove:
                     manager.remove_node(
-                        RemoveNode.Request(node_name=node_name, remove_children=False)
+                        RemoveNode.Request(node_name=node_name, remove_children=False),
+                        RemoveNode.Response(),
                     )
                 root = manager.find_root()
                 if not root:
@@ -2291,10 +2327,19 @@ class TreeManager:
     # Service Handlers Done #
     #########################
 
-    def instantiate_node_from_msg(self, node_msg, allow_rename, permissive=False):
+    def instantiate_node_from_msg(
+        self,
+        node_msg: NodeMsg,
+        allow_rename: bool,
+        ros_node: rclpy.node.Node,
+        permissive: bool = False,
+    ) -> Node:
         try:
             node_instance = Node.from_msg(
-                node_msg, debug_manager=self.debug_manager, permissive=permissive
+                node_msg,
+                ros_node,
+                debug_manager=self.debug_manager,
+                permissive=permissive,
             )
         except TypeError as exc:
             raise BehaviorTreeException(str(exc))
