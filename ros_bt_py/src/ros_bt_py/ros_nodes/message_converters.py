@@ -47,10 +47,14 @@ class MessageToFields(Leaf):
         self.passthrough = True
 
         if inspect.isclass(self.options["input_type"]):
-            msg = self.options["input_type"]()
-            for field in msg._fields_and_field_types:
-                node_outputs[field] = type(getattr(msg, field))
-            self.passthrough = False
+            try:
+                msg = self.options["input_type"]()
+                for field in msg._fields_and_field_types:
+                    node_outputs[field] = type(getattr(msg, field))
+                self.passthrough = False
+            except AttributeError:
+                node_outputs["out"] = self.options["input_type"]
+                self.logwarn(f"Non message type passed to: {self.name}")
         else:
             node_outputs["out"] = self.options["input_type"]
 
@@ -127,10 +131,14 @@ class FieldsToMessage(Leaf):
         self.passthrough = True
 
         if inspect.isclass(self.options["output_type"]):
-            msg = self.options["output_type"]()
-            for field in msg._fields_and_field_types:
-                node_inputs[field] = type(getattr(msg, field))
-            self.passthrough = False
+            try:
+                msg = self.options["output_type"]()
+                for field in msg._fields_and_field_types:
+                    node_inputs[field] = type(getattr(msg, field))
+                self.passthrough = False
+            except AttributeError:
+                node_inputs["in"] = self.options["output_type"]
+                self.logwarn(f"Non message type passed to: {self.name}")
         else:
             node_inputs["in"] = self.options["output_type"]
 
