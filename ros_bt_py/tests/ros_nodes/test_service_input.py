@@ -51,7 +51,7 @@ class TestServiceInput:
 
         unavailable_service.shutdown()
         assert unavailable_service.state == NodeMsg.SHUTDOWN
-        assert client_mock.destroy.called
+        assert ros_mock.destroy_client.called
 
     @mock.patch("rclpy.node.Node")
     @mock.patch("rclpy.client.Client")
@@ -170,12 +170,13 @@ class TestServiceInput:
 
         unavailable_service.reset()
         assert unavailable_service.state == NodeMsg.IDLE
-        assert client_mock.destroy.called
-        assert client_mock.destroy.call_count == 1
+        assert ros_mock.destroy_client.called
+        assert ros_mock.destroy_client.call_count == 1
 
         unavailable_service.shutdown()
         assert unavailable_service.state == NodeMsg.SHUTDOWN
-        assert client_mock.destroy.call_count == 1
+        assert ros_mock.destroy_client.called
+        assert ros_mock.destroy_client.call_count == 1
 
     @mock.patch("rclpy.node.Node")
     @mock.patch("rclpy.client.Client")
@@ -346,7 +347,7 @@ class TestServiceInput:
         unavailable_service.inputs["service_name"] = "bla"
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
-        assert client_mock.destroy.called
+        assert ros_mock.destroy_client.called
 
     @mock.patch("rclpy.node.Node")
     @mock.patch("rclpy.client.Client")

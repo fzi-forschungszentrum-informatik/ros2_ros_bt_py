@@ -37,7 +37,7 @@ def test_node_success(ros_mock, client_mock, clock_mock):
 
     unavailable_service.shutdown()
     assert unavailable_service.state == NodeMsg.SHUTDOWN
-    assert client_mock.destroy.called
+    assert ros_mock.destroy_client.called
 
 
 @mock.patch("rclpy.node.Node")
@@ -66,7 +66,7 @@ def test_node_failure(ros_mock, client_mock, clock_mock):
 
     unavailable_service.shutdown()
     assert unavailable_service.state == NodeMsg.SHUTDOWN
-    assert client_mock.destroy.called
+    assert ros_mock.destroy_client.called
 
 
 @mock.patch("rclpy.node.Node")
@@ -106,7 +106,7 @@ def test_node_reset(ros_mock, client_mock, clock_mock):
 
     unavailable_service.shutdown()
     assert unavailable_service.state == NodeMsg.SHUTDOWN
-    assert client_mock.destroy.called
+    assert ros_mock.destroy_client.called
 
 
 def test_node_no_ros():
@@ -157,7 +157,7 @@ def test_node_untick(ros_mock, client_mock, clock_mock):
 
     unavailable_service.shutdown()
     assert unavailable_service.state == NodeMsg.SHUTDOWN
-    assert client_mock.destroy.called
+    assert ros_mock.destroy_client.called
 
 
 @mock.patch("rclpy.node.Node")
