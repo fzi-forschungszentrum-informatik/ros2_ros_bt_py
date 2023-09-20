@@ -66,7 +66,7 @@ class ServiceInput(Leaf):
 
     def _do_reset(self):
         if self._service_client is not None:
-            self._service_client.destroy()
+            self._ros_node.destroy_client(self._service_client)
             self._service_client = None
 
         self._last_service_call_time: Optional[Time] = None
@@ -159,7 +159,7 @@ class ServiceInput(Leaf):
 
     def _do_shutdown(self):
         if self._service_client is not None:
-            self._service_client.destroy()
+            self._ros_node.destroy_client(self._service_client)
 
     def _do_calculate_utility(self):
         if not self.has_ros_node or self._service_client is None:
@@ -246,7 +246,7 @@ class WaitForService(Leaf):
         return NodeMsg.IDLE
 
     def _do_shutdown(self):
-        self._service_client.destroy()
+        self._ros_node.destroy_client(self._service_client)
 
 
 @define_bt_node(
@@ -305,7 +305,7 @@ class WaitForServiceInput(Leaf):
 
     def _do_reset(self):
         if self._service_client is not None:
-            self._service_client.destroy()
+            self._ros_node.destroy_service(self._service_client)
             self._service_client = None
         self._last_service_call_time = None
         return NodeMsg.IDLE
@@ -313,7 +313,7 @@ class WaitForServiceInput(Leaf):
     def _do_shutdown(self):
         self._last_service_call_time = None
         if self._service_client is not None:
-            self._service_client.destroy()
+            self._ros_node.destroy_client(self._service_client)
             self._service_client = None
 
 
@@ -543,7 +543,7 @@ class ServiceForSetType(ABC, Leaf):
     def _do_shutdown(self):
         self._do_reset()
         if self._service_client is not None:
-            self._service_client.destroy()
+            self._ros_node.destroy_client(self._service_client)
         self._service_client = None
 
     def _do_calculate_utility(self):

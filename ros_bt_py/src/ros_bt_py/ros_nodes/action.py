@@ -253,7 +253,6 @@ class ActionForSetType(ABC, Leaf):
             self._running_goal_handle is not None
             and self._running_goal_handle.status == GoalStatus.STATUS_EXECUTING
         ):
-
             # Check if goal changed
             if self._active_goal == self._input_goal:
                 return self._do_tick_wait_for_action_complete()

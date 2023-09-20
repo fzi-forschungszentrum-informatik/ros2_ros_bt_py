@@ -2,10 +2,8 @@
 
 from typing import Optional
 
-import rclpy
 from rclpy.qos import (
     QoSDurabilityPolicy,
-    QoSHistoryPolicy,
     QoSProfile,
     QoSReliabilityPolicy,
 )
@@ -91,7 +89,7 @@ class TopicSubscriber(Leaf):
             return
         # Unsubscribe from the topic so we don't receive further updates
         try:
-            self._subscriber.destroy()
+            self._ros_node.destroy_subscription(self._subscriber)
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
@@ -218,7 +216,7 @@ class TopicMemorySubscriber(Leaf):
             return
         # Unsubscribe from the topic so we don't receive further updates
         try:
-            self._subscriber.destroy()
+            self._ros_node.destroy_subscription(self._subscriber)
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
@@ -272,7 +270,6 @@ class TopicMemorySubscriber(Leaf):
 )
 class TopicPublisher(Leaf):
     def _do_setup(self):
-
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a refrence to a ROS node!"
             self.logerr(error_msg)
@@ -312,7 +309,7 @@ class TopicPublisher(Leaf):
         # Unregister the publisher
         try:
             if self._publisher is not None:
-                self._publisher.destroy()
+                self._ros_node.destroy_publisher(self._publisher)
         except AttributeError:
             self.logwarn("Can not unregister as no publisher is available.")
         self._publisher = None
