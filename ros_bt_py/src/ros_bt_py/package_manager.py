@@ -30,6 +30,89 @@ from ros_bt_py.helpers import (
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
 
+def make_filepath_unique(filepath):
+    name, extension = os.path.splitext(filepath)
+    while os.path.exists(name + extension):
+        name = increment_name(name)
+    return name + extension
+
+
+def save_tree(
+    request: SaveTree.Request, response: SaveTree.Response
+) -> SaveTree.Response:
+    """
+    Save a tree message in the given package.
+
+    :param ros_bt_py_msgs.srv.SaveTree request:
+
+    If `request.filename` contains forward slashes, treat it as a relative path.
+    If `request.allow_overwrite` is True, the file is overwritten, otherwise service call fails
+    If `request.allow_rename` is True files will no be overwritten,
+        the new file will always be renamed.
+
+    :returns: :class:`ros_bt_py_msgs.src.SaveTreeResponse` or `None`
+
+    Always returns the path under which the tree was saved
+    in response.file_path in the package:// style
+    """
+    # remove input and output values from nodes
+    request.tree = remove_input_output_values(tree=request.tree)
+    if not os.path.exists(request.filepath):
+        response.success = False
+        response.error_message = "File path does not exist!"
+        return response
+    try:
+        save_path = os.path.join(request.filepath, request.filename)
+
+        save_path = save_path.rstrip(os.sep)  # split trailing /
+        path, filename = os.path.split(save_path)
+
+        # set tree name to filename
+        request.tree.name = filename
+
+        try:
+            os.makedirs(path)
+        except OSError:
+            if not os.path.isdir(path):
+                response.success = False
+                response.error_message = "Could not create path"
+                return response
+
+        if os.path.isdir(save_path):
+            response.success = False
+            response.error_message = "File path already exists as directory"
+            return response
+
+        if os.path.isfile(save_path):
+            if request.allow_rename:
+                save_path = make_filepath_unique(save_path)
+                if os.path.isfile(save_path):
+                    response.success = False
+                    response.error_message = "Rename failed"
+                    return response
+            else:
+                if not request.allow_overwrite:
+                    response.success = False
+                    response.error_message = "Overwrite not allowed"
+                    return response
+
+        with open(save_path, "w") as save_file:
+            msg = rosidl_runtime_py.message_to_yaml(request.tree)
+            fix_yaml_response = FixYaml.Response()
+            fix_yaml_response = fix_yaml(
+                request=FixYaml.Request(broken_yaml=msg), response=fix_yaml_response
+            )
+            save_file.write(fix_yaml_response.fixed_yaml)
+        response.success = True
+        return response
+
+    except IOError:
+        response.success = False
+        response.error_message = f'IOError on file: "{request.filename}"'
+
+    return response
+
+
 class PackageManager(object):
     """Provide functionality to interact with ROS messages and colcon packages."""
 
@@ -94,15 +177,36 @@ class PackageManager(object):
                 message_class = rosidl_runtime_py.utilities.get_service(
                     request.message_type
                 )
-            else:
-                if request.action:
-                    message_class = rosidl_runtime_py.utilities.get_action(
-                        request.message_type
-                    )
+                if request.type == GetMessageFields.Request.REQUEST:
+                    message_class = message_class.Request
+                elif request.type == GetMessageFields.Request.RESPONSE:
+                    message_class = message_class.Response
                 else:
-                    message_class = rosidl_runtime_py.utilities.get_message(
-                        request.message_type
+                    response.success = False
+                    response.error_message = (
+                        "Cannot get non Request/Response Service fields"
                     )
+                    return response
+            elif request.action:
+                message_class = rosidl_runtime_py.utilities.get_action(
+                    request.message_type
+                )
+                if request.type == GetMessageFields.Request.GOAL:
+                    message_class = message_class.Goal
+                elif request.type == GetMessageFields.Request.FEEDBACK:
+                    message_class = message_class.Feedback
+                elif request.type == GetMessageFields.Request.RESULT:
+                    message_class = message_class.Result
+                else:
+                    response.success = False
+                    response.error_message = (
+                        "Cannot get non Goal/Feedback/Result Action fields"
+                    )
+                    return response
+            else:
+                message_class = rosidl_runtime_py.utilities.get_message(
+                    request.message_type
+                )
             for field in message_class._fields_and_field_types:
                 response.field_names.append(field.strip())
             response.fields = json_encode(
@@ -207,83 +311,5 @@ class PackageManager(object):
         except PackageNotFoundError:
             response.success = False
             response.error_message = f'Package "{request.package}" does not exist'
-
-        return response
-
-    def make_filepath_unique(self, filepath):
-        name, extension = os.path.splitext(filepath)
-        while os.path.exists(name + extension):
-            name = increment_name(name)
-        return name + extension
-
-    def save_tree(
-        self, request: SaveTree.Request, response: SaveTree.Response
-    ) -> SaveTree.Response:
-        """
-        Save a tree message in the given package.
-
-        :param ros_bt_py_msgs.srv.SaveTree request:
-
-        If `request.filename` contains forward slashes, treat it as a relative path.
-        If `request.allow_overwrite` is True, the file is overwritten, otherwise service call fails
-        If `request.allow_rename` is True files will no be overwritten,
-            the new file will always be renamed.
-
-        :returns: :class:`ros_bt_py_msgs.src.SaveTreeResponse` or `None`
-
-        Always returns the path under which the tree was saved
-        in response.file_path in the package:// style
-        """
-        # remove input and output values from nodes
-        request.tree = remove_input_output_values(tree=request.tree)
-        if not os.path.exists(request.filepath):
-            response.success = False
-            response.error_message = "File path does not exist!"
-            return response
-        try:
-            save_path = os.path.join(request.filepath, request.filename)
-
-            save_path = save_path.rstrip(os.sep)  # split trailing /
-            path, filename = os.path.split(save_path)
-
-            # set tree name to filename
-            request.tree.name = filename
-
-            try:
-                os.makedirs(path)
-            except OSError:
-                if not os.path.isdir(path):
-                    response.success = False
-                    response.error_message = "Could not create path"
-                    return response
-
-            if os.path.isdir(save_path):
-                response.success = False
-                response.error_message = "File path already exists as directory"
-                return response
-
-            if os.path.isfile(save_path):
-                if request.allow_rename:
-                    save_path = self.make_filepath_unique(save_path)
-                    if os.path.isfile(save_path):
-                        response.success = False
-                        response.error_message = "Rename failed"
-                        return response
-                else:
-                    if not request.allow_overwrite:
-                        response.success = False
-                        response.error_message = "Overwrite not allowed"
-                        return response
-
-            with open(save_path, "w") as save_file:
-                msg = rosidl_runtime_py.message_to_yaml(request.tree)
-                fix_yaml_response = fix_yaml(request=FixYaml.Request(broken_yaml=msg))
-                save_file.write(fix_yaml_response.fixed_yaml)
-            response.success = True
-            return response
-
-        except IOError:
-            response.success = False
-            response.error_message = f'IOError on file: "{request.filename}"'
 
         return response

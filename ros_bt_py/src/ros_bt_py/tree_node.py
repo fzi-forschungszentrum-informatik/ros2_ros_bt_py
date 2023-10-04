@@ -59,7 +59,7 @@ from ros_bt_py.tree_manager import (
     get_available_nodes,
 )
 from ros_bt_py.debug_manager import DebugManager
-from ros_bt_py.package_manager import PackageManager
+from ros_bt_py.package_manager import PackageManager, save_tree
 from ros_bt_py.helpers import fix_yaml
 
 
@@ -190,7 +190,7 @@ class TreeNode(Node):
         self.save_tree_service = self.create_service(
             SaveTree,
             "~/save_tree",
-            callback=self.package_manager.save_tree,
+            callback=save_tree,
             callback_group=self.package_manager_service_callback_group,
         )
 
