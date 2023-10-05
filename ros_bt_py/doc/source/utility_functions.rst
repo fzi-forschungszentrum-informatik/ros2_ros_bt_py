@@ -18,15 +18,15 @@ In this implementation, their values are represented by the
 :class:`ros_bt_py_msgs.msg.UtilityBounds` message, which has the
 following attributes:
 
-* `can_execute`
+* ``can_execute``
 
   Pretty self-explanatory - if a critical resoure (like a ROS Topic or
-  Action) for executing a BT node is missing, this is `False`.
+  Action) for executing a BT node is missing, this is ``False``.
 
-* `has_upper_bound_success` and `upper_bound_success`
-* `has_lower_bound_success` and `lower_bound_success`
-* `has_upper_bound_failure` and `upper_bound_failure`
-* `has_lower_bound_failure` and `lower_bound_failure`
+* ``has_upper_bound_success` and `upper_bound_success``
+* ``has_lower_bound_success` and `lower_bound_success``
+* ``has_upper_bound_failure` and `upper_bound_failure``
+* ``has_lower_bound_failure` and `lower_bound_failure``
 
 The latter four describe the bounds of the **cost** (that is, higher
 is worse) of executing a BT node (or entire BT, see below). Not all
