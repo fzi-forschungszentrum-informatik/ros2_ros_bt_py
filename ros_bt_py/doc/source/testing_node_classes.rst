@@ -91,7 +91,7 @@ Don't worry, it's easy - just add the following lines to your
 Adding your Unit Tests to setup.py
 ----------------------------------
 
-When using an `ament_python` package, pytest based tests are automatically picked up by the system.
+When using an ``ament_python`` package, pytest based tests are automatically picked up by the system.
 No additional steps should be required.
 
 Running Tests via colcon
