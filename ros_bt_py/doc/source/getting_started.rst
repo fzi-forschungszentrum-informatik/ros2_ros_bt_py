@@ -23,7 +23,7 @@ To install ``ros_bt_py`` from source you need to follow these steps:
 
 2. Clone the ``ros_bt_py` repo_ from the `src`` folder.
 3. Install all dependencies via ``rosdep install --from-paths . --ignore-src -y``.
-4. From the ``test_ws` folder call `colcon build``.
+4. From the ``test_ws`` folder call ``colcon build``.
 5. Run ``source install/setup.[bash|zsh|sh]`` to load the build packages.
 
 
