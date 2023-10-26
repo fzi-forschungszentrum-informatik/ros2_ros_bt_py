@@ -8,6 +8,15 @@ tree_node_parameters:
       size_gt<>: [0]
     }
   }
+  tree_storage_paths: {
+    type: string_array,
+    default_value: [ "$HOME/.ros" ],
+    description: "Paths where trees can be saved!.",
+    read_only: True,
+    validation: {
+      size_gt<>: [ 0 ]
+    }
+  }
   show_traceback_on_exception: {
     type: bool,
     default_value: False,

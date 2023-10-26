@@ -1,6 +1,7 @@
 # Filename can contain a relative path starting from the package root
-string filename
+string storage_path
 string filepath
+string filename
 Tree tree
 bool allow_overwrite
 bool allow_rename
