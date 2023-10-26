@@ -78,7 +78,7 @@ class Subtree(Leaf):
             request=LoadTree.Request(
                 tree=Tree(
                     path=self.options["subtree_path"],
-                    prefix=self.prefix,
+                    name=self.prefix,
                 )
             ),
             response=response,
@@ -131,7 +131,7 @@ class Subtree(Leaf):
         subtree_outputs: Dict,
     ) -> None:
         subtree_msg = self.manager.to_msg()
-        if self.options.get("use_io_nodes"):
+        if self.options["use_io_nodes"]:
             for node in subtree_msg.nodes:
                 if node.module == "ros_bt_py.nodes.io":
                     if (
@@ -196,7 +196,7 @@ class Subtree(Leaf):
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
                 if (
-                    self.options.get("use_io_nodes")
+                    self.options["use_io_nodes"]
                     and node_data.node_name not in io_inputs
                 ):
                     self.logwarn(
@@ -211,7 +211,7 @@ class Subtree(Leaf):
                     )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
                 if (
-                    self.options.get("use_io_nodes")
+                    self.options["use_io_nodes"]
                     and node_data.node_name not in io_outputs
                 ):
                     pass
