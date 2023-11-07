@@ -158,7 +158,7 @@ class Operation(Leaf):
             succeed_always=succeed_always,
             simulate_tick=simulate_tick,
         )
-        self.operators = dict()
+        self.operators = {}
         self.operators["add"] = operator.add
         self.operators["+"] = operator.add
         self.operators["and"] = operator.__and__
@@ -283,7 +283,7 @@ class UnaryOperation(Leaf):
             succeed_always=succeed_always,
             simulate_tick=simulate_tick,
         )
-        self.operators = dict()
+        self.operators = {}
         self.operators["not"] = operator.not_
         self.operators["inv"] = operator.inv
         self.operators["~"] = operator.inv

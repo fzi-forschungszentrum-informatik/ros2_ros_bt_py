@@ -1640,10 +1640,10 @@ class TreeManager:
         unknown_options = []
         preliminary_incompatible_options = []
         try:
-            deserialized_options = dict(
+            deserialized_options = {
                 (option.key, json_decode(option.serialized_value))
                 for option in request.options
-            )
+            }
         except ValueError as ex:
             return SetOptions.Response(
                 success=False,
