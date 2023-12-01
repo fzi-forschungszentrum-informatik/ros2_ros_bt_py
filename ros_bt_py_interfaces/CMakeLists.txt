@@ -63,7 +63,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Continue.srv"
   "srv/ControlTreeExecution.srv"
   "srv/EvaluateUtility.srv"
-  "srv/FixYaml.srv"
   "srv/GenerateSubtree.srv"
   "srv/GetAvailableNodes.srv"
   "srv/GetAvailableSubtrees.srv"

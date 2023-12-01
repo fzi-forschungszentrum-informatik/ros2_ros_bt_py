@@ -1,5 +1,0 @@
-string broken_yaml
----
-bool success
-string error_message
-string fixed_yaml

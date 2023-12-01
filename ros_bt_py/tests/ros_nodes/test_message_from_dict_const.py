@@ -2,7 +2,7 @@ import pytest
 from ros_bt_py.ros_nodes.messages_from_dict import MessageFromConstDict
 from std_msgs.msg import Int64, String
 from std_srvs.srv import SetBool
-from ros_bt_py_interfaces.srv import FixYaml
+from ros_bt_py_interfaces.srv import ChangeTreeName
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 
 
@@ -97,7 +97,7 @@ def test_node_reset(message, message_dict):
 
 
 @pytest.mark.parametrize(
-    "message, message_dict", [(FixYaml.Request, {"tequila": False})]
+    "message, message_dict", [(ChangeTreeName.Request, {"tequila": False})]
 )
 def test_node_failure(message, message_dict):
     node = MessageFromConstDict(options={"message_type": message, "dict": message_dict})
