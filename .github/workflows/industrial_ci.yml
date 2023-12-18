@@ -17,7 +17,6 @@ jobs:
         distro:
           - humble
           - iron
-          - rolling
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,9 +24,13 @@ jobs:
         env:
           ROS_DISTRO: ${{ matrix.distro }}
           BASEDIR: ${{ github.workspace }}/.build
+          ROS_REPO: main
+          AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
+          ENABLE_COVERAGE_TESTING: "true"
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
           files: |
-            ${{ github.workspace }}/.build/target_ws/build/**/*.xml
+            ${{ github.workspace }}/.build/target_ws/build/**/*xunit.xml
+            ${{ github.workspace }}/.build/target_ws/build/**/*pytest.xml
