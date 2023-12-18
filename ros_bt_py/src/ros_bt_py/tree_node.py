@@ -50,6 +50,8 @@ from ros_bt_py_interfaces.srv import (
     GenerateSubtree,
     ReloadTree,
     ChangeTreeName,
+    GetFolderStructure,
+    GetStorageFolders,
 )
 
 from ros_bt_py.tree_manager import (
@@ -135,7 +137,7 @@ class TreeNode(Node):
             ),
         )
 
-    def init_package_manager(self):
+    def init_package_manager(self, params: tree_node_parameters.Params):
         self.get_logger().info("initializing package manager...")
         self.message_list_pub = self.create_publisher(
             Messages,
@@ -161,6 +163,7 @@ class TreeNode(Node):
         )
 
         self.package_manager = PackageManager(
+            tree_storage_directory_paths=params.tree_storage_paths,
             publish_message_list_callback=self.message_list_pub,
             publish_packages_list_callback=self.packages_list_pub,
         )
@@ -184,13 +187,25 @@ class TreeNode(Node):
         self.get_package_structure_service = self.create_service(
             GetPackageStructure,
             "~/get_package_structure",
-            callback=self.package_manager.get_package_structure,
+            callback=self.package_manager.get_installed_package_structure,
+            callback_group=self.package_manager_service_callback_group,
+        )
+        self.get_folder_structure_service = self.create_service(
+            GetFolderStructure,
+            "~/get_folder_structure",
+            callback=self.package_manager.get_folder_structure,
             callback_group=self.package_manager_service_callback_group,
         )
         self.save_tree_service = self.create_service(
             SaveTree,
             "~/save_tree",
-            callback=save_tree,
+            callback=self.package_manager.save_tree_to_path,
+            callback_group=self.package_manager_service_callback_group,
+        )
+        self.storage_folders_service = self.create_service(
+            GetStorageFolders,
+            "~/get_storage_folders",
+            callback=self.package_manager.get_storage_folders,
             callback_group=self.package_manager_service_callback_group,
         )
 
@@ -398,7 +413,7 @@ def main(argv=None):
         param_listener = tree_node_parameters.ParamListener(tree_node)
         params = param_listener.get_params()
         tree_node.init_publisher()
-        tree_node.init_package_manager()
+        tree_node.init_package_manager(params=params)
         tree_node.init_tree_manager(params=params)
         tree_node.load_default_tree(params=params)
 

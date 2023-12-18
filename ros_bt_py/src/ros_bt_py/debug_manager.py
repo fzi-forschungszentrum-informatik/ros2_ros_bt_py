@@ -28,9 +28,9 @@ class DebugManager(object):
         self.publish_debug_settings = debug_settings_publish_callback
         self.publish_node_diagnostics = node_diagnostics_publish_callback
 
-        self.subtrees = dict()
+        self.subtrees = {}
 
-        self.diagnostics_state = dict()
+        self.diagnostics_state = {}
         self.diagnostics_state["SETUP"] = (
             NodeDiagnostics.PRE_SETUP,
             NodeDiagnostics.POST_SETUP,
@@ -256,9 +256,7 @@ class DebugManager(object):
                     "Trying to add subtree info when subtree publishing is disabled!"
                 )
             self.subtrees[subtree_name] = subtree_msg
-            self._debug_info_msg.subtree_states = [
-                msg for msg in self.subtrees.values()
-            ]
+            self._debug_info_msg.subtree_states = list(self.subtrees.values())
 
     def clear_subtrees(self):
         with self._lock:

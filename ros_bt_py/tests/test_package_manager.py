@@ -8,7 +8,7 @@ from typing import List
 class TestPackageManager:
     @pytest.fixture
     def package_manager(self):
-        return PackageManager()
+        return PackageManager(["/tmp"])
 
     @pytest.mark.parametrize(
         "msg_type, constant_values",
