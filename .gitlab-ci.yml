@@ -4,7 +4,6 @@ variables:
   DEB_BUILD: "false"
   DOCS_SOURCE: "ros_bt_py/doc/source"
   AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
-  UPSTREAM_WORKSPACE: "upstream_workspace.yaml"
 
 workflow:
   rules:

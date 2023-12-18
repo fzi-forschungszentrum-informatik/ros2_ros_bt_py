@@ -26,12 +26,12 @@ repos:
       - id: black
   - repo: local
     hooks:
-    #- id: ament_copyright
-    #  name: ament_copyright
-    #  description: Check if copyright notice is available in all files.
-    #  stages: [commit]
-    #  entry: ament_copyright
-    #  language: system
+    - id: ament_copyright
+      name: ament_copyright
+      description: Check if copyright notice is available in all files.
+      stages: [commit]
+      entry: ament_copyright
+      language: system
     - id: ament_xmllint
       name: ament_xmllint
       description: Static code analysis of xml files.
@@ -61,3 +61,10 @@ repos:
       entry: ament_lint_cmake
       language: system
       files: CMakeLists\.txt$
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+    - id: remove-tabs
+      exclude: "html/"
+    - id: forbid-tabs
+      exclude: "html/"
