@@ -22,7 +22,7 @@ jobs:
           - iron
     runs-on: ubuntu-latest
     env:
-      basedir: /github/workspace
+      basedir: /home/runner/work/ros2_ros_bt_py/ros2_ros_bt_py
     steps:
       - uses: actions/checkout@v3
       - uses: 'ros-industrial/industrial_ci@master'
