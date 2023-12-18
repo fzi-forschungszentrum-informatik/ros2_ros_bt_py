@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright 2018-2023 FZI Forschungszentrum Informatik
+
+
+# Copyright 2023 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,7 +28,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 #
 # ros_bt_py documentation build configuration file, created by
 # sphinx-quickstart on Sun Jan 28 18:00:15 2018.

@@ -4,13 +4,39 @@ variables:
   DEB_BUILD: "false"
   DOCS_SOURCE: "ros_bt_py/doc/source"
   AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
-  UPSTREAM_WORKSPACE: "upstream_workspace.yaml"
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
 
 stages:
   - check
   - build
   - upload
   - deploy
+
+.default_rules:
+  rules:
+      - if: '$ROS_DISTRO == "rolling"'
+        when: on_success
+        allow_failure: true
+      - if: '$ROS_DISTRO'
+        when: on_success
+        allow_failure: false
+
+.deploy_rules:
+  rules:
+      - if: '$DEB_BUILD && $DEB_BUILD == "false"'
+        when: never
+      - if: '$UPSTREAM_WORKSPACE != null'
+        when: never
+      - if: '$CI_COMMIT_REF_NAME == $UPLOAD_BRANCH_NAME && $CI_APTLY_TOKEN && $CI_APTLY_USERNAME'
+      - if: '$UPLOAD_BRANCH_NAME == null && $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH && $CI_APTLY_TOKEN && $CI_APTLY_USERNAME'
+      - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+        when: never
 
 .build_matrix:
   parallel:
@@ -65,6 +91,8 @@ pre-commit:
     paths:
       - ${PRE_COMMIT_HOME}
   parallel: !reference [.build_matrix, parallel]
+  rules:
+    - !reference [.default_rules, rules]
 
 industrial_ci:
     after_script:
@@ -73,3 +101,19 @@ industrial_ci:
     - gcovr --xml-pretty --exclude-unreachable-branches -o coverage_cpp.xml -e ".*test/.*" -e ".*devel/.*" -e ".*tests/.*" --root /root/target_ws || true
     - cp -r /root/target_ws/build ./build
     - sed -i 's/\/root\/target_ws\/install\/ros_bt_py\/lib\/python3.10\/site-packages/ros_bt_py\/src/g' coverage_python.xml
+    rules:
+      - !reference [.default_rules, rules]
+
+clang_format:
+    rules:
+      - !reference [.default_rules, rules]
+
+create_deb_package:
+    rules:
+      - !reference [.deploy_rules, rules]
+      - !reference [.default_rules, rules]
+
+upload_debs:
+    rules:
+      - !reference [.deploy_rules, rules]
+      - !reference [.default_rules, rules]

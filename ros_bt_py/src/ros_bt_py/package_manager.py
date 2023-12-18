@@ -1,5 +1,30 @@
 # Copyright 2023 FZI Forschungszentrum Informatik
-
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the FZI Forschungszentrum Informatik nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 import os
 from ament_index_python import PackageNotFoundError
 from rclpy.utilities import ament_index_python
@@ -195,15 +220,36 @@ class PackageManager(object):
                 message_class = rosidl_runtime_py.utilities.get_service(
                     request.message_type
                 )
-            else:
-                if request.action:
-                    message_class = rosidl_runtime_py.utilities.get_action(
-                        request.message_type
-                    )
+                if request.type == GetMessageFields.Request.REQUEST:
+                    message_class = message_class.Request
+                elif request.type == GetMessageFields.Request.RESPONSE:
+                    message_class = message_class.Response
                 else:
-                    message_class = rosidl_runtime_py.utilities.get_message(
-                        request.message_type
+                    response.success = False
+                    response.error_message = (
+                        "Cannot get non Request/Response Service fields"
                     )
+                    return response
+            elif request.action:
+                message_class = rosidl_runtime_py.utilities.get_action(
+                    request.message_type
+                )
+                if request.type == GetMessageFields.Request.GOAL:
+                    message_class = message_class.Goal
+                elif request.type == GetMessageFields.Request.FEEDBACK:
+                    message_class = message_class.Feedback
+                elif request.type == GetMessageFields.Request.RESULT:
+                    message_class = message_class.Result
+                else:
+                    response.success = False
+                    response.error_message = (
+                        "Cannot get non Goal/Feedback/Result Action fields"
+                    )
+                    return response
+            else:
+                message_class = rosidl_runtime_py.utilities.get_message(
+                    request.message_type
+                )
             for field in message_class._fields_and_field_types:
                 response.field_names.append(field.strip())
             response.fields = json_encode(
