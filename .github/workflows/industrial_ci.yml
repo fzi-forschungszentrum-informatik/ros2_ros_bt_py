@@ -1,0 +1,33 @@
+name: ROS Industrial CI
+
+on:
+  push:
+    branches:
+      main
+  pull_request:
+    branches:
+      main
+  schedule:
+    - cron: '04 23 * * *'
+
+jobs:
+  industrial_ci:
+    strategy:
+      matrix:
+        distro:
+          - humble
+          - iron
+          - rolling
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: 'ros-industrial/industrial_ci@master'
+        env:
+          ROS_DISTRO: ${{ matrix.distro }}
+          BASEDIR: ${{ github.workspace }}/.build
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            ${{ github.workspace }}/.build/target_ws/build/**/*.xml
