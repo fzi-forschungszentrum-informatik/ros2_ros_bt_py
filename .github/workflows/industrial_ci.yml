@@ -22,7 +22,7 @@ jobs:
           - iron
     runs-on: ubuntu-latest
     env:
-      basedir: ${{ github.workspace }}
+      basedir: /github/workspace
     steps:
       - uses: actions/checkout@v3
       - uses: 'ros-industrial/industrial_ci@master'
