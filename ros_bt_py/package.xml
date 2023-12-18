@@ -14,6 +14,7 @@
   <!-- Message dependencies -->
   <depend>ros_bt_py_interfaces</depend>
   <depend>std_msgs</depend>
+  <depend>diagnostic_msgs</depend>
   <test_depend>std_srvs</test_depend>
   <test_depend>geometry_msgs</test_depend>
   <test_depend>sensor_msgs</test_depend>

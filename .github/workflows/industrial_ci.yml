@@ -2,11 +2,10 @@ name: ROS Industrial CI
 
 on:
   push:
-    branches:
-      main
   pull_request:
     branches:
       main
+      dev
   schedule:
     - cron: '04 23 * * *'
 
@@ -33,4 +32,5 @@ jobs:
         with:
           files: |
             ${{ github.workspace }}/.build/target_ws/build/**/*xunit.xml
-            ${{ github.workspace }}/.build/target_ws/build/**/*pytest.xml
+            ${{ github.workspace }}/.build/target_ws/build/**/pytest.xml
+
