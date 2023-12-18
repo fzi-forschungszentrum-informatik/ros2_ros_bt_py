@@ -61,7 +61,7 @@ from ros_bt_py.tree_manager import (
     get_available_nodes,
 )
 from ros_bt_py.debug_manager import DebugManager
-from ros_bt_py.package_manager import PackageManager, save_tree
+from ros_bt_py.package_manager import PackageManager
 from ros_bt_py.helpers import fix_yaml
 
 
