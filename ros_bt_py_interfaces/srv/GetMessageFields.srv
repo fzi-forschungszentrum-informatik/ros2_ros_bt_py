@@ -1,6 +1,14 @@
+uint8 MESSAGE=0
+uint8 REQUEST=1
+uint8 RESPONSE=2
+uint8 GOAL=3
+uint8 FEEDBACK=4
+uint8 RESULT=5
+
 string message_type
 bool service
 bool action
+uint8 type
 ---
 string fields
 string[] field_names

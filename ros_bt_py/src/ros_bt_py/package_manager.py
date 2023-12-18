@@ -201,15 +201,36 @@ class PackageManager(object):
                 message_class = rosidl_runtime_py.utilities.get_service(
                     request.message_type
                 )
-            else:
-                if request.action:
-                    message_class = rosidl_runtime_py.utilities.get_action(
-                        request.message_type
-                    )
+                if request.type == GetMessageFields.Request.REQUEST:
+                    message_class = message_class.Request
+                elif request.type == GetMessageFields.Request.RESPONSE:
+                    message_class = message_class.Response
                 else:
-                    message_class = rosidl_runtime_py.utilities.get_message(
-                        request.message_type
+                    response.success = False
+                    response.error_message = (
+                        "Cannot get non Request/Response Service fields"
                     )
+                    return response
+            elif request.action:
+                message_class = rosidl_runtime_py.utilities.get_action(
+                    request.message_type
+                )
+                if request.type == GetMessageFields.Request.GOAL:
+                    message_class = message_class.Goal
+                elif request.type == GetMessageFields.Request.FEEDBACK:
+                    message_class = message_class.Feedback
+                elif request.type == GetMessageFields.Request.RESULT:
+                    message_class = message_class.Result
+                else:
+                    response.success = False
+                    response.error_message = (
+                        "Cannot get non Goal/Feedback/Result Action fields"
+                    )
+                    return response
+            else:
+                message_class = rosidl_runtime_py.utilities.get_message(
+                    request.message_type
+                )
             for field in message_class._fields_and_field_types:
                 response.field_names.append(field.strip())
             response.fields = json_encode(
