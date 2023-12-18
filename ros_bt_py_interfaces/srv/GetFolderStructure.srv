@@ -1,0 +1,6 @@
+string storage_folder
+bool show_hidden
+---
+bool success
+string error_message
+string storage_folder_structure

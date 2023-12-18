@@ -4,8 +4,8 @@ Creating Node Classes
 =====================
 
 Say you are building a Behavior Tree, and want to do something more
-complex than the node classes in `ros_bt_py.nodes` or
-`ros_bt_py.ros_nodes` can support.
+complex than the node classes in ``ros_bt_py.nodes`` or
+``ros_bt_py.ros_nodes`` can support.
 
 Or maybe they can, but you want to make your tree look less cluttered
 by combining a bunch of steps into a single node.
@@ -15,7 +15,7 @@ To do that, all you have to do is extend the
 this:
 
 1. Create a new class and decorate it with :meth:`ros_bt_py.node.define_bt_node`
-2. Fill in the :class:`ros_bt_py.node_config.NodeConfig` parameter to `define_bt_node`
+2. Fill in the :class:`ros_bt_py.node_config.NodeConfig` parameter to ``define_bt_node``
 3. Implement the :code:`_do_` methods
 
 You really also should do step 4:
