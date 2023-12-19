@@ -15,6 +15,8 @@ on:
 
 jobs:
   industrial_ci:
+    env:
+      ICI_BASEDIR: $GITHUB_WORKSPACE
     strategy:
       matrix:
         distro:
@@ -35,8 +37,8 @@ jobs:
         if: always()
         with:
           files: |
-            $GITHUB_WORKSPACE/.build/target_ws/build/ros_bt_py/pytest.xml
-            $GITHUB_WORKSPACE/.build/target_ws/build/**/*xunit.xml
+            ${{ env.ICI_BASEDIR }}/.build/target_ws/build/ros_bt_py/pytest.xml
+            ${{ env.ICI_BASEDIR }}/.build/target_ws/build/**/*xunit.xml
 
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
