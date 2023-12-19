@@ -21,14 +21,12 @@ jobs:
           - humble
           - iron
     runs-on: ubuntu-latest
-    env:
-      basedir:  $GITHUB_WORKSPACE
     steps:
       - uses: actions/checkout@v3
       - uses: 'ros-industrial/industrial_ci@master'
         env:
           ROS_DISTRO: ${{ matrix.distro }}
-          BASEDIR: ${{ env.basedir }}/.build
+          BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
           AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
           ENABLE_COVERAGE_TESTING: "true"
@@ -37,13 +35,13 @@ jobs:
         if: always()
         with:
           files: |
-            ${{ env.basedir }}/.build/target_ws/build/ros_bt_py/pytest.xml
-            ${{ env.basedir }}/.build/target_ws/build/**/*xunit.xml
+            ${{ github.workspace }}/.build/target_ws/build/ros_bt_py/pytest.xml
+            ${{ github.workspace }}/.build/target_ws/build/**/*xunit.xml
 
       - name: Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: ${{ env.basedir }}/.build/target_ws/build/ros_bt_py/coverage.xml
+          filename: ${{ github.workspace }}/.build/target_ws/build/ros_bt_py/coverage.xml
           badge: true
           fail_below_min: false
           format: markdown
