@@ -1,5 +1,10 @@
 # Welcome to ros_bt_py!
 
+[![ROS Industrial CI](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml/badge.svg)](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml)
+[![codecov](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py/graph/badge.svg?token=CRF3GMWWG3)](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py)
+
+---
+
 This is a [Behavior Tree](https://en.wikipedia.org/wiki/Behavior_tree_(artificial_intelligence,_robotics_and_control)) library meant to be an alternative to [BehaviorTree.cpp](https://www.behaviortree.dev/), [SMACH](http://wiki.ros.org/smach), [FlexBE](http://wiki.ros.org/flexbe) and the like.
 
 It includes a ReactJS-based web GUI and all the building blocks you need to build moderately advanced mission control Behavior Trees without writing a single line of code!

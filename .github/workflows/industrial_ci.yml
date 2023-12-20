@@ -7,9 +7,6 @@ permissions:
 on:
   push:
   pull_request:
-    branches:
-      main
-      dev
   schedule:
     - cron: '04 23 * * *'
 
@@ -46,4 +43,3 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           directory: .build/
-          
