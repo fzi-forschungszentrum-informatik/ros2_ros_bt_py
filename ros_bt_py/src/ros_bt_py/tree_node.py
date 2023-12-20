@@ -70,7 +70,6 @@ from ros_bt_py_interfaces.srv import (
     ClearTree,
     MorphNode,
     SaveTree,
-    FixYaml,
     GetMessageFields,
     GetPackageStructure,
     GenerateSubtree,
@@ -88,7 +87,6 @@ from ros_bt_py.tree_manager import (
 )
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.package_manager import PackageManager
-from ros_bt_py.helpers import fix_yaml
 
 
 class TreeNode(Node):
@@ -379,12 +377,6 @@ class TreeNode(Node):
             ChangeTreeName,
             "~/change_tree_name",
             callback=self.tree_manager.change_tree_name,
-            callback_group=self.tree_manager_service_callback_group,
-        )
-        self.fix_yaml_service = self.create_service(
-            FixYaml,
-            "~/fix_yaml",
-            callback=fix_yaml,
             callback_group=self.tree_manager_service_callback_group,
         )
 

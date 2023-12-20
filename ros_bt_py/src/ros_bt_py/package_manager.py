@@ -43,14 +43,12 @@ from ros_bt_py_interfaces.srv import (
     GetMessageFields,
     SaveTree,
     GetPackageStructure,
-    FixYaml,
     GetFolderStructure,
     GetStorageFolders,
 )
 
 from ros_bt_py.node import increment_name
 from ros_bt_py.helpers import (
-    fix_yaml,
     remove_input_output_values,
     json_encode,
 )
@@ -160,11 +158,7 @@ class PackageManager(object):
 
             with open(save_path, "w") as save_file:
                 msg = rosidl_runtime_py.message_to_yaml(request.tree)
-                fix_yaml_response = FixYaml.Response()
-                fix_yaml_response = fix_yaml(
-                    request=FixYaml.Request(broken_yaml=msg), response=fix_yaml_response
-                )
-                save_file.write(fix_yaml_response.fixed_yaml)
+                save_file.write(msg)
             response.file_path = save_path
             response.success = True
             return response

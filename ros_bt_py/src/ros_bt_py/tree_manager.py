@@ -59,7 +59,6 @@ from ros_bt_py_interfaces.srv import (
     ClearTree,
     Continue,
     ControlTreeExecution,
-    FixYaml,
     GenerateSubtree,
     GetAvailableNodes,
     GetSubtree,
@@ -87,7 +86,6 @@ from ros_bt_py.exceptions import (
     TreeTopologyError,
 )
 from ros_bt_py.helpers import (
-    fix_yaml,
     remove_input_output_values,
     json_encode,
     json_decode,
@@ -217,19 +215,7 @@ def load_tree_from_file(
                     f"Encountered a ScannerError while parsing the tree yaml: {str(ex)}\n"
                     f"This is most likely caused by a tree that was created with "
                     f"PyYAML 5 and genpy < 0.6.10.\n"
-                    f"Attempting to fix this automatically..."
                 )
-                # ScannerError most likely means that the tree was created
-                # with PyYAML 5 and genpy <0.6.10
-                # fix this by correctly indenting the broken lists
-                fix_yaml_response = FixYaml.Response()
-                fix_yaml_response = fix_yaml(
-                    request=FixYaml.Request(broken_yaml=tree_yaml),
-                    response=fix_yaml_response,
-                )
-
-                # try parsing again with fixed tree_yaml:
-                response = parse_tree_yaml(tree_yaml=fix_yaml_response.fixed_yaml)
             # remove input and output values from nodes
             tree = remove_input_output_values(tree=response.tree)
 
