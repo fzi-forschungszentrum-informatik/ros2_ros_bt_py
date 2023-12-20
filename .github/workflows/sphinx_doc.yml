@@ -1,0 +1,31 @@
+name: Build & Publish Documentation
+
+on:
+  push:
+    branches:
+        - main
+        - fb_gh_pages_sphinx_doc
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - name: Install dependencies
+        run: |
+          pip install sphinx sphinx_rtd_theme myst_parser
+      - name: Sphinx build
+        working-directory: ./ros_bt_py/doc
+        run: |
+          sphinx-build -b html source _build
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./ros_bt_py/doc/_build/
+          force_orphan: true
