@@ -4,7 +4,6 @@ on:
   push:
     branches:
         - main
-        - fb_gh_pages_sphinx_doc
 
 permissions:
   contents: write
