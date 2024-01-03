@@ -80,6 +80,7 @@ from ros_bt_py_interfaces.srv import (
 import ament_index_python
 
 from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import (
     BehaviorTreeException,
     MissingParentError,
@@ -295,6 +296,7 @@ class TreeManager:
         name: Optional[str] = None,
         module_list: Optional[List[str]] = None,
         debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
         tick_frequency_hz: float = 10.0,
         publish_tree_callback: Optional[Callable[[Tree], None]] = None,
         publish_debug_info_callback: Optional[Callable[[DebugInfo], None]] = None,
@@ -356,6 +358,10 @@ class TreeManager:
                 "- building our own with default parameters"
             )
             self.debug_manager = DebugManager(ros_node=self.ros_node)
+
+        self.subtree_manager = subtree_manager
+        if not self.subtree_manager:
+            self.subtree_manager = SubtreeManager()
 
         self.show_traceback_on_exception = show_traceback_on_exception
 
@@ -858,6 +864,9 @@ class TreeManager:
             publish_subtrees=request.publish_subtrees,
             collect_node_diagnostics=request.collect_node_diagnostics,
         )
+        self.subtree_manager.set_execution_mode(
+            publish_subtrees=request.publish_subtrees,
+        )
         if request.publish_subtrees:
             self.control_execution(
                 ControlTreeExecution.Request(
@@ -866,8 +875,8 @@ class TreeManager:
                 ControlTreeExecution.Response(),
             )
         else:
-            self.debug_manager.clear_subtrees()
-            self.publish_info(self.debug_manager.get_debug_info_msg())
+            self.subtree_manager.clear_subtrees()
+            self.publish_info(self.subtree_manager.get_debug_info_msg())
         return response
 
     def debug_step(
@@ -948,7 +957,7 @@ class TreeManager:
                 get_logger("tree_manager").warn(response.error_message)
                 return response
 
-            self.debug_manager.clear_subtrees()
+            self.subtree_manager.clear_subtrees()
             try:
                 root = self.find_root()
                 if root:

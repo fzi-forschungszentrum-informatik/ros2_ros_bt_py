@@ -33,7 +33,6 @@ from threading import Event, Lock
 
 import rclpy.node
 
-from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py_interfaces.msg import DebugInfo, DebugSettings, Node, NodeDiagnostics
 
 
@@ -254,40 +253,3 @@ class DebugManager(object):
     def get_debug_info_msg(self):
         with self._lock:
             return deepcopy(self._debug_info_msg)
-
-    def add_subtree_info(self, node_name, subtree_msg):
-        """
-        Publish subtree information.
-
-        Used by the :class:`ros_bt_py.nodes.Subtree`.
-
-        Serialization of subtrees (and calling this method) should
-        only happen when the `publish_subtrees` option is set via
-        `SetExecutionMode`.
-
-        :param str node_name:
-
-        The name of the subtree node. This will be prefixed to the
-        subtree name to ensure it is unique.
-
-        :raises: `ros_bt_py.exceptions.BehaviorTreeException`
-
-        If this method is called when `publish_subtrees` is `False`.
-        """
-        subtree_name = f"{node_name}.{subtree_msg.name}"
-        with self._lock:
-            if not self._debug_settings_msg.publish_subtrees:
-                raise BehaviorTreeException(
-                    "Trying to add subtree info when subtree publishing is disabled!"
-                )
-            self.subtrees[subtree_name] = subtree_msg
-            self._debug_info_msg.subtree_states = list(self.subtrees.values())
-
-    def clear_subtrees(self):
-        with self._lock:
-            self.subtrees.clear()
-            self._debug_info_msg.subtree_states = []
-
-    def get_publish_subtrees(self):
-        with self._lock:
-            return self._debug_settings_msg.publish_subtrees
