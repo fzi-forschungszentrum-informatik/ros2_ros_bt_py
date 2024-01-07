@@ -75,7 +75,7 @@ class TestSubtreeManager:
         subtrees = [Tree(**fields) for fields in subtree_fields]
 
         subtree_manager_subtree_states = (
-            subtree_manager.get_debug_info_msg().subtree_states
+            subtree_manager.get_subtree_info_msg().subtree_states
         )
         assert subtree_manager_subtree_states == []
 
@@ -83,7 +83,7 @@ class TestSubtreeManager:
             subtree_manager.add_subtree_info("node_" + str(i), tree)
 
         subtree_manager_subtree_states = (
-            subtree_manager.get_debug_info_msg().subtree_states
+            subtree_manager.get_subtree_info_msg().subtree_states
         )
         assert len(subtree_manager_subtree_states) == len(subtrees)
         for subtree_manager_tree, tree, fields in zip(
@@ -95,12 +95,12 @@ class TestSubtreeManager:
     def test_clear_subtrees(self, subtree_manager):
         subtree_manager.add_subtree_info("node_name", Tree())
         subtree_manager_subtree_states = (
-            subtree_manager.get_debug_info_msg().subtree_states
+            subtree_manager.get_subtree_info_msg().subtree_states
         )
         assert len(subtree_manager_subtree_states) > 0
         subtree_manager.clear_subtrees()
         subtree_manager_subtree_states = (
-            subtree_manager.get_debug_info_msg().subtree_states
+            subtree_manager.get_subtree_info_msg().subtree_states
         )
         assert subtree_manager_subtree_states == []
 

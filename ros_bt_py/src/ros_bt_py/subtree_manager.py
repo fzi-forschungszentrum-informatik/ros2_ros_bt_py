@@ -30,7 +30,7 @@ from threading import Lock
 
 
 from ros_bt_py.exceptions import BehaviorTreeException
-from ros_bt_py_interfaces.msg import DebugInfo
+from ros_bt_py_interfaces.msg import SubtreeInfo
 
 
 class SubtreeManager(object):
@@ -40,7 +40,7 @@ class SubtreeManager(object):
         self._publish_subtrees = False
         self._lock = Lock()
         with self._lock:
-            self._debug_info_msg = DebugInfo()
+            self._subtree_info_msg = SubtreeInfo()
 
     def set_execution_mode(
         self,
@@ -48,9 +48,9 @@ class SubtreeManager(object):
     ):
         self._publish_subtrees = publish_subtrees
 
-    def get_debug_info_msg(self):
+    def get_subtree_info_msg(self):
         with self._lock:
-            return deepcopy(self._debug_info_msg)
+            return deepcopy(self._subtree_info_msg)
 
     def add_subtree_info(self, node_name, subtree_msg):
         """
@@ -78,12 +78,12 @@ class SubtreeManager(object):
                     "Trying to add subtree info when subtree publishing is disabled!"
                 )
             self.subtrees[subtree_name] = subtree_msg
-            self._debug_info_msg.subtree_states = list(self.subtrees.values())
+            self._subtree_info_msg.subtree_states = list(self.subtrees.values())
 
     def clear_subtrees(self):
         with self._lock:
             self.subtrees.clear()
-            self._debug_info_msg.subtree_states = []
+            self._subtree_info_msg.subtree_states = []
 
     def get_publish_subtrees(self):
         with self._lock:

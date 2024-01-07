@@ -49,6 +49,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CapabilityInterface.msg"
   "msg/CapabilityIOBridgeData.msg"
   "msg/DebugInfo.msg"
+  "msg/SubtreeInfo.msg"
   "msg/DebugSettings.msg"
   "msg/DocumentedNode.msg"
   "msg/Message.msg"

@@ -876,7 +876,7 @@ class TreeManager:
             )
         else:
             self.subtree_manager.clear_subtrees()
-            self.publish_info(self.subtree_manager.get_debug_info_msg())
+            self.publish_info(self.subtree_manager.get_subtree_info_msg())
         return response
 
     def debug_step(
