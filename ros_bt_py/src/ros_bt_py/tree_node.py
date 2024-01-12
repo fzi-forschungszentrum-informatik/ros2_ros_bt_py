@@ -305,12 +305,6 @@ class TreeNode(Node):
             callback=self.tree_manager.unwire_data,
             callback_group=self.tree_manager_service_callback_group,
         )
-        self.modify_breakpoints_service = self.create_service(
-            ModifyBreakpoints,
-            "~/debug/modify_breakpoints",
-            callback=self.tree_manager.modify_breakpoints,
-            callback_group=self.tree_manager_service_callback_group,
-        )
         self.control_tree_execution_service = self.create_service(
             ControlTreeExecution,
             "~/control_tree_execution",
@@ -341,6 +335,7 @@ class TreeNode(Node):
             callback=self.tree_manager.set_execution_mode,
             callback_group=self.tree_manager_service_callback_group,
         )
+        # boolean service message std.....
         self.set_options_service = self.create_service(
             SetOptions,
             "~/set_options",

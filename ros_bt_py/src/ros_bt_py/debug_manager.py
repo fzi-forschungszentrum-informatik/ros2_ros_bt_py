@@ -35,6 +35,9 @@ import rclpy.node
 
 from ros_bt_py_interfaces.msg import DebugInfo, DebugSettings, Node, NodeDiagnostics
 
+# node diagnostics, was getickt wurde
+# kein stepping, kein continuing
+
 
 class DebugManager(object):
     def __init__(
@@ -91,7 +94,7 @@ class DebugManager(object):
         single_step,
         collect_performance_data,
         publish_subtrees,
-        collect_node_diagnostics,
+        collect_node_diagnostics,  # behalten
     ):
         was_debugging = self.is_debugging()
         with self._lock:
@@ -105,22 +108,6 @@ class DebugManager(object):
             self.continue_debug()
         if self.publish_debug_settings:
             self.publish_debug_settings(self._debug_settings_msg)
-
-    def modify_breakpoints(self, add=None, remove=None, remove_all=False):
-        with self._lock:
-            if remove_all:
-                self._debug_settings_msg.breakpoint_names = []
-            if remove:
-                for bp in remove:
-                    if bp in self._debug_settings_msg.breakpoint_names:
-                        self._debug_settings_msg.breakpoint_names.remove(bp)
-            if add:
-                for bp in add:
-                    if bp not in self._debug_settings_msg.breakpoint_names:
-                        self._debug_settings_msg.breakpoint_names.append(bp)
-            if self.publish_debug_settings:
-                self.publish_debug_settings(self._debug_settings_msg)
-            return self._debug_settings_msg.breakpoint_names
 
     def continue_debug(self):
         self.continue_event.set()
