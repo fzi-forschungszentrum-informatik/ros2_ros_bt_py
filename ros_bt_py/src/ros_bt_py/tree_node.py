@@ -46,6 +46,7 @@ from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
     Tree,
     DebugInfo,
+    SubtreeInfo,
     DebugSettings,
     NodeDiagnostics,
     Messages,
@@ -86,6 +87,7 @@ from ros_bt_py.tree_manager import (
     get_available_nodes,
 )
 from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.package_manager import PackageManager
 
 
@@ -108,6 +110,17 @@ class TreeNode(Node):
         self.debug_info_pub = self.create_publisher(
             DebugInfo,
             "~/debug/debug_info",
+            callback_group=self.publisher_callback_group,
+            qos_profile=QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+        )
+        self.subtree_info_pub = self.create_publisher(
+            SubtreeInfo,
+            "~/debug/subtree_info",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -238,12 +251,15 @@ class TreeNode(Node):
 
     def init_tree_manager(self, params: tree_node_parameters.Params):
         self.debug_manager = DebugManager(ros_node=self)
+        self.subtree_manager = SubtreeManager()
         self.tree_manager = TreeManager(
             ros_node=self,
             module_list=params.node_modules,
             debug_manager=self.debug_manager,
+            subtree_manager=self.subtree_manager,
             publish_tree_callback=self.tree_pub.publish,
             publish_debug_info_callback=self.debug_info_pub.publish,
+            publish_subtree_info_callback=self.subtree_info_pub.publish,
             publish_debug_settings_callback=self.debug_settings_pub.publish,
             publish_node_diagnostics_callback=self.node_diagnostics_pub.publish,
             publish_diagnostic_callback=self.ros_diagnostics_pub.publish,

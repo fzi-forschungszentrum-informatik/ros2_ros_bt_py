@@ -38,6 +38,7 @@ class SubtreeManager(object):
 
         self.subtrees = {}
         self._publish_subtrees = False
+
         self._lock = Lock()
         with self._lock:
             self._subtree_info_msg = SubtreeInfo()
