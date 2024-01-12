@@ -43,7 +43,6 @@ import yaml.scanner
 from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import (
-    DebugInfo,
     SubtreeInfo,
     DebugSettings,
     NodeDiagnostics,
@@ -58,7 +57,6 @@ from ros_bt_py_interfaces.srv import (
     AddNodeAtIndex,
     ChangeTreeName,
     ClearTree,
-    Continue,
     ControlTreeExecution,
     GenerateSubtree,
     GetAvailableNodes,
@@ -66,7 +64,6 @@ from ros_bt_py_interfaces.srv import (
     LoadTree,
     LoadTreeFromPath,
     MigrateTree,
-    ModifyBreakpoints,
     MorphNode,
     MoveNode,
     ReloadTree,
@@ -300,8 +297,7 @@ class TreeManager:
         subtree_manager: Optional[SubtreeManager] = None,
         tick_frequency_hz: float = 10.0,
         publish_tree_callback: Optional[Callable[[Tree], None]] = None,
-        publish_debug_info_callback: Optional[Callable[[DebugInfo], None]] = None,
-        publish_subtree_info_callback: Optional[Callable[[DebugInfo], None]] = None,
+        publish_subtree_info_callback: Optional[Callable[[SubtreeInfo], None]] = None,
         publish_debug_settings_callback: Optional[
             Callable[[DebugSettings], None]
         ] = None,
@@ -324,13 +320,6 @@ class TreeManager:
             get_logger("tree_manager").info(
                 "No callback for publishing tree data provided."
             )
-
-        self.publish_debug_info = publish_debug_info_callback
-        if self.publish_debug_info is None:
-            get_logger("tree_manager").info(
-                "No callback for publishing debug data provided."
-            )
-
         self.publish_subtree_info = publish_subtree_info_callback
         if self.publish_subtree_info is None:
             get_logger("tree_manager").info(
@@ -399,7 +388,6 @@ class TreeManager:
 
         self.tick_sliding_window = [tick_frequency_hz] * 10
 
-        self.debug_manager.publish_debug_info = self.publish_info
         self.debug_manager.publish_debug_settings = self.publish_debug_settings
         self.debug_manager.publish_node_diagnostics = self.publish_node_diagnostics
 
@@ -435,7 +423,6 @@ class TreeManager:
             for module_name in module_list:
                 load_node_module(module_name)
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -500,7 +487,6 @@ class TreeManager:
 
     def publish_info(
         self,
-        debug_info_msg: Optional[DebugInfo] = None,
         subtree_info_msg: Optional[SubtreeInfo] = None,
         ticked=False,
     ):
@@ -514,8 +500,6 @@ class TreeManager:
         """
         if self.publish_tree:
             self.publish_tree(self.to_msg(ticked=ticked))
-        if debug_info_msg and self.publish_debug_info:
-            self.publish_debug_info(debug_info_msg)
         if subtree_info_msg and self.publish_subtree_info:
             self.publish_subtree_info(subtree_info_msg)
 
@@ -568,10 +552,6 @@ class TreeManager:
         the `TreeManager` - it can tick once, continuously, until the
         tree reports a result (either SUCCEEDED or FAILED).
 
-        Each of those can be done in debug mode (i.e. requiring a call
-        of :meth:`TreeManager.debug_step()` after each node's tick)
-        too.
-
         This method should *NOT* be called directly, but rather
         triggered via :meth:`TreeManager.control_execution()`!
         """
@@ -608,7 +588,6 @@ class TreeManager:
                 break
             root.tick()
             self.publish_info(
-                debug_info_msg=self.debug_manager.get_debug_info_msg(),
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
@@ -651,7 +630,6 @@ class TreeManager:
         with self._state_lock:
             self.tree_msg.state = Tree.IDLE
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -718,7 +696,6 @@ class TreeManager:
                 tick_frequency_hz=self.tree_msg.tick_frequency_hz,
             )
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -883,7 +860,6 @@ class TreeManager:
 
         response.success = True
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -904,9 +880,6 @@ class TreeManager:
         :param  ros_bt_msgs.srv.SetExecutionModeRequest request:
         """
         self.debug_manager.set_execution_mode(
-            single_step=request.single_step,
-            collect_performance_data=request.collect_performance_data,
-            publish_subtrees=request.publish_subtrees,
             collect_node_diagnostics=request.collect_node_diagnostics,
         )
         if self.subtree_manager:
@@ -923,28 +896,11 @@ class TreeManager:
             else:
                 self.subtree_manager.clear_subtrees()
                 self.publish_info(
-                    debug_info_msg=self.debug_manager.get_debug_info_msg(),
                     subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                     if self.subtree_manager is not None
                     else None,
                 )
         return response
-
-    def debug_step(
-        self, request: Continue.Request, response: Continue.Response
-    ) -> Continue.Response:
-        """
-        Continue execution.
-
-        If single step mode is enabled, advance a single step. If we're
-        currently stopped at a breakpoint, continue to the next, if
-        any. If we're not stopped at all, do nothing.
-
-        :param request ros_bt_msgs.srv.ContinueRequest:
-        """
-        # TODO(nberg): Add more logic to at least warn if we're not stopped
-        self.debug_manager.continue_debug()
-        return Continue.Response(success=True)
 
     def control_execution(  # noqa: C901 # TODO: Remove this and simplfy the method.
         self,
@@ -1047,7 +1003,7 @@ class TreeManager:
                         setting_up = False
                         with self._state_lock:
                             setting_up = self._setting_up
-                        if not self.debug_manager.is_debugging() and not setting_up:
+                        if not setting_up:
                             break
                         self._tick_thread.join(
                             (1.0 / self.tree_msg.tick_frequency_hz) * 4.0
@@ -1101,7 +1057,6 @@ class TreeManager:
                     response.success = False
                     response.error_message = str(ex)
                 self.publish_info(
-                    debug_info_msg=self.debug_manager.get_debug_info_msg(),
                     subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                     if self.subtree_manager is not None
                     else None,
@@ -1132,7 +1087,6 @@ class TreeManager:
                 with self._state_lock:
                     self.tree_msg.state = Tree.EDITABLE
             self.publish_info(
-                debug_info_msg=self.debug_manager.get_debug_info_msg(),
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
@@ -1168,7 +1122,7 @@ class TreeManager:
                         setting_up = False
                         with self._state_lock:
                             setting_up = self._setting_up
-                        if not self.debug_manager.is_debugging() and not setting_up:
+                        if not setting_up:
                             break
                         self._tick_thread.join(
                             (1.0 / self.tree_msg.tick_frequency_hz) * 4.0
@@ -1280,7 +1234,6 @@ class TreeManager:
                     response.error_message = str(ex)
                     response.tree_state = self.get_state()
             self.publish_info(
-                debug_info_msg=self.debug_manager.get_debug_info_msg(),
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
@@ -1428,7 +1381,6 @@ class TreeManager:
             )
             return response
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -1457,7 +1409,6 @@ class TreeManager:
         """Change the name of the currently loaded tree."""
         self.tree_msg.name = request.name
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -1575,7 +1526,6 @@ class TreeManager:
 
         response.success = True
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -1692,7 +1642,6 @@ class TreeManager:
 
         response.success = True
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -1988,7 +1937,6 @@ class TreeManager:
 
         # We made it!
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -2012,7 +1960,6 @@ class TreeManager:
             if node.parent is not None:
                 node.parent.remove_child(node.name)
             self.publish_info(
-                debug_info_msg=self.debug_manager.get_debug_info_msg(),
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
@@ -2069,7 +2016,6 @@ class TreeManager:
         )
 
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -2188,7 +2134,6 @@ class TreeManager:
             with self._state_lock:
                 self.tree_msg.state = Tree.ERROR
             self.publish_info(
-                debug_info_msg=self.debug_manager.get_debug_info_msg(),
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
@@ -2209,7 +2154,6 @@ class TreeManager:
                 MoveNode.Response(),
             )
         self.publish_info(
-            debug_info_msg=self.debug_manager.get_debug_info_msg(),
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
             else None,
@@ -2286,7 +2230,6 @@ class TreeManager:
             # them.
             self.tree_msg.data_wirings.extend(successful_wirings)
             self.publish_info(
-                debug_info_msg=self.debug_manager.get_debug_info_msg(),
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
@@ -2364,7 +2307,6 @@ class TreeManager:
                 if wiring in self.tree_msg.data_wirings:
                     self.tree_msg.data_wirings.remove(wiring)
             self.publish_info(
-                debug_info_msg=self.debug_manager.get_debug_info_msg(),
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
@@ -2426,7 +2368,6 @@ class TreeManager:
                 ros_node=self.ros_node,
                 name="temporary_tree_manager",
                 publish_tree_callback=lambda *args: None,
-                publish_debug_info_callback=lambda *args: None,
                 publish_debug_settings_callback=lambda *args: None,
                 debug_manager=DebugManager(ros_node=self.ros_node),
             )

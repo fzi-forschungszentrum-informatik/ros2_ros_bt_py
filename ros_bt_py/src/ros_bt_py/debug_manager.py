@@ -25,37 +25,26 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from copy import deepcopy
 from contextlib import contextmanager
-import inspect
-from sys import getrecursionlimit
-from threading import Event, Lock
+from threading import Lock
 
 import rclpy.node
 
-from ros_bt_py_interfaces.msg import DebugInfo, DebugSettings, Node, NodeDiagnostics
-
-# node diagnostics, was getickt wurde
-# kein stepping, kein continuing
+from ros_bt_py_interfaces.msg import DebugSettings, NodeDiagnostics
 
 
 class DebugManager(object):
     def __init__(
         self,
         ros_node: rclpy.node.Node,
-        debug_info_publish_callback=None,
         debug_settings_publish_callback=None,
         node_diagnostics_publish_callback=None,
     ):
-        self.continue_event = Event()
         self._lock = Lock()
         self._ros_node = ros_node
 
-        self.publish_debug_info = debug_info_publish_callback
         self.publish_debug_settings = debug_settings_publish_callback
         self.publish_node_diagnostics = node_diagnostics_publish_callback
-
-        self.subtrees = {}
 
         self.diagnostics_state = {}
         self.diagnostics_state["SETUP"] = (
@@ -75,49 +64,16 @@ class DebugManager(object):
             NodeDiagnostics.POST_SHUTDOWN,
         )
 
-        with self._lock:
-            self._debug_info_msg = DebugInfo()
-
-        self._debug_settings_msg = DebugSettings(
-            # List of node names to break on
-            breakpoint_names=[],
-            # Only collect analytics if this is True
-            collect_performance_data=False,
-            # Don't publish subtree states by default
-            publish_subtrees=False,
-            # if True, wait for a continue request before and after every tick
-            single_step=False,
-        )
+        self._debug_settings_msg = DebugSettings()
 
     def set_execution_mode(
         self,
-        single_step,
-        collect_performance_data,
-        publish_subtrees,
-        collect_node_diagnostics,  # behalten
+        collect_node_diagnostics,
     ):
-        was_debugging = self.is_debugging()
         with self._lock:
-            self._debug_settings_msg.single_step = single_step
-            self._debug_settings_msg.collect_performance_data = collect_performance_data
-            self._debug_settings_msg.publish_subtrees = publish_subtrees
             self._debug_settings_msg.collect_node_diagnostics = collect_node_diagnostics
-        if was_debugging and not self.is_debugging():
-            # stopped debugging in this call, send a continue event to prevent issues
-            # with control_execution in the tree_manager
-            self.continue_debug()
         if self.publish_debug_settings:
             self.publish_debug_settings(self._debug_settings_msg)
-
-    def continue_debug(self):
-        self.continue_event.set()
-
-    def is_debugging(self):
-        with self._lock:
-            return (
-                self._debug_settings_msg.breakpoint_names
-                or self._debug_settings_msg.single_step
-            )
 
     @contextmanager
     def report_state(self, node_instance, state):
@@ -193,23 +149,9 @@ class DebugManager(object):
             diagnostics_message.path = diagnostics_message.path[::-1]
             if self.publish_node_diagnostics:
                 self.publish_node_diagnostics(diagnostics_message)
-        if self.is_debugging():
-            old_state = node_instance.state
-            node_instance.state = Node.DEBUG_PRE_TICK
-            self.wait_for_continue()
-            node_instance.state = old_state
-        if self._debug_settings_msg.collect_performance_data:
-            with self._lock:
-                self._debug_info_msg.current_recursion_depth = len(inspect.stack())
-                self._debug_info_msg.max_recursion_depth = getrecursionlimit()
 
         # Contextmanager'ed code is executed here
         yield
-
-        if self._debug_settings_msg.collect_performance_data:
-            with self._lock:
-                self._debug_info_msg.current_recursion_depth = len(inspect.stack())
-                self._debug_info_msg.max_recursion_depth = getrecursionlimit()
 
         if self._debug_settings_msg.collect_node_diagnostics:
             diagnostics_message.state = NodeDiagnostics.POST_TICK
@@ -217,26 +159,3 @@ class DebugManager(object):
             if self.publish_node_diagnostics:
                 if self.publish_node_diagnostics:
                     self.publish_node_diagnostics(diagnostics_message)
-        if self.is_debugging():
-            self.wait_for_continue()
-            old_state = node_instance.state
-            node_instance.state = Node.DEBUG_POST_TICK
-            self.wait_for_continue()
-            node_instance.state = old_state
-            if node_instance.name in self._debug_settings_msg.breakpoint_names:
-                self._debug_settings_msg.breakpoint_names.remove(node_instance.name)
-                if self.publish_debug_settings:
-                    self.publish_debug_settings(self._debug_settings_msg)
-
-    def wait_for_continue(self):
-        # If we have a publish callback, publish debug info
-        if self.publish_debug_info:
-            self.publish_debug_info(self.get_debug_info_msg())
-        # Ensure that we're not picking up an extra continue request sent earlier
-        self.continue_event.clear()
-        self.continue_event.wait()
-        self.continue_event.clear()
-
-    def get_debug_info_msg(self):
-        with self._lock:
-            return deepcopy(self._debug_info_msg)

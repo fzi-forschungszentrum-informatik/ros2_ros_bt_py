@@ -45,7 +45,6 @@ from diagnostic_msgs.msg import DiagnosticArray
 from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
     Tree,
-    DebugInfo,
     SubtreeInfo,
     DebugSettings,
     NodeDiagnostics,
@@ -56,13 +55,11 @@ from ros_bt_py_interfaces.srv import (
     AddNode,
     AddNodeAtIndex,
     ControlTreeExecution,
-    ModifyBreakpoints,
     RemoveNode,
     WireNodeData,
     GetAvailableNodes,
     SetExecutionMode,
     SetOptions,
-    Continue,
     LoadTree,
     LoadTreeFromPath,
     MoveNode,
@@ -107,17 +104,7 @@ class TreeNode(Node):
                 depth=1,
             ),
         )
-        self.debug_info_pub = self.create_publisher(
-            DebugInfo,
-            "~/debug/debug_info",
-            callback_group=self.publisher_callback_group,
-            qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-                history=QoSHistoryPolicy.KEEP_LAST,
-                depth=1,
-            ),
-        )
+
         self.subtree_info_pub = self.create_publisher(
             SubtreeInfo,
             "~/debug/subtree_info",
@@ -258,7 +245,6 @@ class TreeNode(Node):
             debug_manager=self.debug_manager,
             subtree_manager=self.subtree_manager,
             publish_tree_callback=self.tree_pub.publish,
-            publish_debug_info_callback=self.debug_info_pub.publish,
             publish_subtree_info_callback=self.subtree_info_pub.publish,
             publish_debug_settings_callback=self.debug_settings_pub.publish,
             publish_node_diagnostics_callback=self.node_diagnostics_pub.publish,
@@ -335,7 +321,6 @@ class TreeNode(Node):
             callback=self.tree_manager.set_execution_mode,
             callback_group=self.tree_manager_service_callback_group,
         )
-        # boolean service message std.....
         self.set_options_service = self.create_service(
             SetOptions,
             "~/set_options",
@@ -352,12 +337,6 @@ class TreeNode(Node):
             ReplaceNode,
             "~/replace_node",
             callback=self.tree_manager.replace_node,
-            callback_group=self.tree_manager_service_callback_group,
-        )
-        self.continue_service = self.create_service(
-            Continue,
-            "~/debug/continue",
-            callback=self.tree_manager.debug_step,
             callback_group=self.tree_manager_service_callback_group,
         )
         self.load_tree_service = self.create_service(
