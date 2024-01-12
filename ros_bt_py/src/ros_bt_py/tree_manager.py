@@ -946,14 +946,6 @@ class TreeManager:
         self.debug_manager.continue_debug()
         return Continue.Response(success=True)
 
-    def modify_breakpoints(
-        self, request: ModifyBreakpoints.Request, response: ModifyBreakpoints.Response
-    ) -> ModifyBreakpoints.Response:
-        response.current_breakpoints = self.debug_manager.modify_breakpoints(
-            add=request.add, remove=request.remove, remove_all=request.remove_all
-        )
-        return response
-
     def control_execution(  # noqa: C901 # TODO: Remove this and simplfy the method.
         self,
         request: ControlTreeExecution.Request,
