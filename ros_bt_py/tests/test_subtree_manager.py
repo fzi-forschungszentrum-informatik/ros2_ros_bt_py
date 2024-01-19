@@ -40,7 +40,7 @@ class TestSubtreeManager:
     @pytest.fixture
     def subtree_manager(self):
         subtree_manager = SubtreeManager()
-        subtree_manager.set_execution_mode(
+        subtree_manager.set_publish_subtrees(
             publish_subtrees=True,
         )
         return subtree_manager

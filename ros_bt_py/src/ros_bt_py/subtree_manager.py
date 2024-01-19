@@ -43,7 +43,7 @@ class SubtreeManager(object):
         with self._lock:
             self._subtree_info_msg = SubtreeInfo()
 
-    def set_execution_mode(
+    def set_publish_subtrees(
         self,
         publish_subtrees,
     ):
@@ -61,7 +61,7 @@ class SubtreeManager(object):
 
         Serialization of subtrees (and calling this method) should
         only happen when the `publish_subtrees` option is set via
-        `SetExecutionMode`.
+        `set_publish_subtrees` in :class:`TreeManager`.
 
         :param str node_name:
 
