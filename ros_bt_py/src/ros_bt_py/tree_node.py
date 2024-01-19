@@ -46,7 +46,6 @@ from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
     Tree,
     SubtreeInfo,
-    DebugSettings,
     NodeDiagnostics,
     Messages,
     Packages,
@@ -58,7 +57,6 @@ from ros_bt_py_interfaces.srv import (
     RemoveNode,
     WireNodeData,
     GetAvailableNodes,
-    SetExecutionMode,
     SetOptions,
     LoadTree,
     LoadTreeFromPath,
@@ -76,6 +74,8 @@ from ros_bt_py_interfaces.srv import (
     GetFolderStructure,
     GetStorageFolders,
 )
+
+from std_srvs.srv import SetBool
 
 from ros_bt_py.tree_manager import (
     TreeManager,
@@ -108,17 +108,6 @@ class TreeNode(Node):
         self.subtree_info_pub = self.create_publisher(
             SubtreeInfo,
             "~/debug/subtree_info",
-            callback_group=self.publisher_callback_group,
-            qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-                history=QoSHistoryPolicy.KEEP_LAST,
-                depth=1,
-            ),
-        )
-        self.debug_settings_pub = self.create_publisher(
-            DebugSettings,
-            "~/debug/debug_settings",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -237,7 +226,10 @@ class TreeNode(Node):
         self.get_logger().info("initialized package manager")
 
     def init_tree_manager(self, params: tree_node_parameters.Params):
-        self.debug_manager = DebugManager(ros_node=self)
+        self.debug_manager = DebugManager(
+            ros_node=self,
+            node_diagnostics_publish_callback=self.node_diagnostics_pub.publish,
+        )
         self.subtree_manager = SubtreeManager()
         self.tree_manager = TreeManager(
             ros_node=self,
@@ -246,13 +238,17 @@ class TreeNode(Node):
             subtree_manager=self.subtree_manager,
             publish_tree_callback=self.tree_pub.publish,
             publish_subtree_info_callback=self.subtree_info_pub.publish,
-            publish_debug_settings_callback=self.debug_settings_pub.publish,
-            publish_node_diagnostics_callback=self.node_diagnostics_pub.publish,
             publish_diagnostic_callback=self.ros_diagnostics_pub.publish,
             publish_tick_frequency_callback=self.tick_frequency_pub.publish,
             diagnostics_frequency=params.diagnostics_frequency_hz,
             show_traceback_on_exception=params.show_traceback_on_exception,
         )
+        self.set_collect_node_diagnostics_service = self.create_service(
+            SetBool,
+            "~/debug/set_collect_node_diagnostics",
+            callback=self.debug_manager.set_collect_node_diagnostics,
+        )
+
         self.tree_manager_service_callback_group = ReentrantCallbackGroup()
 
         self.add_node_service = self.create_service(
@@ -315,12 +311,13 @@ class TreeNode(Node):
             callback=self.tree_manager.generate_subtree,
             callback_group=self.tree_manager_service_callback_group,
         )
-        self.set_execution_mode_service = self.create_service(
-            SetExecutionMode,
-            "~/debug/set_execution_mode",
-            callback=self.tree_manager.set_execution_mode,
+        self.set_publish_subtrees_service = self.create_service(
+            SetBool,
+            "~/debug/set_publish_subtrees",
+            callback=self.tree_manager.set_publish_subtrees,
             callback_group=self.tree_manager_service_callback_group,
         )
+
         self.set_options_service = self.create_service(
             SetOptions,
             "~/set_options",

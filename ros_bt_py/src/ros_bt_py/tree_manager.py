@@ -44,7 +44,6 @@ from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import (
     SubtreeInfo,
-    DebugSettings,
     NodeDiagnostics,
     Tree,
     Node as NodeMsg,
@@ -69,11 +68,12 @@ from ros_bt_py_interfaces.srv import (
     ReloadTree,
     RemoveNode,
     ReplaceNode,
-    SetExecutionMode,
     SetOptions,
     SetSimulateTick,
     WireNodeData,
 )
+
+from std_srvs.srv import SetBool
 
 import ament_index_python
 
@@ -298,12 +298,6 @@ class TreeManager:
         tick_frequency_hz: float = 10.0,
         publish_tree_callback: Optional[Callable[[Tree], None]] = None,
         publish_subtree_info_callback: Optional[Callable[[SubtreeInfo], None]] = None,
-        publish_debug_settings_callback: Optional[
-            Callable[[DebugSettings], None]
-        ] = None,
-        publish_node_diagnostics_callback: Optional[
-            Callable[[NodeDiagnostics], None]
-        ] = None,
         publish_diagnostic_callback: Optional[Callable[[DiagnosticArray], None]] = None,
         publish_tick_frequency_callback: Optional[Callable[[Float64], None]] = None,
         diagnostics_frequency: float = 1.0,
@@ -324,17 +318,6 @@ class TreeManager:
         if self.publish_subtree_info is None:
             get_logger("tree_manager").info(
                 "No callback for publishing subtree data provided."
-            )
-        self.publish_debug_settings = publish_debug_settings_callback
-        if self.publish_debug_settings is None:
-            get_logger("tree_manager").info(
-                "No callback for publishing debug data provided."
-            )
-
-        self.publish_node_diagnostics = publish_node_diagnostics_callback
-        if self.publish_node_diagnostics is None:
-            get_logger("tree_manager").info(
-                "No callback for publishing node diagnostics data provided."
             )
 
         self.publish_diagnostic = publish_diagnostic_callback
@@ -387,9 +370,6 @@ class TreeManager:
             tick_frequency_hz = 10.0
 
         self.tick_sliding_window = [tick_frequency_hz] * 10
-
-        self.debug_manager.publish_debug_settings = self.publish_debug_settings
-        self.debug_manager.publish_node_diagnostics = self.publish_node_diagnostics
 
         self.nodes = {}
 
@@ -869,24 +849,21 @@ class TreeManager:
             self.set_diagnostics_name()
         return response
 
-    def set_execution_mode(
+    def set_publish_subtrees(
         self,
-        request: SetExecutionMode.Request,
-        response: SetExecutionMode.Response,
-    ) -> SetExecutionMode.Response:
+        request: SetBool.Request,
+        response: SetBool.Response,
+    ) -> SetBool.Response:
         """
-        Set the parameters of our :class:`DebugManager`.
+        Set the parameters of our :class:`SubtreeManager`.
 
-        :param  ros_bt_msgs.srv.SetExecutionModeRequest request:
+        :param  std_srvs.srv.SetBool request:
         """
-        self.debug_manager.set_execution_mode(
-            collect_node_diagnostics=request.collect_node_diagnostics,
-        )
         if self.subtree_manager:
-            self.subtree_manager.set_execution_mode(
-                publish_subtrees=request.publish_subtrees,
+            self.subtree_manager.set_publish_subtrees(
+                publish_subtrees=request.data,
             )
-            if request.publish_subtrees:
+            if request.data:
                 self.control_execution(
                     ControlTreeExecution.Request(
                         command=ControlTreeExecution.Request.SETUP_AND_SHUTDOWN
@@ -900,6 +877,10 @@ class TreeManager:
                     if self.subtree_manager is not None
                     else None,
                 )
+            response.success = True
+        else:
+            response.success = False
+            response.message = "Tree manager has no subtree manager."
         return response
 
     def control_execution(  # noqa: C901 # TODO: Remove this and simplfy the method.
@@ -1783,6 +1764,7 @@ class TreeManager:
         new_node = node.__class__(
             options=deserialized_options,
             name=request.new_name if request.rename_node else node.name,
+            subtree_manager=node.subtree_manager,
             debug_manager=node.debug_manager,
             ros_node=self.ros_node,
         )
@@ -2370,7 +2352,6 @@ class TreeManager:
                 ros_node=self.ros_node,
                 name="temporary_tree_manager",
                 publish_tree_callback=lambda *args: None,
-                publish_debug_settings_callback=lambda *args: None,
                 debug_manager=DebugManager(ros_node=self.ros_node),
             )
 

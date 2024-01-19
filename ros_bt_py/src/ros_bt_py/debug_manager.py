@@ -30,20 +30,20 @@ from threading import Lock
 
 import rclpy.node
 
-from ros_bt_py_interfaces.msg import DebugSettings, NodeDiagnostics
+from ros_bt_py_interfaces.msg import NodeDiagnostics
+
+from std_srvs.srv import SetBool
 
 
 class DebugManager(object):
     def __init__(
         self,
         ros_node: rclpy.node.Node,
-        debug_settings_publish_callback=None,
         node_diagnostics_publish_callback=None,
     ):
         self._lock = Lock()
         self._ros_node = ros_node
 
-        self.publish_debug_settings = debug_settings_publish_callback
         self.publish_node_diagnostics = node_diagnostics_publish_callback
 
         self.diagnostics_state = {}
@@ -64,16 +64,16 @@ class DebugManager(object):
             NodeDiagnostics.POST_SHUTDOWN,
         )
 
-        self._debug_settings_msg = DebugSettings()
+        self._collect_node_diagnostics = False
 
-    def set_execution_mode(
+    def set_collect_node_diagnostics(
         self,
-        collect_node_diagnostics,
-    ):
-        with self._lock:
-            self._debug_settings_msg.collect_node_diagnostics = collect_node_diagnostics
-        if self.publish_debug_settings:
-            self.publish_debug_settings(self._debug_settings_msg)
+        request: SetBool.Request,
+        response: SetBool.Response,
+    ) -> SetBool.Response:
+        self._collect_node_diagnostics = request.data
+        response.success = True
+        return response
 
     @contextmanager
     def report_state(self, node_instance, state):
@@ -90,9 +90,9 @@ class DebugManager(object):
         :param state: The state of the node
         """
         diagnostics_message = None
-        if self._debug_settings_msg.collect_node_diagnostics:
+        if self._collect_node_diagnostics:
             diagnostics_message = NodeDiagnostics(
-                stamp=self._ros_node.get_clock().now(),
+                stamp=self._ros_node.get_clock().now().to_msg(),
                 module=type(node_instance).__module__,
                 node_class=type(node_instance).__name__,
                 name=node_instance.name,
@@ -110,9 +110,9 @@ class DebugManager(object):
         # Contextmanager'ed code is executed here
         yield
 
-        if self._debug_settings_msg.collect_node_diagnostics:
+        if self._collect_node_diagnostics:
             diagnostics_message.state = self.diagnostics_state[state][1]
-            diagnostics_message.stamp = self._ros_node.get_clock().now()
+            diagnostics_message.stamp = self._ros_node.get_clock().now().to_msg()
             if self.publish_node_diagnostics:
                 if self.publish_node_diagnostics:
                     self.publish_node_diagnostics(diagnostics_message)
@@ -127,15 +127,12 @@ class DebugManager(object):
         calculates a moving window average of execution times as well as
         a minimum and maximum value.
 
-        Additionally, it provides pause functionality to enable stepping
-        through a tree and adding break points.
-
         :param instance: The node that's executing
         """
         diagnostics_message = None
-        if self._debug_settings_msg.collect_node_diagnostics:
+        if self._collect_node_diagnostics:
             diagnostics_message = NodeDiagnostics(
-                stamp=self._ros_node.get_clock().now(),
+                stamp=self._ros_node.get_clock().now().to_msg(),
                 module=type(node_instance).__module__,
                 node_class=type(node_instance).__name__,
                 name=node_instance.name,
@@ -153,9 +150,10 @@ class DebugManager(object):
         # Contextmanager'ed code is executed here
         yield
 
-        if self._debug_settings_msg.collect_node_diagnostics:
+        if self._collect_node_diagnostics:
             diagnostics_message.state = NodeDiagnostics.POST_TICK
-            diagnostics_message.stamp = self._ros_node.get_clock().now()
+            diagnostics_message.stamp = self._ros_node.get_clock().now().to_msg()
+
             if self.publish_node_diagnostics:
                 if self.publish_node_diagnostics:
                     self.publish_node_diagnostics(diagnostics_message)
