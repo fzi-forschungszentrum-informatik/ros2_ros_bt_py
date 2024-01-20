@@ -41,12 +41,11 @@ from rclpy.qos import (
 )
 
 from std_msgs.msg import Float64
-from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
     Tree,
     SubtreeInfo,
-    NodeDiagnostics,
     Messages,
     Packages,
 )
@@ -117,7 +116,7 @@ class TreeNode(Node):
             ),
         )
         self.node_diagnostics_pub = self.create_publisher(
-            NodeDiagnostics,
+            DiagnosticStatus,
             "~/debug/node_diagnostics",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(

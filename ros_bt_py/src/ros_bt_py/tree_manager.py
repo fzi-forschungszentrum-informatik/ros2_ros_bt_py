@@ -42,15 +42,16 @@ import yaml
 import yaml.scanner
 from typeguard import typechecked
 
+
 from ros_bt_py_interfaces.msg import (
     SubtreeInfo,
-    NodeDiagnostics,
     Tree,
     Node as NodeMsg,
     DocumentedNode,
     NodeData,
     NodeDataLocation,
 )
+
 from ros_bt_py_interfaces.srv import (
     AddNode,
     AddNodeAtIndex,
