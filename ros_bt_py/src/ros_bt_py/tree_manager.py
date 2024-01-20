@@ -310,8 +310,6 @@ class TreeManager:
         self.name = name
         self.publish_tree = publish_tree_callback
         if self.publish_tree is None:
-            get_logger("tree_manager").info("INITIALIZED " + str(self.name))
-        if self.publish_tree is None:
             get_logger("tree_manager").info(
                 "No callback for publishing tree data provided."
             )
