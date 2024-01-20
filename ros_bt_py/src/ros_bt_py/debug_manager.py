@@ -27,10 +27,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from contextlib import contextmanager
 from threading import Lock
+from typing import Dict, Any
+
 
 import rclpy.node
 
-from ros_bt_py_interfaces.msg import NodeDiagnostics
+from diagnostic_msgs.msg import DiagnosticStatus, KeyValue
+
 
 from std_srvs.srv import SetBool
 
@@ -48,20 +51,20 @@ class DebugManager(object):
 
         self.diagnostics_state = {}
         self.diagnostics_state["SETUP"] = (
-            NodeDiagnostics.PRE_SETUP,
-            NodeDiagnostics.POST_SETUP,
+            "PRE_SETUP",
+            "POST_SETUP",
         )
         self.diagnostics_state["UNTICK"] = (
-            NodeDiagnostics.PRE_UNTICK,
-            NodeDiagnostics.POST_UNTICK,
+            "PRE_UNTICK",
+            "POST_UNTICK",
         )
         self.diagnostics_state["RESET"] = (
-            NodeDiagnostics.PRE_RESET,
-            NodeDiagnostics.POST_RESET,
+            "PRE_RESET",
+            "POST_RESET",
         )
         self.diagnostics_state["SHUTDOWN"] = (
-            NodeDiagnostics.PRE_SHUTDOWN,
-            NodeDiagnostics.POST_SHUTDOWN,
+            "PRE_SHUTDOWN",
+            "POST_SHUTDOWN",
         )
 
         self._collect_node_diagnostics = False
@@ -74,6 +77,20 @@ class DebugManager(object):
         self._collect_node_diagnostics = request.data
         response.success = True
         return response
+
+    def _dict_to_diagnostics_msg(self, diagnostics_dict: Dict[str, Any]):
+        diagnostics_msg = DiagnosticStatus()
+        diagnostics_msg.name = diagnostics_dict["name"]
+        key_value_list = []
+        for key, value in diagnostics_dict.items():
+            if key != "name":
+                key_value = KeyValue()
+                key_value.key = key
+                key_value.value = str(value)
+                key_value_list.append(key_value)
+
+        diagnostics_msg.values = key_value_list
+        return diagnostics_msg
 
     @contextmanager
     def report_state(self, node_instance, state):
@@ -89,33 +106,36 @@ class DebugManager(object):
         :param instance: The node
         :param state: The state of the node
         """
-        diagnostics_message = None
+        diagnostics_msg = None
         if self._collect_node_diagnostics:
-            diagnostics_message = NodeDiagnostics(
-                stamp=self._ros_node.get_clock().now().to_msg(),
-                module=type(node_instance).__module__,
-                node_class=type(node_instance).__name__,
-                name=node_instance.name,
-                state=self.diagnostics_state[state][0],
-            )
+            diagnostics = {
+                "name": node_instance.name,
+                "stamp": self._ros_node.get_clock().now(),
+                "module": type(node_instance).__module__,
+                "node_class": type(node_instance).__name__,
+                "path": [],
+            }
+
             node = node_instance
             while node is not None:
-                diagnostics_message.path.append(node.name)
+                diagnostics["path"].append(node.name)
                 node = node.parent
             # reverse the list
-            diagnostics_message.path = diagnostics_message.path[::-1]
+            diagnostics["path"] = diagnostics["path"][::-1]
             if self.publish_node_diagnostics:
-                self.publish_node_diagnostics(diagnostics_message)
+                diagnostics_msg = self._dict_to_diagnostics_msg(diagnostics)
+                self.publish_node_diagnostics(diagnostics_msg)
 
         # Contextmanager'ed code is executed here
         yield
 
         if self._collect_node_diagnostics:
-            diagnostics_message.state = self.diagnostics_state[state][1]
-            diagnostics_message.stamp = self._ros_node.get_clock().now().to_msg()
+            diagnostics["state"] = self.diagnostics_state[state][1]
+            diagnostics["stamp"] = self._ros_node.get_clock().now()
             if self.publish_node_diagnostics:
                 if self.publish_node_diagnostics:
-                    self.publish_node_diagnostics(diagnostics_message)
+                    diagnostics_msg = self._dict_to_diagnostics_msg(diagnostics)
+                    self.publish_node_diagnostics(diagnostics_msg)
 
     @contextmanager
     def report_tick(self, node_instance):
@@ -129,31 +149,35 @@ class DebugManager(object):
 
         :param instance: The node that's executing
         """
-        diagnostics_message = None
+        diagnostics_msg = None
         if self._collect_node_diagnostics:
-            diagnostics_message = NodeDiagnostics(
-                stamp=self._ros_node.get_clock().now().to_msg(),
-                module=type(node_instance).__module__,
-                node_class=type(node_instance).__name__,
-                name=node_instance.name,
-                state=NodeDiagnostics.PRE_TICK,
-            )
+            diagnostics = {
+                "name": node_instance.name,
+                "stamp": self._ros_node.get_clock().now(),
+                "module": type(node_instance).__module__,
+                "node_class": type(node_instance).__name__,
+                "state": "PRE_TICK",
+                "path": [],
+            }
+
             node = node_instance
             while node is not None:
-                diagnostics_message.path.append(node.name)
+                diagnostics["path"].append(node.name)
                 node = node.parent
             # reverse the list
-            diagnostics_message.path = diagnostics_message.path[::-1]
+            diagnostics["path"] = diagnostics["path"][::-1]
             if self.publish_node_diagnostics:
-                self.publish_node_diagnostics(diagnostics_message)
+                diagnostics_msg = self._dict_to_diagnostics_msg(diagnostics)
+                self.publish_node_diagnostics(diagnostics_msg)
 
         # Contextmanager'ed code is executed here
         yield
 
         if self._collect_node_diagnostics:
-            diagnostics_message.state = NodeDiagnostics.POST_TICK
-            diagnostics_message.stamp = self._ros_node.get_clock().now().to_msg()
+            diagnostics["state"] = "POST_TICK"
+            diagnostics["stamp"] = self._ros_node.get_clock().now()
 
             if self.publish_node_diagnostics:
                 if self.publish_node_diagnostics:
-                    self.publish_node_diagnostics(diagnostics_message)
+                    diagnostics_msg = self._dict_to_diagnostics_msg(diagnostics)
+                    self.publish_node_diagnostics(diagnostics_msg)
