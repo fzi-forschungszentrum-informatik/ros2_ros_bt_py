@@ -56,7 +56,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/NodeData.msg"
   "msg/NodeDataLocation.msg"
   "msg/NodeDataWiring.msg"
-  "msg/NodeDiagnostics.msg"
   "msg/Package.msg"
   "msg/Packages.msg"
   "msg/PingMsg.msg"
