@@ -178,6 +178,5 @@ class DebugManager(object):
             diagnostics["stamp"] = self._ros_node.get_clock().now()
 
             if self.publish_node_diagnostics:
-                if self.publish_node_diagnostics:
-                    diagnostics_msg = self._dict_to_diagnostics_msg(diagnostics)
-                    self.publish_node_diagnostics(diagnostics_msg)
+                diagnostics_msg = self._dict_to_diagnostics_msg(diagnostics)
+                self.publish_node_diagnostics(diagnostics_msg)
