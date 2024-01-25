@@ -39,6 +39,8 @@ from std_srvs.srv import SetBool
 
 
 class DebugManager(object):
+    """Manages the collection and publishing of the node diagnostics."""
+
     def __init__(
         self,
         ros_node: rclpy.node.Node,

@@ -34,6 +34,12 @@ from ros_bt_py_interfaces.msg import SubtreeInfo
 
 
 class SubtreeManager(object):
+    """
+    Manages the collection of the states of a :class:`ros_bt_py.nodes.Subtree`.
+
+    The subtree states are published by the :class:`TreeManager`.
+    """
+
     def __init__(self):
 
         self.subtrees = {}
