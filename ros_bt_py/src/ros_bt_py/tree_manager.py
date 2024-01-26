@@ -1438,6 +1438,22 @@ class TreeManager:
             # If we're not removing the children, at least set their parent to None
             for child in self.nodes[request.node_name].children:
                 child.parent = None
+
+        # Unwire wirings that have removed nodes as source or target
+        self.unwire_data(
+            WireNodeData.Request(
+                wirings=[
+                    wiring
+                    for wiring in self.tree_msg.data_wirings
+                    if (
+                        wiring.source.node_name in names_to_remove
+                        or wiring.target.node_name in names_to_remove
+                    )
+                ]
+            ),
+            WireNodeData.Response(),
+        )
+
         # Remove nodes in the reverse order they were added to the
         # list, i.e. the "deepest" ones first. This ensures that the
         # parent we refer to in the error message still exists.
@@ -1469,21 +1485,6 @@ class TreeManager:
                 self.nodes[self.nodes[name].parent.name].remove_child(name)
             del self.nodes[name]
 
-        # Unwire wirings that have removed nodes as source or target
-        self.unwire_data(
-            WireNodeData.Request(
-                wirings=[
-                    wiring
-                    for wiring in self.tree_msg.data_wirings
-                    if (
-                        wiring.source.node_name in names_to_remove
-                        or wiring.target.node_name in names_to_remove
-                    )
-                ]
-            ),
-            WireNodeData.Response(),
-        )
-
         # Keep tree_msg up-to-date
         self.tree_msg.data_wirings = [
             wiring
@@ -1493,6 +1494,7 @@ class TreeManager:
                 and wiring.target.node_name not in names_to_remove
             )
         ]
+
         self.tree_msg.public_node_data = [
             data
             for data in self.tree_msg.public_node_data
