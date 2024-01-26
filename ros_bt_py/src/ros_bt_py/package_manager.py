@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import os
+from rclpy.logging import get_logger
 from ament_index_python import PackageNotFoundError
 from rclpy.utilities import ament_index_python
 
@@ -38,7 +39,7 @@ import rclpy.logging
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
-from ros_bt_py_interfaces.msg import Message, Messages, Package, Packages
+from ros_bt_py_interfaces.msg import Message, Messages, Package, Packages, Tree
 from ros_bt_py_interfaces.srv import (
     GetMessageFields,
     SaveTree,
@@ -51,6 +52,7 @@ from ros_bt_py.node import increment_name
 from ros_bt_py.helpers import (
     remove_input_output_values,
     json_encode,
+    set_node_state_to_shutdown,
 )
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
@@ -103,6 +105,8 @@ class PackageManager(object):
         """
         # remove input and output values from nodes
         request.tree = remove_input_output_values(tree=request.tree)
+        request.tree = set_node_state_to_shutdown(tree=request.tree)
+        request.tree.state = Tree.IDLE
 
         if request.storage_path not in self.tree_storage_directory_paths:
             response.success = False

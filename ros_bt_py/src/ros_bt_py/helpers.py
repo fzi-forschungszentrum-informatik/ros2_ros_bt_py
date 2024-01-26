@@ -33,7 +33,7 @@ import rclpy.logging
 import functools
 from collections import OrderedDict
 
-from ros_bt_py_interfaces.msg import CapabilityInterface
+from ros_bt_py_interfaces.msg import CapabilityInterface, Node, Tree
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
@@ -81,6 +81,13 @@ def remove_input_output_values(tree):
             node_input.serialized_value = "null"
         for node_output in node.outputs:
             node_output.serialized_value = "null"
+    return tree
+
+
+def set_node_state_to_shutdown(tree):
+    """Set all node states to shutdown."""
+    for node in tree.nodes:
+        node.state = Node.SHUTDOWN
     return tree
 
 
