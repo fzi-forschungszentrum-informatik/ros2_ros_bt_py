@@ -297,6 +297,7 @@ class PackageManager(object):
             return
         self.package_paths = []
         list_of_packages = Packages()
+
         for package, prefix in ament_index_python.get_packages_with_prefixes().items():
             self.package_paths.append(prefix)
             if not prefix.startswith("/opt/ros"):
@@ -304,7 +305,6 @@ class PackageManager(object):
                 package_msg.package = package
                 package_msg.path = prefix
                 list_of_packages.packages.append(package_msg)
-                break
 
         self.packages_list_pub.publish(list_of_packages)
 
