@@ -315,12 +315,12 @@ class Node(object):
 
     @contextmanager
     def _dummy_report_state(self):
-        self.loginfo("Reporting state up without debug manager")
+        self.logdebug("Reporting state up without debug manager")
         yield
 
     @contextmanager
     def _dummy_report_tick(self):
-        self.loginfo("Ticking without debug manager")
+        self.logdebug("Ticking without debug manager")
         yield
 
     node_classes = {}
@@ -519,7 +519,7 @@ class Node(object):
         """
         for input_name in self.inputs:
             if not self.inputs.is_updated(input_name):
-                self.loginfo("Running tick() with stale data!")
+                self.logdebug("Running tick() with stale data!")
             if self.inputs[input_name] is None:
                 # Omit the Error if we declared it to be "okay"
                 # This might still not be the best solution but enables some flexibility
