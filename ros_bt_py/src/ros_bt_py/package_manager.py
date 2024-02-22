@@ -113,19 +113,18 @@ class PackageManager(object):
             response.error_message = "Storage container does not exist on host!"
             return response
 
-        save_filepath = os.path.abspath(
-            os.path.join(request.storage_path, request.filepath)
-        )
         # if not os.path.exists(save_filepath):
         #     response.success = False
         #     response.error_message = f"File path does not exist: {save_filepath}"
         #     return response
 
         try:
-            save_path = os.path.join(save_filepath, request.filename)
+            save_filepath = os.path.abspath(
+                os.path.join(request.storage_path, request.filepath)
+            )
 
-            save_path = save_path.rstrip(os.sep)  # split trailing /
-            path, filename = os.path.split(save_path)
+            split_save_filepath = save_filepath.rstrip(os.sep)  # split trailing /
+            path, filename = os.path.split(split_save_filepath)
 
             # set tree name to filename
             request.tree.name = filename
@@ -139,31 +138,31 @@ class PackageManager(object):
                     response.file_path = path
                     return response
 
-            if os.path.isdir(save_path):
+            if os.path.isdir(split_save_filepath):
                 response.success = False
                 response.error_message = "File path already exists as directory"
                 response.file_path = path
                 return response
 
-            if os.path.isfile(save_path):
+            if os.path.isfile(split_save_filepath):
                 if request.allow_rename:
-                    save_path = make_filepath_unique(save_path)
-                    if os.path.isfile(save_path):
+                    unique_save_filepath = make_filepath_unique(split_save_filepath)
+                    if os.path.isfile(unique_save_filepath):
                         response.success = False
                         response.error_message = "Rename failed"
-                        response.file_path = save_path
+                        response.file_path = unique_save_filepath
                         return response
                 else:
                     if not request.allow_overwrite:
                         response.success = False
                         response.error_message = "Overwrite not allowed"
-                        response.file_path = save_path
+                        response.file_path = split_save_filepath
                         return response
 
-            with open(save_path, "w") as save_file:
+            with open(split_save_filepath, "w") as save_file:
                 msg = rosidl_runtime_py.message_to_yaml(request.tree)
                 save_file.write(msg)
-            response.file_path = save_path
+            response.file_path = split_save_filepath
             response.success = True
             return response
 

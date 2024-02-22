@@ -26,9 +26,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # Filename can contain a relative path starting from the package root
+
+# Name of the configured storage path.
 string storage_path
+# Filepath where to save the tree below the storage path.
 string filepath
-string filename
+# Tree to save
 Tree tree
 bool allow_overwrite
 bool allow_rename
