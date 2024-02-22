@@ -33,8 +33,7 @@ import rclpy.logging
 import functools
 from collections import OrderedDict
 
-from ros_bt_py_interfaces.msg import CapabilityInterface
-from ros_bt_py_interfaces.srv import FixYaml
+from ros_bt_py_interfaces.msg import CapabilityInterface, Node, Tree
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
@@ -71,67 +70,6 @@ def rospy_log_level_to_logging_log_level(rospy_level):
         return logging.FATAL
 
 
-def fix_yaml(request: FixYaml.Request, response: FixYaml.Response) -> FixYaml.Response:
-    """
-    Fix a yaml file and ensures it conforms to the expected format for ros msg de-/serializing.
-
-    :param request: The ros service request containing the yaml file.
-    :param response: The ros service response containing the fixed yaml.
-    :return: Always returns successfully.
-    """
-    tree_yaml = request.broken_yaml
-
-    last_index = 0
-
-    index = 0
-    search_string = "child_names: - "
-    replace_string = "child_names:"
-    search_len = len(search_string)
-    replace_len = len(replace_string)
-    while index < len(tree_yaml):
-        index = tree_yaml.find(search_string, index)
-        if index == -1:
-            break
-
-        # find the last linebreak and count number of spaces until child_names:
-        linebreak_index = tree_yaml.rfind("\n", last_index, index)
-
-        indent = index - linebreak_index - 1 + 2
-
-        # now replace the search_string with the proper linebreak
-        tree_yaml = (
-            f"{tree_yaml[:index + replace_len]}\n{tree_yaml[index + replace_len + 1:]}"
-        )
-
-        # now check all newlines until they are not "\n- " any more
-        newline_index = index + replace_len
-
-        # update for next check
-        index = index + search_len
-        last_index = index
-
-        # rospy.logerr("newline: %s" % tree_yaml[newline_index:])
-        while newline_index < len(tree_yaml):
-            # skip "\n"
-            newline_index = newline_index + 1
-            # check if the line starts with "- "
-            if tree_yaml[newline_index : newline_index + 2] == "- ":
-                # fix it by adding the correct indent:
-                tree_yaml = (
-                    tree_yaml[:newline_index] + " " * indent + tree_yaml[newline_index:]
-                )
-            else:
-                # found no compatible newline
-                break
-            # find next "\n"
-            newline_index = tree_yaml.find("\n", newline_index + indent + 2)
-
-    response.success = True
-    response.fixed_yaml = tree_yaml
-
-    return response
-
-
 def remove_input_output_values(tree):
     """
     Remove all input and output values from the tree nodes.
@@ -143,6 +81,13 @@ def remove_input_output_values(tree):
             node_input.serialized_value = "null"
         for node_output in node.outputs:
             node_output.serialized_value = "null"
+    return tree
+
+
+def set_node_state_to_shutdown(tree):
+    """Set all node states to shutdown."""
+    for node in tree.nodes:
+        node.state = Node.SHUTDOWN
     return tree
 
 

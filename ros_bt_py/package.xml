@@ -35,7 +35,6 @@
 
   <!-- Documentation dependencies -->
   <depend>python3-sphinx</depend>
-  <depend>python3-sphinx-rtd-theme</depend>
 
   <!-- Test dependencies -->
   <test_depend>python3-pytest</test_depend>

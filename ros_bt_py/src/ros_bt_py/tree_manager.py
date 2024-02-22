@@ -59,7 +59,6 @@ from ros_bt_py_interfaces.srv import (
     ClearTree,
     Continue,
     ControlTreeExecution,
-    FixYaml,
     GenerateSubtree,
     GetAvailableNodes,
     GetSubtree,
@@ -87,7 +86,6 @@ from ros_bt_py.exceptions import (
     TreeTopologyError,
 )
 from ros_bt_py.helpers import (
-    fix_yaml,
     remove_input_output_values,
     json_encode,
     json_decode,
@@ -217,19 +215,7 @@ def load_tree_from_file(
                     f"Encountered a ScannerError while parsing the tree yaml: {str(ex)}\n"
                     f"This is most likely caused by a tree that was created with "
                     f"PyYAML 5 and genpy < 0.6.10.\n"
-                    f"Attempting to fix this automatically..."
                 )
-                # ScannerError most likely means that the tree was created
-                # with PyYAML 5 and genpy <0.6.10
-                # fix this by correctly indenting the broken lists
-                fix_yaml_response = FixYaml.Response()
-                fix_yaml_response = fix_yaml(
-                    request=FixYaml.Request(broken_yaml=tree_yaml),
-                    response=fix_yaml_response,
-                )
-
-                # try parsing again with fixed tree_yaml:
-                response = parse_tree_yaml(tree_yaml=fix_yaml_response.fixed_yaml)
             # remove input and output values from nodes
             tree = remove_input_output_values(tree=response.tree)
 
@@ -1452,6 +1438,22 @@ class TreeManager:
             # If we're not removing the children, at least set their parent to None
             for child in self.nodes[request.node_name].children:
                 child.parent = None
+
+        # Unwire wirings that have removed nodes as source or target
+        self.unwire_data(
+            WireNodeData.Request(
+                wirings=[
+                    wiring
+                    for wiring in self.tree_msg.data_wirings
+                    if (
+                        wiring.source.node_name in names_to_remove
+                        or wiring.target.node_name in names_to_remove
+                    )
+                ]
+            ),
+            WireNodeData.Response(),
+        )
+
         # Remove nodes in the reverse order they were added to the
         # list, i.e. the "deepest" ones first. This ensures that the
         # parent we refer to in the error message still exists.
@@ -1483,21 +1485,6 @@ class TreeManager:
                 self.nodes[self.nodes[name].parent.name].remove_child(name)
             del self.nodes[name]
 
-        # Unwire wirings that have removed nodes as source or target
-        self.unwire_data(
-            WireNodeData.Request(
-                wirings=[
-                    wiring
-                    for wiring in self.tree_msg.data_wirings
-                    if (
-                        wiring.source.node_name in names_to_remove
-                        or wiring.target.node_name in names_to_remove
-                    )
-                ]
-            ),
-            WireNodeData.Response(),
-        )
-
         # Keep tree_msg up-to-date
         self.tree_msg.data_wirings = [
             wiring
@@ -1507,6 +1494,7 @@ class TreeManager:
                 and wiring.target.node_name not in names_to_remove
             )
         ]
+
         self.tree_msg.public_node_data = [
             data
             for data in self.tree_msg.public_node_data
