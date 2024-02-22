@@ -39,7 +39,7 @@ generate_parameter_module(
 
 setup(
     name=package_name,
-    version="0.1.0",
+    version="0.0.1",
     packages=[
         "ros_bt_py",
         "ros_bt_py.nodes",
