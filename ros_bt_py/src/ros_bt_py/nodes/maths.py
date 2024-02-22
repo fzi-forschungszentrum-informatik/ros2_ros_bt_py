@@ -28,6 +28,7 @@
 import operator
 import math
 from typing import Optional, Dict
+from rclpy.node import Node
 
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 
@@ -62,7 +63,8 @@ class Convert(Leaf):
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
-        name: str = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
         succeed_always: bool = False,
         simulate_tick: bool = False,
     ):
@@ -70,6 +72,7 @@ class Convert(Leaf):
             options=options,
             debug_manager=debug_manager,
             name=name,
+            ros_node=ros_node,
             succeed_always=succeed_always,
             simulate_tick=simulate_tick,
         )
@@ -172,7 +175,8 @@ class Operation(Leaf):
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
-        name: str = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
         succeed_always: bool = False,
         simulate_tick: bool = False,
     ):
@@ -180,6 +184,7 @@ class Operation(Leaf):
             options=options,
             debug_manager=debug_manager,
             name=name,
+            ros_node=ros_node,
             succeed_always=succeed_always,
             simulate_tick=simulate_tick,
         )
@@ -297,7 +302,8 @@ class UnaryOperation(Leaf):
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
-        name: str = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
         succeed_always: bool = False,
         simulate_tick: bool = False,
     ):
@@ -305,6 +311,7 @@ class UnaryOperation(Leaf):
             options=options,
             debug_manager=debug_manager,
             name=name,
+            ros_node=ros_node,
             succeed_always=succeed_always,
             simulate_tick=simulate_tick,
         )
