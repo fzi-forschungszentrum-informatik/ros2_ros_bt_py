@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
 
 
 class OptionRef(object):
@@ -55,9 +55,9 @@ class OptionRef(object):
 class NodeConfig(object):
     def __init__(
         self,
-        options: Dict[str, type],
-        inputs: Dict[str, type],
-        outputs: Dict[str, type],
+        options: Dict[str, Any],
+        inputs: Dict[str, Any],
+        outputs: Dict[str, Any],
         max_children: Optional[int],
         optional_options: Optional[List[str]] = None,
         version: str = "",
