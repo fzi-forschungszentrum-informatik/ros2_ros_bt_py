@@ -28,11 +28,11 @@ You really also should do step 4:
 
 Let's start with the skeleton of a new node class::
 
-  import rospy
+  import rclpy
 
   # Import the ROS message class under a different name
   # to avoid confusion. We need it for the node state names.
-  from ros_bt_py_msgs.msg import Node as NodeMsg
+  from ros_bt_py_interfaces.msg import Node as NodeMsg
 
   # We need these to define a Node.
   from ros_bt_py.node import Node, define_bt_node
@@ -128,11 +128,11 @@ list of our node's children.
 With all of the :code:`_do_` methods implemented the complete code
 looks like this::
 
-  import rospy
+  import rclpy
 
   # Import the ROS message class under a different name
   # to avoid confusion. We need it for the node state names.
-  from ros_bt_py_msgs.msg import Node as NodeMsg
+  from ros_bt_py_interfaces.msg import Node as NodeMsg
 
   # We need these to define a Node.
   from ros_bt_py.node import Node, define_bt_node
