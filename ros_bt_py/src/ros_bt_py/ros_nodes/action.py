@@ -126,6 +126,7 @@ class ActionForSetType(ABC, Leaf):
             raise BehaviorTreeException(error_msg)
         self._lock = Lock()
         self._feedback = None
+        self._active_goal = None
 
         self._new_goal_future: Optional[rclpy.Future] = None
         self._running_goal_handle: Optional[ClientGoalHandle] = None
@@ -167,7 +168,8 @@ class ActionForSetType(ABC, Leaf):
             self._feedback = feedback
 
     def _do_tick_wait_for_action_complete(self) -> str:
-        if self._running_goal_handle is None or self._running_goal_future is None:
+        if self._running_goal_future is None:
+            self.logfatal("Result handle future is none! Cannot continue!")
             return NodeMsg.BROKEN
         if self._running_goal_future.done():
             result = self._running_goal_future.result()
@@ -199,13 +201,15 @@ class ActionForSetType(ABC, Leaf):
         return NodeMsg.RUNNING
 
     def _do_tick_cancel_running_goal(self) -> str:
-        if self._running_goal_handle is None or self._cancel_goal_future is not None:
+        if self._running_goal_handle is None:
+            self.logfatal("Result handle future is none! Cannot continue!")
             return NodeMsg.BROKEN
         self._cancel_goal_future = self._running_goal_handle.cancel_goal_async()
         return NodeMsg.RUNNING
 
     def _do_tick_wait_for_cancel_complete(self) -> str:
         if self._cancel_goal_future is None:
+            self.logfatal("Cancel goal handle future is none! Cannot continue!")
             return NodeMsg.BROKEN
         if self._cancel_goal_future.done():
             self._cancel_goal_future = None
@@ -223,15 +227,18 @@ class ActionForSetType(ABC, Leaf):
 
     def _do_tick_send_new_goal(self) -> str:
         if self._running_goal_handle is not None or self._new_goal_future is not None:
+            self.logfatal("Running goal handle handle or new goal future is not none! Cannot continue!")
             return NodeMsg.BROKEN
         self._new_goal_future = self._ac.send_goal_async(
             goal=self._input_goal, feedback_callback=self._feedback_cb
         )
-        self._active_goal = self._input_goal
+        if self._input_goal is not None:
+            self._active_goal = self._input_goal
         return NodeMsg.SUCCEED
 
     def _do_tick_wait_for_new_goal_complete(self) -> str:
         if self._new_goal_future is None:
+            self.logfatal("New goal handle future is none! Cannot continue!")
             return NodeMsg.BROKEN
         if self._new_goal_future.done():
             self._running_goal_handle: Optional[
@@ -256,6 +263,7 @@ class ActionForSetType(ABC, Leaf):
         return NodeMsg.RUNNING
 
     def _do_tick(self):
+        self.logfatal(f"Tick Begin: {self._active_goal}")
         if self.simulate_tick:
             self.logdebug("Simulating tick. Action is not executing!")
             if self.succeed_always:
@@ -279,9 +287,12 @@ class ActionForSetType(ABC, Leaf):
             and self._running_goal_handle.status == GoalStatus.STATUS_EXECUTING
         ):
             # Check if goal changed
+            self.logfatal(f"Active goal: {self._active_goal}; Input goal: {self._input_goal}; {self._active_goal == self._input_goal}")
             if self._active_goal == self._input_goal:
+                self.logfatal("Waiting for goal competion!")
                 return self._do_tick_wait_for_action_complete()
             else:
+                self.logfatal("Cancelling goal!")
                 status = self._do_tick_cancel_running_goal()
                 if status not in [NodeMsg.SUCCEED]:
                     return status
