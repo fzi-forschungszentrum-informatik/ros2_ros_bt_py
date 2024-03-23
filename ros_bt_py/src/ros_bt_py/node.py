@@ -45,6 +45,7 @@ from ros_bt_py_interfaces.msg import Tree
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import BehaviorTreeException, NodeStateError, NodeConfigError
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
@@ -331,6 +332,7 @@ class Node(object):
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[ROSNode] = None,
         succeed_always: bool = False,
@@ -374,6 +376,7 @@ class Node(object):
 
         self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager = debug_manager
+        self.subtree_manager = subtree_manager
 
         self.succeed_always = succeed_always
         self.simulate_tick = simulate_tick
@@ -1130,6 +1133,7 @@ class Node(object):
         msg: NodeMsg,
         ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
         permissive: bool = False,
     ):
         """
@@ -1234,11 +1238,15 @@ class Node(object):
                 name=msg.name,
                 options=options_dict,
                 debug_manager=debug_manager,
+                subtree_manager=subtree_manager,
                 ros_node=ros_node,
             )
         else:
             node_instance = node_class(
-                options=options_dict, debug_manager=debug_manager, ros_node=ros_node
+                options=options_dict,
+                debug_manager=debug_manager,
+                subtree_manager=subtree_manager,
+                ros_node=ros_node,
             )
 
         _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)

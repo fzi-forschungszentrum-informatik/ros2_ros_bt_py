@@ -25,8 +25,4 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-bool single_step
-bool collect_performance_data
-bool publish_subtrees
-bool collect_node_diagnostics
----
+Tree[] subtree_states
