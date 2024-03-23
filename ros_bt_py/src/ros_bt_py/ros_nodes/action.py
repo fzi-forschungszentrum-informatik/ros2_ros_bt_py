@@ -216,7 +216,7 @@ class ActionForSetType(ABC, Leaf):
                 self.logdebug("Action result is none, action call must have failed!")
                 return NodeMsg.FAILED
 
-            self.outputs["result"] = result
+            self.outputs["result"] = result.result
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
@@ -274,7 +274,6 @@ class ActionForSetType(ABC, Leaf):
             self._cancel_goal_future = None
             self._running_goal_handle = None
             self._running_goal_future = None
-            self._active_goal = None
 
             self._internal_state = ActionStates.FINISHED
             return NodeMsg.SUCCEED
@@ -311,7 +310,7 @@ class ActionForSetType(ABC, Leaf):
             self._internal_state = ActionStates.IDLE
             return NodeMsg.BROKEN
 
-        if self._new_goal_future.done():
+        if self._new_goal_request_future.done():
             self._running_goal_handle = self._new_goal_request_future.result()
             self._new_goal_request_future = None
 
@@ -326,7 +325,7 @@ class ActionForSetType(ABC, Leaf):
             self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
             return NodeMsg.SUCCEED
 
-        if self._new_goal_future.cancelled():
+        if self._new_goal_request_future.cancelled():
             self.logwarn("Request for a new goal was cancelled!")
             self._new_goal_request_future = None
             self._running_goal_handle = None
@@ -338,7 +337,6 @@ class ActionForSetType(ABC, Leaf):
         return NodeMsg.RUNNING
 
     def _do_tick(self):
-        self.logfatal(f"Tick Begin: {self._active_goal}")
         if self.simulate_tick:
             self.logdebug("Simulating tick. Action is not executing!")
             if self.succeed_always:
@@ -386,6 +384,13 @@ class ActionForSetType(ABC, Leaf):
             return self._do_tick_finished()
 
         return NodeMsg.BROKEN
+
+    def _do_tick_finished(self):
+        if self._active_goal == self._input_goal:
+            return self._state
+        else:
+            self._internal_state = ActionStates.IDLE
+            return NodeMsg.RUNNING
 
     def _do_untick(self):
         if self._internal_state == ActionStates.WAITING_FOR_ACTION_COMPLETE:
