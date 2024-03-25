@@ -219,7 +219,6 @@ class ActionForSetType(ABC, Leaf):
             self.outputs["result"] = result.result
             self._running_goal_handle = None
             self._running_goal_future = None
-            self._active_goal = None
 
             self._internal_state = ActionStates.FINISHED
 
@@ -241,10 +240,13 @@ class ActionForSetType(ABC, Leaf):
 
         if seconds_running > self.options["timeout_seconds"]:
             self.logwarn(f"Cancelling goal after {seconds_running:f} seconds!")
+
+            # This cancels the goal result future, this is not cancelling the goal.
             self._running_goal_future.cancel()
             self._running_goal_future = None
+
             self._internal_state = ActionStates.REQUEST_GOAL_CANCELLATION
-            return NodeMsg.SUCCEED
+            return NodeMsg.RUNNING
 
         return NodeMsg.RUNNING
 
@@ -274,6 +276,7 @@ class ActionForSetType(ABC, Leaf):
             self._cancel_goal_future = None
             self._running_goal_handle = None
             self._running_goal_future = None
+            self._active_goal = None
 
             self._internal_state = ActionStates.FINISHED
             return NodeMsg.SUCCEED
