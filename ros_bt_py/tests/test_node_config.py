@@ -116,10 +116,12 @@ def example_tags():
 @pytest.fixture
 def example_config_0():
     return NodeConfig(
-        options={"option1": str, "options2": bool},
         inputs={"input1": int, "input2": OptionRef(1)},
         outputs={"output1": float, "output2": OptionRef("Test")},
+        options={"option1": str, "options2": bool},
         max_children=3,
+        optional_options={"optional1": str, "optional2": int},
+        version="1.0",
     )
 
 
@@ -129,6 +131,8 @@ def example_config_1():
         inputs={"input1": int, "input2": OptionRef(1)},
         outputs={"output1": float, "output2": OptionRef("Test")},
         max_children=4,
+        optional_options={"optional1": str, "optional2": int},
+        version="1.0",
     )
 
 
