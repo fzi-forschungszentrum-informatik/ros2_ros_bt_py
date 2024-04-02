@@ -113,29 +113,6 @@ def example_tags():
     return ["tag1", "tag2"]
 
 
-@pytest.fixture
-def example_config_0():
-    return NodeConfig(
-        inputs={"input1": int, "input2": OptionRef(1)},
-        outputs={"output1": float, "output2": OptionRef("Test")},
-        options={"option1": str, "options2": bool},
-        max_children=3,
-        optional_options={"optional1": str, "optional2": int},
-        version="1.0",
-    )
-
-
-def example_config_1():
-    return NodeConfig(
-        options={"option1": str, "options2": bool},
-        inputs={"input1": int, "input2": OptionRef(1)},
-        outputs={"output1": float, "output2": OptionRef("Test")},
-        max_children=4,
-        optional_options={"optional1": str, "optional2": int},
-        version="1.0",
-    )
-
-
 class TestNodeConfig:
     def test_init_required(
         example_inputs, example_outputs, example_options, example_max_children
@@ -212,24 +189,62 @@ class TestNodeConfig:
     @pytest.mark.parametrize(
         "same, other, result",
         [
-            (example_config_0, example_config_0, True),
-            (example_config_0, example_config_1, False),
-            (example_config_1, example_config_0, False),
-            (example_config_1, example_config_1, True),
+            (0, 0, True),
+            (0, 1, False),
+            (1, 0, False),
+            (1, 1, True),
         ],
     )
     def test_eq(same, other, result):
-        assert (same == other) == result
+        test_0 = NodeConfig(
+            inputs={"input1": int, "input2": OptionRef(1)},
+            outputs={"output1": float, "output2": OptionRef("Test")},
+            options={"option1": str, "options2": bool},
+            max_children=3,
+            optional_options={"optional1": str, "optional2": int},
+            version="1.0",
+        )
+
+        test_1 = NodeConfig(
+            options={"option1": str, "options2": bool},
+            inputs={"input1": int, "input2": OptionRef(1)},
+            outputs={"output1": float, "output2": OptionRef("Test")},
+            max_children=4,
+            optional_options={"optional1": str, "optional2": int},
+            version="1.0",
+        )
+        node_config_0 = test_0 if same == 0 else test_1
+        node_config_1 = test_0 if other == 0 else test_1
+        assert (node_config_0 == node_config_1) == result
 
     @staticmethod
     @pytest.mark.parametrize(
         "same, other, result",
         [
-            (example_config_0, example_config_0, False),
-            (example_config_0, example_config_1, True),
-            (example_config_1, example_config_0, True),
-            (example_config_1, example_config_1, False),
+            (0, 0, False),
+            (0, 1, True),
+            (1, 0, True),
+            (1, 1, False),
         ],
     )
     def test_ne(same, other, result):
-        assert (same != other) == result
+        test_0 = NodeConfig(
+            inputs={"input1": int, "input2": OptionRef(1)},
+            outputs={"output1": float, "output2": OptionRef("Test")},
+            options={"option1": str, "options2": bool},
+            max_children=3,
+            optional_options={"optional1": str, "optional2": int},
+            version="1.0",
+        )
+
+        test_1 = NodeConfig(
+            options={"option1": str, "options2": bool},
+            inputs={"input1": int, "input2": OptionRef(1)},
+            outputs={"output1": float, "output2": OptionRef("Test")},
+            max_children=4,
+            optional_options={"optional1": str, "optional2": int},
+            version="1.0",
+        )
+        node_config_0 = test_0 if same == 0 else test_1
+        node_config_1 = test_0 if other == 0 else test_1
+        assert (node_config_0 != node_config_1) == result
