@@ -113,6 +113,25 @@ def example_tags():
     return ["tag1", "tag2"]
 
 
+@pytest.fixture
+def example_config_0():
+    return NodeConfig(
+        options={"option1": str, "options2": bool},
+        inputs={"input1": int, "input2": OptionRef(1)},
+        outputs={"output1": float, "output2": OptionRef("Test")},
+        max_children=3,
+    )
+
+
+def example_config_1():
+    return NodeConfig(
+        options={"option1": str, "options2": bool},
+        inputs={"input1": int, "input2": OptionRef(1)},
+        outputs={"output1": float, "output2": OptionRef("Test")},
+        max_children=4,
+    )
+
+
 class TestNodeConfig:
     def test_init_required(
         example_inputs, example_outputs, example_options, example_max_children
@@ -158,3 +177,55 @@ class TestNodeConfig:
         assert node_config.optional_options == example_optional_options
         assert node_config.tags == example_tags
         assert node_config.version == example_version
+
+    def test_repr(
+        example_inputs,
+        example_outputs,
+        example_options,
+        example_optional_options,
+        example_max_children,
+        example_version,
+        example_tags,
+    ):
+        node_config = NodeConfig(
+            options=example_options,
+            inputs=example_inputs,
+            outputs=example_outputs,
+            max_children=example_max_children,
+            optional_options=example_optional_options,
+            version=example_version,
+            tags=example_tags,
+        )
+
+        expected_repr = (
+            f"NodeConfig(inputs={example_inputs}, outputs={example_outputs}, "
+        )
+        f"options={example_options}, max_children={example_max_children}, "
+        f"optional_options={example_optional_options}, version={example_version})"
+        assert repr(node_config) == expected_repr
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "same, other, result",
+        [
+            (example_config_0, example_config_0, True),
+            (example_config_0, example_config_1, False),
+            (example_config_1, example_config_0, False),
+            (example_config_1, example_config_1, True),
+        ],
+    )
+    def test_eq(same, other, result):
+        assert (same == other) == result
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "same, other, result",
+        [
+            (example_config_0, example_config_0, False),
+            (example_config_0, example_config_1, True),
+            (example_config_1, example_config_0, True),
+            (example_config_1, example_config_1, False),
+        ],
+    )
+    def test_ne(same, other, result):
+        assert (same != other) == result
