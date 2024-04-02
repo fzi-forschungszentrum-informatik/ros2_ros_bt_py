@@ -199,9 +199,9 @@ class TestNodeConfig:
 
         expected_repr = (
             f"NodeConfig(inputs={example_inputs}, outputs={example_outputs}, "
+            f"options={example_options}, max_children={example_max_children}, "
+            f"optional_options={example_optional_options}, version={example_version})"
         )
-        f"options={example_options}, max_children={example_max_children}, "
-        f"optional_options={example_optional_options}, version={example_version})"
         assert repr(node_config) == expected_repr
 
     @staticmethod
