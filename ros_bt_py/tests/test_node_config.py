@@ -35,19 +35,19 @@ class TestOptionRefInputs:
     @staticmethod
     def test_init(option_key):
         option_ref = OptionRef(option_key)
-        assert option_key == option_ref.option_key
+        assert option_ref.option_key == option_key
 
     @staticmethod
     def test_repr(option_key):
         option_ref = OptionRef(option_key)
         expected_repr = f"OptionRef(option_key={option_key!r})"
-        assert expected_repr == repr(option_ref)
+        assert repr(option_ref) == expected_repr
 
     @staticmethod
     def test_name(option_key):
         option_ref = OptionRef(option_key)
         expected_name = f"OptionRef(option_key={option_key!r})"
-        assert expected_name == option_ref.__name__()
+        assert option_ref.__name__() == expected_name
 
 
 class TestOptionRefEqs:
@@ -62,7 +62,7 @@ class TestOptionRefEqs:
         ],
     )
     def test_eq(same, other, result):
-        assert result == (same == other)
+        assert (same == other) == result
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -75,4 +75,4 @@ class TestOptionRefEqs:
         ],
     )
     def test_ne(same, other, result):
-        assert result == (same != other)
+        assert (same != other) == result
