@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
-from ros_bt_py.node_config import OptionRef
+from ros_bt_py.node_config import OptionRef, NodeConfig
 
 
 @pytest.mark.parametrize("option_key", ["Test", 1, 1.0, True])
@@ -76,3 +76,85 @@ class TestOptionRefEqs:
     )
     def test_ne(same, other, result):
         assert (same != other) == result
+
+
+@pytest.fixture
+def example_inputs():
+    return {"input1": int, "input2": OptionRef(1)}
+
+
+@pytest.fixture
+def example_outputs():
+    return {"output1": float, "output2": OptionRef("Test")}
+
+
+@pytest.fixture
+def example_options():
+    return {"option1": str, "options2": bool}
+
+
+@pytest.fixture
+def example_optional_options():
+    return {"optional1": str, "optional2": int}
+
+
+@pytest.fixture
+def example_max_children():
+    return 3
+
+
+@pytest.fixture
+def example_version():
+    return "1.0"
+
+
+@pytest.fixture
+def example_tags():
+    return ["tag1", "tag2"]
+
+
+class TestNodeConfig:
+    def test_init_required(
+        example_inputs, example_outputs, example_options, example_max_children
+    ):
+        node_config = NodeConfig(
+            options=example_options,
+            inputs=example_inputs,
+            outputs=example_outputs,
+            max_children=example_max_children,
+        )
+        assert node_config.inputs == example_inputs
+        assert node_config.outputs == example_outputs
+        assert node_config.options == example_options
+        assert node_config.max_children == example_max_children
+        assert node_config.optional_options == []
+        assert node_config.tags == []
+        assert node_config.version == ""
+
+    def test_init_optional(
+        example_inputs,
+        example_outputs,
+        example_options,
+        example_optional_options,
+        example_max_children,
+        example_version,
+        example_tags,
+    ):
+
+        node_config = NodeConfig(
+            options=example_options,
+            inputs=example_inputs,
+            outputs=example_outputs,
+            max_children=example_max_children,
+            optional_options=example_optional_options,
+            version=example_version,
+            tags=example_tags,
+        )
+
+        assert node_config.inputs == example_inputs
+        assert node_config.outputs == example_outputs
+        assert node_config.options == example_options
+        assert node_config.max_children == example_max_children
+        assert node_config.optional_options == example_optional_options
+        assert node_config.tags == example_tags
+        assert node_config.version == example_version
