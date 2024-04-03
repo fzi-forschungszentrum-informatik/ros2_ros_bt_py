@@ -90,12 +90,12 @@ def example_outputs():
 
 @pytest.fixture
 def example_options():
-    return {"option1": str, "options2": bool}
+    return {"option1": str, "option2": bool}
 
 
 @pytest.fixture
 def example_optional_options():
-    return {"optional1": str, "optional2": int}
+    return ["optional1", "optional2"],
 
 
 @pytest.fixture
@@ -199,16 +199,16 @@ class TestNodeConfig:
         test_0 = NodeConfig(
             inputs={"input1": int, "input2": OptionRef(1)},
             outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "options2": bool},
+            options={"option1": str, "option2": bool},
             max_children=3,
             optional_options={"optional1": str, "optional2": int},
             version="1.0",
         )
 
         test_1 = NodeConfig(
-            options={"option1": str, "options2": bool},
             inputs={"input1": int, "input2": OptionRef(1)},
             outputs={"output1": float, "output2": OptionRef("Test")},
+            options={"option1": str, "option2": bool},
             max_children=4,
             optional_options={"optional1": str, "optional2": int},
             version="1.0",
@@ -231,16 +231,16 @@ class TestNodeConfig:
         test_0 = NodeConfig(
             inputs={"input1": int, "input2": OptionRef(1)},
             outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "options2": bool},
+            options={"option1": str, "option2": bool},
             max_children=3,
             optional_options={"optional1": str, "optional2": int},
             version="1.0",
         )
 
         test_1 = NodeConfig(
-            options={"option1": str, "options2": bool},
             inputs={"input1": int, "input2": OptionRef(1)},
             outputs={"output1": float, "output2": OptionRef("Test")},
+            options={"option1": str, "option2": bool},
             max_children=4,
             optional_options={"optional1": str, "optional2": int},
             version="1.0",
