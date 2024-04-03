@@ -95,7 +95,7 @@ def example_options():
 
 @pytest.fixture
 def example_optional_options():
-    return ["optional1", "optional2"],
+    return (["optional1", "optional2"],)
 
 
 @pytest.fixture
@@ -201,7 +201,7 @@ class TestNodeConfig:
             outputs={"output1": float, "output2": OptionRef("Test")},
             options={"option1": str, "option2": bool},
             max_children=3,
-            optional_options={"optional1": str, "optional2": int},
+            optional_options=["optional1", "optional2"],
             version="1.0",
         )
 
@@ -210,7 +210,7 @@ class TestNodeConfig:
             outputs={"output1": float, "output2": OptionRef("Test")},
             options={"option1": str, "option2": bool},
             max_children=4,
-            optional_options={"optional1": str, "optional2": int},
+            optional_options=["optional1", "optional2"],
             version="1.0",
         )
         node_config_0 = test_0 if same == 0 else test_1
@@ -233,7 +233,7 @@ class TestNodeConfig:
             outputs={"output1": float, "output2": OptionRef("Test")},
             options={"option1": str, "option2": bool},
             max_children=3,
-            optional_options={"optional1": str, "optional2": int},
+            optional_options=["optional1", "optional2"],
             version="1.0",
         )
 
@@ -242,7 +242,7 @@ class TestNodeConfig:
             outputs={"output1": float, "output2": OptionRef("Test")},
             options={"option1": str, "option2": bool},
             max_children=4,
-            optional_options={"optional1": str, "optional2": int},
+            optional_options=["optional1", "optional2"],
             version="1.0",
         )
         node_config_0 = test_0 if same == 0 else test_1
