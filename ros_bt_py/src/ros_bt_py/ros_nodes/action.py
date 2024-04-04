@@ -27,7 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from threading import Lock
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Any
+from enum import Enum
 
 import rclpy
 from rclpy.action.client import ActionClient, ClientGoalHandle
@@ -41,6 +42,15 @@ from ros_bt_py_interfaces.msg import UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
+
+
+class ActionStates(Enum):
+    IDLE = 0
+    WAITING_FOR_GOAL_ACCEPTANCE = 1
+    WAITING_FOR_ACTION_COMPLETE = 2
+    REQUEST_GOAL_CANCELLATION = 3
+    WAITING_FOR_GOAL_CANCELLATION = 4
+    FINISHED = 5
 
 
 @define_bt_node(
@@ -97,6 +107,25 @@ class ActionForSetType(ABC, Leaf):
 
     """
 
+    _internal_state = ActionStates.IDLE
+    """Internal state of the action."""
+
+    _new_goal_request_future: Optional[rclpy.Future] = None
+    """Future for requesting a new goal to be executed."""
+
+    _running_goal_handle: Optional[ClientGoalHandle] = None
+    """Goal handle for the currently running goal!."""
+
+    _running_goal_future: Optional[rclpy.Future] = None
+    """Future on the current goal handle."""
+
+    _cancel_goal_future: Optional[rclpy.Future] = None
+    """Future to request the cancellation of the goal."""
+
+    _action_goal: Optional[Any] = None
+
+    _action_available: bool = True
+
     @abstractmethod
     def set_action_attributes(self):
         """Set all important action attributes."""
@@ -126,14 +155,17 @@ class ActionForSetType(ABC, Leaf):
             raise BehaviorTreeException(error_msg)
         self._lock = Lock()
         self._feedback = None
+        self._active_goal = None
 
-        self._new_goal_future: Optional[rclpy.Future] = None
-        self._running_goal_handle: Optional[ClientGoalHandle] = None
-        self._running_goal_future: Optional[rclpy.Future] = None
+        self._internal_state = ActionStates.IDLE
 
-        self._cancel_goal_future: Optional[rclpy.Future] = None
+        self._new_goal_request_future = None
+        self._running_goal_handle = None
+        self._running_goal_future = None
 
-        self._action_available: bool = True
+        self._cancel_goal_future = None
+
+        self._action_available = True
         self._shutdown: bool = False
 
         self.set_action_attributes()
@@ -163,96 +195,148 @@ class ActionForSetType(ABC, Leaf):
         return NodeMsg.IDLE
 
     def _feedback_cb(self, feedback) -> None:
+        self.logdebug(f"Received feedback message: {feedback}")
         with self._lock:
             self._feedback = feedback
 
     def _do_tick_wait_for_action_complete(self) -> str:
         if self._running_goal_handle is None or self._running_goal_future is None:
+            self._internal_state = ActionStates.FINISHED
             return NodeMsg.BROKEN
+
         if self._running_goal_future.done():
             result = self._running_goal_future.result()
             if result is None:
                 self._running_goal_handle = None
                 self._running_goal_future = None
                 self._active_goal = None
+
+                self._internal_state = ActionStates.FINISHED
+
+                self.logdebug("Action result is none, action call must have failed!")
                 return NodeMsg.FAILED
-            self.outputs["result"] = result
+
+            self.outputs["result"] = result.result
             self._running_goal_handle = None
             self._running_goal_future = None
-            self._active_goal = None
+
+            self._internal_state = ActionStates.FINISHED
+
+            self.logdebug("Action succeeded, publishing result!")
             return NodeMsg.SUCCEED
+
         if self._running_goal_future.cancelled():
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
+
+            self._internal_state = ActionStates.FINISHED
+
+            self.logwarn("Action execution was cancelled by the remote server!")
             return NodeMsg.FAILED
         seconds_running = (
             self._running_goal_start_time - self.ros_node.get_clock().now()
         ).nanoseconds / 1e9
+
         if seconds_running > self.options["timeout_seconds"]:
             self.logwarn(f"Cancelling goal after {seconds_running:f} seconds!")
+
+            # This cancels the goal result future, this is not cancelling the goal.
             self._running_goal_future.cancel()
             self._running_goal_future = None
-            status = self._do_tick_cancel_running_goal()
-            if status != NodeMsg.SUCCEED:
-                return status
+
+            self._internal_state = ActionStates.REQUEST_GOAL_CANCELLATION
+            return NodeMsg.RUNNING
+
         return NodeMsg.RUNNING
 
     def _do_tick_cancel_running_goal(self) -> str:
-        if self._running_goal_handle is None or self._cancel_goal_future is not None:
+        if self._running_goal_handle is None:
+            self.logwarn(
+                "Goal cancellation was requested, but there is no handle to the running goal!"
+            )
+            self._internal_state = ActionStates.FINISHED
             return NodeMsg.BROKEN
+
         self._cancel_goal_future = self._running_goal_handle.cancel_goal_async()
-        return NodeMsg.RUNNING
+        self._internal_state = ActionStates.WAITING_FOR_GOAL_CANCELLATION
+        return NodeMsg.SUCCEED
 
     def _do_tick_wait_for_cancel_complete(self) -> str:
         if self._cancel_goal_future is None:
+            self.logwarn(
+                "Waiting for goal cancellation to complete, but the future is none!"
+            )
+            self._internal_state = ActionStates.FINISHED
             return NodeMsg.BROKEN
+
         if self._cancel_goal_future.done():
+            self.logdebug("Successfully cancelled goal exectution!")
+
             self._cancel_goal_future = None
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
+
+            self._internal_state = ActionStates.FINISHED
             return NodeMsg.SUCCEED
         if self._cancel_goal_future.cancelled():
+            self.logdebug("Goal cancellation was cancelled!")
+
             self._cancel_goal_future = None
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
-            return NodeMsg.FAIL
+
+            self._internal_state = ActionStates.FINISHED
+            return NodeMsg.FAILURE
         return NodeMsg.RUNNING
 
     def _do_tick_send_new_goal(self) -> str:
-        if self._running_goal_handle is not None or self._new_goal_future is not None:
-            return NodeMsg.BROKEN
-        self._new_goal_future = self._ac.send_goal_async(
+        """Tick to request the execution of a new goal on the action server."""
+        self._new_goal_request_future = self._ac.send_goal_async(
             goal=self._input_goal, feedback_callback=self._feedback_cb
         )
+
         self._active_goal = self._input_goal
+        self._internal_state = ActionStates.WAITING_FOR_GOAL_ACCEPTANCE
+
         return NodeMsg.SUCCEED
 
     def _do_tick_wait_for_new_goal_complete(self) -> str:
-        if self._new_goal_future is None:
+        """Tick to wait for the new goal to be accepted by the action server!."""
+        if self._new_goal_request_future is None:
+            self.logerr(
+                "Waiting for the goal to be accepted"
+                "on the action server, but the future is none!"
+            )
+            self._internal_state = ActionStates.IDLE
             return NodeMsg.BROKEN
-        if self._new_goal_future.done():
-            self._running_goal_handle: Optional[
-                ClientGoalHandle
-            ] = self._new_goal_future.result()
-            self._new_goal_future = None
-            self._active_goal = None
+
+        if self._new_goal_request_future.done():
+            self._running_goal_handle = self._new_goal_request_future.result()
+            self._new_goal_request_future = None
+
             if self._running_goal_handle is None:
-                self.logerr(
-                    "Could not create new action goal, future returned failure!"
-                )
+                self.logwarn("Action goal was rejeced by the server!")
+                self._internal_state = ActionStates.FINISHED
                 return NodeMsg.FAILED
+
             self._running_goal_start_time = self.ros_node.get_clock().now()
             self._running_goal_future = self._running_goal_handle.get_result_async()
+
+            self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
             return NodeMsg.SUCCEED
-        if self._new_goal_future.cancelled():
-            self.logerr("Request for a new goal was cancelled!")
-            self._new_goal_future = None
+
+        if self._new_goal_request_future.cancelled():
+            self.logwarn("Request for a new goal was cancelled!")
+            self._new_goal_request_future = None
             self._running_goal_handle = None
             self._active_goal = None
+
+            self._internal_state = ActionStates.FINISHED
             return NodeMsg.FAILED
+
         return NodeMsg.RUNNING
 
     def _do_tick(self):
@@ -273,45 +357,56 @@ class ActionForSetType(ABC, Leaf):
         self.set_input()
         self.set_goal()
 
-        # Check if we have an active goal
-        if (
-            self._running_goal_handle is not None
-            and self._running_goal_handle.status == GoalStatus.STATUS_EXECUTING
-        ):
-            # Check if goal changed
+        if self._internal_state == ActionStates.IDLE:
+            status = self._do_tick_send_new_goal()
+            if status not in [NodeMsg.SUCCEED]:
+                return status
+
+        if self._internal_state == ActionStates.WAITING_FOR_GOAL_ACCEPTANCE:
+            status = self._do_tick_wait_for_new_goal_complete()
+            if status not in [NodeMsg.SUCCEED]:
+                return status
+
+        if self._internal_state == ActionStates.WAITING_FOR_ACTION_COMPLETE:
             if self._active_goal == self._input_goal:
                 return self._do_tick_wait_for_action_complete()
             else:
-                status = self._do_tick_cancel_running_goal()
-                if status not in [NodeMsg.SUCCEED]:
-                    return status
-        # Check if we are waiting for the cancellation of a goal
-        if self._cancel_goal_future is not None:
-            status = self._do_tick_wait_for_cancel_complete()
-            if status in [NodeMsg.FAILED, NodeMsg.RUNNING]:
-                return status
-        # Create a new goal as we do not have one!
-        if self._do_tick_send_new_goal() == NodeMsg.FAILED:
-            return NodeMsg.FAILED
+                # We have a new goal, we should cancel the running one!
+                self._internal_state = ActionStates.REQUEST_GOAL_CANCELLATION
 
-        # Check if we are waiting for the creation of a new request
-        if self._new_goal_future is not None:
-            status = self._do_tick_wait_for_new_goal_complete()
-            if status in [NodeMsg.FAILED, NodeMsg.RUNNING]:
+        if self._internal_state == ActionStates.REQUEST_GOAL_CANCELLATION:
+            status = self._do_tick_cancel_running_goal()
+            # Check if goal cancel request was succssful!
+            if status not in [NodeMsg.SUCCEED]:
                 return status
-            else:
-                return NodeMsg.RUNNING
+
+        if self._internal_state == ActionStates.WAITING_FOR_GOAL_CANCELLATION:
+            return self._do_tick_wait_for_cancel_complete()
+
+        if self._internal_state == ActionStates.FINISHED:
+            return self._do_tick_finished()
+
         return NodeMsg.BROKEN
 
+    def _do_tick_finished(self):
+        if self._active_goal == self._input_goal:
+            return self._state
+        else:
+            self._internal_state = ActionStates.IDLE
+            return NodeMsg.RUNNING
+
     def _do_untick(self):
-        if self._active_goal is not None or self._running_goal_future is not None:
+        if self._internal_state == ActionStates.WAITING_FOR_ACTION_COMPLETE:
             self._do_tick_cancel_running_goal()
+
         self._last_goal_time = None
         self._running_goal_future = None
         self._running_goal_handle = None
         self._cancel_goal_future = None
         self._active_goal = None
         self._feedback = None
+        self._internal_state = ActionStates.IDLE
+
         return NodeMsg.IDLE
 
     def _do_reset(self):
