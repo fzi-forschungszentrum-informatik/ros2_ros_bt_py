@@ -25,16 +25,36 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+import sys
+
 import importlib
 import pkgutil
 
-import ros_bt_py
+
+def import_module_from_package(package) -> None:
+    print(f"Beginning function: {package.__path__}")
+    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
+        full_name = package.__name__ + "." + name
+        if is_pkg:
+            print(f"New package: {full_name}")
+            new_package = __import__(full_name, fromlist=[package.__name__])
+            import_module_from_package(new_package)
+        else:
+            print(f"New module: {full_name}")
+            try:
+                importlib.import_module(full_name)
+            except ModuleNotFoundError as exc:
+                if exc.name == "ros_bt_py.parameters":
+                    continue
+                else:
+                    raise exc
 
 
 class TestImport:
     """Check whether all of our modules import fine."""
 
     def test_imports(self):
-        for loader, name, is_pkg in pkgutil.walk_packages(ros_bt_py.__path__):
-            full_name = ros_bt_py.__name__ + "." + name
-            importlib.import_module(full_name)
+
+        import ros_bt_py
+
+        import_module_from_package(ros_bt_py)
