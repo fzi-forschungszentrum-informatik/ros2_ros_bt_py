@@ -36,11 +36,9 @@ def import_module_from_package(package) -> None:
     for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
         full_name = package.__name__ + "." + name
         if is_pkg:
-            print(f"New package: {full_name}")
             new_package = __import__(full_name, fromlist=[package.__name__])
             import_module_from_package(new_package)
         else:
-            print(f"New module: {full_name}")
             try:
                 importlib.import_module(full_name)
             except ModuleNotFoundError as exc:
