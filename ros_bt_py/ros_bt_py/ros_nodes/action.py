@@ -502,3 +502,7 @@ class Action(ActionForSetType):
 
     def set_goal(self):
         self._input_goal = self.inputs["goal"]
+
+    def set_outputs(self):
+        self.outputs["result"] = self._result.result
+        return True
