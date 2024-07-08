@@ -104,6 +104,15 @@ class ActionForSetType(ABC, Leaf):
                 def set_goal(self):
                     self._input_goal = MyActionGoal()
                     self._input_goal.MyInput = self.inputs['MyImput']
+                # overwrite, if there is more than one output key to be overwritten
+                def set_output_none(self):
+                    self.outputs["feedback"] = None
+                    self.outputs["result"] = None
+                # set result
+                # Return True if SUCCEEDED, False if FAILED
+                def set_outputs(self):
+                    self.outputs["OUTPUT_KEY"] = self._result.result
+                    return "TRUTHVALUE"
 
     """
 
@@ -148,6 +157,14 @@ class ActionForSetType(ABC, Leaf):
     def set_goal(self):
         self._input_goal = "ENTER_GOAL_FROM_INPUT"
 
+    # Sets the output (in relation to the result) (define output key while overwriting)
+    # Should return True, if the node state should be SUCCEEDED after receiving the message
+    # and False, if it's in the FAILED state
+    @abstractmethod
+    def set_outputs(self):
+        self.outputs["OUTPUT_KEY"] = self._result.result
+        return "TRUTHVALUE"
+
     def _do_setup(self):
         if not self.has_ros_node:
             error_msg = f"Node {self.name} does not have a reference to a ROS node!"
@@ -156,6 +173,7 @@ class ActionForSetType(ABC, Leaf):
         self._lock = Lock()
         self._feedback = None
         self._active_goal = None
+        self._result = None
 
         self._internal_state = ActionStates.IDLE
 
@@ -205,8 +223,8 @@ class ActionForSetType(ABC, Leaf):
             return NodeMsg.BROKEN
 
         if self._running_goal_future.done():
-            result = self._running_goal_future.result()
-            if result is None:
+            self._result = self._running_goal_future.result()
+            if self._result is None:
                 self._running_goal_handle = None
                 self._running_goal_future = None
                 self._active_goal = None
@@ -216,14 +234,18 @@ class ActionForSetType(ABC, Leaf):
                 self.logdebug("Action result is none, action call must have failed!")
                 return NodeMsg.FAILED
 
-            self.outputs["result"] = result.result
+            # returns failed except the set.ouput() method returns True
+            new_state = NodeMsg.FAILED
+            if self.set_outputs():
+                new_state = NodeMsg.SUCCEEDED
             self._running_goal_handle = None
             self._running_goal_future = None
+            self._result = None
 
             self._internal_state = ActionStates.FINISHED
 
             self.logdebug("Action succeeded, publishing result!")
-            return NodeMsg.SUCCEED
+            return new_state
 
         if self._running_goal_future.cancelled():
             self._running_goal_handle = None
@@ -480,3 +502,7 @@ class Action(ActionForSetType):
 
     def set_goal(self):
         self._input_goal = self.inputs["goal"]
+
+    def set_outputs(self):
+        self.outputs["result"] = self._result.result
+        return True

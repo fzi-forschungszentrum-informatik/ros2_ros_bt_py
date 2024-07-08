@@ -49,6 +49,13 @@ def generate_launch_description():
     )
     node_modules_value = LaunchConfiguration("node_modules")
 
+    tree_storage_paths_launch_arg = DeclareLaunchArgument(
+        "tree_storage_paths",
+        default_value="['$HOME/.ros']",
+        description="Paths where trees can be saved!",
+    )
+    tree_storage_paths_value = LaunchConfiguration("tree_storage_paths")
+
     enable_web_interface_launch_arg = DeclareLaunchArgument(
         "enable_web_interface",
         default_value="False",
@@ -120,6 +127,7 @@ def generate_launch_description():
         namespace=robot_namespace_value,
         parameters=[
             {"node_modules": node_modules_value},
+            {"tree_storage_paths": tree_storage_paths_value},
             {"show_traceback_on_exception": show_traceback_on_exception_value},
             {"diagnostics_frequency_hz": diagnostics_frequency_hz_value},
             {"default_tree/load_default_tree": load_default_tree_value},
@@ -147,6 +155,7 @@ def generate_launch_description():
         [
             robot_namespace_launch_arg,
             node_modules_launch_arg,
+            tree_storage_paths_launch_arg,
             enable_web_interface_launch_arg,
             show_traceback_on_exception_launch_arg,
             diagnostics_frequency_hz_launch_arg,

@@ -67,7 +67,7 @@ class Wait(Leaf):
             return NodeMsg.RUNNING
 
     def _do_shutdown(self):
-        pass
+        self._do_reset()
 
     def _do_reset(self):
         self.first_tick = True
@@ -111,7 +111,7 @@ class WaitInput(Leaf):
             return NodeMsg.RUNNING
 
     def _do_shutdown(self):
-        pass
+        self._do_reset()
 
     def _do_reset(self):
         self.first_tick = True
