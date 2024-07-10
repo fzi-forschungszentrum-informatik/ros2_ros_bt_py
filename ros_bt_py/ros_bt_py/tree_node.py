@@ -379,7 +379,9 @@ class TreeNode(Node):
                 tree=tree, permissive=params.default_tree.load_default_tree_permissive
             )
             load_tree_response = LoadTree.Response()
-            load_tree_response = self.tree_manager.load_tree(load_tree_request, load_tree_response)
+            load_tree_response = self.tree_manager.load_tree(
+                load_tree_request, load_tree_response
+            )
             if not load_tree_response.success:
                 self.get_logger().error(
                     f"could not load default tree: {load_tree_response.error_message}"
@@ -391,8 +393,7 @@ class TreeNode(Node):
                 )
                 control_tree_execution_response = ControlTreeExecution.Response()
                 control_tree_execution_response = self.tree_manager.control_execution(
-                    control_tree_execution_request,
-                    control_tree_execution_response
+                    control_tree_execution_request, control_tree_execution_response
                 )
                 if not control_tree_execution_response.success:
                     self.get_logger().error(
@@ -436,7 +437,6 @@ def main(argv=None):
             tree_node.destroy_node()
     finally:
         rclpy.shutdown()
-
 
 
 if __name__ == "__main__":

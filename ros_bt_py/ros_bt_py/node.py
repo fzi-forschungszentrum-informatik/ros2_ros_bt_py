@@ -32,7 +32,7 @@ from copy import deepcopy
 
 import importlib
 import re
-from typing import Type, List, Dict, Optional, Self
+from typing import Type, List, Dict, Optional
 
 import rclpy
 import rclpy.logging
@@ -613,7 +613,8 @@ class Node(object):
         """Raise an error if `self.state` is not in `allowed_states`."""
         if self.state not in allowed_states:
             raise NodeStateError(
-                f"Node {self.name} ({type(self).__name__}) was in invalid state '{self.state}' after action {action_name}. "
+                f"Node {self.name} ({type(self).__name__}) was in invalid state "
+                f"'{self.state}' after action {action_name}. "
                 f"Allowed states: {str(allowed_states)}"
             )
 
@@ -665,7 +666,7 @@ class Node(object):
             return self.state
 
     @_required
-    def _do_untick(self)-> str:
+    def _do_untick(self) -> str:
         """
         Abstract method used to implement the actual untick operations.
 
@@ -763,14 +764,12 @@ class Node(object):
                 for child in self.children:
                     child.shutdown()
 
-
             self.state = self._do_shutdown()
             if self.state is None:
                 self.state = NodeMsg.SHUTDOWN
-            
+
             for child in self.children:
                 child.shutdown()
-
 
             unshutdown_children = [
                 f"{child.name} ({type(child).__name__}), state: {child.state}"
@@ -854,7 +853,7 @@ class Node(object):
         except ValueError:
             return None
 
-    def add_child(self, child: 'Node', at_index=None) -> Self:
+    def add_child(self, child: "Node", at_index=None) -> "Node":
         """
         Add a child to this node at the given index.
 
@@ -890,7 +889,7 @@ class Node(object):
         # return self to allow chaining of addChild calls
         return self
 
-    def remove_child(self, child_name: str) -> 'Node':
+    def remove_child(self, child_name: str) -> "Node":
         """
         Remove the child with the given name and return it.
 
@@ -910,7 +909,12 @@ class Node(object):
         return tmp
 
     @staticmethod
-    def _find_option_refs(source_map: Dict[str, type], target_map: NodeDataMap, values=None, permissive=False)-> None:
+    def _find_option_refs(
+        source_map: Dict[str, type],
+        target_map: NodeDataMap,
+        values=None,
+        permissive=False,
+    ) -> None:
         for key, data_type in {
             k: v for (k, v) in source_map.items() if not isinstance(v, OptionRef)
         }.items():
@@ -938,7 +942,11 @@ class Node(object):
                         raise e
 
     def _register_node_data(
-        self, source_map: Dict[str, type], target_map: NodeDataMap, values=None, permissive=False
+        self,
+        source_map: Dict[str, type],
+        target_map: NodeDataMap,
+        values=None,
+        permissive=False,
     ) -> None:
         """
         Register a number of typed :class:`NodeData` in the given map.
@@ -1137,7 +1145,7 @@ class Node(object):
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
         permissive: bool = False,
-    ) -> 'Node':
+    ) -> "Node":
         """
         Construct a Node from the given ROS message.
 

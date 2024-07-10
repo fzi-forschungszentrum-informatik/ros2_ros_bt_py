@@ -31,7 +31,7 @@ import traceback
 from copy import deepcopy
 from functools import wraps
 from threading import Thread, Lock, RLock
-from typing import Callable, Optional, List
+from typing import Any, Callable, Dict, Optional, List
 
 import rclpy
 from rclpy.utilities import ok
@@ -229,8 +229,7 @@ def load_tree_from_file(
 
 @typechecked
 def get_available_nodes(
-    request: GetAvailableNodes.Request,
-    response: GetAvailableNodes.Response
+    request: GetAvailableNodes.Request, response: GetAvailableNodes.Response
 ) -> GetAvailableNodes.Response:
     """
     List the types of nodes that are currently known.
@@ -720,7 +719,10 @@ class TreeManager:
 
     @is_edit_service
     def load_tree(  # noqa: C901
-                  self, request: LoadTree.Request, response: LoadTree.Response, prefix: Optional[str]=None
+        self,
+        request: LoadTree.Request,
+        response: LoadTree.Response,
+        prefix: Optional[str] = None,
     ) -> LoadTree.Response:
         """
         Load a tree from the given message (which may point to a file).
@@ -741,9 +743,7 @@ class TreeManager:
         This is used by the subtree node (using its own name as a
         prefix, since that must be unique in the tree) to ensure
         unique node names for easier debugging.
-
         """
-
         migrate_tree_request = MigrateTree.Request()
         migrate_tree_request.tree = request.tree
         load_response = MigrateTree.Response()
@@ -755,7 +755,7 @@ class TreeManager:
             return response
 
         tree = load_response.tree
-        
+
         if prefix is None:
             prefix = ""
         else:
@@ -765,15 +765,12 @@ class TreeManager:
         tree.name = prefix[:-1]
         for node in tree.nodes:
             node.name = prefix + node.name
-            node.child_names = [
-                prefix + child_name for child_name in node.child_names
-            ]
+            node.child_names = [prefix + child_name for child_name in node.child_names]
         for wiring in tree.data_wirings:
             wiring.source.node_name = prefix + wiring.source.node_name
             wiring.target.node_name = prefix + wiring.target.node_name
         for public_datum in tree.public_node_data:
             public_datum.node_name = prefix + public_datum.node_name
-        
 
         for public_datum in tree.public_node_data:
             if public_datum.data_kind == NodeDataLocation.OPTION_DATA:
@@ -1686,7 +1683,7 @@ class TreeManager:
         unknown_options = []
         preliminary_incompatible_options = []
         try:
-            deserialized_options = dict()
+            deserialized_options: Dict[str, Any] = {}
             for option in request.options:
                 deserialized_options[option.key] = json_decode(option.serialized_value)
             # deserialized_options = {
@@ -2316,18 +2313,27 @@ class TreeManager:
             )
         return response
 
-    def get_subtree(self, request: GetSubtree.Request, response: GetSubtree.Response) -> GetSubtree.Response:
+    def get_subtree(
+        self, request: GetSubtree.Request, response: GetSubtree.Response
+    ) -> GetSubtree.Response:
         if request.subtree_root_name not in self.nodes:
-            response.success=False
-            response.error_message=f'Node "{request.subtree_root_name}" does not exist!'
+            response.success = False
+            response.error_message = (
+                f'Node "{request.subtree_root_name}" does not exist!'
+            )
             return response
         try:
-            response.success=True,
-            response.subtree=self.nodes[request.subtree_root_name].get_subtree_msg()[0],
+            response.success = (True,)
+            response.subtree = (
+                self.nodes[request.subtree_root_name].get_subtree_msg()[0],
+            )
             return response
         except BehaviorTreeException as exc:
-            response.success=False
-            response.error_message = f"Error retrieving subtree rooted at {request.subtree_root_name}: {str(exc)}"
+            response.success = False
+            response.error_message = (
+                "Error retrieving subtree rooted at "
+                f"{request.subtree_root_name}: {str(exc)}"
+            )
             return response
 
     def generate_subtree(

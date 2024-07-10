@@ -406,6 +406,7 @@ class ServiceForSetType(ABC, Leaf):
                     return self.outputs[’MyServiceOutput']
 
     """
+
     _service_request_future: Optional[Future] = None
     _last_service_call_time: Optional[Time] = None
     _last_request: Optional[Any] = None
@@ -544,7 +545,7 @@ class ServiceForSetType(ABC, Leaf):
                     "No previous timeout start timestamp set! Timeout starts now"
                 )
                 self._last_service_call_time = self.ros_node.get_clock().now()
-            
+
             seconds_since_call: float = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
             ).nanoseconds / 1e9

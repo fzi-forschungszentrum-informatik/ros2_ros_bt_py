@@ -65,7 +65,7 @@ class Subtree(Leaf):
     could only feasibly be set in the Subtree node's own options, but
     at that point we don't know their names or types yet.
     """
-    
+
     manager: TreeManager
 
     def __init__(  # noqa: C901
@@ -116,13 +116,15 @@ class Subtree(Leaf):
                 )
             ),
             response=response,
-            prefix=self.name
+            prefix=self.name,
         )
 
         if not get_success(response):
-            self.logerr(f"Failed to load subtree {self.name}: {get_error_message(response)}")
+            self.logerr(
+                f"Failed to load subtree {self.name}: {get_error_message(response)}"
+            )
             self.state = NodeMsg.BROKEN
-        
+
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = get_error_message(response)
             return

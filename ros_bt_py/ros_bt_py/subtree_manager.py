@@ -35,6 +35,7 @@ from ros_bt_py_interfaces.msg import Tree
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py_interfaces.msg import SubtreeInfo
 
+
 @typechecked
 class SubtreeManager(object):
     """
@@ -90,7 +91,7 @@ class SubtreeManager(object):
             self.subtrees[subtree_name] = subtree_msg
             self._subtree_info_msg.subtree_states = list(self.subtrees.values())
 
-    def clear_subtrees(self)-> None:
+    def clear_subtrees(self) -> None:
         with self._lock:
             self.subtrees.clear()
             self._subtree_info_msg.subtree_states = []
