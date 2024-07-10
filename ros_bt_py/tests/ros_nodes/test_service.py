@@ -71,7 +71,7 @@ def test_node_success(ros_mock, client_mock, future_mock, clock_mock):
     unavailable_service.inputs["request"] = request
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
-    assert client_mock.call_async.called_with(request)
+    client_mock.call_async.assert_called_with(request)
 
     future_mock.done.return_value = True
 
