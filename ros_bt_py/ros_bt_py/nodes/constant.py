@@ -49,14 +49,14 @@ class Constant(Leaf):
     """
 
     def _do_setup(self):
-        pass
+        return NodeMsg.IDLE
 
     def _do_tick(self):
         self.outputs["constant"] = self.options["constant_value"]
         return NodeMsg.SUCCEEDED
 
     def _do_shutdown(self):
-        pass
+        return NodeMsg.SHUTDOWN
 
     def _do_reset(self):
         return NodeMsg.IDLE

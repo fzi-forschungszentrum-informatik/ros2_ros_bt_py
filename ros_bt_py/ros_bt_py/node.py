@@ -32,7 +32,7 @@ from copy import deepcopy
 
 import importlib
 import re
-from typing import Type, List, Dict, Optional
+from typing import Type, List, Dict, Optional, Self
 
 import rclpy
 import rclpy.logging
@@ -461,10 +461,9 @@ class Node(object):
 
     @ros_node.setter
     def ros_node(self, new_ros_node: ROSNode):
-        self.logfatal("Setting new ROS node.")
         self._ros_node = new_ros_node
 
-    def setup(self):
+    def setup(self) -> str:
         """
         Prepare the node to be ticked for the first time.
 
@@ -488,12 +487,18 @@ class Node(object):
                     "but node %s is in state %s"
                     % (NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN, self.name, self.state)
                 )
-            self._do_setup()
-            self.state = NodeMsg.IDLE
+            self.state = self._do_setup()
+            if self.state is None:
+                self.state = NodeMsg.IDLE
+            self.raise_if_in_invalid_state(
+                allowed_states=[NodeMsg.IDLE], action_name="setup()"
+            )
+
             self._setup_called = True
+        return self.state
 
     @_required
-    def _do_setup(self):
+    def _do_setup(self) -> str:
         """
         Use this to do custom node setup.
 
@@ -509,7 +514,7 @@ class Node(object):
         "without _do_setup function!"
 
         self.logerr(msg)
-        raise NotImplementedError(msg)
+        return NodeMsg.BROKEN
 
     def _handle_inputs(self):
         """
@@ -542,7 +547,7 @@ class Node(object):
         """
         self.outputs.handle_subscriptions()
 
-    def tick(self):
+    def tick(self) -> str:
         """
         Handle node on tick action everytime this is called (at ~10-20Hz, usually).
 
@@ -604,23 +609,16 @@ class Node(object):
 
             return self.state
 
-    def raise_if_in_invalid_state(self, allowed_states, action_name):
+    def raise_if_in_invalid_state(self, allowed_states: list[str], action_name: str):
         """Raise an error if `self.state` is not in `allowed_states`."""
         if self.state not in allowed_states:
             raise NodeStateError(
-                "Node %s (%s) was in invalid state %s after action %s. "
-                "Allowed states: %s"
-                % (
-                    self.name,
-                    type(self).__name__,
-                    self.state,
-                    action_name,
-                    str(allowed_states),
-                )
+                f"Node {self.name} ({type(self).__name__}) was in invalid state '{self.state}' after action {action_name}. "
+                f"Allowed states: {str(allowed_states)}"
             )
 
     @_required
-    def _do_tick(self):
+    def _do_tick(self) -> str:
         """
         Every Node class must override this.
 
@@ -631,10 +629,10 @@ class Node(object):
           One of the constants in :class:`ros_bt_py_msgs.msg.Node`
         """
         msg = f"Ticking a node of type {self.__class__.__name__} without _do_tick function!"
-        self.logerr(msg)
-        raise NotImplementedError(msg)
+        self.logfatal(msg)
+        return NodeMsg.BROKEN
 
-    def untick(self):
+    def untick(self) -> str:
         """
         Signal a node that it should stop any background tasks.
 
@@ -667,7 +665,7 @@ class Node(object):
             return self.state
 
     @_required
-    def _do_untick(self):
+    def _do_untick(self)-> str:
         """
         Abstract method used to implement the actual untick operations.
 
@@ -680,10 +678,10 @@ class Node(object):
         3. Be ready to resume on the next call of :meth:`tick`
         """
         msg = f"Unticking a node of type {self.__class__.__name__} without _do_untick function!"
-        self.logerr(msg)
-        raise NotImplementedError(msg)
+        self.logfatal(msg)
+        return NodeMsg.BROKEN
 
-    def reset(self):
+    def reset(self) -> str:
         """
         Reset a node completly.
 
@@ -721,7 +719,7 @@ class Node(object):
             return self.state
 
     @_required
-    def _do_reset(self):
+    def _do_reset(self) -> str:
         """
         Abstract method used to implement the reset action.
 
@@ -736,9 +734,9 @@ class Node(object):
         """
         msg = f"Resetting a node of type {self.__class__.__name__} without _do_reset function!"
         self.logerr(msg)
-        raise NotImplementedError(msg)
+        return NodeMsg.BROKEN
 
-    def shutdown(self):
+    def shutdown(self) -> str:
         """
         Prepare a node for deletion.
 
@@ -753,7 +751,7 @@ class Node(object):
         report_state = self._dummy_report_state()
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
-
+        self.logfatal(f"Shutting down {self.name}")
         with report_state:
             if self.state == NodeMsg.UNINITIALIZED:
                 self.loginfo(
@@ -764,27 +762,31 @@ class Node(object):
                 # their state to shutdown
                 for child in self.children:
                     child.shutdown()
-            elif self.state != NodeMsg.SHUTDOWN:
-                self._do_shutdown()
+
+
+            self.state = self._do_shutdown()
+            if self.state is None:
                 self.state = NodeMsg.SHUTDOWN
-            else:
-                self.logwarn("Shutdown called twice")
+            
+            for child in self.children:
+                child.shutdown()
+
 
             unshutdown_children = [
                 f"{child.name} ({type(child).__name__}), state: {child.state}"
                 for child in self.children
                 if child.state != NodeMsg.SHUTDOWN
             ]
-            if unshutdown_children:
+            if len(unshutdown_children) > 0:
                 self.logwarn(
                     "Not all children are shut down after calling shutdown(). "
                     "List of not-shutdown children and states:\n"
-                    "\n".join(unshutdown_children)
+                    f"{unshutdown_children}"
                 )
             return self.state
 
     @_required
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> str:
         """
         Abstract method implementing the shutdown action.
 
@@ -794,10 +796,10 @@ class Node(object):
         msg = f"Shutting down a node of type {self.__class__.__name__}"
         "without _do_shutdown function!"
 
-        self.logerr(msg)
-        raise NotImplementedError(msg)
+        self.logfatal(msg)
+        return NodeMsg.BROKEN
 
-    def calculate_utility(self):
+    def calculate_utility(self) -> UtilityBounds:
         """
         Calculate the utility bounds for this node.
 
@@ -813,7 +815,7 @@ class Node(object):
         """
         return self._do_calculate_utility()
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> UtilityBounds:
         """
         Calculate utility values. This is a default implementation.
 
@@ -835,7 +837,7 @@ class Node(object):
             has_upper_bound_failure=True,
         )
 
-    def get_child_index(self, child_name):
+    def get_child_index(self, child_name: str) -> Optional[int]:
         """
         Get the index in the `children` array of the child with the given name.
 
@@ -852,7 +854,7 @@ class Node(object):
         except ValueError:
             return None
 
-    def add_child(self, child, at_index=None):
+    def add_child(self, child: 'Node', at_index=None) -> Self:
         """
         Add a child to this node at the given index.
 
@@ -888,7 +890,7 @@ class Node(object):
         # return self to allow chaining of addChild calls
         return self
 
-    def remove_child(self, child_name):
+    def remove_child(self, child_name: str) -> 'Node':
         """
         Remove the child with the given name and return it.
 
@@ -908,7 +910,7 @@ class Node(object):
         return tmp
 
     @staticmethod
-    def _find_option_refs(source_map, target_map, values=None, permissive=False):
+    def _find_option_refs(source_map: Dict[str, type], target_map: NodeDataMap, values=None, permissive=False)-> None:
         for key, data_type in {
             k: v for (k, v) in source_map.items() if not isinstance(v, OptionRef)
         }.items():
@@ -936,8 +938,8 @@ class Node(object):
                         raise e
 
     def _register_node_data(
-        self, source_map, target_map, values=None, permissive=False
-    ):
+        self, source_map: Dict[str, type], target_map: NodeDataMap, values=None, permissive=False
+    ) -> None:
         """
         Register a number of typed :class:`NodeData` in the given map.
 
@@ -1087,7 +1089,7 @@ class Node(object):
     # Logging methods - these just use the ROS logging framework, but add the
     # name and type of the node so it's easier to trace errors.
 
-    def logdebug(self, message):
+    def logdebug(self, message) -> None:
         """
         Wrap call to :func:rclpy.logger.get_logger(...).debug.
 
@@ -1095,7 +1097,7 @@ class Node(object):
         """
         rclpy.logging.get_logger(self.name).debug(f"{message}")
 
-    def loginfo(self, message):
+    def loginfo(self, message) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).info.
 
@@ -1103,7 +1105,7 @@ class Node(object):
         """
         rclpy.logging.get_logger(self.name).info(f"{message}")
 
-    def logwarn(self, message):
+    def logwarn(self, message) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).warn.
 
@@ -1111,7 +1113,7 @@ class Node(object):
         """
         rclpy.logging.get_logger(self.name).warn(f"{message}")
 
-    def logerr(self, message):
+    def logerr(self, message) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).error.
 
@@ -1119,7 +1121,7 @@ class Node(object):
         """
         rclpy.logging.get_logger(self.name).error(f"{message}")
 
-    def logfatal(self, message):
+    def logfatal(self, message) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).fatal.
 
@@ -1135,7 +1137,7 @@ class Node(object):
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
         permissive: bool = False,
-    ):
+    ) -> 'Node':
         """
         Construct a Node from the given ROS message.
 
@@ -1189,7 +1191,7 @@ class Node(object):
 
         node_classes: List[Type[Node]] = cls.node_classes[msg.module][msg.node_class]
 
-        node_class = None
+        node_class: Optional[type] = None
         if len(node_classes) > 1:
             rclpy.logging.get_logger(cls.__name__).warn(f"{msg} - {node_classes}")
             candidates = list(

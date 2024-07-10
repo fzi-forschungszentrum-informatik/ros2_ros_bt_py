@@ -31,8 +31,9 @@
 """Module containing the main node for a ros_bt_py instance running the BT."""
 
 import rclpy
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.node import ReentrantCallbackGroup, Node
+from rclpy.executors import SingleThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
     QoSHistoryPolicy,
@@ -123,7 +124,7 @@ class TreeNode(Node):
                 reliability=QoSReliabilityPolicy.RELIABLE,
                 durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                 history=QoSHistoryPolicy.KEEP_LAST,
-                depth=10,
+                depth=1,
             ),
         )
         self.tick_frequency_pub = self.create_publisher(
@@ -132,9 +133,9 @@ class TreeNode(Node):
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                durability=QoSDurabilityPolicy.VOLATILE,
                 history=QoSHistoryPolicy.KEEP_LAST,
-                depth=10,
+                depth=1,
             ),
         )
         self.ros_diagnostics_pub = self.create_publisher(
@@ -377,7 +378,8 @@ class TreeNode(Node):
             load_tree_request = LoadTree.Request(
                 tree=tree, permissive=params.default_tree.load_default_tree_permissive
             )
-            load_tree_response = self.tree_manager.load_tree(load_tree_request)
+            load_tree_response = LoadTree.Response()
+            load_tree_response = self.tree_manager.load_tree(load_tree_request, load_tree_response)
             if not load_tree_response.success:
                 self.get_logger().error(
                     f"could not load default tree: {load_tree_response.error_message}"
@@ -387,8 +389,10 @@ class TreeNode(Node):
                     command=params.default_tree.control_command,
                     tick_frequency_hz=params.default_tree.tick_frequency_hz,
                 )
+                control_tree_execution_response = ControlTreeExecution.Response()
                 control_tree_execution_response = self.tree_manager.control_execution(
-                    control_tree_execution_request
+                    control_tree_execution_request,
+                    control_tree_execution_response
                 )
                 if not control_tree_execution_response.success:
                     self.get_logger().error(
@@ -411,6 +415,7 @@ def shutdown(self):
 
 
 def main(argv=None):
+
     rclpy.init(args=argv)
     try:
         tree_node = TreeNode(node_name="BehaviorTreeNode")
@@ -421,7 +426,7 @@ def main(argv=None):
         tree_node.init_tree_manager(params=params)
         tree_node.load_default_tree(params=params)
 
-        executor = MultiThreadedExecutor()
+        executor = SingleThreadedExecutor()
         executor.add_node(tree_node)
 
         try:
@@ -431,6 +436,7 @@ def main(argv=None):
             tree_node.destroy_node()
     finally:
         rclpy.shutdown()
+
 
 
 if __name__ == "__main__":

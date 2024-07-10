@@ -34,6 +34,7 @@ from threading import Thread, Lock, RLock
 from typing import Callable, Optional, List
 
 import rclpy
+from rclpy.utilities import ok
 import rclpy.node
 from rclpy.duration import Duration
 from rclpy.logging import get_logger
@@ -228,8 +229,9 @@ def load_tree_from_file(
 
 @typechecked
 def get_available_nodes(
-    request: GetAvailableNodes.Request, response: GetAvailableNodes.Response
-) -> Optional[GetAvailableNodes.Response]:
+    request: GetAvailableNodes.Request,
+    response: GetAvailableNodes.Response
+) -> GetAvailableNodes.Response:
     """
     List the types of nodes that are currently known.
 
@@ -243,7 +245,7 @@ def get_available_nodes(
     If `request.node_modules` is not empty, try to load those
     modules before responding.
 
-    :returns: :class:`ros_bt_py_msgs.src.GetAvailableNodesResponse` or `None`
+    :returns: :class:`ros_bt_py_msgs.src.GetAvailableNodesResponse`
     """
     for module_name in request.node_modules:
         if module_name and load_node_module(module_name) is None:
@@ -520,8 +522,13 @@ class TreeManager:
                     self._last_error = f"{ex}, {traceback.format_exc()}"
                 else:
                     self._last_error = f"{ex}"
-
                 self.tree_msg.state = Tree.ERROR
+                self.publish_info(
+                    subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                    if self.subtree_manager is not None
+                    else None,
+                    ticked=True,
+                )
 
     def tick(self, once=None):
         """
@@ -561,6 +568,17 @@ class TreeManager:
             root.setup()
             with self._state_lock:
                 self._setting_up = False
+            if root.state is not NodeMsg.IDLE:
+                with self._state_lock:
+                    self.tree_msg.state = Tree.ERROR
+                self.publish_info(
+                    subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                    if self.subtree_manager is not None
+                    else None,
+                    ticked=True,
+                )
+                return
+
         while True:
             tick_start_timestamp = self.ros_node.get_clock().now()
             if self.get_state() == Tree.STOP_REQUESTED:
@@ -702,7 +720,7 @@ class TreeManager:
 
     @is_edit_service
     def load_tree(  # noqa: C901
-        self, request: LoadTree.Request, response: LoadTree.Response, prefix=None
+                  self, request: LoadTree.Request, response: LoadTree.Response, prefix: Optional[str]=None
     ) -> LoadTree.Response:
         """
         Load a tree from the given message (which may point to a file).
@@ -725,8 +743,6 @@ class TreeManager:
         unique node names for easier debugging.
 
         """
-        if prefix is None:
-            prefix = ""
 
         migrate_tree_request = MigrateTree.Request()
         migrate_tree_request.tree = request.tree
@@ -739,21 +755,25 @@ class TreeManager:
             return response
 
         tree = load_response.tree
-
+        
+        if prefix is None:
+            prefix = ""
+        else:
+            prefix += "."
         # we should have a tree message with all the info we need now
         # prefix all the node names, if prefix is not the empty string
-        if prefix != "":
-            tree.name = prefix + tree.name
-            for node in tree.nodes:
-                node.name = prefix + node.name
-                node.child_names = [
-                    prefix + child_name for child_name in node.child_names
-                ]
-            for wiring in tree.data_wirings:
-                wiring.source.node_name = prefix + wiring.source.node_name
-                wiring.target.node_name = prefix + wiring.target.node_name
-            for public_datum in tree.public_node_data:
-                public_datum.node_name = prefix + public_datum.node_name
+        tree.name = prefix[:-1]
+        for node in tree.nodes:
+            node.name = prefix + node.name
+            node.child_names = [
+                prefix + child_name for child_name in node.child_names
+            ]
+        for wiring in tree.data_wirings:
+            wiring.source.node_name = prefix + wiring.source.node_name
+            wiring.target.node_name = prefix + wiring.target.node_name
+        for public_datum in tree.public_node_data:
+            public_datum.node_name = prefix + public_datum.node_name
+        
 
         for public_datum in tree.public_node_data:
             if public_datum.data_kind == NodeDataLocation.OPTION_DATA:
@@ -979,7 +999,7 @@ class TreeManager:
                     # If we're debugging or setting up (and ROS is not
                     # shutting down), keep sleeping until the thread
                     # finishes
-                    while self._tick_thread.is_alive() and rclpy.ok():
+                    while self._tick_thread.is_alive() and ok():
                         setting_up = False
                         with self._state_lock:
                             setting_up = self._setting_up
@@ -1763,8 +1783,8 @@ class TreeManager:
         new_node = node.__class__(
             options=deserialized_options,
             name=request.new_name if request.rename_node else node.name,
-            subtree_manager=node.subtree_manager,
             debug_manager=node.debug_manager,
+            subtree_manager=node.subtree_manager,
             ros_node=self.ros_node,
         )
 
@@ -2296,24 +2316,19 @@ class TreeManager:
             )
         return response
 
-    def get_subtree(self, request: GetSubtree.Request) -> GetSubtree.Response:
+    def get_subtree(self, request: GetSubtree.Request, response: GetSubtree.Response) -> GetSubtree.Response:
         if request.subtree_root_name not in self.nodes:
-            return GetSubtree.Response(
-                success=False,
-                error_message=f'Node "{request.subtree_root_name}" does not exist!',
-            )
+            response.success=False
+            response.error_message=f'Node "{request.subtree_root_name}" does not exist!'
+            return response
         try:
-            return GetSubtree.Response(
-                success=True,
-                subtree=self.nodes[request.subtree_root_name].get_subtree_msg()[0],
-            )
+            response.success=True,
+            response.subtree=self.nodes[request.subtree_root_name].get_subtree_msg()[0],
+            return response
         except BehaviorTreeException as exc:
-            return GetSubtree.Response(
-                success=False,
-                error_message=(
-                    f"Error retrieving subtree rooted at {request.subtree_root_name}: {str(exc)}"
-                ),
-            )
+            response.success=False
+            response.error_message = f"Error retrieving subtree rooted at {request.subtree_root_name}: {str(exc)}"
+            return response
 
     def generate_subtree(
         self, request: GenerateSubtree.Request, response: GenerateSubtree.Response
