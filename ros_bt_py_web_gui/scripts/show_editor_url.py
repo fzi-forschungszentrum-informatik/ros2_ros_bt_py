@@ -28,10 +28,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import List
-import rclpy
-from rclpy.node import Node
 
-from netifaces import interfaces, ifaddresses, AF_INET
+import rclpy
+from netifaces import AF_INET, ifaddresses, interfaces
+from rclpy.node import Node
 
 
 def ip4_addresses() -> List[str]:
