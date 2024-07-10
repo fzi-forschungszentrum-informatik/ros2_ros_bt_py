@@ -34,15 +34,17 @@ from ros_bt_py_interfaces.msg import UtilityBounds, Tree, NodeDataLocation
 from ros_bt_py_interfaces.srv import LoadTree
 
 from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.tree_manager import TreeManager, get_success, get_error_message
 from ros_bt_py.node import Leaf, define_bt_node
+from ros_bt_py.node import Node as BTNode
 from ros_bt_py.node_config import NodeConfig
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
+        version="0.2.0",
         options={"subtree_path": str, "use_io_nodes": bool},
         inputs={},
         outputs={"load_success": bool, "load_error_msg": str},
@@ -64,19 +66,23 @@ class Subtree(Leaf):
     at that point we don't know their names or types yet.
     """
 
+    manager: TreeManager
+
     def __init__(  # noqa: C901
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
         succeed_always: bool = False,
         simulate_tick: bool = False,
     ):
         """Create the tree manager, load the subtree."""
-        super(Subtree, self).__init__(
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
             succeed_always=succeed_always,
@@ -87,14 +93,18 @@ class Subtree(Leaf):
                 "{self.name} does not have a reference to a ROS Node!"
             )
 
-        self.root = None
-        self.prefix = f"{self.name}."
+        self.root: Optional[BTNode] = None
         # since the subtree gets a prefix, we can just have it use the
         # parent debug manager
         self.manager: TreeManager = TreeManager(
-            ros_node=self.ros_node, name=name, debug_manager=debug_manager
+            ros_node=self.ros_node,
+            name=name,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
         )
         self.load_subtree()
+        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
 
     def load_subtree(self) -> None:
         response = LoadTree.Response()
@@ -102,18 +112,24 @@ class Subtree(Leaf):
             request=LoadTree.Request(
                 tree=Tree(
                     path=self.options["subtree_path"],
-                    name=self.prefix,
+                    name=self.name,
                 )
             ),
             response=response,
+            prefix=self.name,
         )
 
         if not get_success(response):
+            self.logerr(
+                f"Failed to load subtree {self.name}: {get_error_message(response)}"
+            )
+            self.state = NodeMsg.BROKEN
+
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = get_error_message(response)
             return
-
-        self.outputs["load_success"] = True
+        else:
+            self.outputs["load_success"] = True
 
         # If we loaded the tree successfully, change node_config to
         # include the public inputs and outputs
@@ -183,8 +199,8 @@ class Subtree(Leaf):
             # Remove the prefix from the node name to make for nicer
             # input/output names (and also not break wirings)
             node_name = node_data.node_name
-            if node_name.startswith(self.prefix):
-                node_name = node_name[len(self.prefix) :]
+            if node_name.startswith(self.name):
+                node_name = node_name[len(self.name) + 1 :]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
                 subtree_inputs[
@@ -215,8 +231,8 @@ class Subtree(Leaf):
             # get the node name without prefix to match our renamed
             # inputs and outputs
             node_name = node_data.node_name
-            if node_name.startswith(self.prefix):
-                node_name = node_name[len(self.prefix) :]
+            if node_name.startswith(self.name):
+                node_name = node_name[len(self.name) + 1 :]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
                 if (
@@ -255,45 +271,39 @@ class Subtree(Leaf):
                 f"{self.options['subtree_path']} exist?"
             )
         self.root.setup()
-        if self.debug_manager and self.debug_manager.get_publish_subtrees():
-            self.manager.name = self.name
-            self.manager.tree_msg.name = self.name
-            self.debug_manager.add_subtree_info(self.name, self.manager.to_msg())
+        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
 
     def _do_tick(self):
+        if not self.root:
+            return NodeMsg.BROKEN
         new_state = self.root.tick()
-        if self.debug_manager and self.debug_manager.get_publish_subtrees():
-            self.manager.name = self.name
-            self.manager.tree_msg.name = self.name
-            self.debug_manager.add_subtree_info(self.name, self.manager.to_msg())
+        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
         return new_state
 
     def _do_untick(self):
+        if not self.root:
+            return NodeMsg.BROKEN
         new_state = self.root.untick()
-        if self.debug_manager and self.debug_manager.get_publish_subtrees():
-            self.manager.name = self.name
-            self.manager.tree_msg.name = self.name
-            self.debug_manager.add_subtree_info(self.name, self.manager.to_msg())
+        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
         return new_state
 
     def _do_reset(self):
         if not self.root:
             return NodeMsg.IDLE
         new_state = self.root.reset()
-        if self.debug_manager and self.debug_manager.get_publish_subtrees():
-            self.manager.name = self.name
-            self.manager.tree_msg.name = self.name
-            self.debug_manager.add_subtree_info(self.name, self.manager.to_msg())
+        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
         return new_state
 
     def _do_shutdown(self):
         if not self.root:
             return NodeMsg.SHUTDOWN
         self.root.shutdown()
-        if self.debug_manager and self.debug_manager.get_publish_subtrees():
-            self.manager.name = self.name
-            self.manager.tree_msg.name = self.name
-            self.debug_manager.add_subtree_info(self.name, self.manager.to_msg())
+        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
 
     def _do_calculate_utility(self):
         self.root = self.manager.find_root()

@@ -25,20 +25,24 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from rclpy.client import Client, Future
-from rclpy.node import Node, ReentrantCallbackGroup
-from rclpy.time import Duration, Time
+from rclpy.task import Future
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.client import Client
+from rclpy.node import Node
+from rclpy.duration import Duration
+from rclpy.time import Time
 
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.exceptions import BehaviorTreeException
 
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Tuple
+from typing import Any, Optional, Dict, Tuple
 
 
 @define_bt_node(
@@ -90,7 +94,7 @@ class ServiceInput(Leaf):
 
     def _do_reset(self):
         if self._service_client is not None:
-            self._ros_node.destroy_client(self._service_client)
+            self.ros_node.destroy_client(self._service_client)
             self._service_client = None
 
         self._last_service_call_time: Optional[Time] = None
@@ -183,7 +187,7 @@ class ServiceInput(Leaf):
 
     def _do_shutdown(self):
         if self._service_client is not None:
-            self._ros_node.destroy_client(self._service_client)
+            self.ros_node.destroy_client(self._service_client)
 
     def _do_calculate_utility(self):
         if not self.has_ros_node or self._service_client is None:
@@ -329,7 +333,7 @@ class WaitForServiceInput(Leaf):
 
     def _do_reset(self):
         if self._service_client is not None:
-            self._ros_node.destroy_service(self._service_client)
+            self.ros_node.destroy_service(self._service_client)
             self._service_client = None
         self._last_service_call_time = None
         return NodeMsg.IDLE
@@ -337,7 +341,7 @@ class WaitForServiceInput(Leaf):
     def _do_shutdown(self):
         self._last_service_call_time = None
         if self._service_client is not None:
-            self._ros_node.destroy_client(self._service_client)
+            self.ros_node.destroy_client(self._service_client)
             self._service_client = None
 
 
@@ -403,10 +407,17 @@ class ServiceForSetType(ABC, Leaf):
 
     """
 
+    _service_request_future: Optional[Future] = None
+    _last_service_call_time: Optional[Time] = None
+    _last_request: Optional[Any] = None
+    _reported_result: bool = False
+    _service_name: str
+
     def __init__(
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
         succeed_always: bool = False,
@@ -415,6 +426,7 @@ class ServiceForSetType(ABC, Leaf):
         super().__init__(
             options=options,
             debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
             succeed_always=succeed_always,
@@ -472,6 +484,7 @@ class ServiceForSetType(ABC, Leaf):
             and self.options["fail_if_not_available"]
         ):
             self._service_available = False
+            return NodeMsg.BROKEN
 
         self._last_service_call_time: Optional[Time] = None
         self._service_request_future: Optional[Future] = None
@@ -533,7 +546,7 @@ class ServiceForSetType(ABC, Leaf):
                 )
                 self._last_service_call_time = self.ros_node.get_clock().now()
 
-            seconds_since_call: Tuple[int, int] = (
+            seconds_since_call: float = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
             ).nanoseconds / 1e9
             if seconds_since_call > self.options["wait_for_response_seconds"]:
@@ -567,7 +580,7 @@ class ServiceForSetType(ABC, Leaf):
     def _do_shutdown(self):
         self._do_reset()
         if self._service_client is not None:
-            self._ros_node.destroy_client(self._service_client)
+            self.ros_node.destroy_client(self._service_client)
         self._service_client = None
 
     def _do_calculate_utility(self):

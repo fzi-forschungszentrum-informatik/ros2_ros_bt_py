@@ -65,7 +65,7 @@ def generate_launch_description():
 
     show_traceback_on_exception_launch_arg = DeclareLaunchArgument(
         "show_traceback_on_exception",
-        default_value="True",
+        default_value="False",
         description="Show error traceback when an exception rises",
     )
     show_traceback_on_exception_value = LaunchConfiguration(
