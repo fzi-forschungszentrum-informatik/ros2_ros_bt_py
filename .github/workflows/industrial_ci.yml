@@ -28,7 +28,7 @@ jobs:
           ROS_DISTRO: ${{ matrix.distro }}
           BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
-          AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
+          AFTER_INSTALL_TARGET_DEPENDENCIES: 'if [ "$ROS_DISTRO" == "jazzy" ]; then pip3 install --break-system-packages coverage[toml]; else pip3 install coverage[toml]; fi;'
           ENABLE_COVERAGE_TESTING: "true"
 
       - name: Upload Test Results
