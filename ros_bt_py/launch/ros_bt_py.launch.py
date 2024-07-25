@@ -66,7 +66,7 @@ def generate_launch_description():
 
     enable_web_interface_launch_arg = DeclareLaunchArgument(
         "enable_web_interface",
-        default_value="False",
+        default_value="True",
         description="Enable the ros_bt_py web GUI",
     )
     enable_web_interface_value = LaunchConfiguration("enable_web_interface")
