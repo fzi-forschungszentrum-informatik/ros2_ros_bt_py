@@ -25,6 +25,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from enum import StrEnum
+from typing import Any
 import jsonpickle
 import logging
 
@@ -34,10 +36,26 @@ import functools
 from collections import OrderedDict
 
 from ros_bt_py_interfaces.msg import CapabilityInterface, Node, Tree
+from typeguard import typechecked
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
-def loglevel_is(level):
+@typechecked
+class BTNodeState(StrEnum):
+    UNINITIALIZED = Node.UNINITIALIZED
+    IDLE = Node.IDLE
+    UNASSIGNED = Node.UNASSIGNED
+    ASSIGNED = Node.ASSIGNED
+    RUNNING = Node.RUNNING
+    SUCCEEDED = Node.SUCCEEDED
+    FAILED = Node.FAILED
+    BROKEN = Node.BROKEN
+    PAUSED = Node.PAUSED
+    SHUTDOWN = Node.SHUTDOWN
+
+
+@typechecked
+def loglevel_is(level) -> bool:
     """
     Determine the current logging level of the default ROS logger.
 
@@ -57,7 +75,8 @@ def loglevel_is(level):
     return logging_level <= rospy_log_level_to_logging_log_level(level)
 
 
-def rospy_log_level_to_logging_log_level(rospy_level):
+@typechecked
+def rospy_log_level_to_logging_log_level(rospy_level: int) -> int:
     if rospy_level == rclpy.logging.LoggingSeverity.DEBUG:
         return logging.DEBUG
     if rospy_level == rclpy.logging.LoggingSeverity.INFO:
@@ -68,9 +87,11 @@ def rospy_log_level_to_logging_log_level(rospy_level):
         return logging.ERROR
     if rospy_level == rclpy.logging.LoggingSeverity.FATAL:
         return logging.FATAL
+    return logging.FATAL
 
 
-def remove_input_output_values(tree):
+@typechecked
+def remove_input_output_values(tree: Tree) -> Tree:
     """
     Remove all input and output values from the tree nodes.
 
@@ -84,7 +105,8 @@ def remove_input_output_values(tree):
     return tree
 
 
-def set_node_state_to_shutdown(tree):
+@typechecked
+def set_node_state_to_shutdown(tree: Tree) -> Tree:
     """Set all node states to shutdown."""
     for node in tree.nodes:
         node.state = Node.SHUTDOWN
@@ -105,7 +127,7 @@ def rsetattr(obj, attr, val):
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)
 
 
-def get_default_value(data_type, ros=False):
+def get_default_value(data_type: Any, ros=False):
     if data_type is type:
         return int
     elif data_type is int:

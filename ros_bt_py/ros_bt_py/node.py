@@ -30,6 +30,8 @@
 from contextlib import contextmanager
 from copy import deepcopy
 
+from result import Err, Ok, Result, as_result
+
 import importlib
 import re
 from typing import Type, List, Dict, Optional
@@ -43,13 +45,14 @@ from ros_bt_py_interfaces.msg import NodeData as NodeDataMsg
 from ros_bt_py_interfaces.msg import NodeDataLocation, NodeDataWiring
 from ros_bt_py_interfaces.msg import Tree
 from ros_bt_py_interfaces.msg import UtilityBounds
+from typeguard import typechecked
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import BehaviorTreeException, NodeStateError, NodeConfigError
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.helpers import get_default_value, json_decode
+from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode
 
 
 def _check_node_data_match(
@@ -287,6 +290,7 @@ class NodeMeta(type):
             return self._doc
 
 
+@typechecked
 class Node(object):
     """
     Base class for Behavior Tree nodes.
@@ -326,7 +330,10 @@ class Node(object):
 
     node_classes = {}
     _node_config = None
-    permissive = False
+    permissive: bool = False
+    debug_manager: Optional[DebugManager]
+    subtree_manager: Optional[SubtreeManager]
+    _state: BTNodeState
 
     def __init__(
         self,
@@ -335,9 +342,7 @@ class Node(object):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[ROSNode] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
+    ) -> None:
         """
         Prepare class members.
 
@@ -368,7 +373,7 @@ class Node(object):
             self.name = type(self).__name__
         # Only used to make finding the root of the tree easier
         self.parent = None
-        self._state = NodeMsg.UNINITIALIZED
+        self._state = BTNodeState.UNINITIALIZED
         self.children = []
 
         self.subscriptions = []
@@ -377,9 +382,6 @@ class Node(object):
         self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager = debug_manager
         self.subtree_manager = subtree_manager
-
-        self.succeed_always = succeed_always
-        self.simulate_tick = simulate_tick
 
         if not self._node_config:
             raise NodeConfigError("Missing node_config, cannot initialize!")
@@ -432,12 +434,12 @@ class Node(object):
         # containers before the user decides to call setup() themselves!
 
     @property
-    def state(self) -> str:
+    def state(self) -> BTNodeState:
         """State of the node."""
         return self._state
 
     @state.setter
-    def state(self, new_state: str):
+    def state(self, new_state: BTNodeState):
         self._state = new_state
 
     @property
@@ -463,7 +465,7 @@ class Node(object):
     def ros_node(self, new_ros_node: ROSNode):
         self._ros_node = new_ros_node
 
-    def setup(self) -> str:
+    def setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Prepare the node to be ticked for the first time.
 
@@ -472,9 +474,9 @@ class Node(object):
         you can use those values in your implementation of
         :meth:`_do_setup`
 
-        Sets the state of the node to IDLE.
+        Sets the state of the node to IDLE or BROKEN.
 
-        :raises: BehaviorTreeException if called when the node is not UNINITIALIZED or SHUTDOWN
+        :returns: Returns a result object with the new state or the error message.
         """
         report_state = self._dummy_report_state()
         if self.debug_manager:
@@ -482,23 +484,25 @@ class Node(object):
 
         with report_state:
             if self.state != NodeMsg.UNINITIALIZED and self.state != NodeMsg.SHUTDOWN:
-                raise BehaviorTreeException(
-                    "Calling setup() is only allowed in states %s and %s, "
-                    "but node %s is in state %s"
-                    % (NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN, self.name, self.state)
+                return Err(
+                    NodeStateError(
+                        "Calling setup() is only allowed in states "
+                        f"{NodeMsg.UNINITIALIZED} and {NodeMsg.SHUTDOWN}, "
+                        f"but node {self.name} is in state {self.state}"
+                    )
                 )
-            self.state = self._do_setup()
-            if self.state is None:
-                self.state = NodeMsg.IDLE
-            self.raise_if_in_invalid_state(
-                allowed_states=[NodeMsg.IDLE], action_name="setup()"
-            )
-
+            setup_result = self._do_setup()
             self._setup_called = True
-        return self.state
+
+            if setup_result.is_err():
+                self.state = BTNodeState.BROKEN
+            else:
+                self.state = setup_result.unwrap()
+
+        return setup_result
 
     @_required
-    def _do_setup(self) -> str:
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Use this to do custom node setup.
 
@@ -514,9 +518,9 @@ class Node(object):
         "without _do_setup function!"
 
         self.logerr(msg)
-        return NodeMsg.BROKEN
+        return Err(BehaviorTreeException(msg))
 
-    def _handle_inputs(self):
+    def _handle_inputs(self) -> Result[None, str]:
         """
         Execute the callbacks registered by :meth:`_wire_input`.
 
@@ -527,17 +531,17 @@ class Node(object):
         """
         for input_name in self.inputs:
             if not self.inputs.is_updated(input_name):
-                self.logdebug("Running tick() with stale data!")
+                continue
             if self.inputs[input_name] is None:
                 # Omit the Error if we declared it to be "okay"
                 # This might still not be the best solution but enables some flexibility
                 if input_name not in self.node_config.optional_options:
-                    raise ValueError(
+                    return Err(
                         f"Trying to tick a node ({self.name}) with an unset input ({input_name})!"
                     )
-        self.inputs.handle_subscriptions()
+        return Ok(self.inputs.handle_subscriptions())
 
-    def _handle_outputs(self):
+    def _handle_outputs(self) -> None:
         """
         Execute the callbacks registered by :meth:`NodeDataMap.subscribe`: .
 
@@ -547,7 +551,7 @@ class Node(object):
         """
         self.outputs.handle_subscriptions()
 
-    def tick(self) -> str:
+    def tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Handle node on tick action everytime this is called (at ~10-20Hz, usually).
 
@@ -557,7 +561,6 @@ class Node(object):
         :returns:
           The state of the node after ticking - should be `SUCCEEDED`, `FAILED` or `RUNNING`.
 
-        :raises: BehaviorTreeException if a tick is impossible / not allowed
         """
         report_tick = self._dummy_report_tick()
         if self.debug_manager:
@@ -565,9 +568,9 @@ class Node(object):
 
         with report_tick:
             if self.state is NodeMsg.UNINITIALIZED:
-                raise BehaviorTreeException("Trying to tick uninitialized node!")
+                return Err(BehaviorTreeException("Trying to tick uninitialized node!"))
 
-            unset_options = []
+            unset_options: List[str] = []
             for option_name in self.options:
                 if (
                     not self.options.is_updated(option_name)
@@ -576,17 +579,25 @@ class Node(object):
                     unset_options.append(option_name)
             if unset_options:
                 msg = f"Trying to tick node with unset options: {str(unset_options)}"
-                self.logerr(msg)
-                raise BehaviorTreeException(msg)
+                self.logwarn(msg)
+                self.state = BTNodeState.BROKEN
+                return Err(BehaviorTreeException(msg))
             self.options.handle_subscriptions()
 
             # Outputs are updated in the tick. To catch that, we need to reset here.
             self.outputs.reset_updated()
 
             # Inputs can override options!
-            self._handle_inputs()
-
-            self.state = self._do_tick()
+            handle_input_result = self._handle_inputs()
+            if handle_input_result.is_err():
+                self.state = BTNodeState.BROKEN
+                return Err(BehaviorTreeException(handle_input_result.err()))
+            tick_result = self._do_tick()
+            if tick_result.is_ok():
+                self.state = tick_result.unwrap()
+            else:
+                self.state = BTNodeState.BROKEN
+                return tick_result
 
             # Inputs are updated by other nodes' outputs, i.e. some time after
             # we use them here. In some cases, inputs might be connected to
@@ -595,7 +606,7 @@ class Node(object):
             # cycle!
             self.inputs.reset_updated()
 
-            self.raise_if_in_invalid_state(
+            valid_state_result = self.check_if_in_invalid_state(
                 allowed_states=[
                     NodeMsg.RUNNING,
                     NodeMsg.SUCCEEDED,
@@ -605,21 +616,29 @@ class Node(object):
                 ],
                 action_name="tick()",
             )
+            if valid_state_result.is_err():
+                return Err(valid_state_result.unwrap_err())
+
             self._handle_outputs()
 
-            return self.state
+            return Ok(self.state)
 
-    def raise_if_in_invalid_state(self, allowed_states: list[str], action_name: str):
+    def check_if_in_invalid_state(
+        self, allowed_states: list[str], action_name: str
+    ) -> Result[None, NodeStateError]:
         """Raise an error if `self.state` is not in `allowed_states`."""
         if self.state not in allowed_states:
-            raise NodeStateError(
-                f"Node {self.name} ({type(self).__name__}) was in invalid state "
-                f"'{self.state}' after action {action_name}. "
-                f"Allowed states: {str(allowed_states)}"
+            return Err(
+                NodeStateError(
+                    f"Node {self.name} ({type(self).__name__}) was in invalid state "
+                    f"'{self.state}' after action {action_name}. "
+                    f"Allowed states: {str(allowed_states)}"
+                )
             )
+        return Ok(None)
 
     @_required
-    def _do_tick(self) -> str:
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Every Node class must override this.
 
@@ -630,10 +649,10 @@ class Node(object):
           One of the constants in :class:`ros_bt_py_msgs.msg.Node`
         """
         msg = f"Ticking a node of type {self.__class__.__name__} without _do_tick function!"
-        self.logfatal(msg)
-        return NodeMsg.BROKEN
+        self.logerr(msg)
+        return Err(BehaviorTreeException(msg))
 
-    def untick(self) -> str:
+    def untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Signal a node that it should stop any background tasks.
 
@@ -656,17 +675,27 @@ class Node(object):
 
         with report_state:
             if self.state is NodeMsg.UNINITIALIZED:
-                raise BehaviorTreeException("Trying to untick uninitialized node!")
-            self.state = self._do_untick()
-            self.raise_if_in_invalid_state(
+                return Err(
+                    BehaviorTreeException("Trying to untick uninitialized node!")
+                )
+            untick_result = self._do_untick()
+            if untick_result.is_ok():
+                self.state = untick_result.unwrap()
+            else:
+                self.state = BTNodeState.BROKEN
+                return untick_result
+
+            check_state_result = self.check_if_in_invalid_state(
                 allowed_states=[NodeMsg.IDLE, NodeMsg.PAUSED], action_name="untick()"
             )
+            if check_state_result.is_err():
+                return Err(check_state_result.unwrap_err())
 
             self.outputs.reset_updated()
-            return self.state
+            return Ok(self.state)
 
     @_required
-    def _do_untick(self) -> str:
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Abstract method used to implement the actual untick operations.
 
@@ -679,8 +708,8 @@ class Node(object):
         3. Be ready to resume on the next call of :meth:`tick`
         """
         msg = f"Unticking a node of type {self.__class__.__name__} without _do_untick function!"
-        self.logfatal(msg)
-        return NodeMsg.BROKEN
+        self.logerr(msg)
+        return Err(BehaviorTreeException(msg))
 
     def reset(self) -> str:
         """

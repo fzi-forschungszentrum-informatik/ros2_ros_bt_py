@@ -25,8 +25,10 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from typing import Any
 import rclpy
 import rclpy.logging
+from result import Err, Ok, Result
 
 from ros_bt_py.helpers import loglevel_is, json_encode
 
@@ -108,7 +110,7 @@ class NodeData(object):
             if self.data_type == float and isinstance(new_value, int):
                 new_value = float(new_value)
             else:
-                if type(new_value) == dict and "py/type" in new_value:
+                if type(new_value) is dict and "py/type" in new_value:
                     raise TypeError(
                         f"Expected data to be of type {self.data_type.__name__},"
                         f"got {type(new_value).__name__} instead. "
@@ -191,7 +193,7 @@ class NodeDataMap(object):
             raise KeyError(f"{key} is not a key of {self.name}")
         if key not in self.callbacks:
             self.callbacks[key] = []
-        if any([subscriber_name == name for _, name in self.callbacks[key]]):
+        if any(subscriber_name == name for _, name in self.callbacks[key]):
             # Do nothing if we already have a callback with the given
             # name for this key
             return
@@ -236,7 +238,7 @@ class NodeDataMap(object):
             )
             self.callbacks[key] = []
 
-    def handle_subscriptions(self):
+    def handle_subscriptions(self) -> None:
         """
         Execute the callbacks registered by :meth:`subscribe`: .
 
@@ -247,15 +249,10 @@ class NodeDataMap(object):
         for key in self._map:
             if self.is_updated(key):
                 if key in self.callbacks:
-                    for callback, subscriber_name in self.callbacks[key]:
-                        if loglevel_is(rclpy.logging.LoggingSeverity.DEBUG):
-                            rclpy.logging.get_logger(self.name).debug(
-                                f"Forwarding value {str(self[key])} of "
-                                f"key {key} to subscriber {subscriber_name}",
-                            )
+                    for callback, _ in self.callbacks[key]:
                         callback(self[key])
 
-    def add(self, key, value):
+    def add(self, key: str, value: Any) -> Result[None, TypeError | KeyError]:
         """
         Add a new key value pair to the node data.
 
@@ -265,14 +262,15 @@ class NodeDataMap(object):
         :raises: TypeError, KeyError
         """
         if not isinstance(key, str):
-            raise TypeError("Key must be a string!")
+            return Err(TypeError("Key must be a string!"))
         if not isinstance(value, NodeData):
-            raise TypeError("Value must be a NodeData object!")
+            return Err(TypeError("Value must be a NodeData object!"))
         if key in self._map:
-            raise KeyError(f"Key {key} is already taken!")
+            return Err(KeyError(f"Key {key} is already taken!"))
         self._map[key] = value
+        return Ok(None)
 
-    def is_updated(self, key):
+    def is_updated(self, key: str) -> bool:
         """
         Check whether the data at the given key has been updated since the last reset of `updated`.
 
@@ -282,14 +280,15 @@ class NodeDataMap(object):
         """
         return self._map[key].updated
 
-    def set_updated(self, key):
+    def set_updated(self, key: str) -> Result[None, KeyError]:
         """Set the `updated` property for the given datum."""
         if key in self._map:
             self._map[key].set_updated()
+            return Ok(None)
         else:
-            raise KeyError(f"No member named {key}")
+            return Err(KeyError(f"No member named {key}"))
 
-    def reset_updated(self):
+    def reset_updated(self) -> None:
         """Reset the `updated` property of all data in this map."""
         for key in self._map:
             self._map[key].reset_updated()
@@ -352,12 +351,12 @@ class NodeDataMap(object):
         return (
             self.name == other.name
             and len(self) == len(other)
-            and all([key in other for key in self])
-            and all([other[key] == self[key] for key in self])
+            and all(key in other for key in self)
+            and all(other[key] == self[key] for key in self)
             and len(self.callbacks) == len(other.callbacks)
-            and all([key in other.callbacks for key in self.callbacks])
+            and all(key in other.callbacks for key in self.callbacks)
             and all(
-                [other.callbacks[key] == self.callbacks[key] for key in self.callbacks]
+                other.callbacks[key] == self.callbacks[key] for key in self.callbacks
             )
         )
 
