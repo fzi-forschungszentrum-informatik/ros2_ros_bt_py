@@ -513,7 +513,7 @@ class Node(object):
         msg = f"Trying to setup a node of type {self.__class__.__name__}"
         "without _do_setup function!"
 
-        self.logerr(msg)
+        self.logfatal(msg)
         return NodeMsg.BROKEN
 
     def _handle_inputs(self):
@@ -734,7 +734,7 @@ class Node(object):
           The new state of the node (should be IDLE unless an error happened)
         """
         msg = f"Resetting a node of type {self.__class__.__name__} without _do_reset function!"
-        self.logerr(msg)
+        self.logfatal(msg)
         return NodeMsg.BROKEN
 
     def shutdown(self) -> str:
@@ -752,7 +752,6 @@ class Node(object):
         report_state = self._dummy_report_state()
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
-        self.logfatal(f"Shutting down {self.name}")
         with report_state:
             if self.state == NodeMsg.UNINITIALIZED:
                 self.loginfo(

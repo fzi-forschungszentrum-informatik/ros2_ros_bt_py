@@ -519,7 +519,7 @@ class ServiceForSetType(ABC, Leaf):
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
-            self.logerr("Future is None, starting new request!")
+            self.logdebug("Future is None, starting new request!")
             self._reported_result = False
             self.set_request()
             self._last_service_call_time = self.ros_node.get_clock().now()
@@ -550,7 +550,7 @@ class ServiceForSetType(ABC, Leaf):
                 self.ros_node.get_clock().now() - self._last_service_call_time
             ).nanoseconds / 1e9
             if seconds_since_call > self.options["wait_for_response_seconds"]:
-                self.logerr(
+                self.logwarn(
                     f"Service call to {self.options['service_name']} with request "
                     f"{self._last_request} timed out"
                 )
@@ -569,7 +569,6 @@ class ServiceForSetType(ABC, Leaf):
             return new_state
 
     def _do_untick(self):
-        self.logerr("Unticking")
         if (
             self._service_request_future is not None
             and not self._service_request_future.done()
