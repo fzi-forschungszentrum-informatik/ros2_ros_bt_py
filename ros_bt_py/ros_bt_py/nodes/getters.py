@@ -140,7 +140,7 @@ class GetListItem(Decorator):
                 self.outputs["item"] = self.inputs["list"][self.inputs["index"]]
                 return NodeMsg.SUCCEEDED
             except IndexError:
-                self.logerr(
+                self.logdebug(
                     "List index %d out of bound for list %s"
                     % (self.inputs["index"], self.inputs["list"])
                 )
@@ -149,7 +149,7 @@ class GetListItem(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return NodeMsg.SUCCEEDED
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return NodeMsg.RUNNING
 
     def _do_shutdown(self):
@@ -198,7 +198,7 @@ class GetDictItem(Decorator):
                 self.outputs["value"] = self.inputs["dict"][self.options["key"]]
                 return NodeMsg.SUCCEEDED
             except KeyError:
-                self.logerr(
+                self.logdebug(
                     f"Key {self.options['key']} is not in dict {str(self.inputs['dict'])}"
                 )
                 return NodeMsg.FAILED
@@ -206,7 +206,7 @@ class GetDictItem(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return NodeMsg.SUCCEEDED
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return NodeMsg.RUNNING
 
     def _do_shutdown(self):
@@ -257,7 +257,7 @@ class GetMultipleDictItems(Decorator):
                 ]
                 return NodeMsg.SUCCEEDED
             except KeyError:
-                self.logerr(
+                self.logdebug(
                     f"One of the key ({self.options['keys']}) is not in dict "
                     f"{str(self.inputs['dict'])}"
                 )
@@ -266,7 +266,7 @@ class GetMultipleDictItems(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return NodeMsg.SUCCEEDED
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return NodeMsg.RUNNING
 
     def _do_shutdown(self):
@@ -315,7 +315,7 @@ class GetDictItemFromKey(Decorator):
                 self.outputs["value"] = self.options["dict"][self.inputs["key"]]
                 return NodeMsg.SUCCEEDED
             except KeyError:
-                self.logerr(
+                self.logdebug(
                     f"Key {self.inputs['key']} is not in dict {str(self.options['dict'])}"
                 )
                 return NodeMsg.FAILED
@@ -323,7 +323,7 @@ class GetDictItemFromKey(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return NodeMsg.SUCCEEDED
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return NodeMsg.RUNNING
 
     def _do_shutdown(self):
@@ -374,7 +374,7 @@ class GetAttr(Decorator):
                 )
                 return NodeMsg.SUCCEEDED
             except AttributeError:
-                self.logerr(
+                self.logdebug(
                     f"Object {self.inputs['object']} does not have attribute "
                     f"{self.options['attr_name']}"
                 )
@@ -383,7 +383,7 @@ class GetAttr(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return NodeMsg.SUCCEEDED
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return NodeMsg.RUNNING
 
     def _do_shutdown(self):

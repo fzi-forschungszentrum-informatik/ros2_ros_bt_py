@@ -42,7 +42,7 @@ from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.exceptions import BehaviorTreeException
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Dict, Tuple
+from typing import Any, Optional, Dict
 
 
 @define_bt_node(
@@ -147,7 +147,7 @@ class ServiceInput(Leaf):
             # If the call takes longer than the specified timeout, abort the
             # call and return FAILED
             if self._last_service_call_time is None:
-                self.logwarn(
+                self.logdebug(
                     "No previous timeout start timestamp set! Timeout starts now"
                 )
                 self._last_service_call_time = self.ros_node.get_clock().now()
@@ -157,7 +157,7 @@ class ServiceInput(Leaf):
             ).nanoseconds / 1e9
 
             if seconds_since_call > self.options["wait_for_response_seconds"]:
-                self.logerr(
+                self.logwarn(
                     f"Service call to {self.inputs['service_name']} with request "
                     f"{self._last_request} timed out after {seconds_since_call} seconds"
                 )
@@ -171,7 +171,6 @@ class ServiceInput(Leaf):
                 res = self._service_request_future.result()
                 self.outputs["response"] = res
             if self._service_request_future.cancelled():
-                self.logerr("FAILED")
                 new_state = NodeMsg.FAILED
 
             self._reported_result = True
@@ -191,14 +190,14 @@ class ServiceInput(Leaf):
 
     def _do_calculate_utility(self):
         if not self.has_ros_node or self._service_client is None:
-            self.loginfo(
+            self.logdebug(
                 f"Unable to check for service {self.inputs['service_name']}, "
                 "ros node available!"
             )
             return UtilityBounds()
 
         if self._service_client.service_is_ready():
-            self.loginfo(
+            self.logdebug(
                 f"Found service {self.inputs['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
@@ -210,7 +209,7 @@ class ServiceInput(Leaf):
                 has_upper_bound_failure=True,
             )
 
-        self.loginfo(f"Service {self.inputs['service_name']} is unavailable")
+        self.logdebug(f"Service {self.inputs['service_name']} is unavailable")
         return UtilityBounds(can_execute=False)
 
 
@@ -533,7 +532,7 @@ class ServiceForSetType(ABC, Leaf):
             return NodeMsg.FAILED
 
         if self._service_request_future.cancelled():
-            self.logwarn("Service request was cancelled!")
+            self.logdebug("Service request was cancelled!")
             self._service_request_future = None
             return NodeMsg.FAILURE
 
@@ -550,7 +549,7 @@ class ServiceForSetType(ABC, Leaf):
                 self.ros_node.get_clock().now() - self._last_service_call_time
             ).nanoseconds / 1e9
             if seconds_since_call > self.options["wait_for_response_seconds"]:
-                self.logwarn(
+                self.loginfo(
                     f"Service call to {self.options['service_name']} with request "
                     f"{self._last_request} timed out"
                 )
@@ -584,14 +583,14 @@ class ServiceForSetType(ABC, Leaf):
 
     def _do_calculate_utility(self):
         if not self.has_ros_node or self._service_client is None:
-            self.loginfo(
+            self.logdebug(
                 f"Unable to check for service {self.options['service_name']}: "
                 "No ros node available!"
             )
             return UtilityBounds(can_execute=False)
 
         if self._service_client.service_is_ready():
-            self.loginfo(
+            self.logdebug(
                 f"Found service {self.options['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
@@ -603,7 +602,7 @@ class ServiceForSetType(ABC, Leaf):
                 has_upper_bound_failure=True,
             )
 
-        self.loginfo(f"Service {self.options['service_name']} is unavailable")
+        self.logdebug(f"Service {self.options['service_name']} is unavailable")
         return UtilityBounds(can_execute=False)
 
 

@@ -213,9 +213,7 @@ def load_tree_from_file(
                 response = parse_tree_yaml(tree_yaml=tree_yaml)
             except yaml.scanner.ScannerError as ex:
                 get_logger("tree_manager").warn(
-                    f"Encountered a ScannerError while parsing the tree yaml: {str(ex)}\n"
-                    f"This is most likely caused by a tree that was created with "
-                    f"PyYAML 5 and genpy < 0.6.10.\n"
+                    f"Encountered a ScannerError while parsing the tree yaml: {str(ex)}"
                 )
             # remove input and output values from nodes
             tree = remove_input_output_values(tree=response.tree)
@@ -311,30 +309,30 @@ class TreeManager:
         self.name = name
         self.publish_tree = publish_tree_callback
         if self.publish_tree is None:
-            get_logger("tree_manager").info(
+            get_logger("tree_manager").get_child(name).info(
                 "No callback for publishing tree data provided."
             )
         self.publish_subtree_info = publish_subtree_info_callback
         if self.publish_subtree_info is None:
-            get_logger("tree_manager").info(
+            get_logger("tree_manager").get_child(name).info(
                 "No callback for publishing subtree data provided."
             )
 
         self.publish_diagnostic = publish_diagnostic_callback
         if self.publish_diagnostic is None:
-            get_logger("tree_manager").info(
+            get_logger("tree_manager").get_child(name).info(
                 "No callback for publishing node diagnostics provided"
             )
 
         self.publish_tick_frequency = publish_tick_frequency_callback
         if self.publish_tick_frequency is None:
-            get_logger("tree_manager").info(
+            get_logger("tree_manager").get_child(name).info(
                 "No callback for publishing tree frequency provided"
             )
 
         self.debug_manager = debug_manager
         if not self.debug_manager:
-            get_logger("tree_manager").info(
+            get_logger("tree_manager").get_child(name).info(
                 "Tree manager instantiated without explicit debug manager "
                 "- building our own with default parameters"
             )
@@ -342,7 +340,7 @@ class TreeManager:
 
         self.subtree_manager = subtree_manager
         if not self.subtree_manager:
-            get_logger("tree_manager").info(
+            get_logger("tree_manager").get_child(name).info(
                 "Tree manager instantiated without explicit subtree manager "
                 "- building our own with default parameters"
             )
@@ -428,13 +426,13 @@ class TreeManager:
             self.diagnostic_status.name = os.path.splitext(self.tree_msg.name)[0]
         elif self.tree_msg.root_name:
             self.diagnostic_status.name = self.tree_msg.root_name
-            get_logger("tree_manager").warn(
+            get_logger("tree_manager").get_child(self.name).warn(
                 "No tree name was found. Diagnostics data from the behavior tree will be"
                 f"published under the name of the root_node: {self.tree_msg.root_name}"
             )
         else:
             self.diagnostic_status.name = ""
-            get_logger("tree_manager").warn(
+            get_logger("tree_manager").get_child(self.name).warn(
                 "Neither a tree name nor the name from the root_node was found."
                 "Diagnostics data from the behavior tree will be "
                 "published without further name specifications"
@@ -513,7 +511,7 @@ class TreeManager:
         try:
             self.tick()
         except Exception as ex:
-            get_logger("tree_manager").error(
+            get_logger("tree_manager").get_child(self.name).error(
                 f"Encountered error while ticking tree: {ex}, {traceback.format_exc()}"
             )
             with self._state_lock:
@@ -606,7 +604,7 @@ class TreeManager:
             tick_rate = self.tree_msg.tick_frequency_hz
 
             if (1 / tick_rate) > (duration.nanoseconds * 1e9):
-                get_logger("tree_manager").warn(
+                get_logger("tree_manager").get_child(self.name).warn(
                     "Tick took longer than set period, cannot tick at "
                     f"{self.tree_msg.tick_frequency_hz:.2f} Hz"
                 )
@@ -675,14 +673,16 @@ class TreeManager:
                 # No root, no problems
                 return response
             if not (root.state in [NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN]):
-                get_logger("tree_manager").error(
+                get_logger("tree_manager").get_child(self.name).error(
                     "Please shut down the tree before clearing it"
                 )
                 response.success = False
                 response.error_message = "Please shut down the tree before clearing it"
                 return response
         except TreeTopologyError as exc:
-            get_logger("tree_manager").warn(f"Could not find root {exc}")
+            get_logger("tree_manager").get_child(self.name).warn(
+                f"Could not find root {exc}"
+            )
 
         self.nodes = {}
         with self._state_lock:
@@ -838,7 +838,7 @@ class TreeManager:
 
         self.tree_msg = tree
         if self.tree_msg.tick_frequency_hz == 0.0:
-            get_logger("tree_manager").warn(
+            get_logger("tree_manager").get_child(self.name).warn(
                 "Tick frequency of loaded tree is 0, defaulting to 10Hz"
             )
             self.tree_msg.tick_frequency_hz = 10.0
@@ -860,7 +860,7 @@ class TreeManager:
             if self.subtree_manager is not None
             else None,
         )
-        get_logger("tree_manager").info("Successfully loaded tree")
+        get_logger("tree_manager").get_child(self.name).info("Successfully loaded tree")
         if self.publish_diagnostic is None:
             self.set_diagnostics_name()
         return response
@@ -950,7 +950,9 @@ class TreeManager:
                     "Tried to setup tree while it is running, aborting"
                 )
                 response.tree_state = tree_state
-                get_logger("tree_manager").warn(response.error_message)
+                get_logger("tree_manager").get_child(self.name).warn(
+                    response.error_message
+                )
                 return response
 
             if self.subtree_manager:
@@ -1019,14 +1021,18 @@ class TreeManager:
                         f"Error stopping tick: {str(self._last_error)}"
                     )
                     response.success = False
-                    get_logger("tree_manager").error(response.error_message)
+                    get_logger("tree_manager").get_child(self.name).error(
+                        response.error_message
+                    )
                 else:
                     response.error_message = (
                         f"Successfully stopped ticking, but tree state is "
                         f"{state_after_joining}, not IDLE"
                     )
                     response.success = False
-                    get_logger("tree_manager").error(response.error_message)
+                    get_logger("tree_manager").get_child(self.name).error(
+                        response.error_message
+                    )
             elif tree_state == Tree.WAITING_FOR_TICK:
                 try:
                     root = self.find_root()
@@ -1039,13 +1045,13 @@ class TreeManager:
                         else:
                             response.tree_state = Tree.ERROR
                             response.success = False
-                            get_logger("tree_manager").error(
+                            get_logger("tree_manager").get_child(self.name).error(
                                 f"Root node ({str(root)}) state after unticking is neither "
                                 f"IDLE nor PAUSED, but {state}"
                             )
                             response.error_message = "Failed to untick root node."
                     else:
-                        get_logger("tree_manager").info(
+                        get_logger("tree_manager").get_child(self.name).info(
                             "Unticking a tree with no nodes."
                         )
                         response.tree_state = Tree.IDLE
@@ -1059,7 +1065,7 @@ class TreeManager:
                     else None,
                 )
             else:
-                get_logger("tree_manager").info(
+                get_logger("tree_manager").get_child(self.name).info(
                     "Received stop command, but tree was not running"
                 )
                 response.success = True
@@ -1072,7 +1078,7 @@ class TreeManager:
                     if root:
                         root.shutdown()
                     else:
-                        get_logger("tree_manager").info(
+                        get_logger("tree_manager").get_child(self.name).info(
                             "Shutting down a tree with no nodes."
                         )
                 except TreeTopologyError as ex:
@@ -1095,7 +1101,9 @@ class TreeManager:
                 response.error_message = (
                     "Tried to tick when tree is already running, aborting"
                 )
-                get_logger("tree_manager").warn(response.error_message)
+                get_logger("tree_manager").get_child(self.name).warn(
+                    response.error_message
+                )
             else:
                 try:
                     # If there are no nodes in the tree, no ticking is needed
@@ -1115,7 +1123,7 @@ class TreeManager:
                     # If we're debugging or setting up (and ROS is not
                     # shutting down), keep sleepin until the thread
                     # finishes
-                    while self._tick_thread.is_alive() and rclpy.ok():
+                    while self._tick_thread.is_alive() and ok():
                         setting_up = False
                         with self._state_lock:
                             setting_up = self._setting_up
@@ -1138,14 +1146,18 @@ class TreeManager:
                             f"Error during single tick: {str(self._last_error)}"
                         )
                         response.success = False
-                        get_logger("tree_manager").error(response.error_message)
+                        get_logger("tree_manager").get_child(self.name).error(
+                            response.error_message
+                        )
                     else:
                         response.error_message = (
                             f"Successfully stopped ticking, but tree state "
                             f"is {state_after_joining}, not IDLE"
                         )
                         response.success = False
-                        get_logger("tree_manager").error(response.error_message)
+                        get_logger("tree_manager").get_child(self.name).error(
+                            response.error_message
+                        )
                 except TreeTopologyError as ex:
                     response.success = False
                     response.error_message = str(ex)
@@ -1162,7 +1174,9 @@ class TreeManager:
                     "already running, aborting"
                 )
                 response.tree_state = tree_state
-                get_logger("tree_manager").warn(response.error_message)
+                get_logger("tree_manager").get_child(self.name).warn(
+                    response.error_message
+                )
             else:
                 try:
                     # If there are no nodes in the tree, no ticking is needed
@@ -1186,7 +1200,7 @@ class TreeManager:
                             frequency=self.tree_msg.tick_frequency_hz
                         )
                     if self.tree_msg.tick_frequency_hz == 0:
-                        get_logger("tree_manager").warn(
+                        get_logger("tree_manager").get_child(self.name).warn(
                             "Loaded tree had frequency 0Hz. Defaulting to 10Hz"
                         )
                         self.tree_msg.tick_frequency_hz = 10.0
@@ -1208,14 +1222,16 @@ class TreeManager:
                     "Tried to reset tree while it is running, aborting"
                 )
                 response.tree_state = tree_state
-                get_logger("tree_manager").warn(response.error_message)
+                get_logger("tree_manager").get_child(self.name).warn(
+                    response.error_message
+                )
             else:
                 try:
                     root = self.find_root()
                     if root:
                         root.reset()
                     else:
-                        get_logger("tree_manager").info(
+                        get_logger("tree_manager").get_child(self.name).info(
                             "Resetting a tree with no root."
                         )
                     with self._state_lock:
@@ -1236,11 +1252,15 @@ class TreeManager:
                 else None,
             )
         elif request.command == ControlTreeExecution.Request.DO_NOTHING:
-            get_logger("tree_manager").info("Doing nothing in this request")
+            get_logger("tree_manager").get_child(self.name).info(
+                "Doing nothing in this request"
+            )
             response.success = True
         else:
             response.error_message = f"Received unknown command {request.command}"
-            get_logger("tree_manager").error(response.error_message)
+            get_logger("tree_manager").get_child(self.name).error(
+                response.error_message
+            )
             response.success = False
 
         return response
@@ -1495,7 +1515,7 @@ class TreeManager:
                 # It's reasonable to expect parent to not be None here, since
                 # the node is one of a list of children
                 parent_name = self.nodes[name].parent.name
-                get_logger("tree_manager").warn(
+                get_logger("tree_manager").get_child(self.name).warn(
                     f"Node {name} was not shut down. Check parent node {parent_name} "
                     f"({type(self.nodes[parent_name]).__name__}) "
                     f"for proper implementation of _do_shutdown()",
@@ -1924,7 +1944,9 @@ class TreeManager:
             # new list that won't be affected by calling
             # remove_child()!
             for child_name in [child.name for child in node.children]:
-                get_logger("tree_manager").info(f"Moving child {child_name}")
+                get_logger("tree_manager").get_child(self.name).info(
+                    f"Moving child {child_name}"
+                )
                 new_node.add_child(node.remove_child(child_name))
         except BehaviorTreeException as exc:
             with self._state_lock:
@@ -2216,7 +2238,7 @@ class TreeManager:
                         f'Failed to undo wiring "{wiring}": {str(ex)}\n'
                         f"Previous error: {response.error_message}"
                     )
-                    get_logger("tree_manager").error(
+                    get_logger("tree_manager").get_child(self.name).error(
                         "Failed to undo successful wiring after error. "
                         "Tree is in undefined state!"
                     )
@@ -2291,7 +2313,7 @@ class TreeManager:
                         f'Failed to redo wiring "{wiring}": {str(ex)}\n'
                         f"Previous error: {response.error_message}"
                     )
-                    get_logger("tree_manager").error(
+                    get_logger("tree_manager").get_child(self.name).error(
                         "Failed to rewire successful unwiring after error. "
                         "Tree is in undefined state!"
                     )
@@ -2390,7 +2412,9 @@ class TreeManager:
                     )
                 root = manager.find_root()
                 if not root:
-                    get_logger("tree_manager").info("No nodes in tree")
+                    get_logger("tree_manager").get_child(self.name).info(
+                        "No nodes in tree"
+                    )
                 else:
                     manager.tree_msg.root_name = root.name
                 response.success = True
@@ -2452,7 +2476,9 @@ class TreeManager:
             else:
                 self.tree_msg.nodes = []
         except TreeTopologyError as exc:
-            get_logger("tree_manager").warn(f"Strange topology {exc}")
+            get_logger("tree_manager").get_child(self.name).warn(
+                f"Strange topology {exc}"
+            )
             # build a tree_msg out of this strange topology, so the user can fix it in the editor
             self.tree_msg.nodes = [node.to_msg() for node in self.nodes.values()]
         return self.tree_msg

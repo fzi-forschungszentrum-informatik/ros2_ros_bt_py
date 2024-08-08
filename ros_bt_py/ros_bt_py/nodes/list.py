@@ -197,14 +197,14 @@ class IterateList(Decorator):
 
     def _do_tick(self):
         if self.inputs.is_updated("list"):
-            self.logwarn("Input list changed - resetting iterator")
+            self.logdebug("Input list changed - resetting iterator")
             self.reset_counter()
 
         # if no items in 'list' directly succeed
         if len(self.inputs["list"]) > 0:
             self.outputs["list_item"] = self.inputs["list"][self.counter]
         else:
-            self.logwarn("Nothing to iterate, input list is empty")
+            self.logdebug("Nothing to iterate, input list is empty")
             return NodeMsg.SUCCEEDED
 
         if len(self.children) == 0:

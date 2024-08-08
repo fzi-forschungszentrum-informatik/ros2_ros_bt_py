@@ -28,7 +28,7 @@
 import rclpy
 import rclpy.logging
 
-from ros_bt_py.helpers import loglevel_is, json_encode
+from ros_bt_py.helpers import json_encode
 
 
 def from_string(data_type, string_value, static=False):
@@ -108,7 +108,7 @@ class NodeData(object):
             if self.data_type == float and isinstance(new_value, int):
                 new_value = float(new_value)
             else:
-                if type(new_value) == dict and "py/type" in new_value:
+                if type(new_value) is dict and "py/type" in new_value:
                     raise TypeError(
                         f"Expected data to be of type {self.data_type.__name__},"
                         f"got {type(new_value).__name__} instead. "
@@ -191,7 +191,7 @@ class NodeDataMap(object):
             raise KeyError(f"{key} is not a key of {self.name}")
         if key not in self.callbacks:
             self.callbacks[key] = []
-        if any([subscriber_name == name for _, name in self.callbacks[key]]):
+        if any(subscriber_name == name for _, name in self.callbacks[key]):
             # Do nothing if we already have a callback with the given
             # name for this key
             return
@@ -223,7 +223,7 @@ class NodeDataMap(object):
                     index = i
             if index is not None:
                 callback_name = self.callbacks[key].pop(index)[1]
-                rclpy.logging.get_logger(self.name).info(
+                rclpy.logging.get_logger(self.name).debug(
                     f'Removed callback "{callback_name}" of key {self.name}[{key}]'
                 )
             else:
@@ -248,11 +248,6 @@ class NodeDataMap(object):
             if self.is_updated(key):
                 if key in self.callbacks:
                     for callback, subscriber_name in self.callbacks[key]:
-                        if loglevel_is(rclpy.logging.LoggingSeverity.DEBUG):
-                            rclpy.logging.get_logger(self.name).debug(
-                                f"Forwarding value {str(self[key])} of "
-                                f"key {key} to subscriber {subscriber_name}",
-                            )
                         callback(self[key])
 
     def add(self, key, value):
@@ -352,12 +347,12 @@ class NodeDataMap(object):
         return (
             self.name == other.name
             and len(self) == len(other)
-            and all([key in other for key in self])
-            and all([other[key] == self[key] for key in self])
+            and all(key in other for key in self)
+            and all(other[key] == self[key] for key in self)
             and len(self.callbacks) == len(other.callbacks)
-            and all([key in other.callbacks for key in self.callbacks])
+            and all(key in other.callbacks for key in self.callbacks)
             and all(
-                [other.callbacks[key] == self.callbacks[key] for key in self.callbacks]
+                other.callbacks[key] == self.callbacks[key] for key in self.callbacks
             )
         )
 
