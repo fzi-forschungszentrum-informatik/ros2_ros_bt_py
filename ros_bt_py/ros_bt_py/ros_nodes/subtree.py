@@ -120,7 +120,7 @@ class Subtree(Leaf):
         )
 
         if not get_success(response):
-            self.logerr(
+            self.logwarn(
                 f"Failed to load subtree {self.name}: {get_error_message(response)}"
             )
             self.state = NodeMsg.BROKEN
@@ -239,7 +239,7 @@ class Subtree(Leaf):
                     self.options["use_io_nodes"]
                     and node_data.node_name not in io_inputs
                 ):
-                    self.logwarn(
+                    self.logdebug(
                         f"removed an unconnected input ({node_name}) from the subtree"
                     )
                 else:

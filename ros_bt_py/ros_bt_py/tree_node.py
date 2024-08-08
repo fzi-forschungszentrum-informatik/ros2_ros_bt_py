@@ -371,7 +371,7 @@ class TreeNode(Node):
 
     def load_default_tree(self, params: tree_node_parameters.Params):
         if params.default_tree.load_default_tree:
-            self.get_logger().warn(
+            self.get_logger().info(
                 f"loading default tree: {params.default_tree.tree_path}"
             )
             tree = Tree(path=params.default_tree.tree_path)

@@ -32,9 +32,8 @@ from enum import Enum
 
 import rclpy
 from rclpy.action.client import ActionClient, ClientGoalHandle
-from rclpy.node import ReentrantCallbackGroup
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.time import Time
-from action_msgs.msg import GoalStatus
 
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds

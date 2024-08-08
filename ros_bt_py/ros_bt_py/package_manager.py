@@ -380,6 +380,7 @@ class PackageManager(object):
                 f'Folder "{request.storage_folder}" is not a valid storage folder:'
                 f"{self.tree_storage_directory_paths}!"
             )
+            return response
         self.reset_id()
         package_structure = self.path_to_dict(
             path=os.path.abspath(request.storage_folder),

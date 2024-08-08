@@ -26,48 +26,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import jsonpickle
-import logging
-
-import rclpy
 import rclpy.logging
 import functools
 from collections import OrderedDict
 
 from ros_bt_py_interfaces.msg import CapabilityInterface, Node, Tree
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
-
-
-def loglevel_is(level):
-    """
-    Determine the current logging level of the default ROS logger.
-
-    Useful to guard log statements that would incur a performance
-    penalty if they ran when the log isn't published.
-
-    For easier use, this translates the `rospy` logger levels into
-    `logging` levels.
-
-    :param int level:
-
-    The logger level to compare against. Since lower levels are more
-    verbose, any level *below* `level` also returns `True`.
-
-    """
-    logging_level = logging.getLogger("rosout").getEffectiveLevel()
-    return logging_level <= rospy_log_level_to_logging_log_level(level)
-
-
-def rospy_log_level_to_logging_log_level(rospy_level):
-    if rospy_level == rclpy.logging.LoggingSeverity.DEBUG:
-        return logging.DEBUG
-    if rospy_level == rclpy.logging.LoggingSeverity.INFO:
-        return logging.INFO
-    if rospy_level == rclpy.logging.LoggingSeverity.WARN:
-        return logging.WARN
-    if rospy_level == rclpy.logging.LoggingSeverity.ERROR:
-        return logging.ERROR
-    if rospy_level == rclpy.logging.LoggingSeverity.FATAL:
-        return logging.FATAL
 
 
 def remove_input_output_values(tree):

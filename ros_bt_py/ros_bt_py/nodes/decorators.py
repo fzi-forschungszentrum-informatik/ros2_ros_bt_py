@@ -387,7 +387,6 @@ class RepeatNoAutoReset(Repeat):
 
     def _do_tick(self):
         if self.inputs["reset"] is not None and self.inputs["reset"]:
-            self.logwarn("Ressetting!")
             self._repeat_count = 0
             self.inputs["reset"] = False
 
