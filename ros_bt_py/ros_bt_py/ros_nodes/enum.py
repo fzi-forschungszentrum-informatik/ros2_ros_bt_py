@@ -31,6 +31,7 @@ from rclpy.node import Node
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 
 from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
@@ -54,6 +55,7 @@ class Enum(Leaf):
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
         succeed_always: bool = False,
@@ -62,6 +64,7 @@ class Enum(Leaf):
         super(Enum, self).__init__(
             options=options,
             debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
             succeed_always=succeed_always,
@@ -133,6 +136,7 @@ class EnumFields(Leaf):
         self,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
         succeed_always: bool = False,
@@ -141,6 +145,7 @@ class EnumFields(Leaf):
         super(EnumFields, self).__init__(
             options=options,
             debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
             succeed_always=succeed_always,
