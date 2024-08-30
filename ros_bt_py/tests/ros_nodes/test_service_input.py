@@ -54,8 +54,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -65,7 +63,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -73,7 +71,7 @@ class TestServiceInput:
 
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.SUCCEEDED
-        assert unavailable_service.outputs["response"].success
+        assert unavailable_service.outputs["success"]
 
         unavailable_service.shutdown()
         assert unavailable_service.state == NodeMsg.SHUTDOWN
@@ -97,8 +95,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -108,7 +104,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.FAILED
 
@@ -130,8 +126,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -141,7 +135,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -173,8 +167,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -184,7 +176,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -192,7 +184,7 @@ class TestServiceInput:
 
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.SUCCEEDED
-        assert unavailable_service.outputs["response"].success
+        assert unavailable_service.outputs["success"]
 
         unavailable_service.reset()
         assert unavailable_service.state == NodeMsg.IDLE
@@ -228,8 +220,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -239,7 +229,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -247,7 +237,7 @@ class TestServiceInput:
 
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.SUCCEEDED
-        assert unavailable_service.outputs["response"].success
+        assert unavailable_service.outputs["success"]
 
         unavailable_service.reset()
 
@@ -266,7 +256,7 @@ class TestServiceInput:
 
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -274,15 +264,13 @@ class TestServiceInput:
 
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.SUCCEEDED
-        assert not unavailable_service.outputs["response"].success
+        assert not unavailable_service.outputs["success"]
 
     def test_node_no_ros(self):
         with pytest.raises(BehaviorTreeException):
             unavailable_service = ServiceInput(
                 options={
                     "service_type": SetBool,
-                    "request_type": SetBool.Request,
-                    "response_type": SetBool.Response,
                     "wait_for_response_seconds": 5.0,
                 },
                 ros_node=None,
@@ -315,8 +303,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -327,7 +313,7 @@ class TestServiceInput:
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.ros_node = None
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.FAILED
 
@@ -355,8 +341,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -366,7 +350,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -399,8 +383,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -410,7 +392,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -442,8 +424,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=None,
@@ -454,8 +434,6 @@ class TestServiceInput:
         unavailable_service_2 = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -490,8 +468,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -500,7 +476,7 @@ class TestServiceInput:
         unavailable_service.setup()
         assert unavailable_service.state == NodeMsg.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
         assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -542,8 +518,6 @@ class TestServiceInput:
         unavailable_service = ServiceInput(
             options={
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -553,7 +527,7 @@ class TestServiceInput:
         assert unavailable_service.state == NodeMsg.IDLE
 
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["request"] = SetBool.Request()
+        unavailable_service.inputs["data"] = SetBool.Request().data
 
         unavailable_service.simulate_tick = True
         unavailable_service.tick()
