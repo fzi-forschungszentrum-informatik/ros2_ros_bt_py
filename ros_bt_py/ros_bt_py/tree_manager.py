@@ -306,7 +306,11 @@ class TreeManager:
         succeed_always: bool = False,
     ) -> None:
         self.ros_node = ros_node
-        self.name = name
+        if name is None:
+            self.name = "UNKNOWN TREE"
+        else:
+            self.name = name
+
         self.publish_tree = publish_tree_callback
         if self.publish_tree is None:
             get_logger("tree_manager").get_child(name).info(
