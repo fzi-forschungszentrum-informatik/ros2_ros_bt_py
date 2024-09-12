@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Tests for NodeConfig class
+- Tree storage path is now a launch argument
+- Action results can now be processed when using ABC Actions
+- Documentation on how to use custom node classes with the library
+
+### Changed
+
+- Fixed up documentation from ROS 1 version
+- Updated Web-GUI version to 2.0.5
+- Subtree manager is now its own class and not inside the debug manager
+- Updated NodeDiagnostics
+- Library can now be installed with symlink install
+- Module List is now generated in a separate function
+- WebGUI is now launched on default
+- Service and Action Nodes now directly expose Request/Response and Goal/Result/Feedback fields
+
+### Fixed
+
+- Fixed package manager to be able to handle more than one package
+- Fixed python version to python3
+- Fixed Action Node and internal state machine
+- Fixed Wait Node to reset before shutdown
+
 ## [v0.0.1]
 
 [unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.0.1...dev
