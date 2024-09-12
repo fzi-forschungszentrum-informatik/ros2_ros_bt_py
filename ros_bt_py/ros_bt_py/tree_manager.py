@@ -395,9 +395,7 @@ class TreeManager:
         self.diagnostic_array.status = [self.diagnostic_status]
 
         self._last_error = None
-        with self._state_lock:
-            self.tree_msg.state = Tree.EDITABLE
-
+        self.set_state(Tree.EDITABLE)
         self._tick_thread = None
 
         # Skip if module_list is empty or None
@@ -415,9 +413,18 @@ class TreeManager:
                 1.0 / diagnostics_frequency, self.diagnostic_callback
             )
 
-    def get_state(self):
+    @typechecked
+    def get_state(self) -> str:
         with self._state_lock:
             return self.tree_msg.state
+
+    @typechecked
+    def set_state(self, new_state: str) -> None:
+        with self._state_lock:
+            self.tree_msg.state = new_state
+            self.ros_node.get_logger().fatal(
+                f"Updating tree state to {self.tree_msg.state}"
+            )
 
     def set_diagnostics_name(self):
         """
@@ -849,9 +856,7 @@ class TreeManager:
 
         self.rate = self.ros_node.create_rate(frequency=self.tree_msg.tick_frequency_hz)
         # Ensure Tree is editable after loading
-        with self._state_lock:
-            self.tree_msg.state = Tree.EDITABLE
-
+        self.set_state(Tree.EDITABLE)
         # find and set root name
         root = self.find_root()
         with self._state_lock:
@@ -964,11 +969,7 @@ class TreeManager:
             try:
                 root = self.find_root()
                 if root:
-                    with self._state_lock:
-                        self._setting_up = True
                     root.setup()
-                    with self._state_lock:
-                        self._setting_up = False
             except TreeTopologyError as ex:
                 response.success = False
                 response.error_message = str(ex)
@@ -988,8 +989,7 @@ class TreeManager:
             ControlTreeExecution.Request.SHUTDOWN,
         ]:
             if tree_state == Tree.TICKING:
-                with self._state_lock:
-                    self.tree_msg.state = Tree.STOP_REQUESTED
+                self.set_state(Tree.STOP_REQUESTED)
                 # Four times the allowed period should be plenty of time to
                 # finish the current tick, if the tree has not stopped by then
                 # we're in deep trouble.
@@ -1003,11 +1003,6 @@ class TreeManager:
                     # shutting down), keep sleeping until the thread
                     # finishes
                     while self._tick_thread.is_alive() and ok():
-                        setting_up = False
-                        with self._state_lock:
-                            setting_up = self._setting_up
-                        if not setting_up:
-                            break
                         self._tick_thread.join(
                             (1.0 / self.tree_msg.tick_frequency_hz) * 4.0
                         )
@@ -1091,8 +1086,7 @@ class TreeManager:
 
                 # Now the tree is editable again - all nodes are in a state
                 # where they must be initialized.
-                with self._state_lock:
-                    self.tree_msg.state = Tree.EDITABLE
+                self.set_state(Tree.EDITABLE)
             self.publish_info(
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
@@ -1117,8 +1111,7 @@ class TreeManager:
 
                     self._once = True
                     self._stop_after_result = False
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.TICKING
+                    self.set_state(Tree.TICKING)
                     self._tick_thread.start()
                     # Give the tick thread some time to finish
                     self._tick_thread.join(
@@ -1128,11 +1121,6 @@ class TreeManager:
                     # shutting down), keep sleepin until the thread
                     # finishes
                     while self._tick_thread.is_alive() and ok():
-                        setting_up = False
-                        with self._state_lock:
-                            setting_up = self._setting_up
-                        if not setting_up:
-                            break
                         self._tick_thread.join(
                             (1.0 / self.tree_msg.tick_frequency_hz) * 4.0
                         )
@@ -1187,9 +1175,7 @@ class TreeManager:
                     if not self.find_root():
                         response.success = True
                         return response
-
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.TICKING
+                    self.set_state(Tree.TICKING)
                     self._once = False
                     self._stop_after_result = False
                     if (
@@ -1238,8 +1224,7 @@ class TreeManager:
                         get_logger("tree_manager").get_child(self.name).info(
                             "Resetting a tree with no root."
                         )
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.IDLE
+                    self.set_state(Tree.IDLE)
                     response.success = True
                     response.tree_state = self.get_state()
                 except TreeTopologyError as ex:
@@ -1629,13 +1614,11 @@ class TreeManager:
                             f"\nAlso failed to restore data wirings: "
                             f"{get_error_message(rewire_resp)}"
                         )
-                        with self._state_lock:
-                            self.tree_msg.state = Tree.ERROR
+                        self.set_state(Tree.ERROR)
 
                 except (KeyError, BehaviorTreeException):
                     error_message += "\n Also failed to restore old node."
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.ERROR
+                    self.set_state(Tree.ERROR)
 
                 return MorphNode.Response(success=False, error_message=error_message)
 
@@ -1863,8 +1846,7 @@ class TreeManager:
                         "\nAlso failed to restore data wirings: "
                         f"{get_error_message(rewire_resp)}"
                     )
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.ERROR
+                    self.set_state(Tree.ERROR)
 
                 return SetOptions.Response(success=False, error_message=error_message)
 
@@ -1885,13 +1867,11 @@ class TreeManager:
                             f"\nAlso failed to restore data wirings: "
                             f"{get_error_message(rewire_resp)}"
                         )
-                        with self._state_lock:
-                            self.tree_msg.state = Tree.ERROR
+                        self.set_state(Tree.ERROR)
 
                 except (KeyError, BehaviorTreeException):
                     error_message += "\n Also failed to restore old node."
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.ERROR
+                    self.set_state(Tree.ERROR)
 
                 return SetOptions.Response(success=False, error_message=error_message)
 
@@ -1937,9 +1917,7 @@ class TreeManager:
                     f"\nFailed to re-wire data to restored node {node.name}: "
                     f"{get_error_message(recovery_wire_response)}"
                 )
-
-                with self._state_lock:
-                    self.tree_msg.state = Tree.ERROR
+                self.set_state(Tree.ERROR)
             return SetOptions.Response(success=False, error_message=error_message)
 
         # Move all of node's children to new_node
@@ -1953,8 +1931,7 @@ class TreeManager:
                 )
                 new_node.add_child(node.remove_child(child_name))
         except BehaviorTreeException as exc:
-            with self._state_lock:
-                self.tree_msg.state = Tree.ERROR
+            self.set_state(Tree.ERROR)
 
             return SetOptions.Response(
                 success=False,
@@ -2157,8 +2134,7 @@ class TreeManager:
         )
 
         if not get_success(res):
-            with self._state_lock:
-                self.tree_msg.state = Tree.ERROR
+            self.set_state(Tree.ERROR)
             self.publish_info(
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
@@ -2246,8 +2222,7 @@ class TreeManager:
                         "Failed to undo successful wiring after error. "
                         "Tree is in undefined state!"
                     )
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.ERROR
+                    self.set_state(Tree.ERROR)
                     break
 
         # only actually wire any data if there were no errors
