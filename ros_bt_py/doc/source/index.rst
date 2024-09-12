@@ -32,6 +32,7 @@ Contents:
     getting_started
     creating_node_classes
     testing_node_classes
+    using_custom_node_classes
     utility_functions
     api
 
