@@ -498,7 +498,9 @@ class Action(Leaf):
     _goal_type: type
     _feedback_type: type
     _result_type: type
-    _ac: Optional[Client] = None
+    _ac: Optional[ActionClient] = None
+    _feedback = None
+    passthrough: bool = False
 
     def __init__(
         self,
@@ -681,10 +683,10 @@ class Action(Leaf):
 
             self._internal_state = ActionStates.REQUEST_GOAL_CANCELLATION
             return NodeMsg.RUNNING
-
-        feed = self._feedback.feedback
-        for k, v in feed.get_fields_and_field_types().items():
-            self.outputs["feedback_" + k] = getattr(feed, k)
+        if self._feedback is not None:
+            feed = self._feedback.feedback
+            for k, v in feed.get_fields_and_field_types().items():
+                self.outputs["feedback_" + k] = getattr(feed, k)
 
         return NodeMsg.RUNNING
 
