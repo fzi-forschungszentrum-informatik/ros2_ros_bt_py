@@ -261,7 +261,7 @@ class ActionForSetType(ABC, Leaf):
             self.logwarn("Action execution was cancelled by the remote server!")
             return NodeMsg.FAILED
         seconds_running = (
-            self._running_goal_start_time - self.ros_node.get_clock().now()
+            self.ros_node.get_clock().now() - self._running_goal_start_time
         ).nanoseconds / 1e9
 
         if seconds_running > self.options["timeout_seconds"]:
@@ -669,7 +669,7 @@ class Action(Leaf):
             self.logwarn("Action execution was cancelled by the remote server!")
             return NodeMsg.FAILED
         seconds_running = (
-            self._running_goal_start_time - self.ros_node.get_clock().now()
+            self.ros_node.get_clock().now() - self._running_goal_start_time
         ).nanoseconds / 1e9
 
         if seconds_running > self.options["timeout_seconds"]:
