@@ -33,7 +33,6 @@ from ros_bt_py.ros_nodes.action import Action
 from rclpy.time import Time
 from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
-from unittest.mock import MagicMock
 
 
 class TestAction:
@@ -89,7 +88,7 @@ class TestAction:
             ]
             ros_mock.get_clock.return_value = clock_mock
 
-            goal_result = MagicMock()
+            goal_result = mock.Mock()
             running_goal_future_mock.result.return_value = goal_result
             result = Fibonacci.Result()
             goal_result.result = result
