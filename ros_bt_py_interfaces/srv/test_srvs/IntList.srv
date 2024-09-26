@@ -1,3 +1,6 @@
 # Test Service, do not use for production!
 ---
-int32 int_list
+int32[] int_list
+float32[] float_list
+string[] str_list
+Node[] node_list
