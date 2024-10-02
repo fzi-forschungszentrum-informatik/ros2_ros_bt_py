@@ -255,9 +255,10 @@ class PackageManager(object):
                 )
             for field in message_class._fields_and_field_types:
                 response.field_names.append(field.strip())
-            response.fields = json_encode(
-                rosidl_runtime_py.message_to_ordereddict(message_class())
-            )
+            #response.fields = json_encode(
+            #    rosidl_runtime_py.message_to_ordereddict(message_class())
+            #)
+            response.fields = json_encode(message_class())
             response.success = True
         except Exception as e:
             response.success = False
