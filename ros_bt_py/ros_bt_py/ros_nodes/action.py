@@ -500,6 +500,7 @@ class Action(Leaf):
     _result_type: type
     _ac: Optional[ActionClient] = None
     _feedback = None
+    _internal_state = ActionStates.IDLE
     passthrough: bool = False
 
     def __init__(
