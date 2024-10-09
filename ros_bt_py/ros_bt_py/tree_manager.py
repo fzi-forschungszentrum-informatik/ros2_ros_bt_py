@@ -422,9 +422,6 @@ class TreeManager:
     def set_state(self, new_state: str) -> None:
         with self._state_lock:
             self.tree_msg.state = new_state
-            self.ros_node.get_logger().fatal(
-                f"Updating tree state to {self.tree_msg.state}"
-            )
 
     def set_diagnostics_name(self):
         """
