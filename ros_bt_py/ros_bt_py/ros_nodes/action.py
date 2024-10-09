@@ -40,8 +40,7 @@ from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
-from rclpy.client import Client
+from ros_bt_py.node_config import NodeConfig
 from rclpy.node import Node
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
