@@ -377,8 +377,6 @@ class TreeManager:
 
         self._state_lock = Lock()
         self._edit_lock = RLock()
-
-        self._setting_up = False
         # Stop the tick thread after a single tick
         self._once = False
         # Stop the tick thread after the tree returns something other than
@@ -567,11 +565,7 @@ class TreeManager:
         with self._state_lock:
             self.tree_msg.root_name = root.name
         if root.state in (NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN):
-            with self._state_lock:
-                self._setting_up = True
             root.setup()
-            with self._state_lock:
-                self._setting_up = False
             if root.state is not NodeMsg.IDLE:
                 self.set_state(Tree.ERROR)
                 self.publish_info(
