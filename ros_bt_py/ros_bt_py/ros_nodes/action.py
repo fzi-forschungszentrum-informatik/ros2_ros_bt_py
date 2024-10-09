@@ -500,7 +500,6 @@ class Action(Leaf):
     _ac: Optional[ActionClient] = None
     _feedback = None
     _internal_state = ActionStates.IDLE
-    passthrough: bool = False
 
     def __init__(
         self,
@@ -535,7 +534,6 @@ class Action(Leaf):
                 msg = self._goal_type()
                 for field in msg._fields_and_field_types:
                     node_inputs[field] = type(getattr(msg, field))
-                self.passthrough = False
             else:
                 node_inputs["in"] = self.options["action_type"]
         except AttributeError:
@@ -548,7 +546,6 @@ class Action(Leaf):
                 msg = self._result_type()
                 for field in msg._fields_and_field_types:
                     node_outputs["result_" + field] = type(getattr(msg, field))
-                self.passthrough = False
             else:
                 node_outputs["result_out"] = self.options["action_type"]
         except AttributeError:
@@ -561,7 +558,6 @@ class Action(Leaf):
                 msg = self._feedback_type()
                 for field in msg._fields_and_field_types:
                     node_outputs["feedback_" + field] = type(getattr(msg, field))
-                self.passthrough = False
             else:
                 node_outputs["feedback_out"] = self.options["action_type"]
         except AttributeError:
