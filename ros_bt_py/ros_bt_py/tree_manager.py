@@ -522,18 +522,17 @@ class TreeManager:
             get_logger("tree_manager").get_child(self.name).error(
                 f"Encountered error while ticking tree: {ex}, {traceback.format_exc()}"
             )
-            with self._state_lock:
-                if self.show_traceback_on_exception:
-                    self._last_error = f"{ex}, {traceback.format_exc()}"
-                else:
-                    self._last_error = f"{ex}"
-                self.tree_msg.state = Tree.ERROR
-                self.publish_info(
-                    subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                    if self.subtree_manager is not None
-                    else None,
-                    ticked=True,
-                )
+            self.set_state(Tree.ERROR)
+            if self.show_traceback_on_exception:
+                self._last_error = f"{ex}, {traceback.format_exc()}"
+            else:
+                self._last_error = f"{ex}"
+            self.publish_info(
+                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                if self.subtree_manager is not None
+                else None,
+                ticked=True,
+            )
 
     def tick(self, once=None):
         """
@@ -574,8 +573,7 @@ class TreeManager:
             with self._state_lock:
                 self._setting_up = False
             if root.state is not NodeMsg.IDLE:
-                with self._state_lock:
-                    self.tree_msg.state = Tree.ERROR
+                self.set_state(Tree.ERROR)
                 self.publish_info(
                     subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                     if self.subtree_manager is not None
@@ -603,8 +601,7 @@ class TreeManager:
             if self._once:
                 # Return immediately, not unticking anything
                 self._once = False
-                with self._state_lock:
-                    self.tree_msg.state = Tree.WAITING_FOR_TICK
+                self.set_state(Tree.WAITING_FOR_TICK)
                 return
             tick_end_timestamp = self.ros_node.get_clock().now()
 
@@ -628,9 +625,7 @@ class TreeManager:
                 tick_frequency_msg.data = tick_frequency_avg
                 self.publish_tick_frequency(tick_frequency_msg)
             self.rate.sleep()
-
-        with self._state_lock:
-            self.tree_msg.state = Tree.IDLE
+        self.set_state(Tree.IDLE)
         self.publish_info(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
@@ -2293,8 +2288,7 @@ class TreeManager:
                         "Failed to rewire successful unwiring after error. "
                         "Tree is in undefined state!"
                     )
-                    with self._state_lock:
-                        self.tree_msg.state = Tree.ERROR
+                    self.set_state(Tree.ERROR)
                     break
 
         # only actually wire any data if there were no errors
