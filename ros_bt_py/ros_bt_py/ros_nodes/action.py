@@ -45,6 +45,7 @@ from rclpy.node import Node
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 import inspect
+from std_msgs.msg import Int64
 
 
 class ActionStates(Enum):
@@ -499,6 +500,7 @@ class Action(Leaf):
     _result_type: type
     _ac: Optional[ActionClient] = None
     _feedback = None
+
     _internal_state = ActionStates.IDLE
 
     def __init__(
@@ -549,7 +551,8 @@ class Action(Leaf):
             else:
                 node_outputs["result_out"] = self.options["action_type"]
         except AttributeError:
-            node_outputs["result_out"] = self.options["action_type"]
+            self._result_type = Int64()
+            node_outputs["result_data"] = self.options["action_type"]
             self.logwarn(f"Non message type passed to: {self.name}")
 
         try:
@@ -561,7 +564,8 @@ class Action(Leaf):
             else:
                 node_outputs["feedback_out"] = self.options["action_type"]
         except AttributeError:
-            node_outputs["feedback_out"] = self.options["action_type"]
+            self._feedback_type = Int64()
+            node_outputs["feedback_data"] = self.options["action_type"]
             self.logwarn(f"Non message type passed to: {self.name}")
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
