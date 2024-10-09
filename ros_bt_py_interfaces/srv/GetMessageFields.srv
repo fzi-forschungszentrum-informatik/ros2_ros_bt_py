@@ -38,6 +38,6 @@ bool action
 uint8 type
 ---
 string fields
-string[] field_names
+string field_types
 bool success
 string error_message

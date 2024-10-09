@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import os
+import json, os, re
 from rclpy.logging import get_logger
 import ament_index_python
 from ament_index_python import PackageNotFoundError
@@ -253,12 +253,36 @@ class PackageManager(object):
                 message_class = rosidl_runtime_py.utilities.get_message(
                     request.message_type
                 )
-            for field in message_class._fields_and_field_types:
-                response.field_names.append(field.strip())
-            #response.fields = json_encode(
-            #    rosidl_runtime_py.message_to_ordereddict(message_class())
-            #)
-            response.fields = json_encode(message_class())
+
+            json_out = json_encode(message_class())
+            def replace_item(match: re.Match):
+                repl = ''
+                if match.group(1) == '{':
+                    repl += '{'
+                if match.group(2) == '}':
+                    repl += '}'
+                if repl == '':
+                    repl += ', '
+                return repl
+            json_out = re.sub(
+                r'({|, )"_check_fields": ["\w\.]*(}|, )',
+                replace_item, json_out
+            )
+            json_out = re.sub(
+                r'({|, )"py\/object": ["\w\.]*(}|, )',
+                replace_item, json_out
+            )
+            response.fields = json_out.replace('{"_', '{"').replace(', "_', ', "')
+
+            def get_field_types(obj):
+                type_dir = { k: [v] for k, v in obj.get_fields_and_field_types().items()
+                }
+                for k in type_dir.keys():
+                    if hasattr(getattr(obj, k), "get_fields_and_field_types"):
+                        type_dir[k].append( get_field_types( getattr(obj, k) ) )
+                return type_dir
+            response.field_types = json.dumps( get_field_types( message_class() ) )
+
             response.success = True
         except Exception as e:
             response.success = False
