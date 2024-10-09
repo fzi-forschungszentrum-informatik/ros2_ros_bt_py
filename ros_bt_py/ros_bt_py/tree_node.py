@@ -419,22 +419,20 @@ def shutdown(self):
 def main(argv=None):
 
     rclpy.init(args=argv)
+    tree_node = TreeNode(node_name="BehaviorTreeNode")
+    param_listener = tree_node_parameters.ParamListener(tree_node)
+    params = param_listener.get_params()
+    tree_node.init_publisher()
+    tree_node.init_package_manager(params=params)
+    tree_node.init_tree_manager(params=params)
+    tree_node.load_default_tree(params=params)
+
+    executor = SingleThreadedExecutor()
+    executor.add_node(tree_node)
     try:
-        tree_node = TreeNode(node_name="BehaviorTreeNode")
-        param_listener = tree_node_parameters.ParamListener(tree_node)
-        params = param_listener.get_params()
-        tree_node.init_publisher()
-        tree_node.init_package_manager(params=params)
-        tree_node.init_tree_manager(params=params)
-        tree_node.load_default_tree(params=params)
-
-        executor = SingleThreadedExecutor()
-        executor.add_node(tree_node)
-
         executor.spin()
-    finally:
+    except KeyboardInterrupt:
         get_logger("tree_node").fatal("Shutting down rclpy!")
-        rclpy.shutdown()
 
 
 if __name__ == "__main__":
