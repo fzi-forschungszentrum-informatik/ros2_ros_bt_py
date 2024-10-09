@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed missing attributes in the Action node.
+- Fixed high level exception catching masking errors.
+- Fixed race condition when setting the tree state.
 - Fixed package manager to be able to handle more than one package
 - Fixed python version to python3
 - Fixed Action Node and internal state machine
