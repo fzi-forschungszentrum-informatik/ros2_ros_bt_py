@@ -45,6 +45,7 @@ from rclpy.client import Client
 from rclpy.node import Node
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
+from ros_bt_py.ros_helpers import get_message_field_type
 import inspect
 
 
@@ -534,7 +535,7 @@ class Action(Leaf):
             if inspect.isclass(self._goal_type):
                 msg = self._goal_type()
                 for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
+                    node_inputs[field] = get_message_field_type(msg, field)
                 self.passthrough = False
             else:
                 node_inputs["in"] = self.options["action_type"]
@@ -547,7 +548,7 @@ class Action(Leaf):
             if inspect.isclass(self._result_type):
                 msg = self._result_type()
                 for field in msg._fields_and_field_types:
-                    node_outputs["result_" + field] = type(getattr(msg, field))
+                    node_outputs["result_" + field] = get_message_field_type(msg, field)
                 self.passthrough = False
             else:
                 node_outputs["result_out"] = self.options["action_type"]
@@ -560,7 +561,9 @@ class Action(Leaf):
             if inspect.isclass(self._feedback_type):
                 msg = self._feedback_type()
                 for field in msg._fields_and_field_types:
-                    node_outputs["feedback_" + field] = type(getattr(msg, field))
+                    node_outputs["feedback_" + field] = get_message_field_type(
+                        msg, field
+                    )
                 self.passthrough = False
             else:
                 node_outputs["feedback_out"] = self.options["action_type"]

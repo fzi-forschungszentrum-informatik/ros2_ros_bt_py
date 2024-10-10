@@ -110,6 +110,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetSimulateTick.srv"
   "srv/TestService.srv"
   "srv/WireNodeData.srv"
+
+  "srv/test_srvs/IntList.srv"
 )
 
 

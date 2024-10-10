@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import inspect
+import array
 
 import rclpy.logging
 
@@ -62,3 +63,11 @@ def get_message_constant_fields(message_class):
         return members
     else:
         raise BehaviorTreeException(f"{message_class} is not a ROS Message")
+
+
+def get_message_field_type(msg, field):
+    """Return type of a field in a ros msg but check for arrays to be converted into lists."""
+    if isinstance((getattr(msg, field)), array.array):
+        return list
+    else:
+        return type(getattr(msg, field))
