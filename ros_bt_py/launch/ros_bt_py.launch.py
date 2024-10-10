@@ -34,6 +34,14 @@ from launch_ros.substitutions import FindPackageShare
 from launch.conditions import IfCondition
 
 
+def generate_module_list():
+    module_list = [
+        "ros_bt_py.nodes",
+        "ros_bt_py.ros_nodes",
+    ]
+    return str(module_list)
+
+
 def generate_launch_description():
     robot_namespace_launch_arg = DeclareLaunchArgument(
         "robot_namespace",
@@ -44,7 +52,7 @@ def generate_launch_description():
 
     node_modules_launch_arg = DeclareLaunchArgument(
         "node_modules",
-        default_value="['ros_bt_py.nodes','ros_bt_py.ros_nodes']",
+        default_value=generate_module_list(),
         description="Default python modules from which to load node definitions",
     )
     node_modules_value = LaunchConfiguration("node_modules")
@@ -58,7 +66,7 @@ def generate_launch_description():
 
     enable_web_interface_launch_arg = DeclareLaunchArgument(
         "enable_web_interface",
-        default_value="False",
+        default_value="True",
         description="Enable the ros_bt_py web GUI",
     )
     enable_web_interface_value = LaunchConfiguration("enable_web_interface")

@@ -160,7 +160,7 @@ def define_bt_node(node_config):
         if missing_methods:
             # Don't register the class if it doesn't implement all required
             # methods
-            rclpy.logging.get_logger(node_class.__name__).info(
+            rclpy.logging.get_logger(node_class.__name__).warn(
                 f"Assigned NodeData to class {node_class.__name__}, but did not register "
                 f"the class because it does not implement all required methods. "
                 f"Missing methods: {str(missing_methods)}",
@@ -763,7 +763,7 @@ class Node(object):
           The new state of the node (should be IDLE unless an error happened)
         """
         msg = f"Resetting a node of type {self.__class__.__name__} without _do_reset function!"
-        self.logerr(msg)
+        self.logfatal(msg)
         return NodeMsg.BROKEN
 
     def shutdown(self) -> str:
@@ -781,7 +781,6 @@ class Node(object):
         report_state = self._dummy_report_state()
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
-        self.logfatal(f"Shutting down {self.name}")
         with report_state:
             if self.state == NodeMsg.UNINITIALIZED:
                 self.loginfo(
@@ -1022,7 +1021,6 @@ class Node(object):
                     'option key "%s"' % (target_map.name, key, data_type.option_key)
                 )
             if not self.options.is_updated(data_type.option_key):
-                self.loginfo(str(self.options))
                 raise NodeConfigError(
                     'OptionRef for %s key "%s" references unwritten '
                     'option key "%s"' % (target_map.name, key, data_type.option_key)
@@ -1230,7 +1228,6 @@ class Node(object):
 
         node_class: Optional[type] = None
         if len(node_classes) > 1:
-            rclpy.logging.get_logger(cls.__name__).warn(f"{msg} - {node_classes}")
             candidates = list(
                 filter(
                     lambda node_class_candidate: _check_node_data_match(
@@ -1535,8 +1532,6 @@ class Node(object):
             if sub.target == wiring.target:
                 if sub.source == wiring.source:
                     raise BehaviorTreeException("Duplicate subscription!")
-                # self.logwarn('Subscribing to two different sources for key %s[%s]'
-                #              % (wiring.target.data_kind, wiring.target.data_key))
         source_node = self.find_node(wiring.source.node_name)
         if not source_node:
             raise BehaviorTreeException(

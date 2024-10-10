@@ -116,10 +116,10 @@ class IOInput(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logwarn('ignoring unset "in" input and using default value')
+                self.logdebug('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logwarn("Running tick() with stale data!")
+                    self.logdebug("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
                     raise ValueError(
                         f"Trying to tick a node with an unset input ({input_name})!"
@@ -173,10 +173,10 @@ class IOOutputOption(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logwarn('ignoring unset "in" input and using default value')
+                self.logdebug('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logwarn("Running tick() with stale data!")
+                    self.logdebug("Running tick() with stale data!")
         self.inputs.handle_subscriptions()
 
     def _do_tick(self):
@@ -226,10 +226,10 @@ class IOOutput(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logwarn('ignoring unset "in" input and using default value')
+                self.logdebug('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logwarn("Running tick() with stale data!")
+                    self.logdebug("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
                     raise ValueError(
                         f"Trying to tick a node with an unset input ({input_name})!"

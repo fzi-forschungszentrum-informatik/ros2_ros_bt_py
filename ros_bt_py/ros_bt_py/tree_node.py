@@ -33,6 +33,7 @@
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.logging import get_logger
 from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
@@ -371,7 +372,7 @@ class TreeNode(Node):
 
     def load_default_tree(self, params: tree_node_parameters.Params):
         if params.default_tree.load_default_tree:
-            self.get_logger().warn(
+            self.get_logger().info(
                 f"loading default tree: {params.default_tree.tree_path}"
             )
             tree = Tree(path=params.default_tree.tree_path)
@@ -430,12 +431,9 @@ def main(argv=None):
         executor = SingleThreadedExecutor()
         executor.add_node(tree_node)
 
-        try:
-            executor.spin()
-        finally:
-            executor.shutdown()
-            tree_node.destroy_node()
+        executor.spin()
     finally:
+        get_logger("tree_node").fatal("Shutting down rclpy!")
         rclpy.shutdown()
 
 

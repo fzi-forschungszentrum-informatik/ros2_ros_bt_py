@@ -109,6 +109,7 @@ class DebugManager(object):
         :param state: The state of the node
         """
         diagnostics_msg = None
+        diagnostics = {}
         if self._collect_node_diagnostics:
             diagnostics = {
                 "name": node_instance.name,
@@ -152,6 +153,7 @@ class DebugManager(object):
         :param instance: The node that's executing
         """
         diagnostics_msg = None
+        diagnostics = {}
         if self._collect_node_diagnostics:
             diagnostics = {
                 "name": node_instance.name,

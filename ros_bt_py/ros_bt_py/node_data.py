@@ -30,7 +30,7 @@ import rclpy
 import rclpy.logging
 from result import Err, Ok, Result
 
-from ros_bt_py.helpers import loglevel_is, json_encode
+from ros_bt_py.helpers import json_encode
 
 
 def from_string(data_type, string_value, static=False):
@@ -225,7 +225,7 @@ class NodeDataMap(object):
                     index = i
             if index is not None:
                 callback_name = self.callbacks[key].pop(index)[1]
-                rclpy.logging.get_logger(self.name).info(
+                rclpy.logging.get_logger(self.name).debug(
                     f'Removed callback "{callback_name}" of key {self.name}[{key}]'
                 )
             else:

@@ -27,8 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import os
 from rclpy.logging import get_logger
+import ament_index_python
 from ament_index_python import PackageNotFoundError
-from rclpy.utilities import ament_index_python
 
 from typing import Optional, List
 
@@ -168,7 +168,7 @@ class PackageManager(object):
 
         except IOError:
             response.success = False
-            response.error_message = f'IOError on file: "{request.filename}"'
+            response.error_message = f'IOError on file: "{request.filepath}"'
 
         return response
 
@@ -380,6 +380,7 @@ class PackageManager(object):
                 f'Folder "{request.storage_folder}" is not a valid storage folder:'
                 f"{self.tree_storage_directory_paths}!"
             )
+            return response
         self.reset_id()
         package_structure = self.path_to_dict(
             path=os.path.abspath(request.storage_folder),
