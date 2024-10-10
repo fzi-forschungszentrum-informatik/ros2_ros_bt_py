@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tree storage path is now a launch argument
 - Action results can now be processed when using ABC Actions
 - Documentation on how to use custom node classes with the library
+- New node module `Time` in the standard node library including a `TimeNow` node that gives back a
+  `builtin_interfaces/Time` message of the current timestamp.
 
 ### Changed
 
