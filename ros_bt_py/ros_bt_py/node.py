@@ -150,7 +150,7 @@ def _required(meth: TCallable) -> TCallable:
     methods could still be instantiated and used, just not as part of
     a BT.
     """
-    meth._required = True
+    setattr(meth, "_required", True)
     return meth
 
 
@@ -324,7 +324,6 @@ class NodeMeta(type):
             return self._doc
 
 
-@typechecked
 class Node(object):
     """
     Base class for Behavior Tree nodes.
@@ -534,6 +533,7 @@ class Node(object):
         return setup_result
 
     @_required
+    @typechecked
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Use this to do custom node setup.
@@ -662,6 +662,7 @@ class Node(object):
         return Ok(None)
 
     @_required
+    @typechecked
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Every Node class must override this.
@@ -713,6 +714,7 @@ class Node(object):
             return Ok(self.state)
 
     @_required
+    @typechecked
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Abstract method used to implement the actual untick operations.
@@ -774,6 +776,7 @@ class Node(object):
             return Ok(self.state)
 
     @_required
+    @typechecked
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Abstract method used to implement the reset action.
@@ -844,6 +847,7 @@ class Node(object):
             return Ok(self.state)
 
     @_required
+    @typechecked
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Abstract method implementing the shutdown action.
@@ -1364,7 +1368,7 @@ class Node(object):
         return Ok(node_instance)
 
     @typechecked
-    def get_children_recursive(self) -> Generator["Node"]:
+    def get_children_recursive(self) -> Generator["Node", None, None]:
         """Return all nodes that are below this node in the parent-child hirachy recursively."""
         yield self
         for child in self.children:
@@ -1414,7 +1418,7 @@ class Node(object):
             state=Tree.IDLE,
         )
 
-        node_map: Dict[str, "Node"] = {node.name: node for node in subtree.nodes}
+        node_map: Dict[str, NodeMsg] = {node.name: node for node in subtree.nodes}
         incoming_connections: List[NodeDataWiring] = []
         outgoing_connections: List[NodeDataWiring] = []
         for node in self.get_children_recursive():
