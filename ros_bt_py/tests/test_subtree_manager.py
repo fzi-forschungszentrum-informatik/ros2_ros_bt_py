@@ -40,9 +40,7 @@ class TestSubtreeManager:
     @pytest.fixture
     def subtree_manager(self):
         subtree_manager = SubtreeManager()
-        subtree_manager.set_publish_subtrees(
-            publish_subtrees=True,
-        )
+        subtree_manager.publish_subtrees = True
         return subtree_manager
 
     def test_add_subtree_info(self, subtree_manager):
@@ -107,13 +105,16 @@ class TestSubtreeManager:
     def test_check_publish_subtrees_false(
         self, subtree_manager_no_publish: SubtreeManager
     ):
-        assert not subtree_manager_no_publish.get_publish_subtrees()
+        assert not subtree_manager_no_publish.publish_subtrees
 
     def test_check_publish_subtrees_true(self, subtree_manager: SubtreeManager):
-        assert subtree_manager.get_publish_subtrees()
+        assert subtree_manager.publish_subtrees
 
     def test_add_subtree_info_exception(
         self, subtree_manager_no_publish: SubtreeManager
     ):
-        with pytest.raises(BehaviorTreeException):
-            subtree_manager_no_publish.add_subtree_info("node_name", Tree())
+
+        add_subtree_result = subtree_manager_no_publish.add_subtree_info(
+            "node_name", Tree()
+        )
+        assert add_subtree_result.is_err()
