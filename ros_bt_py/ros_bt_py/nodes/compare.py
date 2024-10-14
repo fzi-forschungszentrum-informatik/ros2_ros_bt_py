@@ -48,20 +48,11 @@ class Compare(Leaf):
     """
 
     def _do_setup(self):
-        self._received_a = False
-        self._received_b = False
         return NodeMsg.IDLE
 
     def _do_tick(self):
-        if not self._received_a:
-            if self.inputs.is_updated("a"):
-                self._received_a = True
-        if not self._received_b:
-            if self.inputs.is_updated("b"):
-                self._received_b = True
-        if self._received_a and self._received_b:
-            if self.inputs["a"] == self.inputs["b"]:
-                return NodeMsg.SUCCEEDED
+        if self.inputs["a"] == self.inputs["b"]:
+            return NodeMsg.SUCCEEDED
 
         # If we didn't received both values yet, or we did and they're
         # not equal, fail
@@ -72,9 +63,6 @@ class Compare(Leaf):
         return NodeMsg.IDLE
 
     def _do_reset(self):
-        self.inputs.reset_updated()
-        self._received_a = False
-        self._received_b = False
         return NodeMsg.IDLE
 
     def _do_shutdown(self):

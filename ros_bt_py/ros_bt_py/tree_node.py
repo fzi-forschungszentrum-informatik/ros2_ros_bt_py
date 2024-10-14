@@ -31,7 +31,7 @@
 """Module containing the main node for a ros_bt_py instance running the BT."""
 
 import rclpy
-from rclpy.executors import SingleThreadedExecutor
+from rclpy.executors import SingleThreadedExecutor, MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.logging import get_logger
 from rclpy.node import Node
@@ -402,18 +402,18 @@ class TreeNode(Node):
                         f"{control_tree_execution_response.error_message}"
                     )
 
-
-def shutdown(self):
-    """Shut down tree node in a safe way."""
-    if self.tree_manager.get_state() not in [Tree.IDLE, Tree.EDITABLE, Tree.ERROR]:
-        self.get_logger().info("Shutting down Behavior Tree")
-        response = self.tree_manager.control_execution(
-            ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN)
-        )
-        if not get_success(response):
-            self.get_logger().error(
-                f"Failed to shut down Behavior Tree: {get_error_message(response)}"
+    def shutdown(self):
+        """Shut down tree node in a safe way."""
+        if self.tree_manager.get_state() not in [Tree.IDLE, Tree.EDITABLE, Tree.ERROR]:
+            self.get_logger().info("Shutting down Behavior Tree")
+            response = self.tree_manager.control_execution(
+                ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN),
+                ControlTreeExecution.Response()
             )
+            if not get_success(response):
+                self.get_logger().error(
+                    f"Failed to shut down Behavior Tree: {get_error_message(response)}"
+                )
 
 
 def main(argv=None):
@@ -427,7 +427,7 @@ def main(argv=None):
     tree_node.init_tree_manager(params=params)
     tree_node.load_default_tree(params=params)
 
-    executor = SingleThreadedExecutor()
+    executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(tree_node)
     try:
         executor.spin()
