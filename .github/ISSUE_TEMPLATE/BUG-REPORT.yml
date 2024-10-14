@@ -56,25 +56,26 @@ body:
     id: ros2_version
     attributes:
       label: "ROS2 Version"
-      description: What ROS2 versions are you seeing the problem on ?
+      description: What ROS 2 versions are you seeing the problem on?
       multiple: true
       options:
         - Rolling
-        - Humble
+        - Jazzy
         - Iron
-        - Foxy
+        - Humble
     validations:
       required: false
   - type: dropdown
     id: os
     attributes:
       label: "OS"
-      description: What is the impacted environment ?
+      description: What is the impacted environment?
       multiple: true
       options:
         - Windows
         - Ubuntu 20.04
         - Ubuntu 22.04
+        - Ubuntu 24.04
         - RHEL
         - Fedora
         - Mac
