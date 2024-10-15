@@ -25,12 +25,12 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import os
+import json, os
 from rclpy.logging import get_logger
 import ament_index_python
 from ament_index_python import PackageNotFoundError
 
-from typing import Optional, List
+from typing import Any, Optional, List
 
 import rclpy
 import rclpy.publisher
@@ -53,6 +53,7 @@ from ros_bt_py.helpers import (
     remove_input_output_values,
     json_encode,
     set_node_state_to_shutdown,
+    build_message_field_dicts
 )
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
@@ -253,11 +254,23 @@ class PackageManager(object):
                 message_class = rosidl_runtime_py.utilities.get_message(
                     request.message_type
                 )
-            for field in message_class._fields_and_field_types:
-                response.field_names.append(field.strip())
-            response.fields = json_encode(
-                rosidl_runtime_py.message_to_ordereddict(message_class())
-            )
+
+            field_values, field_types = build_message_field_dicts(message_class())
+
+            # Ros interfaces sometimes introduce numpy types or bytes.
+            # Try their standard normalization methods.
+            # If those fail, just cast to string
+            def coerce_numpy_types(obj: Any):
+                try:
+                    return obj.tolist()
+                except AttributeError:
+                    rclpy.logging.get_logger("package_manager") \
+                    .warn(f"Object of type {obj.__class__.__name__} can't be serialized properly")
+                    return str(obj)
+
+            response.fields = json.dumps(field_values, default=coerce_numpy_types)
+            response.field_types = json.dumps(field_types, default=coerce_numpy_types)
+
             response.success = True
         except Exception as e:
             response.success = False
