@@ -25,12 +25,12 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import json, os, re
+import json, os
 from rclpy.logging import get_logger
 import ament_index_python
 from ament_index_python import PackageNotFoundError
 
-from typing import Optional, List
+from typing import Any, Optional, List
 
 import rclpy
 import rclpy.publisher
@@ -53,6 +53,7 @@ from ros_bt_py.helpers import (
     remove_input_output_values,
     json_encode,
     set_node_state_to_shutdown,
+    build_message_field_dicts
 )
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
@@ -254,34 +255,21 @@ class PackageManager(object):
                     request.message_type
                 )
 
-            json_out = json_encode(message_class())
-            def replace_item(match: re.Match):
-                repl = ''
-                if match.group(1) == '{':
-                    repl += '{'
-                if match.group(2) == '}':
-                    repl += '}'
-                if repl == '':
-                    repl += ', '
-                return repl
-            json_out = re.sub(
-                r'({|, )"_check_fields": ["\w\.]*(}|, )',
-                replace_item, json_out
-            )
-            json_out = re.sub(
-                r'({|, )"py\/object": ["\w\.]*(}|, )',
-                replace_item, json_out
-            )
-            response.fields = json_out.replace('{"_', '{"').replace(', "_', ', "')
+            field_values, field_types = build_message_field_dicts(message_class())
 
-            def get_field_types(obj):
-                type_dir = { k: [v] for k, v in obj.get_fields_and_field_types().items()
-                }
-                for k in type_dir.keys():
-                    if hasattr(getattr(obj, k), "get_fields_and_field_types"):
-                        type_dir[k].append( get_field_types( getattr(obj, k) ) )
-                return type_dir
-            response.field_types = json.dumps( get_field_types( message_class() ) )
+            # Ros interfaces sometimes introduce numpy types or bytes.
+            # Try their standard normalization methods.
+            # If those fail, just cast to string
+            def coerce_numpy_types(obj: Any):
+                try:
+                    return obj.tolist()
+                except AttributeError:
+                    rclpy.logging.get_logger("package_manager") \
+                    .warn(f"Object of type {obj.__class__.__name__} can't be serialized properly")
+                    return str(obj)
+
+            response.fields = json.dumps(field_values, default=coerce_numpy_types)
+            response.field_types = json.dumps(field_types, default=coerce_numpy_types)
 
             response.success = True
         except Exception as e:
