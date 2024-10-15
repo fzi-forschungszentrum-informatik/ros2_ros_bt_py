@@ -70,6 +70,7 @@ class TopicSubscriber(Leaf):
     """
 
     _lock = Lock()
+    _subscriber = None
 
     def _do_setup(self):
         self._msg = None
@@ -118,6 +119,7 @@ class TopicSubscriber(Leaf):
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
+        return NodeMsg.SHUTDOWN
 
     def _do_reset(self):
         # discard the last received message
@@ -179,6 +181,7 @@ class TopicMemorySubscriber(Leaf):
     """
 
     _lock = Lock()
+    _subscriber = None
 
     def _do_setup(self):
         if not self.has_ros_node:
@@ -245,6 +248,7 @@ class TopicMemorySubscriber(Leaf):
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
+        return NodeMsg.IDLE
 
     def _do_reset(self):
         # discard the last received message
@@ -294,6 +298,7 @@ class TopicMemorySubscriber(Leaf):
     )
 )
 class TopicPublisher(Leaf):
+    _publisher = None
     def _do_setup(self):
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a refrence to a ROS node!"
