@@ -1,16 +1,18 @@
+###############
 Getting Started
-===============
+###############
 
+************
 Installation
-------------
+************
 
 Installing from binary packages
-+++++++++++++++++++++++++++++++
+===============================
 
 Installation form binary packages is currently not supported, but will be added in the future.
 
 Installing from source
-++++++++++++++++++++++
+======================
 
 To install ``ros_bt_py`` from source you need to follow these steps:
 
@@ -31,8 +33,9 @@ Now ``ros_bt_py`` is build and installed in your workspace and can be used.
 
 .. _repo: https://ids-git.fzi.de/ros2/ros_bt_py
 
+*****************
 Running ros_bt_py
------------------
+*****************
 
 The command
 
@@ -45,7 +48,7 @@ will start a BT server and the rosbridge and webserver needed for the GUI.
 Afterwards, you can open ``http://localhost:8085/index.html`` to use the editor.
 
 Launch Options
-++++++++++++++
+==============
 
 .. list-table:: Launch Options
    :widths: auto
@@ -105,7 +108,7 @@ Launch Options
      - ros_bt_py & ros_bt_py_interfaces
 
 Stand-alone Web Interface
-+++++++++++++++++++++++++
+=========================
 
 The web interface can be launched stand alone of the library, using the following command:
 
