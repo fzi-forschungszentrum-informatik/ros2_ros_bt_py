@@ -1,7 +1,12 @@
-.. _using-custom-nodes:
+.. _advanced-launch-config:
 
+#############################
+Advanced Launch Configuration
+#############################
+
+**************************************
 Using Custom Node Classes in a Project
-======================================
+**************************************
 
 When adding more complex node classes it is strongly advised, that you create your own Python
 package for them, so you don't have to fork (or even have uncommited changes!!) in your
@@ -44,4 +49,6 @@ include your node modules::
           ]
       )
 
-Because ``LaunchDescription`` only takes strings as launch arguments the custom ``generate_module_list`` function is used to allow for adding multiple new modules while also allowing for line breaks for readability.
+Because ``LaunchDescription`` only takes strings as launch arguments the custom
+``generate_module_list`` function is used to allow for adding multiple new modules while also
+allowing for line breaks for readability.
