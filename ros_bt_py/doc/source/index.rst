@@ -3,11 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+#####################################
 Welcome to ros_bt_py's documentation!
-=====================================
+#####################################
 
+************
 Introduction
-------------
+************
 
 ros_bt_py is a Python package for writing and executing Behavior Trees.
 
@@ -30,8 +32,9 @@ development without the need to write any code:
 .. _FlexBE: http://philserver.bplaced.net/
 .. _RAFCON: https://rafcon.readthedocs.io/en/latest/
 
+*****************
 Mission Statement
------------------
+*****************
 
 ros_bt_py was created with the following goals in mind:
 
@@ -42,8 +45,9 @@ ros_bt_py was created with the following goals in mind:
 
 It is meant as a high level control option similar to SMACH or FlexBE.
 
+*****************
 Table of Contents
------------------
+*****************
 
 .. toctree::
     :maxdepth: 2
@@ -56,8 +60,9 @@ Table of Contents
     api
 
 
+******************
 Indices and tables
-------------------
+******************
 
 * :ref:`genindex`
 * :ref:`modindex`
