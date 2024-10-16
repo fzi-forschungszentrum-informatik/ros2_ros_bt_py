@@ -21,9 +21,10 @@ development without the need to write any code:
 
 * The basic framework holding ros_bt_by together.
 * A "standard library" of Behavior Tree nodes (i.e. subclasses of :class:`ros_bt_py.node.Node`)
-  that already allow the construction of complex robot mission Behavior Trees. While these will let
-  you do basically whatever you want, :ref:`writing your own nodes<creating-nodes>` might be
-  helpful after you are familiar with the library.
+  that already allow the construction of complex robot mission Behavior Trees.
+  While these will let you do basically whatever you want,
+  :ref:`writing your own nodes<creating-nodes>` might be helpful after you are familiar with the
+  library.
 * The ros_bt_py web GUI, which should in general be your interface to interact with the library.
   Generating trees through code is currently possible, but neither supported nor documented.
 
@@ -53,9 +54,11 @@ Table of Contents
     :maxdepth: 2
 
     getting_started
+    basic_tutorial
+    advanced_tutorial
     creating_node_classes
     testing_node_classes
-    using_custom_node_classes
+    advanced_launch_configuration
     utility_functions
     api
 
