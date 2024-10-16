@@ -25,14 +25,38 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from . import service
-from . import action
-from . import enum
-from . import file
-from . import message_converters
-from . import messages_from_dict
-from . import param
-from . import subtree
-from . import throttle
-from . import time
-from . import topic
+from ros_bt_py_interfaces.msg import Node as NodeMsg
+from builtin_interfaces.msg import Time
+
+from ros_bt_py.node import define_bt_node, Leaf
+from ros_bt_py.node_config import NodeConfig
+
+
+@define_bt_node(
+    NodeConfig(
+        version="0.1.0",
+        options={},
+        inputs={},
+        outputs={"current_time": Time},
+        max_children=0,
+    )
+)
+class GetTimeNow(Leaf):
+    """Output current time stamp."""
+
+    def _do_setup(self):
+        pass
+
+    def _do_tick(self):
+        current_time = self.ros_node.get_clock().now()
+        self.outputs["current_time"] = current_time.to_msg()
+        return NodeMsg.SUCCEEDED
+
+    def _do_shutdown(self):
+        pass
+
+    def _do_reset(self):
+        return NodeMsg.IDLE
+
+    def _do_untick(self):
+        return NodeMsg.IDLE

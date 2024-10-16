@@ -31,8 +31,9 @@
 """Module containing the main node for a ros_bt_py instance running the BT."""
 
 import rclpy
-from rclpy.executors import SingleThreadedExecutor
+from rclpy.executors import SingleThreadedExecutor, MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.logging import get_logger
 from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
@@ -401,42 +402,37 @@ class TreeNode(Node):
                         f"{control_tree_execution_response.error_message}"
                     )
 
-
-def shutdown(self):
-    """Shut down tree node in a safe way."""
-    if self.tree_manager.get_state() not in [Tree.IDLE, Tree.EDITABLE, Tree.ERROR]:
-        self.get_logger().info("Shutting down Behavior Tree")
-        response = self.tree_manager.control_execution(
-            ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN)
-        )
-        if not get_success(response):
-            self.get_logger().error(
-                f"Failed to shut down Behavior Tree: {get_error_message(response)}"
+    def shutdown(self):
+        """Shut down tree node in a safe way."""
+        if self.tree_manager.get_state() not in [Tree.IDLE, Tree.EDITABLE, Tree.ERROR]:
+            self.get_logger().info("Shutting down Behavior Tree")
+            response = self.tree_manager.control_execution(
+                ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN),
+                ControlTreeExecution.Response()
             )
+            if not get_success(response):
+                self.get_logger().error(
+                    f"Failed to shut down Behavior Tree: {get_error_message(response)}"
+                )
 
 
 def main(argv=None):
 
     rclpy.init(args=argv)
+    tree_node = TreeNode(node_name="BehaviorTreeNode")
+    param_listener = tree_node_parameters.ParamListener(tree_node)
+    params = param_listener.get_params()
+    tree_node.init_publisher()
+    tree_node.init_package_manager(params=params)
+    tree_node.init_tree_manager(params=params)
+    tree_node.load_default_tree(params=params)
+
+    executor = MultiThreadedExecutor(num_threads=3)
+    executor.add_node(tree_node)
     try:
-        tree_node = TreeNode(node_name="BehaviorTreeNode")
-        param_listener = tree_node_parameters.ParamListener(tree_node)
-        params = param_listener.get_params()
-        tree_node.init_publisher()
-        tree_node.init_package_manager(params=params)
-        tree_node.init_tree_manager(params=params)
-        tree_node.load_default_tree(params=params)
-
-        executor = SingleThreadedExecutor()
-        executor.add_node(tree_node)
-
-        try:
-            executor.spin()
-        finally:
-            executor.shutdown()
-            tree_node.destroy_node()
-    finally:
-        rclpy.shutdown()
+        executor.spin()
+    except KeyboardInterrupt:
+        get_logger("tree_node").fatal("Shutting down rclpy!")
 
 
 if __name__ == "__main__":

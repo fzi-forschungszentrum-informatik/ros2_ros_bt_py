@@ -40,8 +40,7 @@ from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
-from rclpy.client import Client
+from ros_bt_py.node_config import NodeConfig
 from rclpy.node import Node
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -498,7 +497,9 @@ class Action(Leaf):
     _goal_type: type
     _feedback_type: type
     _result_type: type
-    _ac: Optional[Client] = None
+    _ac: Optional[ActionClient] = None
+    _feedback = None
+    _internal_state = ActionStates.IDLE
 
     def __init__(
         self,
@@ -533,7 +534,6 @@ class Action(Leaf):
                 msg = self._goal_type()
                 for field in msg._fields_and_field_types:
                     node_inputs[field] = type(getattr(msg, field))
-                self.passthrough = False
             else:
                 node_inputs["in"] = self.options["action_type"]
         except AttributeError:
@@ -546,7 +546,6 @@ class Action(Leaf):
                 msg = self._result_type()
                 for field in msg._fields_and_field_types:
                     node_outputs["result_" + field] = type(getattr(msg, field))
-                self.passthrough = False
             else:
                 node_outputs["result_out"] = self.options["action_type"]
         except AttributeError:
@@ -559,7 +558,6 @@ class Action(Leaf):
                 msg = self._feedback_type()
                 for field in msg._fields_and_field_types:
                     node_outputs["feedback_" + field] = type(getattr(msg, field))
-                self.passthrough = False
             else:
                 node_outputs["feedback_out"] = self.options["action_type"]
         except AttributeError:
@@ -681,10 +679,10 @@ class Action(Leaf):
 
             self._internal_state = ActionStates.REQUEST_GOAL_CANCELLATION
             return NodeMsg.RUNNING
-
-        feed = self._feedback.feedback
-        for k, v in feed.get_fields_and_field_types().items():
-            self.outputs["feedback_" + k] = getattr(feed, k)
+        if self._feedback is not None:
+            feed = self._feedback.feedback
+            for k, v in feed.get_fields_and_field_types().items():
+                self.outputs["feedback_" + k] = getattr(feed, k)
 
         return NodeMsg.RUNNING
 
