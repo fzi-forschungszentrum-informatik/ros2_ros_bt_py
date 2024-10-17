@@ -56,6 +56,7 @@ Table of Contents
     getting_started
     basic_tutorial
     advanced_tutorial
+    creating_a_node_class_package
     creating_node_classes
     testing_node_classes
     advanced_launch_configuration
