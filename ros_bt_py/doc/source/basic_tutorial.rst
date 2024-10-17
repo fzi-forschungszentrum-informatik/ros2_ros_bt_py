@@ -564,3 +564,56 @@ string.
 ***********************************
 Using ROS Interfaces with ros_bt_py
 ***********************************
+
+One of the main reasons for using ros_bt_py is the seamless integration with ROS 2, providing
+interfacing with Topics, Services and Actions as well as standard Node Classes for message handling.
+All interfaces defined in your sourced workspace are available through a type completion in all
+basic bt_py nodes to make the usage even easier and more robust!
+
+Building and processing messages
+================================
+
+ROS 2 interfaces are often much more complex than the basic data types we used for our examples,
+containing multiple data fields which in turn can be complex message types by themselves.
+To interface with these messages multiple standard Node Classes are available in ros_bt_py:
+
+* **MessageToFields** is a Node Class that outputs all fields of a message that is provided as an
+  Input.
+* **FieldsToMessage** does the inverse, creating a message from all its fields
+* TODO: DictToMessage is not working rn?
+* **GetAttr** and **SetAttr** can be used to modify targeted fields in a message without needing
+  decomposition and recomposition.
+
+Topics
+======
+
+Both Subscriber and Publisher Node Classes are available to use.
+They use ROS 2 msg definitions as their Inputs and Outputs.
+
+Services and Actions
+====================
+
+While topic interaction is nice, the main way you should interact with your robotic system through
+bt_py are Services and Actions.
+When working with Services and Actions in the past we realized that composing Action Goals/Service
+Requests and decomposing Action Results/Service Responses needed large amounts of nodes in each
+tree.
+This is why both the **Service** as well as the **Action** Node Classes provide the fields of their
+Goals/Requests as well as Results/Responses directly in the tree, reducing the need for
+MessageToFields or FieldsToMessage contructions.
+
+When editing the Service/Action types inside the Node Menu you will realize, that all other fields
+(Goals/Feedbacks/Results/Requests/Responses) are completed automatically.
+
+As soon as the respective node is ticked it will call the Action or Service in question and return
+RUNNING until a Result/Response arrives in which case the node returns SUCCEEDED.
+If the Action/Service call fails, the node will return FAILED.
+
+When working with Actions and Services remember to use Memory Flow Control Node Classes as they take
+more than one tick to reach terminal state!
+
+You will still need to process your results tho, as most of the time a successful service call does
+not mean the service did what you want it to do.
+To avoid this bt_py also provides abstract Services and Actions allowing for quick and easy
+implementation and in-node result processing.
+To learn more about writing your own nodes see :ref:`creating-nodes`.
