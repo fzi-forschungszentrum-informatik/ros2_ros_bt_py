@@ -53,7 +53,7 @@ class RandomInt(Leaf):
     def _do_tick(self):
         validate_range(self.options["min"], self.options["max"])
         self.outputs["random_number"] = random.randrange(
-            self.options["min"], self.options["max"]
+            self.options["min"], self.options["max"] + 1
         )
         return NodeMsg.SUCCEEDED
 
