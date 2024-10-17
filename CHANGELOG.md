@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Module List is now generated in a separate function
 - WebGUI is now launched on default
 - Service and Action Nodes now directly expose Request/Response and Goal/Result/Feedback fields
+- RandomInt now gives a number from [min, max] instead of [min, max) to make it more intuitive
 
 ### Fixed
 
