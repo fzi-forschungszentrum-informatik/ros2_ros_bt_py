@@ -1,7 +1,8 @@
 .. _testing-nodes:
 
+####################
 Testing Node Classes
-====================
+####################
 
 Even though a lot of errors are harder to make and/or easier to catch
 with :mod:`ros_bt_py` than with other libraries, you should still
@@ -12,8 +13,9 @@ do that, you simply create a new folder, slap some test scripts in
 there, and add a few lines to your :code:`CMakeLists.txt` or :code:`setup.py`, and
 :code:`package.xml`.  I'll walk you through it:
 
+*******************************************
 Creating a Test Folder and Unit Test Script
--------------------------------------------
+*******************************************
 
 The most common way to write Python unit tests in ROS2 is the
 :mod:`pytest` module.
@@ -43,8 +45,9 @@ following code in it
 A lot of the names here are important, because pytest uses the function name to find
 and run tests.  Your test script must start with the word "test".
 
+***********************
 Running your Unit Tests
------------------------
+***********************
 
 Now, to actually *run* your unit tests, simply go to the package folder and run
 
@@ -52,8 +55,9 @@ Now, to actually *run* your unit tests, simply go to the package folder and run
 
   pytest
 
+****************************************
 Adding your Unit Tests to CMakeLists.txt
-----------------------------------------
+****************************************
 
 If you want your tests to be run by the CI pipeline (and who
 doesn't?) and you use CMakeLists.txt to build your package,
@@ -88,14 +92,16 @@ Don't worry, it's easy - just add the following lines to your
     endforeach()
   endif()
 
+**********************************
 Adding your Unit Tests to setup.py
-----------------------------------
+**********************************
 
 When using an ``ament_python`` package, pytest based tests are automatically picked up by the system.
 No additional steps should be required.
 
+************************
 Running Tests via colcon
-------------------------
+************************
 
 Now that you've registered your tests with ROS2 and colcon, you can use colcon
 to run them

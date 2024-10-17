@@ -1,15 +1,17 @@
 .. _utility-functions:
 
+#################
 Utility Functions
-=================
+#################
 
 Utility Functions are one of the things that make :code:`ros_bt_py` unique.
 
 Here you'll learn a bit about what they are, what they're good for and
 how to work with them.
 
+*****
 What?
------
+*****
 
 Utility Functions are used to determine which robot is best suited to
 execute any given BT.
@@ -39,8 +41,9 @@ Conversely, for a long traversal, failure might actually have a
 smaller lower bound than success, since failing at the start is not
 very "expensive" to the robot.
 
+****
 Why?
-----
+****
 
 Utility Functions are used when *shoving* a BT. In that case,
 all available robots calculate their local Utility Function values for
@@ -49,8 +52,9 @@ the entire BT, and the "best" one gets to execute it.
 What constitutes the best value and how shoving works in general is
 described in :ref:`shoving`.
 
+****
 How?
-----
+****
 
 To actually get Utility Function values, and to aggregate them to get
 one value for an entire BT, as many node classes as possible should
