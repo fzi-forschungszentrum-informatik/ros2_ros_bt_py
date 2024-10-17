@@ -1,7 +1,8 @@
 .. _creating-nodes:
 
+#####################
 Creating Node Classes
-=====================
+#####################
 
 Say you are building a Behavior Tree, and want to do something more
 complex than the node classes in ``ros_bt_py.nodes`` or
@@ -22,9 +23,9 @@ You really also should do step 4:
 
 4. Test your new node!
 
-
+*********************
 1. Create a new class
----------------------
+*********************
 
 Let's start with the skeleton of a new node class::
 
@@ -69,7 +70,9 @@ If you load this module into the BT editor, it will actually work - it
 won't *do* anything, but you can add it to a Behavior Tree, tick it,
 untick, reset and shut it down to your heart's content.
 
+*************************
 2. Fill in the NodeConfig
+*************************
 -------------------------
 
 That's one step down. Let's move on to filling in the Node interface::
@@ -98,8 +101,9 @@ If we didn't want to limit the number of children, we'd leave
 :code:`max_children` at :code:`None`.  To tell the decorator your node
 cannot have any children, set :code:`max_children=0`.
 
+*************************************
 3. Implement the :code:`_do_` methods
--------------------------------------
+*************************************
 
 Finally, it's time to actually implement the :code:`_do_` methods.
 Luckily, these are fairly straightforward for our example.
@@ -173,8 +177,9 @@ looks like this::
 
 So we're done and ready to roll!
 
+******************
 4. Test your node!
-------------------
+******************
 
 ..\.Or are we?
 
