@@ -231,15 +231,15 @@ Tree States
 To check the health of your tree and determine your next steps e.g. on a successful run of the tree
 you need to understand the different Tree States as shown in the State Field
 
-* EDITABLE:
+* **EDITABLE:**
   The tree is currently not running and changes can be made in the canvas.
-* RUNNING:
+* **RUNNING:**
   The tree is currently running and no changes can be made.
   Everything is great.
-* IDLE:
+* **IDLE:**
   The tree reached a terminal state, but you will have to call Shutdown before you are able to edit
   it.
-* ERROR:
+* **ERROR:**
   The tree reached an error state while executing.
   Something went wrong - find the bug.
 
@@ -248,21 +248,21 @@ Execution modes
 
 When running a tree the Top Bar gives you multiple execution modes to choose from:
 
-* Tick Once:
+* **Tick Once:**
   Run exactly one single Tick through the tree.
   Especially useful when trying to debug a faulty tree.
-* Tick Periodically:
+* **Tick Periodically:**
   Run Ticks until Shutdown is called.
   After a successful run the tree will reset and start again instead of going into the IDLE state.
-* Tick Until Result:
+* **Tick Until Result:**
   Run Ticks until Shutdown is called or the tree transitions into the IDLE state.
-* Stop:
+* **Stop:**
   TODO: Does this do something?
-* Reset:
+* **Reset:**
   Reset the tree.
   This will not change the Tree State and should only be called while IDLE.
   Data in the tree as well as the Node States of the tree nodes will be reset.
-* Shutdown:
+* **Shutdown:**
   Halt and shut down the tree completely.
   This is your get out of jail free card.
   Use this to get into EDITABLE to edit your tree from any other Tree State.
@@ -284,28 +284,26 @@ runtime.
 Additionally Node States can affect the flow of the tree and which nodes are ticked through Flow
 Control Nodes.
 
-TODO: ARE THESE ENOUGH?
-
-* UNINITIALIZED:
+* **UNINITIALIZED:**
   An uninitialized node is a node in a tree that has not been executed.
   The node will have a gray frame while being in this state.
   When ticking any node in a tree all uninitialized nodes will transition to IDLE.
-* IDLE:
+* **IDLE:**
   An idle node has not yet been ticked, but is ready to be ticked.
   The node will have a light blue frame while being in this state.
   Calling Reset will reset all nodes in the tree to IDLE.
-* SUCCEEDED:
+* **SUCCEEDED:**
   A succeeded node has reached its terminal state and its action was successful.
   The node will have a light green frame while being in this state.
-* FAILED:
+* **FAILED:**
   A failed node has reached its terminal state and its action failed.
   The node will have a light red frame while being in this state.
   Failing does not mean something went wrong!
-* BROKEN:
+* **BROKEN:**
   A broken node has encountered an error while executing and will set the Tree State to ERROR.
   The node will have a dark red frame while being in this state.
   Broken nodes mean something is wrong - most probably in your node implementation.
-* SHUTDOWN:
+* **SHUTDOWN:**
   A shut down node means Shutdown was called on the whole tree and all nodes should be in that
   state.
   The node will have a dark red frame, similar to the BROKEN state.
@@ -354,3 +352,215 @@ As soon as there is more than one Node in the BT, Nodes can be moved via drag & 
 While dragging a Node, translucent drop targets appear at the positions it can be moved to.
 The canvas can be scrolled freely, either by clicking and dragging on the background or by moving
 the cursor close to one of its corners while dragging a Node or Wiring.
+
+
+**************************
+Understanding Flow Control
+**************************
+
+Flow Control Nodes are integral to effective BT design which is why we will explain them in more
+detail.
+For understanding Leaf and Decorator Node Classes please refer to the docs.
+
+Basic Control Flows
+===================
+
+The most basic Control Flow Nodes you will use the most are Sequences and Fallback nodes.
+
+**Sequences** are ticked until all their Child Nodes returns success, making them suitable for
+linear action sequences you want the tree to trigger, such as getting a goal and driving to the goalwith your robot.
+They will return FAILED as soon as one child fails.
+
+**Fallbacks** are ticked until one(!) of their Child Nodes returns success, making them suitable for
+basic branching of different behaviors, such as deciding on which action to take first when multiple
+actions might be suitable in the current situation.
+They will only return FAILED if all children fail.
+
+Advanced Control Flows
+======================
+
+While Fallbacks and Sequences are great for designing a BT, sometimes more complex Flow Control is
+needed.
+
+**Name Switches** are used for targeted selection of action paths, ticking only the Child Node whose
+name matches the Input of the Name Switch and will return the terminal state of that child.
+
+**Parallel** nodes are used to trigger multiple Child Nodes at the same time, enabling parallel
+behaviors.
+Child Nodes are ticked until they reach a terminal state and will not be ticked again until all
+children return a result.
+The return value of the Parallel node is determined by the amount of successes needed which can be
+configured in the Node Menu.
+While the amount of allowed failures of a bare Parallel node is implicitly given by the amount of
+successes needed a **ParallelFailureTolerance** allows for more flexibility by explicitly defining
+the amount of allowed failures.
+
+Regarding Memory
+================
+
+As you might have noticed by now, both Fallback and Sequence Node Classes are also available in two
+versions, one basic and one memory version.
+While the behavior of those nodes is the same when all nodes in the BT return their results on their
+first tick, it is vastly different when looking into longer running behaviors - such as moving your
+robot to a goal pose/point.
+
+The basic implementations of the Node Classes will *untick* all their Child Nodes as soon as one
+child returns RUNNING.
+This is awesome when trying to create a reactive behavior, but will lead to weird and unwanted
+effects if we actually want to give the system the time to finish a behavior e.g. a movement.
+
+To avoid those effects, such as the longer running behavior to be triggered multiple times, both
+**Memory Sequence** and **MemoryFallback** nodes can be used.
+They will remember the state of their Child Nodes when being ticked again after a node returned
+RUNNING and in turn continue ticking that node until it reaches a terminal state.
+
+In general you will want to mostly use the memory version of the basic Flow Control Node Classes
+when writing BTs for robotic applications and only use the basic versions when you explicitly want
+to display reactive behaviors.
+
+*************************
+Writing a more complex BT
+*************************
+
+Using the knowledge we gained about more complex Control Flows we now want to modify our tree that
+we created earlier to outputs either "HelloWorld" or "HelloRobot" randomly instead of a boring
+"HelloWorld".
+
+Starting from our basic tree we need to introduce a branching path through the tree where one path
+sets the Input "b" of the "StringConcatenation" to "Hello" and the other sets it to "World".
+
+1. Adding a branching path
+==========================
+
+Looking at the Flow Control Nodes both a Fallback as well as a Name Switch Node seem feasible, but
+for now we choose to use a Fallback as it is the more often used node.
+Additionally we add a third Constant "Constant_3" containing the string "Robot".
+
+#. Drag and Drop a Fallback Node before the StringConcatenation node.
+#. Drag the Constant_2 node below that Fallback node.
+#. Drag and Drop an additional Constant node to the right of the Constant_2 and adjust the Constant
+   type and value - it will automatically be named Constant_3!
+
+.. image:: _static/second_tree_0.png
+  :alt: Fallback added to the tree
+
+If you run the tree you will observe that the output is always the same, as we did not yet introduce
+a way for the first child of the Fallback to fail, creating a situation where the first child will
+always succeed and the second child to never be ticked.
+
+2. Introducing randomized Outputs
+=================================
+
+Next we want to introduce the random output - Luckily bt_py has a native **RandomInt** Node Class
+allowing for easy introduction of a random variable as well as a **CompareConstant** Node Class for
+checking our number.
+
+Before adding the node let's first think about where to do the random number generation and the
+tree flow we want to generate.
+Just adding the nodes directly under the Fallback will result in an Error state - the RandomInt node
+will succeed, letting the Fallback succeed and the StringConcatenation node being ticked with one
+unset input!
+Clearly the random number check needs to happen in its own Sequence and one of the Constants needs
+to be ticked if the check succeeds.
+So let's introduce a Sequence that takes care of this.
+
+#. Drag and Drop a Sequence node below the Fallback left of Constant_2.
+#. Drag and Drop a RandomInt node and a CompareConstant node below the sequence.
+   Also Drag the Constant_2 node to the right of them.
+#. Adjust the *max* Option in the Node Menu of the RandomInt node to 1 - this will make the node
+   generate either 0 or 1.
+#. Check the expected type and value of the CompareConstant node to make sure it will compare an int
+   to either 0 or 1 - your choice.
+
+.. image:: _static/second_tree_1.png
+  :alt: Added random element
+
+When running the tree through "TickUntilResult" multiple times and examining the Node Data you will
+see that only Constant_2 or Constant_3 is ticked, depending on the generated number.
+
+Randomizing the number at the beginning of the tree does work as well, but trying to keep
+information locally helps with making the tree more understandable!
+
+**************
+Using Subtrees
+**************
+
+When creating large trees both Data Wiring as well as Tree Structure can quickly get unwieldy.
+Additionally you should try to reuse behaviors as much as possible - no need to create the same tree
+section multiple times.
+
+To solve those problems bt_py provides Subtrees as a way to reduce redundancy and make it possible
+to quickly insert complex behaviors in multiple sections of one large tree while keeping the tree
+itself well structured.
+
+Inside the top level tree the Subtree is represented as a single node of the Subtree Node Class.
+To load a specific tree you will need to provide the path to the tree inside the Subtree Node
+Options.
+Note that the path can either be an absolute path, in which case you should lead with `file://` as
+well as a path relative to a ROS 2 package, in which case you should lead with `package://`.
+
+Subtree I/O
+===========
+
+While regular Node Classes usually have predefined Inputs/Outputs (except the ROS Interface Node
+Classes we will discuss shortly), Subtree nodes need to generate them automatically from the actual
+tree definition.
+
+You can define Inputs/Outputs *implicitly* or *explicitly*.
+
+*Implicit* definition is the one exception to the rule of unconnected Inputs as it requires you to
+leave the Inputs you want to set from outside the Subtree to be empty.
+When unchecking the "use_io_nodes" Option in the Subtree Node Menu unconnected In- and Outputs will
+be set to the Subtree In-/Outputs respectively.
+**This might cause the BT that is used as a Subtree not to be executable as a standalone tree,
+making them hard to verify!**
+
+*Explicit* definition makes use of **IOInput** and **IOOutput** Node Classes as well as their
+**Option** versions.
+These Node Classes have a default value for the Subtree In-/Output, either as an Option or an
+Input, allowing for standalone execution and testing.
+
+Using a Subtree in our example tree
+====================================
+
+Let's say we want to use our randomized string inside a larger tree, where we define the first part
+of the tree. But we also want to be able to still execute our "HelloWorld/Robot" example by itself!
+
+1. Define Inputs and Outputs
+----------------------------
+
+Using what we learned before, we should utilize the tree as a Subtree, while explicitly defining
+tree Inputs and Outputs to keep the tree executable as a standalone tree.
+
+#. Drag and Drop an IOInputOption as well as an IOOutputOption node at the start and end of the
+   main tree sequence.
+#. Adjust the Data Types and default values. The default value of the Input should be "Hello",
+   the one of the Output is not important as we always set an input.
+#. Connect the Data Graph and delete the Constant_1 node - it has been substituted by the
+   IOOutputOption.
+#. Test the tree. The Output of the IOOutputOption node should be the same as before.
+
+.. image:: _static/third_tree_0.png
+   :alt: Added IO Nodes
+
+2. Utilize the tree as a Subtree
+--------------------------------
+
+Now we are ready to use the tree as a Subtree where we manipulate the first part of our output
+string.
+
+#. After saving our first tree (let's call it "subtree.yaml") open a blank tree by clicking "New".
+#. Create a new Sequence with a Constant and a Subtree.
+#. Load the Subtree we just saved by adjusting the path Option of the Subtree node.
+   Use `file:///path/to/dir/subtree.yaml`.
+#. Adjust the Constant to output "Goodbye" and connect the In-/Outputs.
+#. Verify the Output of the Subtree, it should read "GoodbyeWorld" or "GoodbyeRobot", depending on
+   what was rolled in the Subtree.
+
+.. image:: _static/third_tree_1.png
+   :alt: Used as Subtree
+
+
+***********************************
+Using ROS Interfaces with ros_bt_py
+***********************************
