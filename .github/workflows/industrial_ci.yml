@@ -23,13 +23,13 @@ jobs:
           - rolling
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: 'ros-industrial/industrial_ci@master'
         env:
           ROS_DISTRO: ${{ matrix.distro }}
           BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
-          AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
+          AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install --break-system-packages coverage[toml]"
           ENABLE_COVERAGE_TESTING: "true"
 
       - name: Upload Test Results
