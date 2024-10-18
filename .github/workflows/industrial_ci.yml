@@ -29,8 +29,9 @@ jobs:
           ROS_DISTRO: ${{ matrix.distro }}
           BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
-          AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install --break-system-packages coverage[toml]"
+          AFTER_INSTALL_TARGET_DEPENDENCIES: "pip3 install coverage[toml]"
           ENABLE_COVERAGE_TESTING: "true"
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
 
       - name: Upload Test Results
         if: always()
