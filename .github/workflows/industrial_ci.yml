@@ -19,6 +19,8 @@ jobs:
         distro:
           - humble
           - iron
+          - jazzy
+          - rolling
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
