@@ -103,7 +103,8 @@ class Subtree(Leaf):
             subtree_manager=subtree_manager,
         )
         self.load_subtree()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager and self.subtree_manager.publish_subtrees:
+            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
 
     def load_subtree(self) -> None:
@@ -264,6 +265,7 @@ class Subtree(Leaf):
                     )
 
     def _do_setup(self):
+        # FIXME: This does not use the result!
         self.root = self.manager.find_root()
         if self.root is None:
             raise BehaviorTreeException(
@@ -271,14 +273,16 @@ class Subtree(Leaf):
                 f"{self.options['subtree_path']} exist?"
             )
         self.root.setup()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager and self.subtree_manager.publish_subtrees:
+            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
 
     def _do_tick(self):
         if not self.root:
             return NodeMsg.BROKEN
         new_state = self.root.tick()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager and self.subtree_manager.publish_subtrees:
+            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
         return new_state
 
@@ -286,7 +290,8 @@ class Subtree(Leaf):
         if not self.root:
             return NodeMsg.BROKEN
         new_state = self.root.untick()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager and self.subtree_manager.publish_subtrees:
+            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
         return new_state
 
@@ -294,7 +299,8 @@ class Subtree(Leaf):
         if not self.root:
             return NodeMsg.IDLE
         new_state = self.root.reset()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager and self.subtree_manager.publish_subtrees:
+            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
         return new_state
 
@@ -302,10 +308,12 @@ class Subtree(Leaf):
         if not self.root:
             return NodeMsg.SHUTDOWN
         self.root.shutdown()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager and self.subtree_manager.publish_subtrees:
+            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
 
     def _do_calculate_utility(self):
+        # FIXME: This does not use the result!
         self.root = self.manager.find_root()
         if self.root is not None:
             return self.root.calculate_utility()

@@ -25,10 +25,15 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from typing import List
+from result import Ok, Result
+from typeguard import typechecked
+from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
 
-from ros_bt_py.node import FlowControl, define_bt_node
+from ros_bt_py.node import FlowControl, Node, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
 
@@ -66,48 +71,70 @@ class Sequence(FlowControl):
 
     """
 
-    def _do_setup(self):
+    @typechecked
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            child.setup()
+            child_result = child.setup()
+            if child_result.is_err():
+                return child_result
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    @typechecked
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
-            return NodeMsg.SUCCEEDED
+            return Ok(BTNodeState.SUCCEEDED)
 
         # If we've previously succeeded or failed, untick all children
         if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
             for child in self.children:
-                child.reset()
+                child_reset_result = child.reset()
+                if child_reset_result.is_err():
+                    return child_reset_result
 
         # Tick children until one returns FAILED or RUNNING
         result = NodeMsg.FAILED
         for index, child in enumerate(self.children):
             result = child.tick()
-            if result != NodeMsg.SUCCEEDED:
+            if result.is_err():
+                return result
+            else:
+                state = result.unwrap()
+            if state != NodeMsg.SUCCEEDED:
                 # For all states other than RUNNING...
-                if result != NodeMsg.RUNNING:
+                if state != NodeMsg.RUNNING:
                     # ...untick all children after the one that hasn't
                     # succeeded
                     for untick_child in self.children[index + 1 :]:
-                        untick_child.untick()
-                break
+                        untick_result = untick_child.untick()
+                        if untick_result.is_err():
+                            return untick_result
+                    return Ok(BTNodeState.FAILED)
+                else:
+                    return Ok(BTNodeState.RUNNING)
 
-        return result
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            child.untick()
-        return NodeMsg.IDLE
+            untick_result = child.untick()
+            if untick_result.is_err():
+                return untick_result
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            child.reset()
-        return NodeMsg.IDLE
+            reset_result = child.reset()
+            if reset_result.is_err():
+                return reset_result
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            child.shutdown()
+            shutdown_result = child.shutdown()
+            if shutdown_result.is_err():
+                return shutdown_result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self):
         return calculate_utility_sequence(self.children)
@@ -211,7 +238,9 @@ class MemorySequence(FlowControl):
         return calculate_utility_sequence(self.children)
 
 
-def calculate_utility_sequence(children):
+def calculate_utility_sequence(
+    children: List[Node],
+) -> Result[UtilityBounds, BehaviorTreeException]:
     """Shared Utility aggregation for Sequence and MemorySequence."""
     bounds = UtilityBounds(
         can_execute=True,
@@ -234,12 +263,15 @@ def calculate_utility_sequence(children):
             for _ in children
         ]
         for index, child_bounds in enumerate(
-            (child.calculate_utility() for child in children)
+            (
+                child.calculate_utility().unwrap_or(UtilityBounds(can_execute=False))
+                for child in children
+            )
         ):
             # If any child cannot execute at all, the sequence cannot
             # execute and won't provide a utility estimate:
             if not child_bounds.can_execute:
-                return UtilityBounds()
+                return Ok(UtilityBounds())
 
             bounds.has_lower_bound_success &= child_bounds.has_lower_bound_success
             bounds.lower_bound_success += child_bounds.lower_bound_success
@@ -289,4 +321,4 @@ def calculate_utility_sequence(children):
             (b.has_upper_bound_failure for b in failure_bounds)
         )
 
-    return bounds
+    return Ok(bounds)
