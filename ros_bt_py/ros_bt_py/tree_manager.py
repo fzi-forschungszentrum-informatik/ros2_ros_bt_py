@@ -371,8 +371,6 @@ class TreeManager:
         if tick_frequency_hz == 0.0:
             tick_frequency_hz = 10.0
 
-        self.tick_sliding_window = [tick_frequency_hz] * 10
-
         self.nodes = {}
 
         self._state_lock = Lock()
@@ -576,17 +574,33 @@ class TreeManager:
                 )
                 return
 
+        tick_start_timestamp = self.ros_node.get_clock().now()
         while True:
-            tick_start_timestamp = self.ros_node.get_clock().now()
             if self.get_state() == Tree.STOP_REQUESTED:
                 break
             root.tick()
+            tick_end_timestamp = self.ros_node.get_clock().now()
+            
             self.publish_info(
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
                 ticked=True,
             )
+
+            measured_tick_period_s: float = (tick_end_timestamp - tick_start_timestamp).nanoseconds / 1e9
+            expected_tick_period_s: float = 1 / self.tree_msg.tick_frequency_hz
+
+            if expected_tick_period_s < measured_tick_period_s:
+                get_logger("tree_manager").get_child(self.name).warn(
+                    "Tick took longer than set period, cannot tick at "
+                    f"{self.tree_msg.tick_frequency_hz:.2f} Hz"
+                )
+
+            if self.publish_tick_frequency is not None:
+                tick_frequency_msg = Float64()
+                tick_frequency_msg.data = measured_tick_period_s
+                self.publish_tick_frequency(tick_frequency_msg)
 
             if self._stop_after_result:
                 if root.state in [NodeMsg.FAILED, NodeMsg.SUCCEEDED]:
@@ -597,28 +611,8 @@ class TreeManager:
                 self._once = False
                 self.set_state(Tree.WAITING_FOR_TICK)
                 return
-            tick_end_timestamp = self.ros_node.get_clock().now()
-
-            duration: Duration = tick_end_timestamp - tick_start_timestamp
-            tick_rate = self.tree_msg.tick_frequency_hz
-
-            if (1 / tick_rate) > (duration.nanoseconds * 1e9):
-                get_logger("tree_manager").get_child(self.name).warn(
-                    "Tick took longer than set period, cannot tick at "
-                    f"{self.tree_msg.tick_frequency_hz:.2f} Hz"
-                )
-
-            self.tick_sliding_window.pop(0)
-            self.tick_sliding_window.append(duration.nanoseconds * 1e9)
-            tick_frequency_avg = sum(self.tick_sliding_window) / len(
-                self.tick_sliding_window
-            )
-
-            if self.publish_tick_frequency is not None:
-                tick_frequency_msg = Float64()
-                tick_frequency_msg.data = tick_frequency_avg
-                self.publish_tick_frequency(tick_frequency_msg)
             self.rate.sleep()
+            tick_start_timestamp = self.ros_node.get_clock().now()
         self.set_state(Tree.IDLE)
         self.publish_info(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
