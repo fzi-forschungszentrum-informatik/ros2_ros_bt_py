@@ -611,8 +611,8 @@ class TreeManager:
                 self._once = False
                 self.set_state(Tree.WAITING_FOR_TICK)
                 return
-            self.rate.sleep()
             tick_start_timestamp = self.ros_node.get_clock().now()
+            self.rate.sleep()
         self.set_state(Tree.IDLE)
         self.publish_info(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
