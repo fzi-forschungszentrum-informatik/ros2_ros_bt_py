@@ -45,7 +45,7 @@ from ros_bt_py.node_config import NodeConfig, OptionRef
     )
 )
 class RandomInt(Leaf):
-    """Provides a pseudo-random integer in range min <= random_number < max."""
+    """Provides a pseudo-random integer in range min <= random_number <= max."""
 
     def _do_setup(self):
         validate_range(self.options["min"], self.options["max"])
