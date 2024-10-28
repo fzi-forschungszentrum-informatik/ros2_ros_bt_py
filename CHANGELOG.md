@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Removed
+
+### Changed
+
+### Fixed
+
+[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.0...main
+
+## [v0.1.0]
+
+### Added
+
 - Tests for NodeConfig class
 - Tree storage path is now a launch argument
 - Action results can now be processed when using ABC Actions
@@ -38,11 +50,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Action Node and internal state machine
 - Fixed Wait Node to reset before shutdown
 
+[v0.1.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.0.1...v0.1.0
+
 ## [v0.0.1]
 
-[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.0.1...dev
 [v0.0.1]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/releases/tag/v0.0.1
-
 <!---
 ## [vx.x.x] - YYYY-MM-DD
 
