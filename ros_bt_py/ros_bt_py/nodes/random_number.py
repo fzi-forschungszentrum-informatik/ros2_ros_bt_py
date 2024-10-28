@@ -77,7 +77,7 @@ class RandomInt(Leaf):
     )
 )
 class RandomIntInputs(Leaf):
-    """Provides a pseudo-random integer in range min <= random_number < max."""
+    """Provides a pseudo-random integer in range min <= random_number <= max."""
 
     def _do_setup(self):
         pass
@@ -85,7 +85,7 @@ class RandomIntInputs(Leaf):
     def _do_tick(self):
         validate_range(self.inputs["min"], self.inputs["max"])
         self.outputs["random_number"] = random.randrange(
-            self.inputs["min"], self.inputs["max"]
+            self.inputs["min"], self.inputs["max"] + 1
         )
         return NodeMsg.SUCCEEDED
 
