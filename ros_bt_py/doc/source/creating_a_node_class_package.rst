@@ -53,7 +53,7 @@ The ``setup.py`` file in this case should look like this:
    from glob import glob
    from setuptools import setup
 
-   package_name = 'kankra_bt'
+   package_name = 'test_behaviors'
 
    setup(
         name=package_name,
