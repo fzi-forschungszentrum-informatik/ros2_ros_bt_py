@@ -54,8 +54,6 @@ def test_node_success(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -68,16 +66,16 @@ def test_node_success(ros_mock, client_mock, future_mock, clock_mock):
     assert unavailable_service.state == NodeMsg.IDLE
     request = SetBool.Request()
     request.data = False
-    unavailable_service.inputs["request"] = request
+    unavailable_service.inputs["data"] = request.data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
-    assert client_mock.call_async.called_with(request)
+    client_mock.call_async.assert_called_with(request)
 
     future_mock.done.return_value = True
 
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.SUCCEEDED
-    assert unavailable_service.outputs["response"].success
+    assert unavailable_service.outputs["success"]
 
     unavailable_service.shutdown()
     assert unavailable_service.state == NodeMsg.SHUTDOWN
@@ -103,8 +101,6 @@ def test_node_failure(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -115,7 +111,7 @@ def test_node_failure(ros_mock, client_mock, future_mock, clock_mock):
     assert unavailable_service is not None
     unavailable_service.setup()
     assert unavailable_service.state == NodeMsg.IDLE
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.FAILED
 
@@ -139,8 +135,6 @@ def test_node_timeout(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -151,7 +145,7 @@ def test_node_timeout(ros_mock, client_mock, future_mock, clock_mock):
     assert unavailable_service is not None
     unavailable_service.setup()
     assert unavailable_service.state == NodeMsg.IDLE
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -185,8 +179,6 @@ def test_node_reset_shutdown(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -197,7 +189,7 @@ def test_node_reset_shutdown(ros_mock, client_mock, future_mock, clock_mock):
     assert unavailable_service is not None
     unavailable_service.setup()
     assert unavailable_service.state == NodeMsg.IDLE
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -205,7 +197,7 @@ def test_node_reset_shutdown(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.SUCCEEDED
-    assert unavailable_service.outputs["response"].success
+    assert unavailable_service.outputs["success"]
 
     unavailable_service.reset()
     assert unavailable_service.state == NodeMsg.IDLE
@@ -240,8 +232,6 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -252,7 +242,7 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
     assert unavailable_service is not None
     unavailable_service.setup()
     assert unavailable_service.state == NodeMsg.IDLE
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -260,7 +250,7 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.SUCCEEDED
-    assert unavailable_service.outputs["response"].success
+    assert unavailable_service.outputs["success"]
 
     unavailable_service.reset()
 
@@ -278,7 +268,7 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
     ]
 
     assert unavailable_service.state == NodeMsg.IDLE
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -286,7 +276,7 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.SUCCEEDED
-    assert not unavailable_service.outputs["response"].success
+    assert not unavailable_service.outputs["success"]
 
 
 def test_node_no_ros():
@@ -295,8 +285,6 @@ def test_node_no_ros():
             options={
                 "service_name": "this_service_does_not_exist",
                 "service_type": SetBool,
-                "request_type": SetBool.Request,
-                "response_type": SetBool.Response,
                 "wait_for_response_seconds": 5.0,
                 "wait_for_service_seconds": 5.0,
                 "fail_if_not_available": True,
@@ -333,8 +321,6 @@ def test_node_untick(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -345,7 +331,7 @@ def test_node_untick(ros_mock, client_mock, future_mock, clock_mock):
     assert unavailable_service is not None
     unavailable_service.setup()
     assert unavailable_service.state == NodeMsg.IDLE
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -380,8 +366,6 @@ def test_node_utility_no_ros(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -395,8 +379,6 @@ def test_node_utility_no_ros(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -432,8 +414,6 @@ def test_node_utility(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -443,7 +423,7 @@ def test_node_utility(ros_mock, client_mock, future_mock, clock_mock):
     assert unavailable_service is not None
     unavailable_service.setup()
     assert unavailable_service.state == NodeMsg.IDLE
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
     unavailable_service.tick()
     assert unavailable_service.state == NodeMsg.RUNNING
 
@@ -487,8 +467,6 @@ def test_node_simulate_tick(ros_mock, client_mock, future_mock, clock_mock):
         options={
             "service_name": "this_service_does_not_exist",
             "service_type": SetBool,
-            "request_type": SetBool.Request,
-            "response_type": SetBool.Response,
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -499,7 +477,7 @@ def test_node_simulate_tick(ros_mock, client_mock, future_mock, clock_mock):
     unavailable_service.setup()
     assert unavailable_service.state == NodeMsg.IDLE
 
-    unavailable_service.inputs["request"] = SetBool.Request()
+    unavailable_service.inputs["data"] = SetBool.Request().data
 
     unavailable_service.simulate_tick = True
     unavailable_service.tick()

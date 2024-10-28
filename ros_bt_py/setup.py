@@ -26,20 +26,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import os
+import xml.etree.ElementTree as ET
 from glob import glob
 from setuptools import setup
 from generate_parameter_library_py.setup_helper import generate_parameter_module
-
-package_name = "ros_bt_py"
 
 generate_parameter_module(
     "parameters",  # python module name for parameter library
     "config/tree_node_parameters.yaml",  # path to input yaml file
 )
 
+package_xml_path = os.path.join(os.getcwd(), "package.xml")
+package_xmldata = ET.parse(package_xml_path)
+
+package_name = package_xmldata.find("name").text
+version_str = package_xmldata.find("version").text
+description_str = package_xmldata.find("description").text
+license_str = package_xmldata.find("license").text
+maintainer = package_xmldata.find("maintainer")
+maintainer_name_str = maintainer.text
+maintainer_email_str = maintainer.attrib["email"]
+
 setup(
     name=package_name,
-    version="0.0.1",
+    version=version_str,
     packages=[
         "ros_bt_py",
         "ros_bt_py.nodes",
@@ -58,12 +68,11 @@ setup(
         ),
     ],
     install_requires=["setuptools"],
-    package_dir={"": "src/"},
     zip_safe=True,
-    maintainer="David Oberacker",
-    maintainer_email="oberacker@fzi.de",
-    description="TODO: Package description",
-    license="TODO: License declaration",
+    maintainer=maintainer_name_str,
+    maintainer_email=maintainer_email_str,
+    description=description_str,
+    license=license_str,
     tests_require=["pytest", "pytest-cov"],
     entry_points={
         "console_scripts": ["tree_node = ros_bt_py.tree_node:main"],
