@@ -1,0 +1,2 @@
+ignore:
+    - "ros_bt_py/tests/"
