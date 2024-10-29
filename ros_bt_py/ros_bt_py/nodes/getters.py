@@ -350,7 +350,14 @@ class GetDictItemFromKey(Decorator):
     )
 )
 class GetAttr(Decorator):
-    """Get a specific attribute form a python object."""
+    """
+    Get a specific attribute form a python object.
+
+    This can also be done with nested attributes,
+    e.g. the sec argument the timestamp of a
+    std_msgs/msg/Header.msg can be extracted by using stamp.sec
+
+    """
 
     def _do_setup(self):
         for child in self.children:

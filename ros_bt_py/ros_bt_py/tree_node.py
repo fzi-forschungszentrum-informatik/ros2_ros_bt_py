@@ -429,18 +429,16 @@ def main(argv=None):
     tree_node = TreeNode(node_name="BehaviorTreeNode")
     param_listener = tree_node_parameters.ParamListener(tree_node)
     params = param_listener.get_params()
+    tree_node.init_publisher()
+    tree_node.init_package_manager(params=params)
+    tree_node.init_tree_manager(params=params)
+    tree_node.load_default_tree(params=params)
+
+    executor = MultiThreadedExecutor(num_threads=3)
+    executor.add_node(tree_node)
     try:
-        tree_node.init_publisher()
-        tree_node.init_package_manager(params=params)
-        tree_node.init_tree_manager(params=params)
-        tree_node.load_default_tree(params=params)
-
-        executor = MultiThreadedExecutor(num_threads=3)
-        executor.add_node(tree_node)
-
         executor.spin()
     except KeyboardInterrupt:
-        tree_node.shutdown()
         get_logger("tree_node").fatal("Shutting down rclpy!")
 
 

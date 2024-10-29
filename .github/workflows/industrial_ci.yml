@@ -20,9 +20,11 @@ jobs:
           - humble
           - iron
           - jazzy
+          - rolling
+
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: 'ros-industrial/industrial_ci@master'
         env:
           ROS_DISTRO: ${{ matrix.distro }}
@@ -31,6 +33,7 @@ jobs:
           ROSDEP_SKIP_KEYS: result-pip
           AFTER_INSTALL_TARGET_DEPENDENCIES: 'if [ "$ROS_DISTRO" == "jazzy" ]; then pip3 install --break-system-packages coverage[toml] result; else pip3 install coverage[toml] result; fi;'
           ENABLE_COVERAGE_TESTING: "true"
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
 
       - name: Upload Test Results
         if: always()

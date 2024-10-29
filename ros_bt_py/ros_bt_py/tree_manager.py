@@ -381,7 +381,6 @@ class TreeManager:
 
         self._tree_lock = Lock()
         self._edit_lock = RLock()
-
         # Stop the tick thread after a single tick
         self._once: bool = False
         # Stop the tick thread after the tree returns something other than
@@ -588,14 +587,10 @@ class TreeManager:
 
         with self._tree_lock:
             self.tree_msg.root_name = root.name
-
-        if root.state in (BTNodeState.UNINITIALIZED, BTNodeState.SHUTDOWN):
-            setup_result = root.setup()
-            if setup_result.is_err():
-                return setup_result.map(lambda x: None)
-
-            if root.state != BTNodeState.IDLE:
-                self.state = Tree.ERROR
+        if root.state in (NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN):
+            root.setup()
+            if root.state is not NodeMsg.IDLE:
+                self.set_state(Tree.ERROR)
                 self.publish_info(
                     subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                     if self.subtree_manager is not None
@@ -632,9 +627,8 @@ class TreeManager:
             if self._once:
                 # Return immediately, not unticking anything
                 self._once = False
-                self.state = Tree.WAITING_FOR_TICK
+                self.set_state(Tree.WAITING_FOR_TICK)
                 return Ok(None)
-
             tick_end_timestamp = self.ros_node.get_clock().now()
 
             duration: Duration = tick_end_timestamp - tick_start_timestamp
@@ -657,8 +651,7 @@ class TreeManager:
                 tick_frequency_msg.data = tick_frequency_avg
                 self.publish_tick_frequency(tick_frequency_msg)
             self.rate.sleep()
-
-        self.state = Tree.IDLE
+        self.set_state(Tree.IDLE)
         self.publish_info(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
             if self.subtree_manager is not None
@@ -2566,11 +2559,10 @@ class TreeManager:
                         "Failed to rewire successful unwiring after error. "
                         "Tree is in undefined state!"
                     )
-                    self.state = Tree.ERROR
+                    self.set_state(Tree.ERROR)
                     return response
             return response
         else:
-            # only actually wire any data if there were no errors
             # We've removed these NodeDataWirings, so remove them from tree_msg as
             # well.
             with self._tree_lock:
