@@ -67,6 +67,15 @@ extensions = [
 ]
 
 # autodoc_default_flags= 'inherited-members'
+autodoc_mock_imports = [
+    "rclpy",
+    "rclpy_message_converter",
+    "ros_bt_py_interfaces",
+    "diagnostic_msgs",
+    "std_msgs",
+    "std_srvs",
+    "ament_index_python",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
