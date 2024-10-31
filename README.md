@@ -20,6 +20,8 @@ ros_bt_py has been the subject of multiple publications:
 * [Distributed Behavior Trees for Heterogeneous Robot Teams](https://arxiv.org/pdf/2309.08253)
 * [Behavior Tree Capabilities for Dynamic Multi-Robot Task Allocation with Heterogeneous Robot Teams](https://arxiv.org/pdf/2402.02833)
 
+<p align="center"><img src="bt_py.gif"></p>
+
 ## Documentation, Improvements and Community
 
 Learn about how to get started, API and tutorials in [our documentation](https://fzi-forschungszentrum-informatik.github.io/ros2_ros_bt_py/index.html).
