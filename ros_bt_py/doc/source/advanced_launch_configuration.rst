@@ -90,3 +90,7 @@ Other relevant launch arguments you might find useful:
      - Command to execute per default after loading the default tree on startup!
      - 2
      - DO_NOTHING = 0, TICK_ONCE = 1, TICK_PERIODICALLY = 2, TICK_UNTIL_RESULT = 3
+   * - tree_storage_paths
+     - Specify the storage paths for your trees when using "Save to File"
+     - "['$HOME/.ros']"
+     - Use this to save trees directly to your tree repository
