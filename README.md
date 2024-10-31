@@ -1,6 +1,7 @@
 [![ROS Industrial CI](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml/badge.svg)](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml)
 [![codecov](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py/graph/badge.svg?token=CRF3GMWWG3)](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py)
 [![Documentation](https://img.shields.io/badge/Documentation-Github_Pages-blue)](https://fzi-forschungszentrum-informatik.github.io/ros2_ros_bt_py/index.html)
+---
 
 # Welcome to ros_bt_py!
 
