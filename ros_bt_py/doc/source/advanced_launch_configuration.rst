@@ -83,11 +83,11 @@ Other relevant launch arguments you might find useful:
      - False
      - Needs to be set to true to load a tree
    * - default_tree_path
-     - Path to the default tree to load on startup!
+     - Path to the default tree to load on startup
      - ""
      - path to load the tree, can be used with ``file://`` or ``package://``
    * - default_tree_control_command
-     - Command to execute per default after loading the default tree on startup!
+     - Command to execute per default after loading the default tree on startup
      - 2
      - DO_NOTHING = 0, TICK_ONCE = 1, TICK_PERIODICALLY = 2, TICK_UNTIL_RESULT = 3
    * - tree_storage_paths
