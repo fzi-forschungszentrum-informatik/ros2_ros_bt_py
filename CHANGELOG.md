@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed whitespaces in documentation Makefile (Makefiles should use tabs).
+- Fixed autodoc config for sphinx documentation build.
 
 [unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.0...main
 

@@ -73,7 +73,6 @@ untick, reset and shut it down to your heart's content.
 *************************
 2. Fill in the NodeConfig
 *************************
--------------------------
 
 That's one step down. Let's move on to filling in the Node interface::
 
