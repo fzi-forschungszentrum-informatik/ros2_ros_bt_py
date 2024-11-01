@@ -65,6 +65,14 @@ repos:
     rev: v1.5.4
     hooks:
     - id: remove-tabs
-      exclude: "html/"
+      exclude: |
+        (?x)(
+          html/|
+          Makefile
+        )
     - id: forbid-tabs
-      exclude: "html/"
+      exclude: |
+        (?x)(
+          html/|
+          Makefile
+        )

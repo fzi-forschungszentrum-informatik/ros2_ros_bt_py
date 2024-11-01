@@ -9,18 +9,6 @@ This is a [Behavior Tree](https://en.wikipedia.org/wiki/Behavior_tree_(artificia
 
 It includes a ReactJS-based web GUI and all the building blocks you need to build moderately advanced mission control Behavior Trees without writing a single line of code!
 
-## Documentation
-
-The main documentation effort is found in the `doc`folder.
-Simply execute the following commands in your shell to get browsable HTML documentation, including some tutorials:
-
-```bash
-$ cd ros_bt_py/doc
-$ make html
-$ cd build
-$ python -m http.server & xdg-open http://localhost:8000/html
-```
-
 ## Installation
 
 To actually start using ros_bt_py, you need to install its dependencies first:
@@ -52,6 +40,7 @@ Afterwards, you can open `http://localhost:8085/index.html` to use the editor.
 |--------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------|
 | robot_namespace                | Namespace to launch all ros_bt_py nodes in!                                                 | /                                             |
 | node_modules                   | List of python packages that contain nodes to be loaded on startup.                         | _"['ros_bt_py.nodes','ros_bt_py.ros_nodes']"_ |
+| tree_storage_paths             | List of storage paths for trees.                                                            | _"['$HOME/.ros']"_                            |
 | enable_web_interface           | Start web GUI on startup.                                                                   | _False_                                       |
 | show_traceback_on_exception    | Show error traceback when an exception rises.                                               | _True_                                        |
 | diagnostics_frequency_hz       | Publishing frequency for diagnostics msgs.                                                  | _1.0_                                         |
