@@ -28,13 +28,13 @@
 from enum import StrEnum
 from typing import Any
 import jsonpickle
-import rclpy.logging
 import functools
 from collections import OrderedDict
 
 from ros_bt_py_interfaces.msg import CapabilityInterface, Node, Tree
 from typeguard import typechecked
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
+from typing import Optional
 
 
 @typechecked
@@ -88,7 +88,7 @@ def rsetattr(obj, attr, val):
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)
 
 
-def get_default_value(data_type: Any, ros=False):
+def get_default_value(data_type: Any, ros: bool = False) -> Any:
     if data_type is type:
         return int
     elif data_type is int:
@@ -115,12 +115,12 @@ def get_default_value(data_type: Any, ros=False):
         return {}
 
 
-def json_encode(data):
+def json_encode(data: Any) -> Optional[str]:
     """Wrap the call to jsonpickle.encode."""
     return jsonpickle.encode(data)
 
 
-def json_decode(data):
+def json_decode(data: str) -> Optional[Any]:
     """Wrap the call to jsonpickle.decode."""
     return jsonpickle.decode(data)
 

@@ -149,6 +149,7 @@ class Subtree(Leaf):
 
         # merge subtree input and option dicts, so we can receive
         # option updates between ticks
+        # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(
                 options={},

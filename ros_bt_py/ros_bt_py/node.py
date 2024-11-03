@@ -170,16 +170,14 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[Type["Node"]], Type["No
     """
 
     def inner_dec(node_class: Type[Node]) -> Type[Node]:
-        if not issubclass(node_class, Node):
-            rclpy.logging.get_logger(node_class.__name__).error(
-                f"Class {node_class.__name__} is not a subclass of Node, "
-                f"cannot apply define_bt_node decorator!"
-            )
-            raise TypeError()
         # Merge supplied node config with those of base classes
         for base in node_class.__bases__:
             if hasattr(base, "_node_config") and base._node_config:
-                node_config.extend(base._node_config)
+                config_extend_result = node_config.extend(base._node_config)
+                if config_extend_result.is_err():
+                    rclpy.logging.get_logger(node_class.__name__).error(
+                        f"Node config could not be extended: {config_extend_result.unwrap_err()}"
+                    )
         node_class._node_config = node_config
 
         # Find unimplemented required methods
