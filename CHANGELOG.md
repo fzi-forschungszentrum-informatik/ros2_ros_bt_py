@@ -13,6 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Fixed
+
+[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.1...main
+
+## [v0.1.1]
+
+### Added
+
+### Removed
+
+### Changed
+
+- Updated web UI to version 3.0.0.
 - Removed doc build instructions from Readme
 
 ### Fixed
@@ -20,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed whitespaces in documentation Makefile (Makefiles should use tabs).
 - Fixed autodoc config for sphinx documentation build.
 
-[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.0...main
+[v0.1.1]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.0...v0.1.1
 
 ## [v0.1.0]
 
