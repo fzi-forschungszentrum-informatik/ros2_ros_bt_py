@@ -25,12 +25,11 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import os
-from rclpy.logging import get_logger
+import json, os
 import ament_index_python
 from ament_index_python import PackageNotFoundError
 
-from typing import Optional, List
+from typing import Any, Optional, List
 
 import rclpy
 import rclpy.publisher
@@ -53,6 +52,7 @@ from ros_bt_py.helpers import (
     remove_input_output_values,
     json_encode,
     set_node_state_to_shutdown,
+    build_message_field_dicts
 )
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
@@ -214,48 +214,29 @@ class PackageManager(object):
     def get_message_fields(
         self, request: GetMessageFields.Request, response: GetMessageFields.Response
     ):
-        """Return the jsonpickled fields of the provided message type."""
+        """Return the fields and field types of the provided message type."""
         try:
-            message_class = None
-            if request.service:
-                message_class = rosidl_runtime_py.utilities.get_service(
-                    request.message_type
-                )
-                if request.type == GetMessageFields.Request.REQUEST:
-                    message_class = message_class.Request
-                elif request.type == GetMessageFields.Request.RESPONSE:
-                    message_class = message_class.Response
-                else:
-                    response.success = False
-                    response.error_message = (
-                        "Cannot get non Request/Response Service fields"
-                    )
-                    return response
-            elif request.action:
-                message_class = rosidl_runtime_py.utilities.get_action(
-                    request.message_type
-                )
-                if request.type == GetMessageFields.Request.GOAL:
-                    message_class = message_class.Goal
-                elif request.type == GetMessageFields.Request.FEEDBACK:
-                    message_class = message_class.Feedback
-                elif request.type == GetMessageFields.Request.RESULT:
-                    message_class = message_class.Result
-                else:
-                    response.success = False
-                    response.error_message = (
-                        "Cannot get non Goal/Feedback/Result Action fields"
-                    )
-                    return response
-            else:
-                message_class = rosidl_runtime_py.utilities.get_message(
-                    request.message_type
-                )
-            for field in message_class._fields_and_field_types:
-                response.field_names.append(field.strip())
-            response.fields = json_encode(
-                rosidl_runtime_py.message_to_ordereddict(message_class())
+            message_class = rosidl_runtime_py.utilities.get_message(
+                request.message_type
             )
+
+            field_values, field_types = build_message_field_dicts(message_class())
+
+            # Ros interfaces sometimes introduce numpy types or bytes.
+            # Try their standard normalization methods.
+            # If those fail, just cast to string
+            def coerce_numpy_types(obj: Any):
+                try:
+                    return obj.tolist()
+                except AttributeError:
+                    rclpy.logging.get_logger("package_manager").warn(
+                        f"Object of type {obj.__class__.__name__} can't be serialized properly"
+                    )
+                    return str(obj)
+
+            response.fields = json.dumps(field_values, default=coerce_numpy_types)
+            response.field_types = json.dumps(field_types, default=coerce_numpy_types)
+
             response.success = True
         except Exception as e:
             response.success = False
@@ -267,24 +248,17 @@ class PackageManager(object):
     def get_message_constant_fields_handler(
         self, request: GetMessageFields.Request, response: GetMessageFields.Response
     ):
-        if request.service or request.action:
-            # not supported yet
+        try:
+            message_class = rosidl_runtime_py.utilities.get_message(
+                request.message_type
+            )
+            response.field_names = get_message_constant_fields(message_class)
+            response.success = True
+        except Exception as e:
             response.success = False
             response.error_message = (
-                "Constant message fields for services are not yet supported"
+                f"Could not get message fields for {request.message_type}: {e}"
             )
-        else:
-            try:
-                message_class = rosidl_runtime_py.utilities.get_message(
-                    request.message_type
-                )
-                response.field_names = get_message_constant_fields(message_class)
-                response.success = True
-            except Exception as e:
-                response.success = False
-                response.error_message = (
-                    f"Could not get message fields for {request.message_type}: {e}"
-                )
         return response
 
     def publish_packages_list(self):

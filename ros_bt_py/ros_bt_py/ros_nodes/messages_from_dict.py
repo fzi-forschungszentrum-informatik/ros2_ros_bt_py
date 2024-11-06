@@ -165,6 +165,8 @@ class MessageFromConstDict(Leaf):
     def _do_tick(self):
         message = self._message_type()
         try:
+            #TODO Maybe we should enable using 'auto' headers and 'now' timestamps and
+            # immediately call their respective callbacks?
             set_message_fields(
                 message,
                 self.options["dict"],
