@@ -241,6 +241,7 @@ class Operation(Leaf):
         node_outputs = {}
         node_outputs["result"] = self.operand_type
 
+        # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
@@ -377,6 +378,7 @@ class UnaryOperation(Leaf):
         node_outputs = {}
         node_outputs["result"] = self.operand_type
 
+        # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0

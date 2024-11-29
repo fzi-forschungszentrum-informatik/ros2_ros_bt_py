@@ -191,6 +191,7 @@ class ActionForSetType(ABC, Leaf):
         self._shutdown: bool = False
 
         self.set_action_attributes()
+        # FIXME: ROS Node Optional check not done!
         self._ac = ActionClient(
             node=self.ros_node,
             action_type=self._action_type,

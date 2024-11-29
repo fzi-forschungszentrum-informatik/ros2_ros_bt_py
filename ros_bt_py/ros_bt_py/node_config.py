@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import Any, Dict, Optional, List
+from result import Result, Err, Ok
 
 
 class OptionRef(object):
@@ -36,19 +37,21 @@ class OptionRef(object):
     :class:NodeConfig
     """
 
-    def __init__(self, option_key):
+    def __init__(self, option_key: str):
         self.option_key = option_key
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"OptionRef(option_key={self.option_key!r})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, OptionRef):
+            return False
         return self.option_key == other.option_key
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return not self == other
 
-    def __name__(self):
+    def __name__(self) -> str:
         return f"OptionRef(option_key={self.option_key!r})"
 
 
@@ -105,21 +108,18 @@ class NodeConfig(object):
             tags = []
         self.tags = tags
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
-            "NodeConfig(inputs=%r, outputs=%r, options=%r, max_children=%r,"
-            " optional_options=%s, version=%s)"
-            % (
-                self.inputs,
-                self.outputs,
-                self.options,
-                self.max_children,
-                self.optional_options,
-                self.version,
-            )
+            "NodeConfig("
+            f"inputs={self.inputs}, "
+            f"outputs={self.outputs}, "
+            f"options={self.options}, "
+            f"max_children={self.max_children}, "
+            f"optional_options={self.optional_options}, "
+            f"version={self.version})"
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (
             self.inputs == other.inputs
             and self.outputs == other.outputs
@@ -129,10 +129,10 @@ class NodeConfig(object):
             and self.version == other.version
         )
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not self == other
 
-    def extend(self, other):
+    def extend(self, other: "NodeConfig") -> Result[None, str]:
         """
         Extend the input, output and option dicts with values from `other`.
 
@@ -142,7 +142,7 @@ class NodeConfig(object):
           raise `ValueError`.
         """
         if self.max_children != other.max_children:
-            raise ValueError(
+            return Err(
                 f"Mismatch in max_children: {self.max_children} vs {other.max_children}"
             )
         duplicate_inputs = []
@@ -180,4 +180,5 @@ class NodeConfig(object):
             if duplicate_options:
                 keys_strings.append(f"options: {str(duplicate_options)}")
             msg += ", ".join(keys_strings)
-            raise KeyError(msg)
+            return Err(msg)
+        return Ok(None)

@@ -25,16 +25,34 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from enum import StrEnum
+from typing import Any
 import jsonpickle
-import rclpy.logging
 import functools
 from collections import OrderedDict
 
 from ros_bt_py_interfaces.msg import CapabilityInterface, Node, Tree
+from typeguard import typechecked
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
+from typing import Optional
 
 
-def remove_input_output_values(tree):
+@typechecked
+class BTNodeState(StrEnum):
+    UNINITIALIZED = Node.UNINITIALIZED
+    IDLE = Node.IDLE
+    UNASSIGNED = Node.UNASSIGNED
+    ASSIGNED = Node.ASSIGNED
+    RUNNING = Node.RUNNING
+    SUCCEEDED = Node.SUCCEEDED
+    FAILED = Node.FAILED
+    BROKEN = Node.BROKEN
+    PAUSED = Node.PAUSED
+    SHUTDOWN = Node.SHUTDOWN
+
+
+@typechecked
+def remove_input_output_values(tree: Tree) -> Tree:
     """
     Remove all input and output values from the tree nodes.
 
@@ -48,7 +66,8 @@ def remove_input_output_values(tree):
     return tree
 
 
-def set_node_state_to_shutdown(tree):
+@typechecked
+def set_node_state_to_shutdown(tree: Tree) -> Tree:
     """Set all node states to shutdown."""
     for node in tree.nodes:
         node.state = Node.SHUTDOWN
@@ -69,7 +88,7 @@ def rsetattr(obj, attr, val):
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)
 
 
-def get_default_value(data_type, ros=False):
+def get_default_value(data_type: Any, ros: bool = False) -> Any:
     if data_type is type:
         return int
     elif data_type is int:
@@ -96,12 +115,12 @@ def get_default_value(data_type, ros=False):
         return {}
 
 
-def json_encode(data):
+def json_encode(data: Any) -> Optional[str]:
     """Wrap the call to jsonpickle.encode."""
     return jsonpickle.encode(data)
 
 
-def json_decode(data):
+def json_decode(data: str) -> Optional[Any]:
     """Wrap the call to jsonpickle.decode."""
     return jsonpickle.decode(data)
 

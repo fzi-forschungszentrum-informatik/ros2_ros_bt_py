@@ -29,6 +29,7 @@ from copy import deepcopy
 from threading import Lock
 from typing import Dict
 
+from result import Err, Ok, Result
 from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import Tree
@@ -53,17 +54,22 @@ class SubtreeManager(object):
         with self._lock:
             self._subtree_info_msg = SubtreeInfo()
 
-    def set_publish_subtrees(
-        self,
-        publish_subtrees: bool,
-    ) -> None:
-        self._publish_subtrees = publish_subtrees
+    @property
+    def publish_subtrees(self) -> bool:
+        return self._publish_subtrees
+
+    @publish_subtrees.setter
+    def publish_subtrees(self, publish_subtrees: bool) -> None:
+        with self._lock:
+            self._publish_subtrees = publish_subtrees
 
     def get_subtree_info_msg(self) -> SubtreeInfo:
         with self._lock:
             return deepcopy(self._subtree_info_msg)
 
-    def add_subtree_info(self, node_name: str, subtree_msg: Tree):
+    def add_subtree_info(
+        self, node_name: str, subtree_msg: Tree
+    ) -> Result[None, BehaviorTreeException]:
         """
         Publish subtree information.
 
@@ -83,19 +89,19 @@ class SubtreeManager(object):
         If this method is called when `publish_subtrees` is `False`.
         """
         subtree_name = f"{node_name}"
-        with self._lock:
-            if not self._publish_subtrees:
-                raise BehaviorTreeException(
+        if not self._publish_subtrees:
+            return Err(
+                BehaviorTreeException(
                     "Trying to add subtree info when subtree publishing is disabled!"
                 )
+            )
+        with self._lock:
             self.subtrees[subtree_name] = subtree_msg
             self._subtree_info_msg.subtree_states = list(self.subtrees.values())
+
+        return Ok(None)
 
     def clear_subtrees(self) -> None:
         with self._lock:
             self.subtrees.clear()
             self._subtree_info_msg.subtree_states = []
-
-    def get_publish_subtrees(self) -> bool:
-        with self._lock:
-            return self._publish_subtrees

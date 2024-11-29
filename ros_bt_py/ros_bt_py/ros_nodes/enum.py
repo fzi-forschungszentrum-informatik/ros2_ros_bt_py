@@ -91,6 +91,7 @@ class Enum(Leaf):
             getattr(self.msg, self.options["constant_name"].enum_value)
         )
 
+        # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
@@ -166,6 +167,7 @@ class EnumFields(Leaf):
         for field in constants:
             node_outputs[field] = type(getattr(self.msg, field))
 
+        # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
