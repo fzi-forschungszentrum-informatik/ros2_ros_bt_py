@@ -40,11 +40,13 @@ from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.ros_helpers import get_message_field_type
 
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Dict
 
 import inspect
+import array
 
 
 @define_bt_node(
@@ -109,7 +111,7 @@ class ServiceInput(Leaf):
             if inspect.isclass(self._request_type):
                 msg = self._request_type()
                 for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
+                    node_inputs[field] = get_message_field_type(msg, field)
                 self.passthrough = False
             else:
                 node_inputs["in"] = self.options["service_type"]
@@ -122,7 +124,7 @@ class ServiceInput(Leaf):
             if inspect.isclass(self._response_type):
                 msg = self._response_type()
                 for field in msg._fields_and_field_types:
-                    node_outputs[field] = type(getattr(msg, field))
+                    node_outputs[field] = get_message_field_type(msg, field)
                 self.passthrough = False
             else:
                 node_outputs["out"] = self.options["service_type"]
@@ -740,7 +742,7 @@ class Service(Leaf):
             if inspect.isclass(self._request_type):
                 msg = self._request_type()
                 for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
+                    node_inputs[field] = get_message_field_type(msg, field)
                 self.passthrough = False
             else:
                 node_inputs["in"] = self.options["service_type"]
@@ -753,7 +755,7 @@ class Service(Leaf):
             if inspect.isclass(self._response_type):
                 msg = self._response_type()
                 for field in msg._fields_and_field_types:
-                    node_outputs[field] = type(getattr(msg, field))
+                    node_outputs[field] = get_message_field_type(msg, field)
                 self.passthrough = False
             else:
                 node_outputs["out"] = self.options["service_type"]

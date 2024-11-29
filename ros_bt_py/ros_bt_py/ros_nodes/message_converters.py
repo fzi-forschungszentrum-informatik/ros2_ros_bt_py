@@ -36,6 +36,7 @@ from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.ros_helpers import get_message_field_type
 
 
 @define_bt_node(
@@ -76,7 +77,7 @@ class MessageToFields(Leaf):
             try:
                 msg = self.options["input_type"]()
                 for field in msg._fields_and_field_types:
-                    node_outputs[field] = type(getattr(msg, field))
+                    node_outputs[field] = get_message_field_type(msg, field)
                 self.passthrough = False
             except AttributeError:
                 node_outputs["out"] = self.options["input_type"]
@@ -162,7 +163,7 @@ class FieldsToMessage(Leaf):
             try:
                 msg = self.options["output_type"]()
                 for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
+                    node_inputs[field] = get_message_field_type(msg, field)
                 self.passthrough = False
             except AttributeError:
                 node_inputs["in"] = self.options["output_type"]

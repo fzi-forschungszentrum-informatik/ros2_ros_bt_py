@@ -30,6 +30,8 @@ import rclpy.logging
 
 from ros_bt_py.helpers import json_encode
 
+import array
+
 
 def from_string(data_type, string_value, static=False):
     return NodeData(
@@ -107,6 +109,8 @@ class NodeData(object):
             # Silently convert ints to float
             if self.data_type == float and isinstance(new_value, int):
                 new_value = float(new_value)
+            if self.data_type == list and isinstance(new_value, array.array):
+                new_value = list(new_value)
             else:
                 if type(new_value) is dict and "py/type" in new_value:
                     raise TypeError(
