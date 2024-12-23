@@ -41,11 +41,13 @@ from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node import Node as BTNode
 from ros_bt_py.node_config import NodeConfig
 
+from ros_bt_py.custom_types import FilePath
+
 
 @define_bt_node(
     NodeConfig(
         version="0.2.0",
-        options={"subtree_path": str, "use_io_nodes": bool},
+        options={"subtree_path": FilePath, "use_io_nodes": bool},
         inputs={},
         outputs={"load_success": bool, "load_error_msg": str},
         max_children=0,
@@ -111,7 +113,7 @@ class Subtree(Leaf):
         response = self.manager.load_tree(
             request=LoadTree.Request(
                 tree=Tree(
-                    path=self.options["subtree_path"],
+                    path=self.options["subtree_path"].path,
                     name=self.name,
                 )
             ),
