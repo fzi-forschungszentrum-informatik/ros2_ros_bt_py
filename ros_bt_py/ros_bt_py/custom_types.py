@@ -32,3 +32,22 @@ class FilePath(object):
     def __init__(self, path=''):
         self.path = path
 
+
+class MathUnaryOperator(object):
+    def __init__(self, operator):
+        self.operator = operator
+
+
+class MathBinaryOperator(object):
+    def __init__(self, operator):
+        self.operator = operator
+
+
+class MathOperandType(object):
+    def __init__(self, operand_type):
+        self.operand_type = operand_type
+
+
+class MathUnaryOperandType(object):
+    def __init__(self, operand_type):
+        self.operand_type = operand_type
