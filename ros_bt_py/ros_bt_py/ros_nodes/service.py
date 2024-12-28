@@ -32,6 +32,7 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 from rclpy.time import Time
 
+from ros_bt_py.custom_types import RosServiceName, RosServiceType
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
 
@@ -51,7 +52,7 @@ import inspect
     NodeConfig(
         version="0.1.0",
         options={
-            "service_type": type,
+            "service_type": RosServiceType,
             "wait_for_response_seconds": float,
         },
         inputs={
@@ -102,32 +103,34 @@ class ServiceInput(Leaf):
             simulate_tick=simulate_tick,
         )
 
+        self._service_type = self.options["service_type"].type_obj
+
         node_inputs = {}
         node_outputs = {}
         try:
-            self._request_type = getattr(self.options["service_type"], "Request")
+            self._request_type = getattr(self._service_type, "Request")
             if inspect.isclass(self._request_type):
                 msg = self._request_type()
                 for field in msg._fields_and_field_types:
                     node_inputs[field] = type(getattr(msg, field))
                 self.passthrough = False
             else:
-                node_inputs["in"] = self.options["service_type"]
+                node_inputs["in"] = self._service_type
         except AttributeError:
-            node_inputs["in"] = self.options["service_type"]
+            node_inputs["in"] = self._service_type
             self.logwarn(f"Non message type passed to: {self.name}")
 
         try:
-            self._response_type = getattr(self.options["service_type"], "Response")
+            self._response_type = getattr(self._service_type, "Response")
             if inspect.isclass(self._response_type):
                 msg = self._response_type()
                 for field in msg._fields_and_field_types:
                     node_outputs[field] = type(getattr(msg, field))
                 self.passthrough = False
             else:
-                node_outputs["out"] = self.options["service_type"]
+                node_outputs["out"] = self._service_type
         except AttributeError:
-            node_outputs["out"] = self.options["service_type"]
+            node_outputs["out"] = self._service_type
             self.logwarn(f"Non message type passed to: {self.name}")
 
         self.node_config.extend(
@@ -180,7 +183,7 @@ class ServiceInput(Leaf):
         if self._service_client is None:
             if self.has_ros_node:
                 self._service_client = self.ros_node.create_client(
-                    self.options["service_type"],
+                    self._service_type,
                     self.inputs["service_name"],
                     callback_group=ReentrantCallbackGroup(),
                 )
@@ -284,8 +287,8 @@ class ServiceInput(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "service_type": type,
-            "service_name": str,
+            "service_type": RosServiceType,
+            "service_name": RosServiceName,
             "wait_for_service_seconds": float,
         },
         inputs={},
@@ -297,13 +300,36 @@ class ServiceInput(Leaf):
 class WaitForService(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
+    def __init__(
+        self, 
+        options = None, 
+        debug_manager = None, 
+        subtree_manager = None, 
+        name = None, 
+        ros_node = None, 
+        succeed_always = False, 
+        simulate_tick = False
+    ):
+        super().__init__(
+            options, 
+            debug_manager, 
+            subtree_manager, 
+            name, 
+            ros_node, 
+            succeed_always, 
+            simulate_tick
+        )
+
+        self._service_type = self.options["service_type"].type_obj
+        self._service_name = self.options["service_name"].sname
+
     def _do_setup(self):
         if not self.has_ros_node:
             self.logerr("Not ROS node reference available!")
             raise BehaviorTreeException("No ROS node reference available!")
 
         self._service_client = self.ros_node.create_client(
-            self.options["service_name"], self.options["service_type"]
+            self._service_name, self._service_type
         )
         self._last_service_call_time: Optional[Time] = None
 
@@ -346,7 +372,7 @@ class WaitForService(Leaf):
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"service_type": type, "wait_for_service_seconds": float},
+        options={"service_type": RosServiceType, "wait_for_service_seconds": float},
         inputs={"service_name": str},
         outputs={},
         max_children=0,
@@ -355,6 +381,28 @@ class WaitForService(Leaf):
 )
 class WaitForServiceInput(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
+
+    def __init__(
+        self, 
+        options = None, 
+        debug_manager = None, 
+        subtree_manager = None, 
+        name = None, 
+        ros_node = None, 
+        succeed_always = False, 
+        simulate_tick = False
+    ):
+        super().__init__(
+            options, 
+            debug_manager, 
+            subtree_manager, 
+            name, 
+            ros_node, 
+            succeed_always, 
+            simulate_tick
+        )
+
+        self._service_type = self.options["service_type"].type_obj
 
     def _do_setup(self):
         if not self.has_ros_node:
@@ -374,7 +422,7 @@ class WaitForServiceInput(Leaf):
 
         if self._service_client is None:
             self._service_client = self.ros_node.create_client(
-                self.inputs["service_name"], self.options["service_type"]
+                self.inputs["service_name"], self._service_type
             )
 
         if self._service_client.service_is_ready():
@@ -414,7 +462,7 @@ class WaitForServiceInput(Leaf):
 @define_bt_node(
     NodeConfig(
         options={
-            "service_name": str,
+            "service_name": RosServiceName,
             "wait_for_service_seconds": float,
             "wait_for_response_seconds": float,
             "fail_if_not_available": bool,
@@ -499,7 +547,7 @@ class ServiceForSetType(ABC, Leaf):
             simulate_tick=simulate_tick,
         )
         self._service_client: Optional[Client] = None
-        self._service_name = self.options["service_name"]
+        self._service_name = self.options["service_name"].name
         self.set_service_type()
 
     # Sets all outputs none (define output key while overwriting)
@@ -617,7 +665,7 @@ class ServiceForSetType(ABC, Leaf):
             ).nanoseconds / 1e9
             if seconds_since_call > self.options["wait_for_response_seconds"]:
                 self.loginfo(
-                    f"Service call to {self.options['service_name']} with request "
+                    f"Service call to {self._service_name} with request "
                     f"{self._last_request} timed out"
                 )
                 self._service_request_future.cancel()
@@ -651,14 +699,14 @@ class ServiceForSetType(ABC, Leaf):
     def _do_calculate_utility(self):
         if not self.has_ros_node or self._service_client is None:
             self.logdebug(
-                f"Unable to check for service {self.options['service_name']}: "
+                f"Unable to check for service {self._service_name}: "
                 "No ros node available!"
             )
             return UtilityBounds(can_execute=False)
 
         if self._service_client.service_is_ready():
             self.logdebug(
-                f"Found service {self.options['service_name']} with correct type, returning "
+                f"Found service {self._service_name} with correct type, returning "
                 "filled out UtilityBounds"
             )
             return UtilityBounds(
@@ -669,15 +717,15 @@ class ServiceForSetType(ABC, Leaf):
                 has_upper_bound_failure=True,
             )
 
-        self.logdebug(f"Service {self.options['service_name']} is unavailable")
+        self.logdebug(f"Service {self._service_name} is unavailable")
         return UtilityBounds(can_execute=False)
 
 
 @define_bt_node(
     NodeConfig(
         options={
-            "service_name": str,
-            "service_type": type,
+            "service_name": RosServiceName,
+            "service_type": RosServiceType,
             "wait_for_service_seconds": float,
             "wait_for_response_seconds": float,
             "fail_if_not_available": bool,
@@ -733,32 +781,35 @@ class Service(Leaf):
             simulate_tick=simulate_tick,
         )
 
+        self._service_type = self.options["service_type"].type_obj
+        self._service_name = self.options["service_name"].name
+
         node_inputs = {}
         node_outputs = {}
         try:
-            self._request_type = getattr(self.options["service_type"], "Request")
+            self._request_type = getattr(self._service_type, "Request")
             if inspect.isclass(self._request_type):
                 msg = self._request_type()
                 for field in msg._fields_and_field_types:
                     node_inputs[field] = type(getattr(msg, field))
                 self.passthrough = False
             else:
-                node_inputs["in"] = self.options["service_type"]
+                node_inputs["in"] = self._service_type
         except AttributeError:
-            node_inputs["in"] = self.options["service_type"]
+            node_inputs["in"] = self._service_type
             self.logwarn(f"Non message type passed to: {self.name}")
 
         try:
-            self._response_type = getattr(self.options["service_type"], "Response")
+            self._response_type = getattr(self._service_type, "Response")
             if inspect.isclass(self._response_type):
                 msg = self._response_type()
                 for field in msg._fields_and_field_types:
                     node_outputs[field] = type(getattr(msg, field))
                 self.passthrough = False
             else:
-                node_outputs["out"] = self.options["service_type"]
+                node_outputs["out"] = self._service_type
         except AttributeError:
-            node_outputs["out"] = self.options["service_type"]
+            node_outputs["out"] = self._service_type
             self.logwarn(f"Non message type passed to: {self.name}")
 
         self.node_config.extend(
@@ -805,11 +856,12 @@ class Service(Leaf):
 
             return NodeMsg.RUNNING
 
+        #TODO Can't this be in `_do_setup`?
         if self._service_client is None:
             if self.has_ros_node:
                 self._service_client = self.ros_node.create_client(
-                    self.options["service_type"],
-                    self.options["service_name"],
+                    self._service_type,
+                    self._service_name,
                     callback_group=ReentrantCallbackGroup(),
                 )
             else:
@@ -848,7 +900,7 @@ class Service(Leaf):
 
             if seconds_since_call > self.options["wait_for_response_seconds"]:
                 self.logerr(
-                    f"Service call to {self.options['service_name']} with request "
+                    f"Service call to {self._service_name} with request "
                     f"{self._last_request} timed out after {seconds_since_call} seconds"
                 )
                 self._service_request_future.cancel()
@@ -885,14 +937,14 @@ class Service(Leaf):
     def _do_calculate_utility(self):
         if not self.has_ros_node or self._service_client is None:
             self.loginfo(
-                f"Unable to check for service {self.options['service_name']}, "
+                f"Unable to check for service {self._service_name}, "
                 "ros node available!"
             )
             return UtilityBounds()
 
         if self._service_client.service_is_ready():
             self.loginfo(
-                f"Found service {self.options['service_name']} with correct type, returning "
+                f"Found service {self._service_name} with correct type, returning "
                 "filled out UtilityBounds"
             )
             return UtilityBounds(
@@ -903,5 +955,5 @@ class Service(Leaf):
                 has_upper_bound_failure=True,
             )
 
-        self.loginfo(f"Service {self.options['service_name']} is unavailable")
+        self.loginfo(f"Service {self._service_name} is unavailable")
         return UtilityBounds(can_execute=False)
