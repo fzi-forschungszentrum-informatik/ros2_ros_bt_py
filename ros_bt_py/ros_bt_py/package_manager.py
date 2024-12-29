@@ -186,7 +186,7 @@ class PackageManager(object):
 
         messages = []
 
-        packages = list(ament_index_python.get_packages_with_prefixes().keys())
+        packages = list(rosidl_runtime_py.get_interface_packages().keys())
         for package, package_messages in rosidl_runtime_py.get_message_interfaces(
             packages
         ).items():
