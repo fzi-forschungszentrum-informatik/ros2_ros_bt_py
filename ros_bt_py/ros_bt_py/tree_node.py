@@ -46,6 +46,7 @@ from std_msgs.msg import Float64
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
+    MessageChannels,
     Tree,
     SubtreeInfo,
     Messages,
@@ -87,6 +88,9 @@ from ros_bt_py.tree_manager import (
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.package_manager import PackageManager
+
+from ros_bt_py.ros_helpers import publish_message_channels
+from functools import partial
 
 
 class TreeNode(Node):
@@ -141,7 +145,7 @@ class TreeNode(Node):
         )
         self.ros_diagnostics_pub = self.create_publisher(
             DiagnosticArray,
-            "/diagnostics",
+            "/diagnostics", #TODO Should this be '~/diagnostics'?
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -370,6 +374,27 @@ class TreeNode(Node):
 
         self.get_logger().info("initialized tree manager")
 
+    def init_channels_publisher(self):
+        self.message_channels_pub = self.create_publisher(
+            MessageChannels,
+            "~/message_channels",
+            callback_group=self.publisher_callback_group,
+            qos_profile=QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.VOLATILE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+        )
+        self.publish_channels_timer = self.create_timer(
+            10.0, 
+            partial(
+                publish_message_channels, 
+                self, 
+                self.message_channels_pub,
+            ),
+        )
+
     def load_default_tree(self, params: tree_node_parameters.Params):
         if params.default_tree.load_default_tree:
             self.get_logger().info(
@@ -426,6 +451,7 @@ def main(argv=None):
     tree_node.init_package_manager(params=params)
     tree_node.init_tree_manager(params=params)
     tree_node.load_default_tree(params=params)
+    tree_node.init_channels_publisher()
 
     executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(tree_node)

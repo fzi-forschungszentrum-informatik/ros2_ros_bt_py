@@ -28,8 +28,10 @@
 import inspect
 
 import rclpy.logging
+from rclpy.node import Node, Publisher
 
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py_interfaces.msg import MessageChannel, MessageChannels
 
 
 class LoggerLevel(object):
@@ -62,3 +64,25 @@ def get_message_constant_fields(message_class):
         return members
     else:
         raise BehaviorTreeException(f"{message_class} is not a ROS Message")
+
+
+def publish_message_channels(node: Node, publisher: Publisher):
+    """Return all known topic-, service-, and action-names"""
+    msg = MessageChannels()
+    # Types are returned as 1?-element lists, so we need to unpack them
+    for name, [interface, *_] in node.get_topic_names_and_types():
+        msg.topics.append(
+            MessageChannel(
+                name=name, 
+                type=interface
+            )
+        )
+    for name, [interface, *_] in node.get_service_names_and_types():
+        msg.services.append(
+            MessageChannel(
+                name=name, 
+                type=interface
+            )
+        )
+    msg.actions = [] #TODO How to discover action names (function doesn't exist)
+    publisher.publish(msg)

@@ -65,6 +65,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Tree.msg"
   "msg/TreeDataUpdate.msg"
   "msg/UtilityBounds.msg"
+  "msg/MessageChannel.msg"
+  "msg/MessageChannels.msg"
 
   "srv/AddNode.srv"
   "srv/AddNodeAtIndex.srv"
