@@ -103,7 +103,7 @@ class ServiceInput(Leaf):
             simulate_tick=simulate_tick,
         )
 
-        self._service_type = self.options["service_type"].type_obj
+        self._service_type = self.options["service_type"].get_type_obj()
 
         node_inputs = {}
         node_outputs = {}
@@ -320,8 +320,8 @@ class WaitForService(Leaf):
             simulate_tick
         )
 
-        self._service_type = self.options["service_type"].type_obj
-        self._service_name = self.options["service_name"].sname
+        self._service_type = self.options["service_type"].get_type_obj()
+        self._service_name = self.options["service_name"].name
 
     def _do_setup(self):
         if not self.has_ros_node:
@@ -402,7 +402,7 @@ class WaitForServiceInput(Leaf):
             simulate_tick
         )
 
-        self._service_type = self.options["service_type"].type_obj
+        self._service_type = self.options["service_type"].get_type_obj()
 
     def _do_setup(self):
         if not self.has_ros_node:
@@ -781,7 +781,7 @@ class Service(Leaf):
             simulate_tick=simulate_tick,
         )
 
-        self._service_type = self.options["service_type"].type_obj
+        self._service_type = self.options["service_type"].get_type_obj()
         self._service_name = self.options["service_name"].name
 
         node_inputs = {}

@@ -35,6 +35,7 @@ from rclpy.action.client import ActionClient, ClientGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.time import Time
 
+from ros_bt_py.custom_types import RosActionName, RosActionType
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
 
@@ -60,7 +61,7 @@ class ActionStates(Enum):
 @define_bt_node(
     NodeConfig(
         options={
-            "action_name": str,
+            "action_name": RosActionName,
             "wait_for_action_server_seconds": float,
             "timeout_seconds": float,
             "fail_if_not_available": bool,
@@ -147,7 +148,7 @@ class ActionForSetType(ABC, Leaf):
         self._feedback_type = "ENTER_FEEDBACK_TYPE"
         self._result_type = "ENTER_RESULT_TYPE"
 
-        self._action_name = self.options["action_name"]
+        self._action_name = self.options["action_name"].name
 
     def set_input(self):
         pass
@@ -468,8 +469,8 @@ class ActionForSetType(ABC, Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "action_type": type,
-            "action_name": str,
+            "action_type": RosActionType,
+            "action_name": RosActionName,
             "wait_for_action_server_seconds": float,
             "timeout_seconds": float,
             "fail_if_not_available": bool,
@@ -526,46 +527,46 @@ class Action(Leaf):
         node_inputs = {}
         node_outputs = {}
 
-        self._action_name = self.options["action_name"]
-        self._action_type = self.options["action_type"]
+        self._action_name = self.options["action_name"].name
+        self._action_type = self.options["action_type"].get_type_obj()
 
         try:
-            self._goal_type = getattr(self.options["action_type"], "Goal")
+            self._goal_type = getattr(self._action_type, "Goal")
 
             if inspect.isclass(self._goal_type):
                 msg = self._goal_type()
                 for field in msg._fields_and_field_types:
                     node_inputs[field] = type(getattr(msg, field))
             else:
-                node_inputs["in"] = self.options["action_type"]
+                node_inputs["in"] = self._action_type
         except AttributeError:
-            node_inputs["in"] = self.options["action_type"]
+            node_inputs["in"] = self._action_type
             self.logwarn(f"Non message type passed to: {self.name}")
 
         try:
-            self._result_type = getattr(self.options["action_type"], "Result")
+            self._result_type = getattr(self._action_type, "Result")
             if inspect.isclass(self._result_type):
                 msg = self._result_type()
                 for field in msg._fields_and_field_types:
                     node_outputs["result_" + field] = type(getattr(msg, field))
             else:
-                node_outputs["result_out"] = self.options["action_type"]
+                node_outputs["result_out"] = self._action_type
         except AttributeError:
             self._result_type = Int64()
-            node_outputs["result_data"] = self.options["action_type"]
+            node_outputs["result_data"] = self._action_type
             self.logwarn(f"Non message type passed to: {self.name}")
 
         try:
-            self._feedback_type = getattr(self.options["action_type"], "Feedback")
+            self._feedback_type = getattr(self._action_type, "Feedback")
             if inspect.isclass(self._feedback_type):
                 msg = self._feedback_type()
                 for field in msg._fields_and_field_types:
                     node_outputs["feedback_" + field] = type(getattr(msg, field))
             else:
-                node_outputs["feedback_out"] = self.options["action_type"]
+                node_outputs["feedback_out"] = self._action_type
         except AttributeError:
             self._feedback_type = Int64()
-            node_outputs["feedback_data"] = self.options["action_type"]
+            node_outputs["feedback_data"] = self._action_type
             self.logwarn(f"Non message type passed to: {self.name}")
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
