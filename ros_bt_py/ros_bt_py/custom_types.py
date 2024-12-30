@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from abc import ABC, abstractmethod
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
@@ -39,34 +40,55 @@ class MathUnaryOperator(object):
     def __init__(self, operator='sqrt'):
         self.operator = operator
 
-
 class MathBinaryOperator(object):
     def __init__(self, operator='+'):
         self.operator = operator
 
-
 class MathOperandType(object):
     def __init__(self, operand_type='float'):
         self.operand_type = operand_type
-
 
 class MathUnaryOperandType(object):
     def __init__(self, operand_type='float'):
         self.operand_type = operand_type
 
 
-class RosServiceType(object):
+
+class RosType(ABC):
     def __init__(self, type_str=''):
         self.type_str = type_str
 
-    @property
-    def type_obj(self):
-        #NOTE We can't do the conversion in `__init__`,
-        # because jsonpickle bypasses the init function.
+    #NOTE We can't do the conversion in `__init__`,
+    # because jsonpickle bypasses the init function.
+    @abstractmethod
+    def get_type_obj(self):
+        pass
+    
+class RosTopicType(RosType):
+    def get_type_obj(self):
+        return rosidl_runtime_py.utilities.get_message(self.type_str)
+    
+class RosServiceType(RosType):
+    def get_type_obj(self):
         return rosidl_runtime_py.utilities.get_service(self.type_str)
+    
+class RosActionType(RosType):
+    def get_type_obj(self):
+        return rosidl_runtime_py.utilities.get_action(self.type_str)
 
-#NOTE This should only be used if the service name is specified via options.
-# If it is specified via inputs, this would involve unnecessary object creation
-class RosServiceName(object):
+
+
+#NOTE These should only be used if the service name is specified via options.
+# If the name is specified via inputs just use string instead
+class RosName(ABC):
     def __init__(self, name=''):
         self.name = name
+
+class RosTopicName(RosName):
+    pass
+
+class RosServiceName(RosName):
+    pass
+
+class RosActionName(RosName):
+    pass
