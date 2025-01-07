@@ -36,22 +36,9 @@ class FilePath(object):
         self.path = path
 
 
-class MathUnaryOperator(object):
-    def __init__(self, operator='sqrt'):
-        self.operator = operator
-
-class MathBinaryOperator(object):
-    def __init__(self, operator='+'):
-        self.operator = operator
-
-class MathOperandType(object):
-    def __init__(self, operand_type='float'):
-        self.operand_type = operand_type
-
-class MathUnaryOperandType(object):
-    def __init__(self, operand_type='float'):
-        self.operand_type = operand_type
-
+#TODO Math types for operation and operand remain in `helpers.py`
+# to not cause a breaking change. If those are ever updated,
+# they should be moved here.
 
 
 class RosType(ABC):
