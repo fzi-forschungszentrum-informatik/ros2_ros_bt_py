@@ -39,7 +39,7 @@ import rclpy.logging
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
-from ros_bt_py_interfaces.msg import Message, Messages, Package, Packages, Tree
+from ros_bt_py_interfaces.msg import MessageTypes, Package, Packages, Tree
 from ros_bt_py_interfaces.srv import (
     GetMessageFields,
     SaveTree,
@@ -184,34 +184,32 @@ class PackageManager(object):
             )
             return
 
-        messages = []
+        message_types = MessageTypes()
 
         packages = list(rosidl_runtime_py.get_interface_packages().keys())
         for package, package_messages in rosidl_runtime_py.get_message_interfaces(
             packages
         ).items():
             for message in package_messages:
-                messages.append(
-                    Message(msg=package + "/" + message, service=False, action=False)
+                message_types.topics.append(
+                    package + "/" + message
                 )
         for package, package_services in rosidl_runtime_py.get_service_interfaces(
             packages
         ).items():
             for service in package_services:
-                messages.append(
-                    Message(msg=package + "/" + service, service=True, action=False)
+                message_types.services.append(
+                    package + "/" + service
                 )
         for package, package_actions in rosidl_runtime_py.get_action_interfaces(
             packages
         ).items():
             for action in package_actions:
-                messages.append(
-                    Message(msg=package + "/" + action, service=False, action=True)
+                message_types.actions.append(
+                    package + "/" + action
                 )
 
-        msg = Messages()
-        msg.messages = messages
-        self.message_list_pub.publish(msg)
+        self.message_list_pub.publish(message_types)
 
     def get_message_fields(
         self, request: GetMessageFields.Request, response: GetMessageFields.Response
