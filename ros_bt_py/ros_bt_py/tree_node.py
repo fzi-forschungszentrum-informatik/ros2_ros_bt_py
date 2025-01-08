@@ -49,7 +49,7 @@ from ros_bt_py_interfaces.msg import (
     MessageChannels,
     Tree,
     SubtreeInfo,
-    Messages,
+    MessageTypes,
     Packages,
 )
 from ros_bt_py_interfaces.srv import (
@@ -158,8 +158,8 @@ class TreeNode(Node):
     def init_package_manager(self, params: tree_node_parameters.Params):
         self.get_logger().info("initializing package manager...")
         self.message_list_pub = self.create_publisher(
-            Messages,
-            "~/messages",
+            MessageTypes,
+            "~/message_types",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
