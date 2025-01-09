@@ -27,12 +27,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import math
 
+from result import Ok, Err, is_err
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.exceptions import BehaviorTreeException
-from ros_bt_py.node import FlowControl, define_bt_node
+from ros_bt_py.node import FlowControl, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig
 
 
@@ -70,68 +70,86 @@ class Parallel(FlowControl):
 
     def _do_setup(self):
         if len(self.children) < self.options["needed_successes"]:
-            raise BehaviorTreeException(
-                (
-                    "Option value needed_successes (%d) cannot be larger than "
-                    "the number of children (%d)"
+            return Err(
+                BehaviorTreeException(
+                    f"Option value needed_successes ({self.options['needed_successes']})"
+                    " cannot be larger than "
+                    f"the number of children ({len(self.children)})"
                 )
-                % (self.options["needed_successes"], len(self.children))
             )
         for child in self.children:
-            child.setup()
+            result = child.setup()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Just like Sequence and Fallback, reset after having returned
         # SUCCEEDED or FAILED once
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
-                child.reset()
+                result = child.reset()
+                if result.is_err():
+                    return result
 
         successes = 0
         failures = 0
         for child in self.children:
-            if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
-                child.tick()
-            if child.state == NodeMsg.SUCCEEDED:
+            if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
+                result = child.tick()
+                if result.is_err():
+                    return result
+            if child.state == BTNodeState.SUCCEEDED:
                 successes += 1
-            if child.state == NodeMsg.FAILED:
+            if child.state == BTNodeState.FAILED:
                 failures += 1
         if successes >= self.options["needed_successes"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
-                    child.untick()
-            return NodeMsg.SUCCEEDED
+                if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
+                    result = child.untick()
+                    if result.is_err():
+                        return result
+            return Ok(BTNodeState.SUCCEEDED)
         elif failures > len(self.children) - self.options["needed_successes"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
-                    child.untick()
-            return NodeMsg.FAILED
-        return NodeMsg.RUNNING
+                if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
+                    result = child.untick()
+                    if result.is_err():
+                        return result
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
         for child in self.children:
-            child.shutdown()
+            result = child.shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         for child in self.children:
-            child.reset()
-        return NodeMsg.IDLE
+            result = child.reset()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
         for child in self.children:
-            child.untick()
-        return NodeMsg.IDLE
+            result = child.untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
     def _do_calculate_utility(self):
         if len(self.children) < self.options["needed_successes"]:
-            raise BehaviorTreeException(
-                (
-                    "Option value needed_successes (%d) cannot be larger than "
-                    "the number of children (%d)"
+            return Err(
+                BehaviorTreeException(
+                    f"Option value needed_successes ({self.options['needed_successes']}) "
+                    " cannot be larger than "
+                    f"the number of children ({len(self.children)})"
                 )
-                % (self.options["needed_successes"], len(self.children))
             )
 
         # This calculation is fairly straightforward:
@@ -147,13 +165,31 @@ class Parallel(FlowControl):
         # for the upper bounds) and then summing the first
         # "needed_successes" values from the sorted array.
 
-        child_bounds = [child.calculate_utility() for child in self.children]
+        child_bounds_results = [child.calculate_utility() for child in self.children]
         bounds = UtilityBounds()
+        failures = [
+            child_bound.err()
+            for child_bound in child_bounds_results
+            if child_bound.is_err()
+        ]
+
+        if len(failures) > 0:
+            return Err(
+                BehaviorTreeException(
+                    f"Could not calculate utility for all child nodes: {failures}"
+                )
+            )
+
+        child_bounds = [
+            child_bound.ok()
+            for child_bound in child_bounds_results
+            if child_bound.is_ok()
+        ]
         bounds.can_execute = all((b.can_execute for b in child_bounds))
 
         # Early return if any child cannot execute
         if not bounds.can_execute:
-            return bounds
+            return Ok(bounds)
 
         success_threshold = self.options["needed_successes"]
 
@@ -212,7 +248,7 @@ class Parallel(FlowControl):
                 (b.upper_bound_failure for b in worst_failure_group)
             )
 
-        return bounds
+        return Ok(bounds)
 
 
 @define_bt_node(
@@ -245,66 +281,86 @@ class ParallelFailureTolerance(FlowControl):
 
     def _do_setup(self):
         if len(self.children) < self.options["needed_successes"]:
-            raise BehaviorTreeException(
-                (
-                    "Option value needed_successes (%d) cannot be larger than "
-                    "the number of children (%d)"
+            return Err(
+                BehaviorTreeException(
+                    f"Option value needed_successes ({self.options['needed_successes']})"
+                    " cannot be larger than "
+                    f"the number of children ({len(self.children)})"
                 )
-                % (self.options["needed_successes"], len(self.children))
             )
         for child in self.children:
-            child.setup()
+            result = child.setup()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Just like Sequence and Fallback, reset after having returned
         # SUCCEEDED or FAILED once
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
-                child.reset()
+                result = child.reset()
+                if result.is_err():
+                    return result
 
         successes = 0
         failures = 0
         for child in self.children:
-            if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
-                child.tick()
-            if child.state == NodeMsg.SUCCEEDED:
+            if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
+                result = child.tick()
+                if result.is_err():
+                    return result
+            if child.state == BTNodeState.SUCCEEDED:
                 successes += 1
-            if child.state == NodeMsg.FAILED:
+            if child.state == BTNodeState.FAILED:
                 failures += 1
         if successes >= self.options["needed_successes"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
-                    child.untick()
-            return NodeMsg.SUCCEEDED
+                if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
+                    result = child.untick()
+                    if result.is_err():
+                        return result
+            return Ok(BTNodeState.SUCCEEDED)
         elif failures > self.options["tolerate_failures"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
-                    child.untick()
-            return NodeMsg.FAILED
-        return NodeMsg.RUNNING
+                if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
+                    result = child.untick()
+                    if result.is_err():
+                        return result
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
         for child in self.children:
-            child.shutdown()
+            result = child.shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         for child in self.children:
-            child.reset()
-        return NodeMsg.IDLE
+            result = child.reset()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        for child in self.children:
+            result = child.untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
     def _do_calculate_utility(self):
         if len(self.children) < self.options["needed_successes"]:
-            raise BehaviorTreeException(
-                (
-                    "Option value needed_successes (%d) cannot be larger than "
-                    "the number of children (%d)"
+            return Err(
+                BehaviorTreeException(
+                    f"Option value needed_successes ({self.options['needed_successes']})"
+                    " cannot be larger than "
+                    f"the number of children ({len(self.children)})"
                 )
-                % (self.options["needed_successes"], len(self.children))
             )
 
         # This calculation is fairly straightforward:
@@ -319,14 +375,31 @@ class ParallelFailureTolerance(FlowControl):
         # respective bound (ascending for the lower bounds, descending
         # for the upper bounds) and then summing the first
         # "needed_successes" values from the sorted array.
-
-        child_bounds = [child.calculate_utility() for child in self.children]
+        child_bounds_results = [child.calculate_utility() for child in self.children]
         bounds = UtilityBounds()
+        failures = [
+            child_bound.err()
+            for child_bound in child_bounds_results
+            if child_bound.is_err()
+        ]
+
+        if len(failures) > 0:
+            return Err(
+                BehaviorTreeException(
+                    "Could not calculate utility for all child nodes:" f" {failures}"
+                )
+            )
+
+        child_bounds = [
+            child_bound.ok()
+            for child_bound in child_bounds_results
+            if child_bound.is_ok()
+        ]
         bounds.can_execute = all((b.can_execute for b in child_bounds))
 
         # Early return if any child cannot execute
         if not bounds.can_execute:
-            return bounds
+            return Ok(bounds)
 
         success_threshold = self.options["needed_successes"]
 
@@ -385,4 +458,4 @@ class ParallelFailureTolerance(FlowControl):
                 (b.upper_bound_failure for b in worst_failure_group)
             )
 
-        return bounds
+        return Ok(bounds)
