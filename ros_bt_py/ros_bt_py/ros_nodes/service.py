@@ -25,6 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from typeguard import typechecked
 from rclpy.task import Future
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.client import Client
@@ -32,19 +33,21 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 from rclpy.time import Time
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.exceptions import BehaviorTreeException
 
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Dict
 
 import inspect
+
+from result import Result, Ok, Err, is_err
 
 
 @define_bt_node(
@@ -89,8 +92,6 @@ class ServiceInput(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ) -> None:
         super().__init__(
             options=options,
@@ -98,12 +99,10 @@ class ServiceInput(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
-        node_inputs = {}
-        node_outputs = {}
+        node_inputs: Dict[str, Any] = {}
+        node_outputs: Dict[str, Any] = {}
         try:
             self._request_type = getattr(self.options["service_type"], "Request")
             if inspect.isclass(self._request_type):
@@ -130,16 +129,26 @@ class ServiceInput(Leaf):
             node_outputs["out"] = self.options["service_type"]
             self.logwarn(f"Non message type passed to: {self.name}")
 
-        self.node_config.extend(
+        node_config_extend_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
+        if node_config_extend_result.is_err():
+            self.state = BTNodeState.BROKEN
+            return
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        input_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        output_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if input_result.is_err() or output_result.is_err():
+            self.state = BTNodeState.BROKEN
+            return
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_client: Optional[Client] = None
         self._service_request_future: Optional[Future] = None
         self._reported_result: bool = False
@@ -147,13 +156,15 @@ class ServiceInput(Leaf):
             self.outputs[k] = None
 
         if not self.has_ros_node:
-            raise BehaviorTreeException(
-                "ROS service node does not have ROS node reference!"
+            return Err(
+                BehaviorTreeException(
+                    "ROS service node does not have ROS node reference!"
+                )
             )
 
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is not None:
             self.ros_node.destroy_client(self._service_client)
             self._service_client = None
@@ -163,16 +174,9 @@ class ServiceInput(Leaf):
         for k, v in self._response_type.get_fields_and_field_types().items():
             self.outputs[k] = None
 
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
-        if self.simulate_tick:
-            self.logdebug(f"Simulating tick. {self.name} is not executing!")
-            if self.succeed_always:
-                return NodeMsg.SUCCEEDED
-
-            return NodeMsg.RUNNING
-
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # If the service name changed
         if self.inputs.is_updated("service_name"):
             if self._service_client is not None:
@@ -186,7 +190,7 @@ class ServiceInput(Leaf):
                 )
             else:
                 self.logerr(f"No ROS node available for node: {self.name}!")
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
@@ -203,7 +207,7 @@ class ServiceInput(Leaf):
                 self._last_request
             )
 
-        if self._service_request_future is not None and not (
+        if (
             self._service_request_future.done()
             or self._service_request_future.cancelled()
         ):
@@ -215,7 +219,7 @@ class ServiceInput(Leaf):
                 )
                 self._last_service_call_time = self.ros_node.get_clock().now()
 
-            seconds_since_call: Duration = (
+            seconds_since_call: float = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
             ).nanoseconds / 1e9
 
@@ -225,59 +229,64 @@ class ServiceInput(Leaf):
                     f"{self._last_request} timed out after {seconds_since_call} seconds"
                 )
                 self._service_request_future.cancel()
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
 
-            return NodeMsg.RUNNING
+            return Ok(BTNodeState.RUNNING)
         else:
-            new_state = NodeMsg.SUCCEEDED
+            new_state = BTNodeState.SUCCEEDED
             if self._service_request_future.done():
                 res = self._service_request_future.result()
+                if res is None:
+                    return Err(BehaviorTreeException("Service response is none!"))
                 fields = res.get_fields_and_field_types().items()
                 for k, v in fields:
                     self.outputs[k] = getattr(res, k)
             if self._service_request_future.cancelled():
-                new_state = NodeMsg.FAILED
+                new_state = BTNodeState.FAILED
             self._service_request_future = None
             self._reported_result = True
-            return new_state
+            return Ok(new_state)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if (
             self._service_request_future is not None
             and not self._service_request_future.done()
         ):
             self._service_request_future.cancel()
         self._service_request_future = None
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_request_future = None
         if self._service_client is not None:
             self.ros_node.destroy_client(self._service_client)
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node or self._service_client is None:
             self.logdebug(
                 f"Unable to check for service {self.inputs['service_name']}, "
                 "ros node available!"
             )
-            return UtilityBounds()
+            return Ok(UtilityBounds())
 
         if self._service_client.service_is_ready():
             self.logdebug(
                 f"Found service {self.inputs['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
-            return UtilityBounds(
-                can_execute=True,
-                has_lower_bound_success=True,
-                has_upper_bound_success=True,
-                has_lower_bound_failure=True,
-                has_upper_bound_failure=True,
+            return Ok(
+                UtilityBounds(
+                    can_execute=True,
+                    has_lower_bound_success=True,
+                    has_upper_bound_success=True,
+                    has_lower_bound_failure=True,
+                    has_upper_bound_failure=True,
+                )
             )
 
         self.logdebug(f"Service {self.inputs['service_name']} is unavailable")
-        return UtilityBounds(can_execute=False)
+        return Ok(UtilityBounds(can_execute=False))
 
 
 @define_bt_node(
@@ -297,26 +306,21 @@ class ServiceInput(Leaf):
 class WaitForService(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
             self.logerr("Not ROS node reference available!")
-            raise BehaviorTreeException("No ROS node reference available!")
+            return Err(BehaviorTreeException("No ROS node reference available!"))
 
         self._service_client = self.ros_node.create_client(
             self.options["service_name"], self.options["service_type"]
         )
         self._last_service_call_time: Optional[Time] = None
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
-        if self.simulate_tick:
-            self.logdebug(f"Simulating tick. {self.name} is not executing!")
-            if self.succeed_always:
-                return NodeMsg.SUCCEEDED
-
-            return NodeMsg.RUNNING
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
 
         if self._service_client.service_is_ready():
-            return NodeMsg.SUCCEEDED
+            return Ok(BTNodeState.SUCCEEDED)
         else:
             if self._last_service_call_time is None:
                 self._last_service_call_time = self.ros_node.get_clock().now()
@@ -327,20 +331,27 @@ class WaitForService(Leaf):
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
             ]:
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
             else:
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        self._ros_node.destroy_client(self._service_client)
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        if self.has_ros_node and self._ros_node.destroy_client(self._service_client):
+            return Ok(BTNodeState.SHUTDOWN)
+        else:
+            return Err(
+                BehaviorTreeException(
+                    f"Failed to destory service handle in {self.name}"
+                )
+            )
 
 
 @define_bt_node(
@@ -356,29 +367,23 @@ class WaitForService(Leaf):
 class WaitForServiceInput(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
             self.logerr("Not ROS node reference available!")
-            raise BehaviorTreeException("No ROS node reference available!")
+            return Err(BehaviorTreeException("No ROS node reference available!"))
 
         self._service_client: Optional[Client] = None
         self._last_service_call_time: Optional[Time] = None
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
-        if self.simulate_tick:
-            self.logdebug(f"Simulating tick. {self.name} is not executing!")
-            if self.succeed_always:
-                return NodeMsg.SUCCEEDED
-
-            return NodeMsg.RUNNING
-
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is None:
             self._service_client = self.ros_node.create_client(
                 self.inputs["service_name"], self.options["service_type"]
             )
 
         if self._service_client.service_is_ready():
-            return NodeMsg.SUCCEEDED
+            return Ok(BTNodeState.SUCCEEDED)
         else:
             if self._last_service_call_time is None:
                 self._last_service_call_time = self.ros_node.get_clock().now()
@@ -389,26 +394,29 @@ class WaitForServiceInput(Leaf):
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
             ]:
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
             else:
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is not None:
-            self.ros_node.destroy_service(self._service_client)
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(BehaviorTreeException("Could not destroy service client!"))
             self._service_client = None
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_service_call_time = None
         if self._service_client is not None:
-            self.ros_node.destroy_client(self._service_client)
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(BehaviorTreeException("Could not destroy service client!"))
             self._service_client = None
+        return Ok(BTNodeState.SHUTDOWN)
 
 
 @define_bt_node(
@@ -486,8 +494,6 @@ class ServiceForSetType(ABC, Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ) -> None:
         super().__init__(
             options=options,
@@ -495,8 +501,6 @@ class ServiceForSetType(ABC, Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
         self._service_client: Optional[Client] = None
         self._service_name = self.options["service_name"]
@@ -528,12 +532,14 @@ class ServiceForSetType(ABC, Leaf):
     def set_service_type(self):
         self._service_type = "SERVICE_TYPE"
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_available = True
 
         if not self.has_ros_node:
-            raise BehaviorTreeException(
-                f"ROS node reference not available for {self.name}!"
+            return Err(
+                BehaviorTreeException(
+                    f"ROS node reference not available for {self.name}!"
+                )
             )
         self._service_client = self.ros_node.create_client(
             self._service_type,
@@ -550,16 +556,16 @@ class ServiceForSetType(ABC, Leaf):
             and self.options["fail_if_not_available"]
         ):
             self._service_available = False
-            return NodeMsg.BROKEN
+            return Ok(BTNodeState.BROKEN)
 
         self._last_service_call_time: Optional[Time] = None
         self._service_request_future: Optional[Future] = None
         self._last_request = None
         self._reported_result: bool = False
         self.set_output_none()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         if (
             self._service_request_future is not None
             and not self._service_request_future.done()
@@ -570,18 +576,12 @@ class ServiceForSetType(ABC, Leaf):
         self._last_request = None
         self._reported_result: bool = False
         self.set_output_none()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
-        if self.simulate_tick:
-            self.logdebug(f"Simulating tick. {self.name} is not executing!")
-            if self.succeed_always:
-                return NodeMsg.SUCCEEDED
-
-            return NodeMsg.RUNNING
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
 
         if not self._service_available or self._service_client is None:
-            return NodeMsg.FAILED
+            return Ok(BTNodeState.FAILED)
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
@@ -596,12 +596,12 @@ class ServiceForSetType(ABC, Leaf):
 
         if self._service_request_future is None:
             self.logerr("Service request future is unexpecedly none!")
-            return NodeMsg.FAILED
+            return Ok(BTNodeState.FAILED)
 
         if self._service_request_future.cancelled():
             self.logdebug("Service request was cancelled!")
             self._service_request_future = None
-            return NodeMsg.FAILURE
+            return Ok(BTNodeState.FAILED)
 
         if not self._service_request_future.done():
             # If the call takes longer than the specified timeout, abort the
@@ -622,55 +622,61 @@ class ServiceForSetType(ABC, Leaf):
                 )
                 self._service_request_future.cancel()
                 self._service_request_future = None
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
 
-            return NodeMsg.RUNNING
+            return Ok(BTNodeState.RUNNING)
         else:
             if self.set_outputs():
-                new_state = NodeMsg.SUCCEEDED
+                new_state = BTNodeState.SUCCEEDED
             else:
-                new_state = NodeMsg.FAILED
+                new_state = BTNodeState.FAILED
             self._reported_result = True
             self._service_request_future = None
-            return new_state
+            return Ok(new_state)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if (
             self._service_request_future is not None
             and not self._service_request_future.done()
         ):
             self._service_request_future.cancel()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        self._do_reset()
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        reset_result = self._do_reset()
+        if reset_result.is_err():
+            return reset_result
+
         if self._service_client is not None:
             self.ros_node.destroy_client(self._service_client)
         self._service_client = None
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node or self._service_client is None:
             self.logdebug(
                 f"Unable to check for service {self.options['service_name']}: "
                 "No ros node available!"
             )
-            return UtilityBounds(can_execute=False)
+            return Ok(UtilityBounds(can_execute=False))
 
         if self._service_client.service_is_ready():
             self.logdebug(
                 f"Found service {self.options['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
-            return UtilityBounds(
-                can_execute=True,
-                has_lower_bound_success=True,
-                has_upper_bound_success=True,
-                has_lower_bound_failure=True,
-                has_upper_bound_failure=True,
+            return Ok(
+                UtilityBounds(
+                    can_execute=True,
+                    has_lower_bound_success=True,
+                    has_upper_bound_success=True,
+                    has_lower_bound_failure=True,
+                    has_upper_bound_failure=True,
+                )
             )
 
         self.logdebug(f"Service {self.options['service_name']} is unavailable")
-        return UtilityBounds(can_execute=False)
+        return Ok(UtilityBounds(can_execute=False))
 
 
 @define_bt_node(
@@ -720,8 +726,6 @@ class Service(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ) -> None:
         super().__init__(
             options=options,
@@ -729,8 +733,6 @@ class Service(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         node_inputs = {}
@@ -761,16 +763,30 @@ class Service(Leaf):
             node_outputs["out"] = self.options["service_type"]
             self.logwarn(f"Non message type passed to: {self.name}")
 
-        self.node_config.extend(
+        # TODO: Use result type.
+        extend_node_config_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
+        if extend_node_config_result.is_err():
+            self.state = BTNodeState.BROKEN
+            self.logfatal(
+                f"Failed to extend node config for {self.name}: "
+                f"{extend_node_config_result.unwrap_err()}"
+            )
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_input_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        register_output_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_input_result.is_err() or register_output_result.is_err():
+            self.state = BTNodeState.BROKEN
+            self.logfatal(f"Could not register input or output data for {self.name}")
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_client: Optional[Client] = None
         self._service_request_future: Optional[Future] = None
         self._reported_result: bool = False
@@ -778,15 +794,18 @@ class Service(Leaf):
             self.outputs[k] = None
 
         if not self.has_ros_node:
-            raise BehaviorTreeException(
-                "ROS service node does not have ROS node reference!"
+            return Err(
+                BehaviorTreeException(
+                    "ROS service node does not have ROS node reference!"
+                )
             )
 
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is not None:
-            self.ros_node.destroy_client(self._service_client)
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(BehaviorTreeException("Could not destroy client!"))
             self._service_client = None
 
         self._last_service_call_time: Optional[Time] = None
@@ -795,15 +814,9 @@ class Service(Leaf):
         for k, v in self._response_type.get_fields_and_field_types().items():
             self.outputs[k] = None
 
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
-        if self.simulate_tick:
-            self.logdebug(f"Simulating tick. {self.name} is not executing!")
-            if self.succeed_always:
-                return NodeMsg.SUCCEEDED
-
-            return NodeMsg.RUNNING
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
 
         if self._service_client is None:
             if self.has_ros_node:
@@ -813,8 +826,9 @@ class Service(Leaf):
                     callback_group=ReentrantCallbackGroup(),
                 )
             else:
-                self.logerr(f"No ROS node available for node: {self.name}!")
-                return NodeMsg.FAILED
+                msg = f"No ROS node available for node: {self.name}!"
+                self.logerr(msg)
+                return Err(BehaviorTreeException(msg))
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
@@ -842,21 +856,21 @@ class Service(Leaf):
                 )
                 self._last_service_call_time = self.ros_node.get_clock().now()
 
-            seconds_since_call: Duration = (
+            seconds_since_call: float = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
             ).nanoseconds / 1e9
 
             if seconds_since_call > self.options["wait_for_response_seconds"]:
-                self.logerr(
+                self.logwarn(
                     f"Service call to {self.options['service_name']} with request "
                     f"{self._last_request} timed out after {seconds_since_call} seconds"
                 )
                 self._service_request_future.cancel()
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
 
-            return NodeMsg.RUNNING
+            return Ok(BTNodeState.RUNNING)
         else:
-            new_state = NodeMsg.SUCCEEDED
+            new_state = BTNodeState.SUCCEEDED
             if self._service_request_future.done():
                 res = self._service_request_future.result()
                 fields = res.get_fields_and_field_types().items()
@@ -864,44 +878,49 @@ class Service(Leaf):
                     self.outputs[k] = getattr(res, k)
 
             if self._service_request_future.cancelled():
-                new_state = NodeMsg.FAILED
+                new_state = BTNodeState.FAILED
 
             self._service_request_future = None
             self._reported_result = True
-            return new_state
+            return Ok(new_state)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if (
             self._service_request_future is not None
             and not self._service_request_future.done()
         ):
             self._service_request_future.cancel()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is not None:
-            self.ros_node.destroy_client(self._service_client)
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(BehaviorTreeException("Failed to destroy client!"))
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node or self._service_client is None:
-            self.loginfo(
+            msg = (
                 f"Unable to check for service {self.options['service_name']}, "
                 "ros node available!"
             )
-            return UtilityBounds()
+            self.loginfo(msg)
+            return Ok(UtilityBounds())
 
         if self._service_client.service_is_ready():
             self.loginfo(
                 f"Found service {self.options['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
-            return UtilityBounds(
-                can_execute=True,
-                has_lower_bound_success=True,
-                has_upper_bound_success=True,
-                has_lower_bound_failure=True,
-                has_upper_bound_failure=True,
+            return Ok(
+                UtilityBounds(
+                    can_execute=True,
+                    has_lower_bound_success=True,
+                    has_upper_bound_success=True,
+                    has_lower_bound_failure=True,
+                    has_upper_bound_failure=True,
+                )
             )
 
         self.loginfo(f"Service {self.options['service_name']} is unavailable")
-        return UtilityBounds(can_execute=False)
+        return Ok(UtilityBounds(can_execute=False))

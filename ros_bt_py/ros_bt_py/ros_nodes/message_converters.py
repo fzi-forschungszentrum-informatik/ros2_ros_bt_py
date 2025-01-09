@@ -84,6 +84,7 @@ class MessageToFields(Leaf):
         else:
             node_outputs["out"] = self.options["input_type"]
 
+        # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
@@ -99,7 +100,9 @@ class MessageToFields(Leaf):
         else:
             for field in self.outputs:
                 value = getattr(self.inputs["in"], field)
-                if type(value) == tuple and self.outputs.get_type(field) == list:
+                if isinstance(value, tuple) and isinstance(
+                    self.outputs.get_type(field), list
+                ):
                     self.outputs[field] = list(value)
                 else:
                     self.outputs[field] = value
@@ -170,6 +173,7 @@ class FieldsToMessage(Leaf):
         else:
             node_inputs["in"] = self.options["output_type"]
 
+        # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(options={}, inputs=node_inputs, outputs={}, max_children=0)
         )

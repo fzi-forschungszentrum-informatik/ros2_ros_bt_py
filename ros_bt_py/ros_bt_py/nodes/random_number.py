@@ -26,11 +26,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import random
-
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from result import Ok, Err, Result
 
 from ros_bt_py.exceptions import BehaviorTreeException
 
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
 
@@ -48,23 +48,25 @@ class RandomInt(Leaf):
     """Provides a pseudo-random integer in range min <= random_number <= max."""
 
     def _do_setup(self):
-        validate_range(self.options["min"], self.options["max"])
+        validate_result = validate_range(self.options["min"], self.options["max"])
+        if validate_result.is_err():
+            return Err(validate_result.err())
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
-        validate_range(self.options["min"], self.options["max"])
         self.outputs["random_number"] = random.randrange(
             self.options["min"], self.options["max"] + 1
         )
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -80,32 +82,39 @@ class RandomIntInputs(Leaf):
     """Provides a pseudo-random integer in range min <= random_number <= max."""
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
-        validate_range(self.inputs["min"], self.inputs["max"])
+        validate_result = validate_range(self.inputs["min"], self.inputs["max"])
+        if validate_result.is_err():
+            return Err(validate_result.err())
         self.outputs["random_number"] = random.randrange(
             self.inputs["min"], self.inputs["max"] + 1
         )
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
-def validate_range(minimum, maximum):
+def validate_range(minimum, maximum) -> Result[None, BehaviorTreeException]:
     """Check if `minimum` < `maximum` and raises a BehaviorTreeException if not."""
     if minimum == maximum:
-        raise BehaviorTreeException(
-            f"minimum ({minimum}) cannot be equal to maximum ({maximum})"
+        return Err(
+            BehaviorTreeException(
+                f"minimum ({minimum}) cannot be equal to maximum ({maximum})"
+            )
         )
     if minimum > maximum:
-        raise BehaviorTreeException(
-            f"minimum ({minimum}) cannot be greater that maximum ({maximum})"
+        return Err(
+            BehaviorTreeException(
+                f"minimum ({minimum}) cannot be greater that maximum ({maximum})"
+            )
         )
+    return Ok(None)

@@ -25,9 +25,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from result import Ok
 
-from ros_bt_py.node import Leaf, define_bt_node
+from ros_bt_py.node import Leaf, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef
 
 
@@ -50,19 +50,19 @@ class PassthroughNode(Leaf):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         self.outputs["out"] = self.inputs["in"]
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)

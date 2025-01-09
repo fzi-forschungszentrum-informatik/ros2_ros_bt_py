@@ -27,9 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """BT nodes to get values from containers and other nodes."""
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from result import Ok, Err
 
-from ros_bt_py.node import Decorator, define_bt_node
+from ros_bt_py.node import Decorator, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.helpers import rgetattr
 
@@ -54,51 +54,64 @@ class GetConstListItem(Decorator):
     """
 
     def _do_setup(self):
-        for child in self.children:
-            child.setup()
-            # We have a child, so set list to an empty list. We're avoiding an
-            # error this way because we know what we're doing, don't use this
-            # gratuitously!
-            self.inputs["list"] = []
-            self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].setup()
+            if result.is_err():
+                return result
+        self.inputs["list"] = []
+        self.inputs.reset_updated()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
-        for child in self.children:
-            child.tick()
+        if len(self.children) == 1:
+            result = self.children[0].tick()
+            if result.is_err():
+                return result
+
+            if result.ok() == BTNodeState.FAILED:
+                return Ok(BTNodeState.FAILED)
+            elif result.ok() == BTNodeState.RUNNING:
+                return Ok(BTNodeState.RUNNING)
 
         if self.inputs.is_updated("list"):
             try:
                 self.outputs["item"] = self.inputs["list"][self.options["index"]]
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             except IndexError:
                 self.logerr(
                     "List index %d out of bound for list %s"
                     % (self.options["index"], self.inputs["list"])
                 )
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
         else:
             if self.options["succeed_on_stale_data"]:
                 # We don't need to check whether we have gotten any
                 # data at all, because if we hadn't the tick method
                 # would raise an error
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             else:
                 self.loginfo("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        pass
+        if len(self.children) == 1:
+            result = self.children[0].shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["item"] = None
         self.outputs.reset_updated()
-        self._do_setup()
-        return NodeMsg.IDLE
+        return self._do_setup()
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -121,49 +134,64 @@ class GetListItem(Decorator):
     """
 
     def _do_setup(self):
-        for child in self.children:
-            child.setup()
-            # We have a child, so set list to an empty list. We're avoiding an
-            # error this way because we know what we're doing, don't use this
-            # gratuitously!
-            self.inputs["list"] = []
-            self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].setup()
+            if result.is_err():
+                return result
+        self.inputs["list"] = []
+        self.inputs.reset_updated()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
-        for child in self.children:
-            child.tick()
+        if len(self.children) == 1:
+            result = self.children[0].tick()
+            if result.is_err():
+                return result
 
-        if self.inputs.is_updated("list") or self.inputs.is_updated("index"):
+            if result.ok() == BTNodeState.FAILED:
+                return Ok(BTNodeState.FAILED)
+            elif result.ok() == BTNodeState.RUNNING:
+                return Ok(BTNodeState.RUNNING)
+
+        if self.inputs.is_updated("list"):
             try:
                 self.outputs["item"] = self.inputs["list"][self.inputs["index"]]
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             except IndexError:
-                self.logdebug(
+                self.logerr(
                     "List index %d out of bound for list %s"
-                    % (self.inputs["index"], self.inputs["list"])
+                    % (self.options["index"], self.inputs["list"])
                 )
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                # We don't need to check whether we have gotten any
+                # data at all, because if we hadn't the tick method
+                # would raise an error
+                return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                self.loginfo("No new data since last tick!")
+                return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        pass
+        if len(self.children) == 1:
+            result = self.children[0].shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["item"] = None
         self.outputs.reset_updated()
-        self._do_setup()
-        self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return self._do_setup()
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -179,48 +207,60 @@ class GetDictItem(Decorator):
     """Get a item with a specific key from a dict input."""
 
     def _do_setup(self):
-        for child in self.children:
-            child.setup()
-            # We have a child, so set dict to an empty dict. We're avoiding an
-            # error this way because we know what we're doing, don't use this
-            # gratuitously!
-            self.inputs["dict"] = {}
-            self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].setup()
+            if result.is_err():
+                return result
+        self.inputs["dict"] = {}
+        self.inputs.reset_updated()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
-        for child in self.children:
-            child.tick()
+        if len(self.children) == 1:
+            result = self.children[0].tick()
+            if result.is_err():
+                return result
+
+            if result.ok() == BTNodeState.FAILED:
+                return Ok(BTNodeState.FAILED)
+            elif result.ok() == BTNodeState.RUNNING:
+                return Ok(BTNodeState.RUNNING)
 
         if self.inputs.is_updated("dict"):
             try:
                 self.outputs["value"] = self.inputs["dict"][self.options["key"]]
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             except KeyError:
                 self.logdebug(
                     f"Key {self.options['key']} is not in dict {str(self.inputs['dict'])}"
                 )
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        pass
+        if len(self.children) == 1:
+            result = self.children[0].shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["value"] = None
         self.outputs.reset_updated()
-        self._do_setup()
-        self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return self._do_setup()
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -236,51 +276,63 @@ class GetMultipleDictItems(Decorator):
     """Get multiple dict items with a specific list of keys."""
 
     def _do_setup(self):
-        for child in self.children:
-            child.setup()
-            # We have a child, so set dict to an empty dict. We're avoiding an
-            # error this way because we know what we're doing, don't use this
-            # gratuitously!
-            self.inputs["dict"] = {}
-            self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].setup()
+            if result.is_err():
+                return result
+        self.inputs["dict"] = {}
+        self.inputs.reset_updated()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
-        for child in self.children:
-            child.tick()
+        if len(self.children) == 1:
+            result = self.children[0].tick()
+            if result.is_err():
+                return result
+
+            if result.ok() == BTNodeState.FAILED:
+                return Ok(BTNodeState.FAILED)
+            elif result.ok() == BTNodeState.RUNNING:
+                return Ok(BTNodeState.RUNNING)
 
         if self.inputs.is_updated("dict"):
             try:
                 self.outputs["values"] = [
                     self.inputs["dict"][k] for k in self.options["keys"]
                 ]
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             except KeyError:
                 self.logdebug(
                     f"One of the key ({self.options['keys']}) is not in dict "
                     f"{str(self.inputs['dict'])}"
                 )
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        pass
+        if len(self.children) == 1:
+            result = self.children[0].shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        self.outputs["values"] = []
+        self.outputs["values"] = None
         self.outputs.reset_updated()
-        self._do_setup()
-        self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return self._do_setup()
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -296,48 +348,60 @@ class GetDictItemFromKey(Decorator):
     """Get a specific dict item with a key as data input."""
 
     def _do_setup(self):
-        for child in self.children:
-            child.setup()
-            # We have a child, so set key to an empty string. We're avoiding an
-            # error this way because we know what we're doing, don't use this
-            # gratuitously!
-            self.inputs["key"] = ""
-            self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].setup()
+            if result.is_err():
+                return result
+        self.inputs["key"] = ""
+        self.inputs.reset_updated()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
-        for child in self.children:
-            child.tick()
+        if len(self.children) == 1:
+            result = self.children[0].tick()
+            if result.is_err():
+                return result
+
+            if result.ok() == BTNodeState.FAILED:
+                return Ok(BTNodeState.FAILED)
+            elif result.ok() == BTNodeState.RUNNING:
+                return Ok(BTNodeState.RUNNING)
 
         if self.inputs.is_updated("key"):
             try:
                 self.outputs["value"] = self.options["dict"][self.inputs["key"]]
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             except KeyError:
                 self.logdebug(
                     f"Key {self.inputs['key']} is not in dict {str(self.options['dict'])}"
                 )
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        pass
+        if len(self.children) == 1:
+            result = self.children[0].shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["value"] = None
         self.outputs.reset_updated()
-        self._do_setup()
-        self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return self._do_setup()
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -360,48 +424,60 @@ class GetAttr(Decorator):
     """
 
     def _do_setup(self):
-        for child in self.children:
-            child.setup()
-            # We have a child, so set object to an empty object. We're avoiding an
-            # error this way because we know what we're doing, don't use this
-            # gratuitously!
-            self.inputs["object"] = object()
-            self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].setup()
+            if result.is_err():
+                return result
+        self.inputs["object"] = ""
+        self.inputs.reset_updated()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
-        for child in self.children:
-            child.tick()
+        if len(self.children) == 1:
+            result = self.children[0].tick()
+            if result.is_err():
+                return result
+
+            if result.ok() == BTNodeState.FAILED:
+                return Ok(BTNodeState.FAILED)
+            elif result.ok() == BTNodeState.RUNNING:
+                return Ok(BTNodeState.RUNNING)
 
         if self.inputs.is_updated("object"):
             try:
                 self.outputs["attr"] = rgetattr(
                     self.inputs["object"], self.options["attr_name"]
                 )
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             except AttributeError:
                 self.logdebug(
                     f"Object {self.inputs['object']} does not have attribute "
                     f"{self.options['attr_name']}"
                 )
-                return NodeMsg.FAILED
+                return Ok(BTNodeState.FAILED)
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        pass
+        if len(self.children) == 1:
+            result = self.children[0].shutdown()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["attr"] = None
         self.outputs.reset_updated()
-        self._do_setup()
-        self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return self._do_setup()
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].untick()
+            if result.is_err():
+                return result
+        return Ok(BTNodeState.IDLE)
