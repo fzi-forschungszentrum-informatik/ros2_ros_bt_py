@@ -25,12 +25,10 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
 
-from ros_bt_py.node import IO, define_bt_node
+from result import Ok
+from ros_bt_py.node import IO, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef
-
-from rosbridge_library.internal.message_conversion import InvalidMessageException
 
 # FIXME: input/output are exact copies of each other, move this code to a common implementation
 
@@ -52,7 +50,7 @@ class IOInputOption(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -63,29 +61,30 @@ class IOInputOption(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logwarn('ignoring unset "in" input and using default value')
+                self.logdebug('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logwarn("Running tick() with stale data!")
+                    self.logdebug("Running tick() with stale data!")
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
     def _do_tick(self):
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.options["default"]
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -105,7 +104,7 @@ class IOInput(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -125,24 +124,25 @@ class IOInput(IO):
                         f"Trying to tick a node with an unset input ({input_name})!"
                     )
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
     def _do_tick(self):
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.inputs["default"]
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -162,7 +162,7 @@ class IOOutputOption(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -178,24 +178,25 @@ class IOOutputOption(IO):
                 if not self.inputs.is_updated(input_name):
                     self.logdebug("Running tick() with stale data!")
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
     def _do_tick(self):
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.options["default"]
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -215,7 +216,7 @@ class IOOutput(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -235,21 +236,22 @@ class IOOutput(IO):
                         f"Trying to tick a node with an unset input ({input_name})!"
                     )
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
     def _do_tick(self):
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.inputs["default"]
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
