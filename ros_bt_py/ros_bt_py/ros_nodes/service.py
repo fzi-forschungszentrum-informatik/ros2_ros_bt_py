@@ -105,33 +105,20 @@ class ServiceInput(Leaf):
 
         self._service_type = self.options["service_type"].get_type_obj()
 
+        self._request_type = self._service_type.Request
+        self._response_type = self._service_type.Response
+
         node_inputs = {}
         node_outputs = {}
-        try:
-            self._request_type = getattr(self._service_type, "Request")
-            if inspect.isclass(self._request_type):
-                msg = self._request_type()
-                for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            else:
-                node_inputs["in"] = self._service_type
-        except AttributeError:
-            node_inputs["in"] = self._service_type
-            self.logwarn(f"Non message type passed to: {self.name}")
 
-        try:
-            self._response_type = getattr(self._service_type, "Response")
-            if inspect.isclass(self._response_type):
-                msg = self._response_type()
-                for field in msg._fields_and_field_types:
-                    node_outputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            else:
-                node_outputs["out"] = self._service_type
-        except AttributeError:
-            node_outputs["out"] = self._service_type
-            self.logwarn(f"Non message type passed to: {self.name}")
+        request_msg = self._request_type()
+        for field in request_msg._fields_and_field_types:
+            node_inputs[field] = type(getattr(request_msg, field))
+
+        response_msg = self._response_type()
+        for field in response_msg._fields_and_field_types:
+            node_outputs[field] = type(getattr(response_msg, field))
+                
 
         self.node_config.extend(
             NodeConfig(
@@ -784,33 +771,20 @@ class Service(Leaf):
         self._service_type = self.options["service_type"].get_type_obj()
         self._service_name = self.options["service_name"].name
 
+        self._request_type = self._service_type.Request
+        self._response_type = self._service_type.Response
+
         node_inputs = {}
         node_outputs = {}
-        try:
-            self._request_type = getattr(self._service_type, "Request")
-            if inspect.isclass(self._request_type):
-                msg = self._request_type()
-                for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            else:
-                node_inputs["in"] = self._service_type
-        except AttributeError:
-            node_inputs["in"] = self._service_type
-            self.logwarn(f"Non message type passed to: {self.name}")
 
-        try:
-            self._response_type = getattr(self._service_type, "Response")
-            if inspect.isclass(self._response_type):
-                msg = self._response_type()
-                for field in msg._fields_and_field_types:
-                    node_outputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            else:
-                node_outputs["out"] = self._service_type
-        except AttributeError:
-            node_outputs["out"] = self._service_type
-            self.logwarn(f"Non message type passed to: {self.name}")
+        request_msg = self._request_type()
+        for field in request_msg._fields_and_field_types:
+            node_inputs[field] = type(getattr(request_msg, field))
+
+        response_msg = self._response_type()
+        for field in response_msg._fields_and_field_types:
+            node_outputs[field] = type(getattr(response_msg, field))
+                
 
         self.node_config.extend(
             NodeConfig(

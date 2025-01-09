@@ -530,44 +530,22 @@ class Action(Leaf):
         self._action_name = self.options["action_name"].name
         self._action_type = self.options["action_type"].get_type_obj()
 
-        try:
-            self._goal_type = getattr(self._action_type, "Goal")
+        self._goal_type = self._action_type.Goal
+        self._result_type = self._action_type.Result
+        self._feedback_type = self._action_type.Feedback
 
-            if inspect.isclass(self._goal_type):
-                msg = self._goal_type()
-                for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
-            else:
-                node_inputs["in"] = self._action_type
-        except AttributeError:
-            node_inputs["in"] = self._action_type
-            self.logwarn(f"Non message type passed to: {self.name}")
-
-        try:
-            self._result_type = getattr(self._action_type, "Result")
-            if inspect.isclass(self._result_type):
-                msg = self._result_type()
-                for field in msg._fields_and_field_types:
-                    node_outputs["result_" + field] = type(getattr(msg, field))
-            else:
-                node_outputs["result_out"] = self._action_type
-        except AttributeError:
-            self._result_type = Int64()
-            node_outputs["result_data"] = self._action_type
-            self.logwarn(f"Non message type passed to: {self.name}")
-
-        try:
-            self._feedback_type = getattr(self._action_type, "Feedback")
-            if inspect.isclass(self._feedback_type):
-                msg = self._feedback_type()
-                for field in msg._fields_and_field_types:
-                    node_outputs["feedback_" + field] = type(getattr(msg, field))
-            else:
-                node_outputs["feedback_out"] = self._action_type
-        except AttributeError:
-            self._feedback_type = Int64()
-            node_outputs["feedback_data"] = self._action_type
-            self.logwarn(f"Non message type passed to: {self.name}")
+        goal_msg = self._goal_type()
+        for field in goal_msg._fields_and_field_types:
+            node_inputs[field] = type(getattr(goal_msg, field))
+            
+        result_msg = self._result_type()
+        for field in result_msg._fields_and_field_types:
+            node_outputs["result_" + field] = type(getattr(result_msg, field))
+            
+        feedback_msg = self._feedback_type()
+        for field in feedback_msg._fields_and_field_types:
+            node_outputs["feedback_" + field] = type(getattr(feedback_msg, field))
+            
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)

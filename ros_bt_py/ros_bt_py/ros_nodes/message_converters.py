@@ -76,17 +76,9 @@ class MessageToFields(Leaf):
 
         self.passthrough = True
 
-        if inspect.isclass(self._message_type):
-            try:
-                msg = self._message_type()
-                for field in msg._fields_and_field_types:
-                    node_outputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            except AttributeError:
-                node_outputs["out"] = self._message_type
-                self.logwarn(f"Non message type passed to: {self.name}")
-        else:
-            node_outputs["out"] = self._message_type
+        msg = self._message_type()
+        for field in msg._fields_and_field_types:
+            node_outputs[field] = type(getattr(msg, field))
 
         self.node_config.extend(
             NodeConfig(options={}, inputs=node_inputs, outputs=node_outputs, max_children=0)
@@ -166,17 +158,9 @@ class FieldsToMessage(Leaf):
 
         self.passthrough = True
 
-        if inspect.isclass(self._message_type):
-            try:
-                msg = self._message_type()
-                for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            except AttributeError:
-                node_inputs["in"] = self._message_type
-                self.logwarn(f"Non message type passed to: {self.name}")
-        else:
-            node_inputs["in"] = self._message_type
+        msg = self._message_type()
+        for field in msg._fields_and_field_types:
+            node_inputs[field] = type(getattr(msg, field))
 
         self.node_config.extend(
             NodeConfig(options={}, inputs=node_inputs, outputs=node_outputs, max_children=0)
