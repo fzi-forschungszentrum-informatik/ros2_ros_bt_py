@@ -25,9 +25,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
 
-from ros_bt_py.node import Leaf, Decorator, define_bt_node
+from result import Ok
+from ros_bt_py.node import Leaf, Decorator, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef
 
 
@@ -44,20 +44,20 @@ class ListLength(Leaf):
     """Compute list length."""
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         self.outputs["length"] = len(self.inputs["list"])
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -73,20 +73,20 @@ class GetListElementOption(Leaf):
     """Return element at given index in the list."""
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         self.outputs["element"] = self.inputs["list"][self.options["index"]]
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -102,22 +102,22 @@ class InsertInList(Leaf):
     """Return a new list with the inserted element."""
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         if self.inputs.is_updated("list") or self.inputs.is_updated("element"):
             self.outputs["list"] = list(self.inputs["list"])
             self.outputs["list"].insert(self.options["index"], self.inputs["element"])
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -138,7 +138,7 @@ class IsInList(Leaf):
 
     def _do_setup(self):
         self._received_in = False
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         if not self._received_in:
@@ -146,23 +146,23 @@ class IsInList(Leaf):
                 self._received_in = True
 
         if self._received_in and self.inputs["in"] in self.options["list"]:
-            return NodeMsg.SUCCEEDED
+            return Ok(BTNodeState.SUCCEEDED)
         else:
-            return NodeMsg.FAILED
+            return Ok(BTNodeState.FAILED)
 
     def _do_untick(self):
         # Nothing to do
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_reset(self):
         self.inputs.reset_updated()
         self._received_in = False
 
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
         # Nothing to do
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
 
 @define_bt_node(
@@ -187,9 +187,10 @@ class IterateList(Decorator):
 
     def _do_setup(self):
         self.reset_counter()
-        for child in self.children:
-            child.setup()
-        return NodeMsg.IDLE
+        if len(self.children) == 1:
+            result = self.children[0].setup()
+            return result
+        return Ok(BTNodeState.IDLE)
 
     def reset_counter(self):
         self.output_changed = True
@@ -205,44 +206,47 @@ class IterateList(Decorator):
             self.outputs["list_item"] = self.inputs["list"][self.counter]
         else:
             self.logdebug("Nothing to iterate, input list is empty")
-            return NodeMsg.SUCCEEDED
+            return Ok(BTNodeState.SUCCEEDED)
 
         if len(self.children) == 0:
             self.counter += 1
             if self.counter == len(self.inputs["list"]):
                 self.reset_counter()
-                return NodeMsg.SUCCEEDED
+                return Ok(BTNodeState.SUCCEEDED)
         else:
             if self.output_changed:
                 # let one tick go for the tree to digest our new output before childs are ticked
                 self.output_changed = False
-                return NodeMsg.RUNNING
+                return Ok(BTNodeState.RUNNING)
             for child in self.children:
                 result = child.tick()
-                if result == NodeMsg.SUCCEEDED:
+                if result.is_err():
+                    return result
+                if result.ok() == BTNodeState.SUCCEEDED:
                     # we only increment the counter when the child succeeded
                     self.counter += 1
                     self.output_changed = True
                     if self.counter == len(self.inputs["list"]):
                         self.reset_counter()
-                        return NodeMsg.SUCCEEDED
-                elif result == NodeMsg.FAILED:
+                        return Ok(BTNodeState.SUCCEEDED)
+                elif result.ok() == BTNodeState.FAILED:
                     # child failed: we failed
-                    return NodeMsg.FAILED
-        return NodeMsg.RUNNING
+                    return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.RUNNING)
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_reset(self):
         self.inputs.reset_updated()
         self.reset_counter()
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
         for child in self.children:
             return child.shutdown()
+        return Ok(BTNodeState.SHUTDOWN)
