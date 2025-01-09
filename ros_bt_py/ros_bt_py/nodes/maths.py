@@ -30,13 +30,13 @@ import math
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from result import Ok, Err
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import BehaviorTreeException
 
-from ros_bt_py.node import Leaf, define_bt_node
+from ros_bt_py.node import Leaf, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef
 
 from ros_bt_py.helpers import MathUnaryOperator, MathBinaryOperator
@@ -103,7 +103,7 @@ class Convert(Leaf):
             )
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         if self.options["input_type"] is self.options["output_type"]:
@@ -131,16 +131,16 @@ class Convert(Leaf):
             elif self.options["input_type"] is float:
                 if self.options["output_type"] is int:
                     self.outputs["out"] = int(self.inputs["in"])
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -241,33 +241,34 @@ class Operation(Leaf):
         node_outputs = {}
         node_outputs["result"] = self.operand_type
 
-        # TODO: Use result type.
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
+        if extend_result.is_err():
+            raise BehaviorTreeException("Node config could not be extended!")
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         self.outputs["result"] = self.operators[self.options["operator"].operator](
             self.inputs["a"], self.inputs["b"]
         )
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -378,30 +379,31 @@ class UnaryOperation(Leaf):
         node_outputs = {}
         node_outputs["result"] = self.operand_type
 
-        # TODO: Use result type.
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
+        if extend_result.is_err():
+            raise BehaviorTreeException("Node config could not be extended!")
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         self.outputs["result"] = self.operators[self.options["operator"].operator](
             self.inputs["in"]
         )
-        return NodeMsg.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return Ok(BTNodeState.IDLE)
