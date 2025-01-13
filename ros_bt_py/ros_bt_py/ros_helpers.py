@@ -28,6 +28,7 @@
 import inspect
 
 import rclpy.logging
+from rclpy import action
 from rclpy.node import Node, Publisher
 
 from ros_bt_py.exceptions import BehaviorTreeException
@@ -84,5 +85,11 @@ def publish_message_channels(node: Node, publisher: Publisher):
                 type=interface
             )
         )
-    msg.actions = [] #TODO How to discover action names (function doesn't exist)
+    for name, [interface, *_] in action.get_action_names_and_types(node):
+        msg.actions.append(
+            MessageChannel(
+                name=name,
+                type=interface
+            )
+        )
     publisher.publish(msg)
