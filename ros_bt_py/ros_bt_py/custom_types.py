@@ -44,7 +44,9 @@ from .helpers import MathOperandType, MathUnaryOperandType
 
 
 class RosType(ABC):
-    def __init__(self, type_str=''):
+    #NOTE Subclasses should supply a working default
+    @abstractmethod
+    def __init__(self, type_str):
         self.type_str = type_str
 
     #NOTE We can't do the conversion in `__init__`,
@@ -54,14 +56,23 @@ class RosType(ABC):
         pass
     
 class RosTopicType(RosType):
+    def __init__(self, type_str='std_msgs/msg/Empty'):
+        super().__init__(type_str)
+
     def get_type_obj(self):
         return rosidl_runtime_py.utilities.get_message(self.type_str)
     
 class RosServiceType(RosType):
+    def __init__(self, type_str='std_srvs/srv/Trigger'):
+        super().__init__(type_str)
+
     def get_type_obj(self):
         return rosidl_runtime_py.utilities.get_service(self.type_str)
     
 class RosActionType(RosType):
+    def __init__(self, type_str='ros_bt_py_interfaces/action/Empty'):
+        super().__init__(type_str)
+
     def get_type_obj(self):
         return rosidl_runtime_py.utilities.get_action(self.type_str)
 

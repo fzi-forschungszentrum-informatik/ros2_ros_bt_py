@@ -43,6 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/ExecuteRemoteCapability.action"
   "action/RunTree.action"
   "action/FindBestExecutor.action"
+  "action/Empty.action"
 
   "msg/CapabilityExecutionStatus.msg"
   "msg/CapabilityImplementation.msg"
