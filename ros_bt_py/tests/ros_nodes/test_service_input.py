@@ -29,6 +29,7 @@ import pytest
 
 import unittest.mock as mock
 from std_srvs.srv import SetBool
+from ros_bt_py.custom_types import RosServiceType
 from ros_bt_py.ros_nodes.service import ServiceInput
 from rclpy.time import Time
 from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
@@ -50,10 +51,9 @@ class TestServiceInput:
         ros_mock.create_client.return_value = client_mock
         clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
         ros_mock.get_clock.return_value = clock_mock
-
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -94,7 +94,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -125,7 +125,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -166,7 +166,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -219,7 +219,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -270,7 +270,7 @@ class TestServiceInput:
         with pytest.raises(BehaviorTreeException):
             unavailable_service = ServiceInput(
                 options={
-                    "service_type": SetBool,
+                    "service_type": RosServiceType("std_srvs/srv/SetBool"),
                     "wait_for_response_seconds": 5.0,
                 },
                 ros_node=None,
@@ -302,7 +302,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -340,7 +340,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -382,7 +382,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -423,7 +423,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=None,
@@ -433,7 +433,7 @@ class TestServiceInput:
 
         unavailable_service_2 = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -467,7 +467,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
@@ -517,7 +517,7 @@ class TestServiceInput:
 
         unavailable_service = ServiceInput(
             options={
-                "service_type": SetBool,
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,

@@ -25,8 +25,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Optional
+from typing import Dict, Optional
 
+from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
     QoSProfile,
@@ -41,20 +42,23 @@ from ros_bt_py_interfaces.msg import UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.custom_types import RosTopicName, RosTopicType
+from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
 
 
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
         options={
-            "topic_type": type,
-            "topic_name": str,
+            "topic_type": RosTopicType,
+            "topic_name": RosTopicName,
             "reliable": bool,
             "transient_local": bool,
             "depth": int,
         },
         inputs={},
-        outputs={"message": OptionRef("topic_type")},
+        outputs={},
         max_children=0,
     )
 )
@@ -68,6 +72,37 @@ class TopicSubscriber(Leaf):
 
     This node never returns FAILED.
     """
+
+    def __init__(
+        self,
+        options: Optional[Dict] = None,
+        debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
+        succeed_always: bool = False,
+        simulate_tick: bool = False,
+    ):
+        super(TopicSubscriber, self).__init__(
+            options=options,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            name=name,
+            ros_node=ros_node,
+            succeed_always=succeed_always,
+            simulate_tick=simulate_tick,
+        )
+
+        self._topic_type = self.options["topic_type"].get_type_obj()
+        self._topic_name = self.options["topic_name"].name
+
+        node_outputs = {"message": self._topic_type}
+
+        self.node_config.extend(
+            NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
+        )
+
+        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     _lock = Lock()
     _subscriber = None
@@ -91,8 +126,8 @@ class TopicSubscriber(Leaf):
             reliability=reliability_policy, history=durability_policy, depth=depth
         )
         self._subscriber = self.ros_node.create_subscription(
-            msg_type=self.options["topic_type"],
-            topic=self.options["topic_name"],
+            msg_type=self._topic_type,
+            topic=self._topic_name,
             callback=self._callback,
             qos_profile=self._qos_profile,
         )
@@ -133,11 +168,11 @@ class TopicSubscriber(Leaf):
         if not self.has_ros_node:
             return UtilityBounds(can_execute=False)
 
-        resolved_topic = self.ros_node.resolve_topic_name(self.options["topic_name"])
+        resolved_topic = self.ros_node.resolve_topic_name(self._topic_name)
 
         for endpoint in self.ros_node.get_publishers_info_by_topic(resolved_topic):
             if (
-                endpoint.topic_type == self.options["topic_type"]
+                endpoint.topic_type == self._topic_type
                 and endpoint.qos_profile == self._qos_profile
             ):
                 # if the topic we want exists, we can do our job, so
@@ -156,15 +191,15 @@ class TopicSubscriber(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "topic_type": type,
-            "topic_name": str,
+            "topic_type": RosTopicType,
+            "topic_name": RosTopicName,
             "memory_delay": float,
             "reliable": bool,
             "transient_local": bool,
             "depth": int,
         },
         inputs={},
-        outputs={"message": OptionRef("topic_type")},
+        outputs={},
         max_children=0,
     )
 )
@@ -179,6 +214,38 @@ class TopicMemorySubscriber(Leaf):
 
     This node never returns RUNNING.
     """
+
+    def __init__(
+        self,
+        options: Optional[Dict] = None,
+        debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
+        succeed_always: bool = False,
+        simulate_tick: bool = False,
+    ):
+        super(TopicMemorySubscriber, self).__init__(
+            options=options,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            name=name,
+            ros_node=ros_node,
+            succeed_always=succeed_always,
+            simulate_tick=simulate_tick,
+        )
+
+        self._topic_type = self.options["topic_type"].get_type_obj()
+        self._topic_name = self.options["topic_name"].name
+
+        node_outputs = {"message": self._topic_type}
+
+        self.node_config.extend(
+            NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
+        )
+
+        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+
 
     _lock = Lock()
     _subscriber = None
@@ -208,8 +275,8 @@ class TopicMemorySubscriber(Leaf):
             reliability=reliability_policy, history=durability_policy, depth=depth
         )
         self._subscriber = self.ros_node.create_subscription(
-            msg_type=self.options["topic_type"],
-            topic=self.options["topic_name"],
+            msg_type=self._topic_type,
+            topic=self._topic_name,
             callback=self._callback,
             qos_profile=self._qos_profile,
         )
@@ -263,11 +330,11 @@ class TopicMemorySubscriber(Leaf):
         if not self.has_ros_node:
             return UtilityBounds(can_execute=False)
 
-        resolved_topic = self.ros_node.resolve_topic_name(self.options["topic_name"])
+        resolved_topic = self.ros_node.resolve_topic_name(self._topic_name)
 
         for endpoint in self.ros_node.get_publishers_info_by_topic(resolved_topic):
             if (
-                endpoint.topic_type == self.options["topic_type"]
+                endpoint.topic_type == self._topic_type
                 and endpoint.qos_profile == self._qos_profile
             ):
                 # if the topic we want exists, we can do our job, so
@@ -286,19 +353,52 @@ class TopicMemorySubscriber(Leaf):
     NodeConfig(
         version="1.0.0",
         options={
-            "topic_type": type,
-            "topic_name": str,
+            "topic_type": RosTopicType,
+            "topic_name": RosTopicName,
             "reliable": bool,
             "transient_local": bool,
             "depth": int,
         },
-        inputs={"message": OptionRef("topic_type")},
+        inputs={},
         outputs={},
         max_children=0,
     )
 )
 class TopicPublisher(Leaf):
+
     _publisher = None
+
+    def __init__(
+        self,
+        options: Optional[Dict] = None,
+        debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
+        succeed_always: bool = False,
+        simulate_tick: bool = False,
+    ):
+        super(TopicPublisher, self).__init__(
+            options=options,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            name=name,
+            ros_node=ros_node,
+            succeed_always=succeed_always,
+            simulate_tick=simulate_tick,
+        )
+
+        self._topic_type = self.options["topic_type"].get_type_obj()
+        self._topic_name = self.options["topic_name"].name
+
+        node_inputs = {"message": self._topic_type}
+
+        self.node_config.extend(
+            NodeConfig(options={}, inputs=node_inputs, outputs={}, max_children=0)
+        )
+
+        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
+
     def _do_setup(self):
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a refrence to a ROS node!"
@@ -322,8 +422,8 @@ class TopicPublisher(Leaf):
         )
 
         self._publisher = self.ros_node.create_publisher(
-            msg_type=self.options["topic_type"],
-            topic=self.options["topic_name"],
+            msg_type=self._topic_type,
+            topic=self._topic_name,
             qos_profile=self._qos_profile,
         )
         return NodeMsg.IDLE
