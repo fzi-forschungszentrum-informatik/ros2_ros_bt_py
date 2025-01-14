@@ -74,14 +74,14 @@ class MessageToFields(Leaf):
         node_inputs = {"in": self._message_type}
         node_outputs = {}
 
-        self.passthrough = True
-
         msg = self._message_type()
         for field in msg._fields_and_field_types:
             node_outputs[field] = type(getattr(msg, field))
 
         self.node_config.extend(
-            NodeConfig(options={}, inputs=node_inputs, outputs=node_outputs, max_children=0)
+            NodeConfig(
+                options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
+            )
         )
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
@@ -91,15 +91,12 @@ class MessageToFields(Leaf):
         return NodeMsg.IDLE
 
     def _do_tick(self):
-        if self.passthrough:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            for field in self.outputs:
-                value = getattr(self.inputs["in"], field)
-                if type(value) == tuple and self.outputs.get_type(field) == list:
-                    self.outputs[field] = list(value)
-                else:
-                    self.outputs[field] = value
+        for field in self.outputs:
+            value = getattr(self.inputs["in"], field)
+            if type(value) == tuple and self.outputs.get_type(field) == list:
+                self.outputs[field] = list(value)
+            else:
+                self.outputs[field] = value
         return NodeMsg.SUCCEEDED
 
     def _do_untick(self):
@@ -156,14 +153,14 @@ class FieldsToMessage(Leaf):
         node_inputs = {}
         node_outputs = {"out": self._message_type}
 
-        self.passthrough = True
-
         msg = self._message_type()
         for field in msg._fields_and_field_types:
             node_inputs[field] = type(getattr(msg, field))
 
         self.node_config.extend(
-            NodeConfig(options={}, inputs=node_inputs, outputs=node_outputs, max_children=0)
+            NodeConfig(
+                options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
+            )
         )
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
@@ -173,15 +170,12 @@ class FieldsToMessage(Leaf):
         return NodeMsg.IDLE
 
     def _do_tick(self):
-        if self.passthrough:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            msg = self._message_type()
+        msg = self._message_type()
 
-            for field in msg._fields_and_field_types:
-                setattr(msg, field, self.inputs[field])
+        for field in msg._fields_and_field_types:
+            setattr(msg, field, self.inputs[field])
 
-            self.outputs["out"] = msg
+        self.outputs["out"] = msg
         return NodeMsg.SUCCEEDED
 
     def _do_untick(self):

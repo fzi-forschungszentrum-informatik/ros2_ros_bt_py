@@ -28,7 +28,7 @@
 from typing import Dict
 import pytest
 
-from std_srvs.srv import SetBool
+from ros_bt_py.custom_types import RosTopicType
 from ros_bt_py.ros_nodes.message_converters import FieldsToMessage
 from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
 
@@ -36,9 +36,9 @@ from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
 @pytest.mark.parametrize(
     "message,fields",
     [
-        (SetBool.Request, {"data": False}),
+        (RosTopicType("std_msgs/msg/Bool"), {"data": False}),
         (
-            UtilityBounds,
+            RosTopicType("ros_bt_py_interfaces/msg/UtilityBounds"),
             {
                 "can_execute": False,
                 "has_upper_bound_success": False,
@@ -53,7 +53,7 @@ from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
         ),
     ],
 )
-def test_node_success(message: type, fields: Dict[str, type]):
+def test_node_success(message: RosTopicType, fields: Dict[str, type]):
     unavailable_service = FieldsToMessage(
         options={
             "output_type": message,
