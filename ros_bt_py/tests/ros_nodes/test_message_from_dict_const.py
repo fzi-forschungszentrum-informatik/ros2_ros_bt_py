@@ -26,9 +26,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
+from ros_bt_py.custom_types import RosTopicType
 from ros_bt_py.ros_nodes.messages_from_dict import MessageFromConstDict
-from std_msgs.msg import Int64, String
-from std_srvs.srv import SetBool
+from std_msgs.msg import Int64, String, Bool
 from ros_bt_py_interfaces.srv import ChangeTreeName
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 
@@ -36,9 +36,9 @@ from ros_bt_py_interfaces.msg import Node as NodeMsg
 @pytest.mark.parametrize(
     "message, message_dict",
     [
-        (Int64, {"data": 667}),
-        (String, {"data": "this is a test string"}),
-        (SetBool.Request, {"data": True}),
+        (RosTopicType("std_msgs/msg/Int64"), {"data": 667}),
+        (RosTopicType("std_msgs/msg/String"), {"data": "this is a test string"}),
+        (RosTopicType("std_msgs/msg/Bool"), {"data": True}),
     ],
 )
 def test_node_success(message, message_dict):
@@ -58,9 +58,9 @@ def test_node_success(message, message_dict):
 @pytest.mark.parametrize(
     "message, message_dict",
     [
-        (Int64, {"data": 667}),
-        (String, {"data": "this is a test string"}),
-        (SetBool.Request, {"data": True}),
+        (RosTopicType("std_msgs/msg/Int64"), {"data": 667}),
+        (RosTopicType("std_msgs/msg/String"), {"data": "this is a test string"}),
+        (RosTopicType("std_msgs/msg/Bool"), {"data": True}),
     ],
 )
 def test_node_untick(message, message_dict):
@@ -92,9 +92,9 @@ def test_node_untick(message, message_dict):
 @pytest.mark.parametrize(
     "message, message_dict",
     [
-        (Int64, {"data": 667}),
-        (String, {"data": "this is a test string"}),
-        (SetBool.Request, {"data": True}),
+        (RosTopicType("std_msgs/msg/Int64"), {"data": 667}),
+        (RosTopicType("std_msgs/msg/String"), {"data": "this is a test string"}),
+        (RosTopicType("std_msgs/msg/Bool"), {"data": True}),
     ],
 )
 def test_node_reset(message, message_dict):
@@ -124,7 +124,7 @@ def test_node_reset(message, message_dict):
 
 
 @pytest.mark.parametrize(
-    "message, message_dict", [(ChangeTreeName.Request, {"tequila": False})]
+    "message, message_dict", [(RosTopicType("std_msgs/msg/Bool"), {"tequila": False})]
 )
 def test_node_failure(message, message_dict):
     node = MessageFromConstDict(options={"message_type": message, "dict": message_dict})
