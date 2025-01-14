@@ -55,6 +55,23 @@ def set_node_state_to_shutdown(tree):
     return tree
 
 
+class MathUnaryOperator(object):
+    def __init__(self, operator='sqrt'):
+        self.operator = operator
+
+class MathBinaryOperator(object):
+    def __init__(self, operator='+'):
+        self.operator = operator
+
+class MathOperandType(object):
+    def __init__(self, operand_type='float'):
+        self.operand_type = operand_type
+
+class MathUnaryOperandType(object):
+    def __init__(self, operand_type='float'):
+        self.operand_type = operand_type
+
+
 # handling nested objects,
 # see https://stackoverflow.com/questions/31174295/getattr-and-setattr-on-nested-objects
 def rgetattr(obj, attr, *args):
@@ -105,25 +122,6 @@ def json_decode(data):
     """Wrap the call to jsonpickle.decode."""
     return jsonpickle.decode(data)
 
-
-class MathUnaryOperator(object):
-    def __init__(self, operator):
-        self.operator = operator
-
-
-class MathBinaryOperator(object):
-    def __init__(self, operator):
-        self.operator = operator
-
-
-class MathOperandType(object):
-    def __init__(self, operand_type):
-        self.operand_type = operand_type
-
-
-class MathUnaryOperandType(object):
-    def __init__(self, operand_type):
-        self.operand_type = operand_type
 
 
 class HashableCapabilityInterface:

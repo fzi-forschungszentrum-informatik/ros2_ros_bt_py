@@ -43,6 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/ExecuteRemoteCapability.action"
   "action/RunTree.action"
   "action/FindBestExecutor.action"
+  "action/Empty.action"
 
   "msg/CapabilityExecutionStatus.msg"
   "msg/CapabilityImplementation.msg"
@@ -50,8 +51,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CapabilityIOBridgeData.msg"
   "msg/SubtreeInfo.msg"
   "msg/DocumentedNode.msg"
-  "msg/Message.msg"
-  "msg/Messages.msg"
   "msg/Node.msg"
   "msg/NodeData.msg"
   "msg/NodeDataLocation.msg"
@@ -65,6 +64,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Tree.msg"
   "msg/TreeDataUpdate.msg"
   "msg/UtilityBounds.msg"
+  "msg/MessageChannel.msg"
+  "msg/MessageChannels.msg"
+  "msg/MessageTypes.msg"
 
   "srv/AddNode.srv"
   "srv/AddNodeAtIndex.srv"
