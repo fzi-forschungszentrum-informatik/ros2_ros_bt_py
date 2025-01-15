@@ -28,7 +28,17 @@
 import rclpy
 import rclpy.logging
 
+from ros_bt_py.custom_types import (
+    FilePath,
+    RosActionName,
+    RosActionType,
+    RosServiceName,
+    RosServiceType,
+    RosTopicName,
+    RosTopicType,
+)
 from ros_bt_py.helpers import json_encode
+from ros_bt_py.ros_helpers import get_interface_name
 
 
 def from_string(data_type, string_value, static=False):
@@ -104,8 +114,24 @@ class NodeData(object):
         if self._static and self.updated:
             raise Exception("Trying to overwrite data in static NodeData object")
         if not isinstance(new_value, self.data_type) and new_value is not None:
+            # Convert str based params to the FilePath or Ros...Name format.
+            if self.data_type in [
+                RosServiceName,
+                RosTopicName,
+                RosActionName,
+                FilePath,
+            ] and isinstance(new_value, str):
+                new_value = self.data_type(new_value)
+            # Convert Ros...Type from type variables!
+            elif self.data_type in [
+                RosServiceType,
+                RosActionType,
+                RosTopicType,
+            ] and isinstance(new_value, type):
+                new_value_type = get_interface_name(new_value)
+                new_value = self.data_type(new_value_type)
             # Silently convert ints to float
-            if self.data_type == float and isinstance(new_value, int):
+            elif self.data_type == float and isinstance(new_value, int):
                 new_value = float(new_value)
             else:
                 if type(new_value) is dict and "py/type" in new_value:

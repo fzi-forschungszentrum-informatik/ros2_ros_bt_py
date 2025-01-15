@@ -51,6 +51,21 @@ class EnumValue(object):
         self.enum_value = enum_value
 
 
+def get_interface_name(msg_metaclass: type) -> str:
+    """
+    Extract the interface name from a ROS2 message metaclass.
+
+    :param msg_metaclass: The ROS2 message metaclass.
+
+    :returns: The interface name in the format 'package_name/message_type/message_name'.
+    """
+    module_parts = msg_metaclass.__module__.split(".")
+    package_name = module_parts[0]
+    message_type = module_parts[-2]  # Extract 'msg', 'srv', or 'action'
+    message_name = msg_metaclass.__name__
+    return f"{package_name}/{message_type}/{message_name}"
+
+
 def get_message_constant_fields(message_class):
     """Return all constant fields of a message as a list."""
     if inspect.isclass(message_class):
@@ -68,28 +83,13 @@ def get_message_constant_fields(message_class):
 
 
 def publish_message_channels(node: Node, publisher: Publisher):
-    """Return all known topic-, service-, and action-names"""
+    """Return all known topic-, service-, and action-names."""
     msg = MessageChannels()
     # Types are returned as 1?-element lists, so we need to unpack them
     for name, [interface, *_] in node.get_topic_names_and_types():
-        msg.topics.append(
-            MessageChannel(
-                name=name, 
-                type=interface
-            )
-        )
+        msg.topics.append(MessageChannel(name=name, type=interface))
     for name, [interface, *_] in node.get_service_names_and_types():
-        msg.services.append(
-            MessageChannel(
-                name=name, 
-                type=interface
-            )
-        )
+        msg.services.append(MessageChannel(name=name, type=interface))
     for name, [interface, *_] in action.get_action_names_and_types(node):
-        msg.actions.append(
-            MessageChannel(
-                name=name,
-                type=interface
-            )
-        )
+        msg.actions.append(MessageChannel(name=name, type=interface))
     publisher.publish(msg)
