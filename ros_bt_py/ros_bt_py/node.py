@@ -50,6 +50,7 @@ from ros_bt_py.exceptions import BehaviorTreeException, NodeStateError, NodeConf
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.helpers import get_default_value, json_decode
+from ros_bt_py.custom_types import HintedType
 
 
 def _check_node_data_match(
@@ -971,6 +972,14 @@ class Node(object):
           * If an OptionRef references an option value that does not hold a `type`
 
         """
+        # Replace any instances of HintedType with type to not mess with internal logic
+        # HintedType is only meant to display additional information.
+        for key, value in source_map.items():
+            if isinstance(value, HintedType):
+                source_map[key] = type
+            else:
+                source_map[key] = value
+
         # Find the values that are not OptionRefs first
         self._find_option_refs(
             source_map=source_map,

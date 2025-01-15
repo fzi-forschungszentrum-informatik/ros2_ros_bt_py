@@ -30,7 +30,22 @@ from abc import ABC, abstractmethod
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
-# TODO Math types for operation and operand remain in `helpers.py`
+
+class HintedType(object):
+
+    def __init__(self, hints=None):
+        if hints is None:
+            self.hints = []
+        else:
+            self.hints = hints
+
+
+class FilePath(object):
+    def __init__(self, path=''):
+        self.path = path
+
+
+#TODO Math types for operation and operand remain in `helpers.py`
 # to not cause a breaking change. If those are ever updated,
 # they should be moved here.
 from .helpers import MathBinaryOperator, MathUnaryOperator
