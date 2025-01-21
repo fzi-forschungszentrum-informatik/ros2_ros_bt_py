@@ -31,13 +31,14 @@ from ros_bt_py.exceptions import BehaviorTreeException
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.custom_types import HintedType
 
 
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
         options={
-            "param_type": type,
+            "param_type": HintedType(hints=['builtin']),
             "default_value": OptionRef("param_type"),
             "param_name": str,
         },
@@ -90,7 +91,7 @@ class RosParamOption(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "param_type": type,
+            "param_type": HintedType(hints=['builtin']),
             "param_name": str,
         },
         inputs={
@@ -145,7 +146,7 @@ class RosParamOptionDefaultInput(Leaf):
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"param_type": type, "default_value": OptionRef("param_type")},
+        options={"param_type": HintedType(hints=['builtin']), "default_value": OptionRef("param_type")},
         inputs={"param_name": str},
         outputs={"param": OptionRef("param_type")},
         max_children=0,
