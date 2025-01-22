@@ -29,13 +29,16 @@ from ros_bt_py_interfaces.msg import Node as NodeMsg
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.custom_types import HintedType
+from ros_bt_py.custom_types import TypeWrapper, TYPE_BUILTIN
 
 
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"constant_type": HintedType(hints=['builtin']), "constant_value": OptionRef("constant_type")},
+        options={
+            "constant_type": TypeWrapper(type, info=TYPE_BUILTIN), 
+            "constant_value": OptionRef("constant_type")
+        },
         inputs={},
         outputs={"constant": OptionRef("constant_type")},
         max_children=0,
@@ -45,6 +48,9 @@ from ros_bt_py.custom_types import HintedType
 class Constant(Leaf):
     """
     Provide a set value as an output.
+
+    If you're looking to generate Ros Messages, 
+    MessageFromConstDict and other message converters provide a better experience
 
     Useful to provide parameters to Subtrees.
     """

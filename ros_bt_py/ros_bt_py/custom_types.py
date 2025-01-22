@@ -31,13 +31,17 @@ import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
 
-class HintedType(object):
-
-    def __init__(self, hints=None):
-        if hints is None:
-            self.hints = []
-        else:
-            self.hints = hints
+# NOTE These constants serve as docs for supported wrappings and to avoid typos
+TYPE_BUILTIN = 'builtin'
+DICT_ROS = 'ros'
+class TypeWrapper(object):
+    """
+    This allows to wrap any builtin type to supply additional information,
+    like restrictions, suggestions, ...
+    """
+    def __init__(self, actual_type, info=''):
+        self.actual_type = actual_type
+        self.info = info
 
 
 class FilePath(object):
