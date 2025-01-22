@@ -94,6 +94,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetAvailableSubtrees.srv"
   "srv/GetFolderStructure.srv"
   "srv/GetMessageFields.srv"
+  "srv/GetMessageConstantFields.srv"
   "srv/GetPackageStructure.srv"
   "srv/GetStorageFolders.srv"
   "srv/GetSubtree.srv"

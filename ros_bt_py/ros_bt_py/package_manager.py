@@ -41,6 +41,7 @@ import rosidl_runtime_py.utilities
 from ros_bt_py_interfaces.msg import MessageTypes, Package, Packages, Tree
 from ros_bt_py_interfaces.srv import (
     GetMessageFields,
+    GetMessageConstantFields,
     SaveTree,
     GetPackageStructure,
     GetFolderStructure,
@@ -245,8 +246,10 @@ class PackageManager(object):
             )
         return response
 
+    #TODO Maybe instead of introducing a new message type,
+    # constant_fields should also be returned as a dict?
     def get_message_constant_fields_handler(
-        self, request: GetMessageFields.Request, response: GetMessageFields.Response
+        self, request: GetMessageConstantFields.Request, response: GetMessageConstantFields.Response
     ):
         try:
             message_class = rosidl_runtime_py.utilities.get_message(
