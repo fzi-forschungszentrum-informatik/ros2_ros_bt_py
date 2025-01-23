@@ -87,6 +87,7 @@ from ros_bt_py.exceptions import (
     TreeTopologyError,
 )
 from ros_bt_py.helpers import (
+    get_default_value,
     remove_input_output_values,
     json_encode,
     json_decode,
@@ -250,11 +251,31 @@ def get_available_nodes(
             response.error_message = f"Failed to import module {module_name}"
             return response
 
-    def to_node_data(data_map):
-        return [
-            NodeData(key=name, serialized_value=json_encode(type_or_ref))
-            for (name, type_or_ref) in data_map.items()
-        ]
+    def to_node_data(data_map, use_default_value=False):
+        node_data_list = []
+        for name, type_or_ref in data_map.items():
+            if isinstance(type_or_ref, tuple):
+                serialized_type = json_encode(type_or_ref[0])
+                default_value = type_or_ref[1] if use_default_value else None
+            else:
+                serialized_type = json_encode(type_or_ref)
+                default_value = (
+                    get_default_value(type_or_ref) if use_default_value else None
+                )
+
+            serialized_default_value = (
+                json_encode(default_value) if use_default_value else ""
+            )
+
+            node_data_list.append(
+                NodeData(
+                    key=name,
+                    serialized_type=serialized_type,
+                    serialized_default_value=serialized_default_value,
+                )
+            )
+
+        return node_data_list
 
     for module, nodes in Node.node_classes.items():
         for class_name, node_classes in nodes.items():
@@ -269,7 +290,9 @@ def get_available_nodes(
                         version=node_class._node_config.version,
                         max_children=max_children,
                         name=class_name,
-                        options=to_node_data(node_class._node_config.options),
+                        options=to_node_data(
+                            node_class._node_config.options, use_default_value=True
+                        ),
                         inputs=to_node_data(node_class._node_config.inputs),
                         outputs=to_node_data(node_class._node_config.outputs),
                         doc=str(doc),
