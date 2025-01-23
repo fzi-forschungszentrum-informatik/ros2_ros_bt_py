@@ -15,7 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.1...main
+[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.2.0...main
+
+## [v0.2.0]
+
+### Added
+
+- Strong type system for ROS types (thanks @doomse)
+
+### Removed
+
+- ROS2 Iron build in CI
+
+### Changed
+
+- Updated web UI to version 3.2.3.
+- Removed doc build instructions from Readme
+- Updated README.md to look better
+
+### Fixed
+
+- Loading trees from packages
+
+[v0.2.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.1...v0.2.0
 
 ## [v0.1.1]
 
@@ -26,8 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated web UI to version 3.0.0.
-- Removed doc build instructions from Readme
-- Updated README.md to look better
 
 ### Fixed
 
@@ -74,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.0.1]
 
 [v0.0.1]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/releases/tag/v0.0.1
+
 <!---
 ## [vx.x.x] - YYYY-MM-DD
 
