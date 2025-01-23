@@ -29,6 +29,7 @@ import pytest
 
 import unittest.mock as mock
 from std_srvs.srv import SetBool
+from ros_bt_py.custom_types import RosServiceName, RosServiceType
 from ros_bt_py.ros_nodes.service import WaitForService
 from rclpy.time import Time
 from ros_bt_py_interfaces.msg import Node as NodeMsg
@@ -46,8 +47,8 @@ def test_node_success(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -80,8 +81,8 @@ def test_node_failure(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -118,8 +119,8 @@ def test_node_reset(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -148,8 +149,8 @@ def test_node_no_ros():
     with pytest.raises(BehaviorTreeException):
         unavailable_service = WaitForService(
             options={
-                "service_name": "this_service_does_not_exist",
-                "service_type": SetBool,
+                "service_name": RosServiceName("this_service_does_not_exist"),
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_service_seconds": 5.0,
             },
             ros_node=None,
@@ -176,8 +177,8 @@ def test_node_untick(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -216,11 +217,10 @@ def test_node_simulate_tick(ros_mock, client_mock, clock_mock):
         Time(seconds=4),
     ]
     ros_mock.get_clock.return_value = clock_mock
-
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
