@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated web UI to version 3.0.0.
 - Removed doc build instructions from Readme
+- Updated README.md to look better
 
 ### Fixed
 

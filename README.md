@@ -1,13 +1,32 @@
-# Welcome to ros_bt_py!
-
 [![ROS Industrial CI](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml/badge.svg)](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml)
 [![codecov](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py/graph/badge.svg?token=CRF3GMWWG3)](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py)
 [![Documentation](https://img.shields.io/badge/Documentation-Github_Pages-blue)](https://fzi-forschungszentrum-informatik.github.io/ros2_ros_bt_py/index.html)
 ---
 
+# Welcome to ros_bt_py!
+
 This is a [Behavior Tree](https://en.wikipedia.org/wiki/Behavior_tree_(artificial_intelligence,_robotics_and_control)) library meant to be an alternative to [BehaviorTree.cpp](https://www.behaviortree.dev/), [SMACH](http://wiki.ros.org/smach), [FlexBE](http://wiki.ros.org/flexbe) and the like.
 
-It includes a ReactJS-based web GUI and all the building blocks you need to build moderately advanced mission control Behavior Trees without writing a single line of code!
+It includes a ReactJS-based web GUI and all the building blocks you need to build advanced mission
+control Behavior Trees without writing a single line of code!
+
+**ros_bt_py** is a plug-and-play solution for all your ROS 2 deliberation needs including:
+
+* Intuitive interfacing with **ROS Actions** and **Services** through run-time configurable Node Classes
+* Explicit and type-safe **Dataflow** utilizing a drag-and-drop based datagraph.
+* Easy customization and expansion of the available Node Classes as **Python Modules**
+
+ros_bt_py has been the subject of multiple publications:
+* [Distributed Behavior Trees for Heterogeneous Robot Teams](https://arxiv.org/pdf/2309.08253)
+* [Behavior Tree Capabilities for Dynamic Multi-Robot Task Allocation with Heterogeneous Robot Teams](https://arxiv.org/pdf/2402.02833)
+
+<p align="center"><img src="bt_py.gif"></p>
+
+## Documentation, Improvements and Community
+
+Learn about how to get started, API and tutorials in [our documentation](https://fzi-forschungszentrum-informatik.github.io/ros2_ros_bt_py/index.html).
+
+If you have specific questions or ideas feel free to [write an issue](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/issues/new/choose) or [start a discussion](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/discussions).
 
 ## Installation
 
@@ -18,10 +37,11 @@ $ cd colcon_workspace
 $ rosdep install --from-paths src --ignore-src -r -y
 ```
 
-Then you can just build the package with your prefered method i.e. `colcon build`
+Then you can just build the package with your preferred method i.e. `colcon build`
 
-**Note**: Do not build the workspace using `--symlink-install` as this is currently not working
-with generate_parameter_library. You will get an error when running `ModuleNotFoundError: No module named 'ros_bt_py.parameters'`.
+**ros_bt_py is under active development so things on the main branch might not be stable.**
+
+**To make sure you do use a stable version check out the latest [release](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/releases).**
 
 ## Running
 
