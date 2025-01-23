@@ -1,0 +1,426 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Getting Started" href="getting_started.html" />
+
+    <link rel="shortcut icon" href="_static/ros_bt_py.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
+        <title>ros_bt_py 0.1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="#"><div class="brand">ros_bt_py 0.1.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/ros_bt_py_128.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">ros_bt_py 0.1.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_tutorial.html">Basic Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_tutorial.html">Advanced Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating_a_node_class_package.html">Creating a Node Class package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating_node_classes.html">Creating Node Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="testing_node_classes.html">Testing Node Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_launch_configuration.html">Advanced Launch Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utility_functions.html">Utility Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="welcome-to-ros-bt-py-s-documentation">
+<h1>Welcome to ros_bt_py’s documentation!<a class="headerlink" href="#welcome-to-ros-bt-py-s-documentation" title="Link to this heading">¶</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
+<p>ros_bt_py is a Python package for writing and executing Behavior Trees.</p>
+<p>It is built to enable high-level (aka task level) mission control for
+robots, similar to <a class="reference external" href="https://www.behaviortree.dev/">BehaviorTree.Cpp</a>, <a class="reference external" href="http://wiki.ros.org/smach">SMACH</a>, <a class="reference external" href="http://philserver.bplaced.net/">FlexBE</a> or <a class="reference external" href="https://rafcon.readthedocs.io/en/latest/">RAFCON</a>.</p>
+<p>The roy_bt_py repository is home to multiple elements enabling you to quickly get started with BT
+development without the need to write any code:</p>
+<ul class="simple">
+<li><p>The basic framework holding ros_bt_by together.</p></li>
+<li><p>A “standard library” of Behavior Tree nodes (i.e. subclasses of <code class="xref py py-class docutils literal notranslate"><span class="pre">ros_bt_py.node.Node</span></code>)
+that already allow the construction of complex robot mission Behavior Trees.
+While these will let you do basically whatever you want,
+<a class="reference internal" href="creating_node_classes.html#creating-nodes"><span class="std std-ref">writing your own nodes</span></a> might be helpful after you are familiar with the
+library.</p></li>
+<li><p>The ros_bt_py web GUI, which should in general be your interface to interact with the library.
+Generating trees through code is currently possible, but neither supported nor documented.</p></li>
+</ul>
+</section>
+<section id="mission-statement">
+<h2>Mission Statement<a class="headerlink" href="#mission-statement" title="Link to this heading">¶</a></h2>
+<p>ros_bt_py was created with the following goals in mind:</p>
+<ul class="simple">
+<li><p>Fully ROS compatible.</p></li>
+<li><p>Mission control for Robots, meaning long runing processes.</p></li>
+<li><p>Possiblity to distribute it among multiple robots to enable cooperation in robot Teams.</p></li>
+<li><p>Extendible, understandable and typesafe implementation.</p></li>
+</ul>
+<p>It is meant as a high level control option similar to SMACH or FlexBE.</p>
+</section>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#running-ros-bt-py">Running ros_bt_py</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="basic_tutorial.html">Basic Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#starting-up-ros-bt-py">Starting up ros_bt_py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#examining-the-interface">Examining the Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#writing-your-first-bt">Writing your first BT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#working-with-bt-py">Working with bt_py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#understanding-flow-control">Understanding Flow Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#writing-a-more-complex-bt">Writing a more complex BT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#using-subtrees">Using Subtrees</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html#using-ros-interfaces-with-ros-bt-py">Using ROS Interfaces with ros_bt_py</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_tutorial.html">Advanced Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced_tutorial.html#using-optionrefs">Using OptionRefs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="creating_a_node_class_package.html">Creating a Node Class package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="creating_a_node_class_package.html#package-creation">Package Creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating_a_node_class_package.html#example-package">Example Package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="creating_node_classes.html">Creating Node Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="creating_node_classes.html#create-a-new-class">1. Create a new class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating_node_classes.html#fill-in-the-nodeconfig">2. Fill in the NodeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating_node_classes.html#implement-the-do-methods">3. Implement the <code class="code docutils literal notranslate"><span class="pre">_do_</span></code> methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating_node_classes.html#test-your-node">4. Test your node!</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testing_node_classes.html">Testing Node Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="testing_node_classes.html#creating-a-test-folder-and-unit-test-script">Creating a Test Folder and Unit Test Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing_node_classes.html#running-your-unit-tests">Running your Unit Tests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing_node_classes.html#adding-your-unit-tests-to-cmakelists-txt">Adding your Unit Tests to CMakeLists.txt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing_node_classes.html#adding-your-unit-tests-to-setup-py">Adding your Unit Tests to setup.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing_node_classes.html#running-tests-via-colcon">Running Tests via colcon</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_launch_configuration.html">Advanced Launch Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced_launch_configuration.html#using-custom-node-classes-in-a-project">Using Custom Node Classes in a Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_launch_configuration.html#other-important-launch-arguments">Other Important Launch Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utility_functions.html">Utility Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utility_functions.html#what">What?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utility_functions.html#why">Why?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utility_functions.html#how">How?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.debug_manager">ros_bt_py.debug_manager module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.exceptions">ros_bt_py.exceptions module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-helpers-module">ros_bt_py.helpers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-node-module">ros_bt_py.node module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.node_config">ros_bt_py.node_config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-node-data-module">ros_bt_py.node_data module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.ros_helpers">ros_bt_py.ros_helpers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-tree-manager-module">ros_bt_py.tree_manager module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="getting_started.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Getting Started</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, FZI Forschungszentrum Informatik
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Welcome to ros_bt_py’s documentation!</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#mission-statement">Mission Statement</a></li>
+<li><a class="reference internal" href="#table-of-contents">Table of Contents</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=a58bc63e"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
+    </body>
+</html>
