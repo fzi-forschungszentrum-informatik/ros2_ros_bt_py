@@ -262,7 +262,7 @@ class ActionForSetType(ABC, Leaf):
             self.logwarn("Action execution was cancelled by the remote server!")
             return NodeMsg.FAILED
         seconds_running = (
-            self._running_goal_start_time - self.ros_node.get_clock().now()
+            self.ros_node.get_clock().now() - self._running_goal_start_time
         ).nanoseconds / 1e9
 
         if seconds_running > self.options["timeout_seconds"]:
@@ -650,7 +650,7 @@ class Action(Leaf):
             self.logwarn("Action execution was cancelled by the remote server!")
             return NodeMsg.FAILED
         seconds_running = (
-            self._running_goal_start_time - self.ros_node.get_clock().now()
+            self.ros_node.get_clock().now() - self._running_goal_start_time
         ).nanoseconds / 1e9
 
         if seconds_running > self.options["timeout_seconds"]:
@@ -859,21 +859,3 @@ class Action(Leaf):
             has_lower_bound_failure=True,
             has_upper_bound_failure=True,
         )
-
-    """
-    def set_action_attributes(self):
-        Set all action attributes.
-        self._action_type = self.options["action_type"]
-        self._goal_type = self.options["goal_type"]
-        self._feedback_type = self.options["feedback_type"]
-        self._result_type = self.options["result_type"]
-
-        self._action_name = self.options["action_name"]
-
-    def set_goal(self):
-        self._input_goal = self.inputs["goal"]
-
-    def set_outputs(self):
-        self.outputs["result"] = self._result.result
-        return True
-    """
