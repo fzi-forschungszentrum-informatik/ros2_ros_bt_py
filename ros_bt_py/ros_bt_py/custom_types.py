@@ -39,7 +39,7 @@ class TypeWrapper(object):
     This allows to wrap any builtin type to supply additional information,
     like restrictions, suggestions, ...
     """
-    def __init__(self, actual_type, info=''):
+    def __init__(self, actual_type: type, info=''):
         self.actual_type = actual_type
         self.info = info
 
