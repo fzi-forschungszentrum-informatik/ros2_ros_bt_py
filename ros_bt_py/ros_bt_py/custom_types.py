@@ -32,8 +32,9 @@ import rosidl_runtime_py.utilities
 
 
 # NOTE These constants serve as docs for supported wrappings and to avoid typos
-TYPE_BUILTIN = 'builtin'
-DICT_ROS = 'ros'
+TYPE_BUILTIN = 'builtin' # Shows only builtin types to autocomplete
+DICT_ROS = 'ros' # Loads dict with message fields
+ROS_TYPE_FULL = 'full' # Includes _Request, _Response, _Goal, ...
 class TypeWrapper(object):
     """
     This allows to wrap any builtin type to supply additional information,
