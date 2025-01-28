@@ -72,7 +72,7 @@ class ActionStates(Enum):
         optional_options=["fail_if_not_available"],
     )
 )
-class ActionForSetType(ABC, Leaf):
+class ActionForSetType(Leaf): # Removed ABC inheritance
     """
     Abstract ROS action class.
 
@@ -140,7 +140,7 @@ class ActionForSetType(ABC, Leaf):
 
     _action_available: bool = True
 
-    @abstractmethod
+    #@abstractmethod
     def set_action_attributes(self):
         """Set all important action attributes."""
         self._action_type = "ENTER_ACTION_TYPE"
@@ -158,14 +158,14 @@ class ActionForSetType(ABC, Leaf):
         self.outputs["feedback"] = None
         self.outputs["result"] = None
 
-    @abstractmethod
+    #@abstractmethod
     def set_goal(self):
         self._input_goal = "ENTER_GOAL_FROM_INPUT"
 
     # Sets the output (in relation to the result) (define output key while overwriting)
     # Should return True, if the node state should be SUCCEEDED after receiving the message
     # and False, if it's in the FAILED state
-    @abstractmethod
+    #@abstractmethod
     def set_outputs(self):
         self.outputs["OUTPUT_KEY"] = self._result.result
         return "TRUTHVALUE"

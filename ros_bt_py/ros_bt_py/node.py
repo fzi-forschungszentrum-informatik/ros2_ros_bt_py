@@ -49,6 +49,7 @@ from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import BehaviorTreeException, NodeStateError, NodeConfigError
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.custom_types import TypeWrapper
 from ros_bt_py.helpers import get_default_value, json_decode
 
 
@@ -251,10 +252,21 @@ class NodeMeta(type):
             if self._node_config.options:
                 param_table.append("*Options*\n\n")
                 for option_key in self._node_config.options:
-                    param_table.append(
-                        f"* {option_key}: :class:"
-                        f"`{self._node_config.options[option_key].__name__}`\n"
-                    )
+                    if isinstance(self._node_config.options[option_key], OptionRef):
+                        param_table.append(
+                            f"* {option_key}: ``{str(self._node_config.options[option_key])}``\n"
+                        )
+                    elif isinstance(self._node_config.options[option_key], TypeWrapper):
+                        param_table.append(
+                            f"* {option_key}: :class:"
+                            f"`{self._node_config.options[option_key].actual_type.__name__}` "
+                            f"(`{self._node_config.options[option_key].info}`)\n"
+                        )
+                    else:
+                        param_table.append(
+                            f"* {option_key}: :class:"
+                            f"`{self._node_config.options[option_key].__name__}`\n"
+                        )
                 param_table.append("\n")
             if self._node_config.inputs:
                 param_table.append("*Inputs*\n\n")
@@ -288,7 +300,7 @@ class NodeMeta(type):
             return self._doc
 
 
-class Node(object):
+class Node(object, metaclass=NodeMeta):
     """
     Base class for Behavior Tree nodes.
 
@@ -312,8 +324,6 @@ class Node(object):
       single child and work with that child's result - for instance, a *Decorator*
       could invert `FAILED` into `SUCCEEDED`.
     """
-
-    __metaclass__ = NodeMeta
 
     @contextmanager
     def _dummy_report_state(self):
