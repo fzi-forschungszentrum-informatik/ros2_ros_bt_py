@@ -33,8 +33,8 @@ from rclpy.node import Node
 from rosidl_runtime_py.set_message import set_message_fields
 
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.custom_types import RosTopicType
+from ros_bt_py.node_config import NodeConfig
+from ros_bt_py.custom_types import RosTopicType, TypeWrapper, DICT_ROS
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 
@@ -120,7 +120,10 @@ class MessageFromDict(Leaf):
 @define_bt_node(
     NodeConfig(
         version="0.9.0",
-        options={"message_type": RosTopicType, "dict": dict},
+        options={
+            "message_type": RosTopicType, 
+            "dict": TypeWrapper(dict, info=DICT_ROS)
+        },
         inputs={},
         outputs={},
         max_children=0,
@@ -165,6 +168,8 @@ class MessageFromConstDict(Leaf):
     def _do_tick(self):
         message = self._message_type()
         try:
+            #TODO Maybe we should enable using 'auto' headers and 'now' timestamps and
+            # immediately call their respective callbacks?
             set_message_fields(
                 message,
                 self.options["dict"],
