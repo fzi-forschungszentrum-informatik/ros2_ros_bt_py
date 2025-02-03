@@ -49,9 +49,9 @@ class FilePath(object):
         self.path = path
 
 
-#TODO Math types for operation and operand remain in `helpers.py`
-# to not cause a breaking change. If those are ever updated,
-# they should be moved here.
+#NOTE Math types for operation and operand remain in `helpers.py`
+# to not cause a breaking change. If there ever is a breaking change for those,
+# the new version should be moved here.
 from .helpers import MathBinaryOperator, MathUnaryOperator
 from .helpers import MathOperandType, MathUnaryOperandType
 
@@ -75,7 +75,7 @@ class RosType(ABC):
 
 
 class RosTopicType(RosType):
-    def __init__(self, type_str="std_msgs/msg/Empty"):
+    def __init__(self, type_str="example_interfaces/msg/Empty"):
         super().__init__(type_str)
 
     def get_type_obj(self):
@@ -83,7 +83,7 @@ class RosTopicType(RosType):
 
 
 class RosServiceType(RosType):
-    def __init__(self, type_str="std_srvs/srv/Trigger"):
+    def __init__(self, type_str="example_interfaces/srv/Trigger"):
         super().__init__(type_str)
 
     def get_type_obj(self):
