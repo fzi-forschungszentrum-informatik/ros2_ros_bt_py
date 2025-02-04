@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from threading import Lock
-from abc import ABC, abstractmethod
+import abc
 from typing import Optional, Any, Dict
 from enum import Enum
 
@@ -72,7 +72,7 @@ class ActionStates(Enum):
         optional_options=["fail_if_not_available"],
     )
 )
-class ActionForSetType(Leaf): # Removed ABC inheritance
+class ActionForSetType(Leaf):
     """
     Abstract ROS action class.
 
@@ -140,7 +140,7 @@ class ActionForSetType(Leaf): # Removed ABC inheritance
 
     _action_available: bool = True
 
-    #@abstractmethod
+    @abc.abstractmethod
     def set_action_attributes(self):
         """Set all important action attributes."""
         self._action_type = "ENTER_ACTION_TYPE"
@@ -150,22 +150,24 @@ class ActionForSetType(Leaf): # Removed ABC inheritance
 
         self._action_name = self.options["action_name"].name
 
+    # TODO What is this supposed to do, should this be flagged as abstract
     def set_input(self):
         pass
 
     # overwrite, if there is more than one output key to be overwritten
+    @abc.abstractmethod
     def set_output_none(self):
         self.outputs["feedback"] = None
         self.outputs["result"] = None
 
-    #@abstractmethod
+    @abc.abstractmethod
     def set_goal(self):
         self._input_goal = "ENTER_GOAL_FROM_INPUT"
 
     # Sets the output (in relation to the result) (define output key while overwriting)
     # Should return True, if the node state should be SUCCEEDED after receiving the message
     # and False, if it's in the FAILED state
-    #@abstractmethod
+    @abc.abstractmethod
     def set_outputs(self):
         self.outputs["OUTPUT_KEY"] = self._result.result
         return "TRUTHVALUE"
