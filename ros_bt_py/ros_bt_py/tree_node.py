@@ -103,7 +103,7 @@ class TreeNode(Node):
             "~/tree",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
                 durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
@@ -115,7 +115,7 @@ class TreeNode(Node):
             "~/debug/subtree_info",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
                 durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
@@ -126,7 +126,7 @@ class TreeNode(Node):
             "~/debug/node_diagnostics",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
                 durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
@@ -137,7 +137,7 @@ class TreeNode(Node):
             "~/debug/tick_frequency",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
                 durability=QoSDurabilityPolicy.VOLATILE,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
@@ -145,7 +145,7 @@ class TreeNode(Node):
         )
         self.ros_diagnostics_pub = self.create_publisher(
             DiagnosticArray,
-            "/diagnostics", #TODO Should this be '~/diagnostics'?
+            "/diagnostics",  # TODO Should this be '~/diagnostics'?
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -387,10 +387,10 @@ class TreeNode(Node):
             ),
         )
         self.publish_channels_timer = self.create_timer(
-            10.0, 
+            10.0,
             partial(
-                publish_message_channels, 
-                self, 
+                publish_message_channels,
+                self,
                 self.message_channels_pub,
             ),
         )
@@ -432,8 +432,10 @@ class TreeNode(Node):
         if self.tree_manager.get_state() not in [Tree.IDLE, Tree.EDITABLE, Tree.ERROR]:
             self.get_logger().info("Shutting down Behavior Tree")
             response = self.tree_manager.control_execution(
-                ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN),
-                ControlTreeExecution.Response()
+                ControlTreeExecution.Request(
+                    command=ControlTreeExecution.Request.SHUTDOWN
+                ),
+                ControlTreeExecution.Response(),
             )
             if not get_success(response):
                 self.get_logger().error(
