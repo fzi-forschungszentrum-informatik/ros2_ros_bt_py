@@ -34,6 +34,7 @@ from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
+from ros_bt_py.custom_types import FilePath
 
 
 class LoadFileError(Exception):
@@ -74,7 +75,7 @@ def load_file(path):
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"file_path": str},
+        options={"file_path": FilePath},
         inputs={},
         outputs={
             "load_success": bool,
@@ -103,7 +104,7 @@ class YamlListOption(Leaf):
         self.outputs["load_error_msg"] = ""
 
         try:
-            data = load_file(self.options["file_path"])
+            data = load_file(self.options["file_path"].path)
             if data and isinstance(data, list):
                 self.outputs["load_success"] = True
                 self.data = data
