@@ -30,9 +30,28 @@ from abc import ABC, abstractmethod
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
-# TODO Math types for operation and operand remain in `helpers.py`
-# to not cause a breaking change. If those are ever updated,
-# they should be moved here.
+
+# NOTE These constants serve as docs for supported wrappings and to avoid typos
+TYPE_BUILTIN = 'builtin'
+DICT_ROS = 'ros'
+class TypeWrapper(object):
+    """
+    This allows to wrap any builtin type to supply additional information,
+    like restrictions, suggestions, ...
+    """
+    def __init__(self, actual_type: type, info=''):
+        self.actual_type = actual_type
+        self.info = info
+
+
+class FilePath(object):
+    def __init__(self, path=''):
+        self.path = path
+
+
+#NOTE Math types for operation and operand remain in `helpers.py`
+# to not cause a breaking change. If there ever is a breaking change for those,
+# the new version should be moved here.
 from .helpers import MathBinaryOperator, MathUnaryOperator
 from .helpers import MathOperandType, MathUnaryOperandType
 
@@ -56,7 +75,7 @@ class RosType(ABC):
 
 
 class RosTopicType(RosType):
-    def __init__(self, type_str="std_msgs/msg/Empty"):
+    def __init__(self, type_str="example_interfaces/msg/Empty"):
         super().__init__(type_str)
 
     def get_type_obj(self):
@@ -64,7 +83,7 @@ class RosTopicType(RosType):
 
 
 class RosServiceType(RosType):
-    def __init__(self, type_str="std_srvs/srv/Trigger"):
+    def __init__(self, type_str="example_interfaces/srv/Trigger"):
         super().__init__(type_str)
 
     def get_type_obj(self):

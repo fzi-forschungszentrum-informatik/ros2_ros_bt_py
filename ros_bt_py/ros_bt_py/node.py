@@ -52,6 +52,7 @@ from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.helpers import get_default_value, json_decode
 
 
+
 def _check_node_data_match(
     node_config: Dict[str, Type], node_data: List[NodeDataMsg]
 ) -> bool:
@@ -971,6 +972,7 @@ class Node(object):
           * If an OptionRef references an option value that does not hold a `type`
 
         """
+
         # Find the values that are not OptionRefs first
         self._find_option_refs(
             source_map=source_map,
