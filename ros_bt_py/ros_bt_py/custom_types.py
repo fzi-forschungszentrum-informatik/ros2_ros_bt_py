@@ -30,7 +30,27 @@ from abc import ABC, abstractmethod
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
-# TODO Math types for operation and operand remain in `helpers.py`
+
+# NOTE These constants serve as docs for supported wrappings and to avoid typos
+TYPE_BUILTIN = 'builtin' # Shows only builtin types to autocomplete
+DICT_ROS = 'ros' # Loads dict with message fields
+ROS_TYPE_FULL = 'full' # Includes _Request, _Response, _Goal, ...
+class TypeWrapper(object):
+    """
+    This allows to wrap any builtin type to supply additional information,
+    like restrictions, suggestions, ...
+    """
+    def __init__(self, actual_type: type, info=''):
+        self.actual_type = actual_type
+        self.info = info
+
+
+class FilePath(object):
+    def __init__(self, path=''):
+        self.path = path
+
+
+#TODO Math types for operation and operand remain in `helpers.py`
 # to not cause a breaking change. If those are ever updated,
 # they should be moved here.
 from .helpers import MathBinaryOperator, MathUnaryOperator
