@@ -84,11 +84,6 @@ class EnumFields(Leaf):
 
         constants = get_message_constant_fields(self._message_class)
 
-        #if not constants:
-        #    raise BehaviorTreeException(
-        #        f"{self.options['ros_message_type']} has no constant fields"
-        #    )
-
         for field in constants:
             node_outputs[field] = type(getattr(self._message_class, field))
 
