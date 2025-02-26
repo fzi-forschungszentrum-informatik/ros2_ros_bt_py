@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Update web gui to version 3.3.0
+
 ### Fixed
 
 * Fixed TopicSubscriber to forget about message after outputting it
