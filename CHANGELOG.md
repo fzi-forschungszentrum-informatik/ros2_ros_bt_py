@@ -9,12 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Add type hinting wrapper for builtin types.
+
 ### Removed
+
+* Enum node.
 
 ### Changed
 
+* Switched to example_interfaces from default types.
+
 ### Fixed
 
+* Fix ABC system for NodeMeta class
+* Fix docstring generation in NodeMeta class
 * Fixed TopicSubscriber to forget about message after outputting it
 * Fixed timeout behavior of the TopicMemorySubscriber
 
