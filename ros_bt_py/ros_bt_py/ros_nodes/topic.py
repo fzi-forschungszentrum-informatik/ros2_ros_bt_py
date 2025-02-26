@@ -142,6 +142,7 @@ class TopicSubscriber(Leaf):
             if self._msg is None:
                 return NodeMsg.RUNNING
             self.outputs["message"] = self._msg
+            self._msg = None
         return NodeMsg.SUCCEEDED
 
     def _do_shutdown(self):
@@ -246,7 +247,6 @@ class TopicMemorySubscriber(Leaf):
 
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
-
     _lock = Lock()
     _subscriber = None
 
@@ -257,7 +257,7 @@ class TopicMemorySubscriber(Leaf):
             raise BehaviorTreeException(error_msg)
 
         self._msg = None
-        self._msg_timestamp: Optional[Time] = None
+        self._msg_timestamp: Optional[Time] = self._ros_node.get_clock().now()
 
         reliability_policy = (
             QoSReliabilityPolicy.RELIABLE
@@ -290,8 +290,7 @@ class TopicMemorySubscriber(Leaf):
     def _do_tick(self):
         with self._lock:
             if self._msg is None:
-                if self._msg_timestamp is None:
-                    self._msg_timestamp = self.ros_node.get_clock().now()
+                if self._msg_timestamp is not None:
                     if (
                         (
                             self.ros_node.get_clock().now() - self._msg_timestamp
