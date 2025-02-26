@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Removed
+
+### Changed
+
+### Fixed
+
+[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.3.0...main
+
+## [v0.3.0]
+
+### Added
+
 * Add type hinting wrapper for builtin types.
 
 ### Removed
@@ -27,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed TopicSubscriber to forget about message after outputting it
 * Fixed timeout behavior of the TopicMemorySubscriber
 
-[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.2.0...main
+[v0.3.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.2.0...v0.3.0
 
 ## [v0.2.0]
 
