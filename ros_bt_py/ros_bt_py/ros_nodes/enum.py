@@ -38,7 +38,7 @@ from ros_bt_py.node_config import NodeConfig
 
 from ros_bt_py.ros_helpers import EnumValue, get_message_constant_fields
 
-
+#TODO What does this node do and what should it type input be?
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
@@ -116,6 +116,7 @@ class Enum(Leaf):
         return NodeMsg.IDLE
 
 
+#TODO What does this node do and what should it type input be?
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
