@@ -39,13 +39,12 @@ from ros_bt_py_interfaces.msg import UtilityBounds
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.exceptions import BehaviorTreeException
 
-from abc import ABC, abstractmethod
+import abc
 from typing import Any, Optional, Dict
 
-import inspect
 
 
 @define_bt_node(
@@ -460,7 +459,7 @@ class WaitForServiceInput(Leaf):
         optional_options=["fail_if_not_available"],
     )
 )
-class ServiceForSetType(ABC, Leaf):
+class ServiceForSetType(Leaf):
     """
     Abstract ROS service class.
 
@@ -538,19 +537,19 @@ class ServiceForSetType(ABC, Leaf):
         self.set_service_type()
 
     # Sets all outputs none (define output key while overwriting)
-    @abstractmethod
+    @abc.abstractmethod
     def set_output_none(self):
         self.outputs["OUTPUT_KEY"] = None
 
     # Returns the service request message that should be send to the service.
-    @abstractmethod
+    @abc.abstractmethod
     def set_request(self):
         pass
 
     # Sets the output (in relation to the response) (define output key while overwriting)
     # Should return True, if the node state should be SUCCEEDED after receiving the message
     # and False, if it's in the FAILED state
-    @abstractmethod
+    @abc.abstractmethod
     def set_outputs(self) -> bool:
         if self._service_request_future is not None:
             self.outputs["OUTPUT_KEY"] = self._service_request_future.result()
@@ -559,7 +558,7 @@ class ServiceForSetType(ABC, Leaf):
             return False
 
     # Sets the service type
-    @abstractmethod
+    @abc.abstractmethod
     def set_service_type(self):
         self._service_type = "SERVICE_TYPE"
 
