@@ -231,8 +231,7 @@ def load_tree_from_file(
                 )
                 return response
             tree = response.tree
-
-    tree.name = file_name
+            tree.path = request.tree.path
 
     response.success = True
     response.tree = tree
@@ -845,9 +844,10 @@ class TreeManager:
             prefix = ""
         else:
             prefix += "."
+            tree.name = prefix[:-1]
+
         # we should have a tree message with all the info we need now
         # prefix all the node names, if prefix is not the empty string
-        tree.name = prefix[:-1]
         tree.tree_id = prefix[:-1]
         for node in tree.nodes:
             node.name = prefix + node.name

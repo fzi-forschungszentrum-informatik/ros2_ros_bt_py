@@ -118,9 +118,6 @@ class PackageManager(object):
             split_save_filepath = save_filepath.rstrip(os.sep)  # split trailing /
             path, filename = os.path.split(split_save_filepath)
 
-            # set tree name to filename
-            request.tree.name = filename
-
             try:
                 os.makedirs(path)
             except OSError:
