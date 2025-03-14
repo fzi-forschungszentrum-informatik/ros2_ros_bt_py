@@ -25,5 +25,17 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-NodeDataLocation source
-NodeDataLocation target
+# A descriptive name for this tree. At runtime, this is chosen by the
+# tree manager node.
+string name
+# A string pointing to a YAML file to read a tree from, if
+# any. Can be a file:// or a package:// string. Please don't build
+# infinite loops using this.
+string path
+string root_name
+NodeStructure[] nodes
+Wiring[] data_wirings
+float64 tick_frequency_hz
+
+# These are accessible when using this tree as a subtree
+WiringEndpoint[] public_node_data
