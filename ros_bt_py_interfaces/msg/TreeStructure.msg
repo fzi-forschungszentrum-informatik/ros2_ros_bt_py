@@ -38,4 +38,4 @@ Wiring[] data_wirings
 float64 tick_frequency_hz
 
 # These are accessible when using this tree as a subtree
-WiringEndpoint[] public_node_data
+NodeDataLocation[] public_node_data

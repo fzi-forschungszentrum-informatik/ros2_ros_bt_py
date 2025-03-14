@@ -47,7 +47,9 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
     MessageChannels,
-    Tree,
+    TreeStructure,
+    TreeState,
+    TreeData,
     SubtreeInfo,
     MessageTypes,
     Packages,
@@ -99,13 +101,37 @@ class TreeNode(Node):
 
     def init_publisher(self):
         self.publisher_callback_group = ReentrantCallbackGroup()
-        self.tree_pub = self.create_publisher(
-            Tree,
-            "~/tree",
+        self.tree_structure_pub = self.create_publisher(
+            TreeStructure,
+            "~/tree_structure",
+            callback_group=self.publisher_callback_group,
+            qos_profile=QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+        )
+
+        self.tree_state_pub = self.create_publisher(
+            TreeState,
+            "~/tree_state",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.BEST_EFFORT,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                durability=QoSDurabilityPolicy.VOLATILE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+        )
+
+        self.tree_data_pub = self.create_publisher(
+            TreeData,
+            "~/tree_data",
+            callback_group=self.publisher_callback_group,
+            qos_profile=QoSProfile(
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                durability=QoSDurabilityPolicy.VOLATILE,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
             ),
@@ -401,7 +427,7 @@ class TreeNode(Node):
             self.get_logger().info(
                 f"loading default tree: {params.default_tree.tree_path}"
             )
-            tree = Tree(path=params.default_tree.tree_path)
+            tree = TreeStructure(path=params.default_tree.tree_path)
             load_tree_request = LoadTree.Request(
                 tree=tree, permissive=params.default_tree.load_default_tree_permissive
             )
@@ -430,7 +456,7 @@ class TreeNode(Node):
 
     def shutdown(self):
         """Shut down tree node in a safe way."""
-        if self.tree_manager.get_state() not in [Tree.IDLE, Tree.EDITABLE, Tree.ERROR]:
+        if self.tree_manager.get_state() not in [TreeState.IDLE, TreeState.EDITABLE, TreeState.ERROR]:
             self.get_logger().info("Shutting down Behavior Tree")
             response = self.tree_manager.control_execution(
                 ControlTreeExecution.Request(

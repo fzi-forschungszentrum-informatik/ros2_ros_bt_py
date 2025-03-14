@@ -37,11 +37,19 @@ import rclpy
 import rclpy.logging
 from rclpy.node import Node as ROSNode
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
-from ros_bt_py_interfaces.msg import NodeData as NodeDataMsg
-from ros_bt_py_interfaces.msg import NodeDataLocation, NodeDataWiring
-from ros_bt_py_interfaces.msg import Tree
 from ros_bt_py_interfaces.msg import UtilityBounds
+from ros_bt_py_interfaces.msg import (
+    NodeStructure,
+    NodeState,
+    NodeOption,
+    NodeIO,
+    NodeDataLocation,
+    Wiring,
+    WiringData,
+    TreeStructure,
+    TreeState,
+    TreeData,
+)
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -54,7 +62,7 @@ from ros_bt_py.helpers import get_default_value, json_decode
 
 
 def _check_node_data_match(
-    node_config: Dict[str, Type], node_data: List[NodeDataMsg]
+    node_config: Dict[str, Type], node_data: List[NodeIO | NodeOption]
 ) -> bool:
     for data in node_data:
         try:
@@ -360,7 +368,7 @@ class Node(object, metaclass=NodeMeta):
             self.name = type(self).__name__
         # Only used to make finding the root of the tree easier
         self.parent = None
-        self._state = NodeMsg.UNINITIALIZED
+        self._state = NodeState.UNINITIALIZED
         self.children = []
 
         self.subscriptions = []
@@ -473,17 +481,17 @@ class Node(object, metaclass=NodeMeta):
             report_state = self.debug_manager.report_state(self, "SETUP")
 
         with report_state:
-            if self.state != NodeMsg.UNINITIALIZED and self.state != NodeMsg.SHUTDOWN:
+            if self.state != NodeState.UNINITIALIZED and self.state != NodeState.SHUTDOWN:
                 raise BehaviorTreeException(
                     "Calling setup() is only allowed in states %s and %s, "
                     "but node %s is in state %s"
-                    % (NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN, self.name, self.state)
+                    % (NodeState.UNINITIALIZED, NodeState.SHUTDOWN, self.name, self.state)
                 )
             self.state = self._do_setup()
             if self.state is None:
-                self.state = NodeMsg.IDLE
+                self.state = NodeState.IDLE
             self.raise_if_in_invalid_state(
-                allowed_states=[NodeMsg.IDLE], action_name="setup()"
+                allowed_states=[NodeState.IDLE], action_name="setup()"
             )
 
             self._setup_called = True
@@ -506,7 +514,7 @@ class Node(object, metaclass=NodeMeta):
         "without _do_setup function!"
 
         self.logfatal(msg)
-        return NodeMsg.BROKEN
+        return NodeState.BROKEN
 
     def _handle_inputs(self):
         """
@@ -556,7 +564,7 @@ class Node(object, metaclass=NodeMeta):
             report_tick = self.debug_manager.report_tick(self)
 
         with report_tick:
-            if self.state is NodeMsg.UNINITIALIZED:
+            if self.state is NodeState.UNINITIALIZED:
                 raise BehaviorTreeException("Trying to tick uninitialized node!")
 
             unset_options = []
@@ -589,11 +597,11 @@ class Node(object, metaclass=NodeMeta):
 
             self.raise_if_in_invalid_state(
                 allowed_states=[
-                    NodeMsg.RUNNING,
-                    NodeMsg.SUCCEEDED,
-                    NodeMsg.FAILED,
-                    NodeMsg.ASSIGNED,
-                    NodeMsg.UNASSIGNED,
+                    NodeState.RUNNING,
+                    NodeState.SUCCEEDED,
+                    NodeState.FAILED,
+                    NodeState.ASSIGNED,
+                    NodeState.UNASSIGNED,
                 ],
                 action_name="tick()",
             )
@@ -623,7 +631,7 @@ class Node(object, metaclass=NodeMeta):
         """
         msg = f"Ticking a node of type {self.__class__.__name__} without _do_tick function!"
         self.logfatal(msg)
-        return NodeMsg.BROKEN
+        return NodeState.BROKEN
 
     def untick(self) -> str:
         """
@@ -647,11 +655,11 @@ class Node(object, metaclass=NodeMeta):
             report_state = self.debug_manager.report_state(self, "UNTICK")
 
         with report_state:
-            if self.state is NodeMsg.UNINITIALIZED:
+            if self.state is NodeState.UNINITIALIZED:
                 raise BehaviorTreeException("Trying to untick uninitialized node!")
             self.state = self._do_untick()
             self.raise_if_in_invalid_state(
-                allowed_states=[NodeMsg.IDLE, NodeMsg.PAUSED], action_name="untick()"
+                allowed_states=[NodeState.IDLE, NodeState.PAUSED], action_name="untick()"
             )
 
             self.outputs.reset_updated()
@@ -672,7 +680,7 @@ class Node(object, metaclass=NodeMeta):
         """
         msg = f"Unticking a node of type {self.__class__.__name__} without _do_untick function!"
         self.logfatal(msg)
-        return NodeMsg.BROKEN
+        return NodeState.BROKEN
 
     def reset(self) -> str:
         """
@@ -690,10 +698,10 @@ class Node(object, metaclass=NodeMeta):
             report_state = self.debug_manager.report_state(self, "RESET")
 
         with report_state:
-            if self.state is NodeMsg.UNINITIALIZED:
+            if self.state is NodeState.UNINITIALIZED:
                 raise BehaviorTreeException("Trying to reset uninitialized node!")
 
-            if self.state is NodeMsg.SHUTDOWN:
+            if self.state is NodeState.SHUTDOWN:
                 raise BehaviorTreeException("Trying to reset shutdown node!")
 
             # Reset input/output reset state and set outputs to None
@@ -707,7 +715,7 @@ class Node(object, metaclass=NodeMeta):
 
             self.state = self._do_reset()
             self.raise_if_in_invalid_state(
-                allowed_states=[NodeMsg.IDLE], action_name="reset()"
+                allowed_states=[NodeState.IDLE], action_name="reset()"
             )
             return self.state
 
@@ -727,7 +735,7 @@ class Node(object, metaclass=NodeMeta):
         """
         msg = f"Resetting a node of type {self.__class__.__name__} without _do_reset function!"
         self.logfatal(msg)
-        return NodeMsg.BROKEN
+        return NodeState.BROKEN
 
     def shutdown(self) -> str:
         """
@@ -745,11 +753,11 @@ class Node(object, metaclass=NodeMeta):
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
         with report_state:
-            if self.state == NodeMsg.UNINITIALIZED:
+            if self.state == NodeState.UNINITIALIZED:
                 self.loginfo(
                     "Not calling shutdown method, node has not been initialized yet"
                 )
-                self.state = NodeMsg.SHUTDOWN
+                self.state = NodeState.SHUTDOWN
                 # Call shutdown on all children - this should only set
                 # their state to shutdown
                 for child in self.children:
@@ -757,7 +765,7 @@ class Node(object, metaclass=NodeMeta):
 
             self.state = self._do_shutdown()
             if self.state is None:
-                self.state = NodeMsg.SHUTDOWN
+                self.state = NodeState.SHUTDOWN
 
             for child in self.children:
                 child.shutdown()
@@ -765,7 +773,7 @@ class Node(object, metaclass=NodeMeta):
             unshutdown_children = [
                 f"{child.name} ({type(child).__name__}), state: {child.state}"
                 for child in self.children
-                if child.state != NodeMsg.SHUTDOWN
+                if child.state != NodeState.SHUTDOWN
             ]
             if len(unshutdown_children) > 0:
                 self.logwarn(
@@ -787,7 +795,7 @@ class Node(object, metaclass=NodeMeta):
         "without _do_shutdown function!"
 
         self.logfatal(msg)
-        return NodeMsg.BROKEN
+        return NodeState.BROKEN
 
     def calculate_utility(self) -> UtilityBounds:
         """
@@ -1132,7 +1140,7 @@ class Node(object, metaclass=NodeMeta):
     @classmethod
     def from_msg(
         cls,
-        msg: NodeMsg,
+        msg: NodeStructure,
         ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -1293,11 +1301,10 @@ class Node(object, metaclass=NodeMeta):
 
         """
         subtree_name = f"{self.name}_subtree"
-        subtree = Tree(
+        subtree = TreeStructure(
             name=subtree_name,
             root_name=self.name,
             nodes=[node.to_msg() for node in self.get_children_recursive()],
-            state=Tree.IDLE,
         )
 
         node_map = {node.name: node for node in subtree.nodes}
@@ -1312,7 +1319,7 @@ class Node(object, metaclass=NodeMeta):
                 # add a wiring.
                 if source_node and target_node:
                     subtree.data_wirings.append(
-                        NodeDataWiring(source=sub.source, target=sub.target)
+                        Wiring(source=sub.source, target=sub.target)
                     )
                 # In the other cases, add that datum to public_node_data
                 elif source_node:
@@ -1624,33 +1631,31 @@ class Node(object, metaclass=NodeMeta):
         """
         node_type = type(self)
 
-        return NodeMsg(
+        return NodeStructure(
             module=node_type.__module__,
             node_class=node_type.__name__,
             version=self.node_config.version,
             name=self.name,
             child_names=[child.name for child in self.children],
             options=[
-                NodeDataMsg(
+                NodeOption(
                     key=key,
-                    serialized_value=self.options.get_serialized(key),
-                    serialized_type=self.options.get_serialized_type(key),
+                    value=self.options.get_serialized(key),
+                    type=self.options.get_serialized_type(key),
                 )
                 for key in self.options
             ],
             inputs=[
-                NodeDataMsg(
+                NodeIO(
                     key=key,
-                    serialized_value=self.inputs.get_serialized(key),
-                    serialized_type=self.inputs.get_serialized_type(key),
+                    type=self.inputs.get_serialized_type(key),
                 )
                 for key in self.inputs
             ],
             outputs=[
-                NodeDataMsg(
+                NodeIO(
                     key=key,
-                    serialized_value=self.outputs.get_serialized(key),
-                    serialized_type=self.outputs.get_serialized_type(key),
+                    type=self.outputs.get_serialized_type(key),
                 )
                 for key in self.outputs
             ],
