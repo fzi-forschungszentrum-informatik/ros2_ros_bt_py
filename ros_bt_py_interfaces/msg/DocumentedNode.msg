@@ -51,19 +51,3 @@ string doc
 
 # Tags
 string[] tags
-
-# Should be one of the constants below
-string state
-
-string UNINITIALIZED = UNINITIALIZED
-string IDLE = IDLE
-string RUNNING = RUNNING
-string SUCCEEDED = SUCCEEDED
-string SUCCEED = SUCCEEDED
-string SUCCESS = SUCCEEDED
-string FAILED = FAILED
-string FAIL = FAILED
-string FAILURE = FAILED
-string BROKEN = BROKEN
-string PAUSED = PAUSED
-string SHUTDOWN = SHUTDOWN

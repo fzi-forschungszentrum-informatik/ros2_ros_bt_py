@@ -27,9 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # This can be a fully populated message, or one that has the "path" member set
 # to a file:// or package:// URI
-Tree tree
+TreeStructure tree
 ---
-Tree tree
+TreeStructure tree
 # Indicates if the tree was migrated or not
 bool migrated
 bool success
