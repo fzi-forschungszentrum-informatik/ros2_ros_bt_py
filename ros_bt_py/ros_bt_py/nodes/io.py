@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.node import IO, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
@@ -52,7 +52,7 @@ class IOInputOption(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _handle_inputs(self):
         """
@@ -74,10 +74,10 @@ class IOInputOption(IO):
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.options["default"]
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
@@ -85,7 +85,7 @@ class IOInputOption(IO):
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -105,7 +105,7 @@ class IOInput(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _handle_inputs(self):
         """
@@ -131,10 +131,10 @@ class IOInput(IO):
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.inputs["default"]
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
@@ -142,7 +142,7 @@ class IOInput(IO):
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -162,7 +162,7 @@ class IOOutputOption(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _handle_inputs(self):
         """
@@ -184,10 +184,10 @@ class IOOutputOption(IO):
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.options["default"]
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
@@ -195,7 +195,7 @@ class IOOutputOption(IO):
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -215,7 +215,7 @@ class IOOutput(IO):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _handle_inputs(self):
         """
@@ -241,10 +241,10 @@ class IOOutput(IO):
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.inputs["default"]
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
@@ -252,4 +252,4 @@ class IOOutput(IO):
     def _do_reset(self):
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE

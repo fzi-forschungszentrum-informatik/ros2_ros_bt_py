@@ -38,7 +38,7 @@ from ros_bt_py.custom_types import RosTopicType, TypeWrapper, DICT_ROS
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 
 
@@ -88,7 +88,7 @@ class MessageFromDict(Leaf):
         pass
 
     def _do_tick(self):
-        if self.inputs.is_updated("dict") or self.state == NodeMsg.IDLE:
+        if self.inputs.is_updated("dict") or self.state == NodeState.IDLE:
             message = self._message_type()
             try:
                 set_message_fields(
@@ -104,17 +104,17 @@ class MessageFromDict(Leaf):
                     f"Error populating message of type {self._message_type.__name__}: "
                     f"{str(ex)}"
                 )
-                return NodeMsg.FAILED
-        return NodeMsg.SUCCEEDED
+                return NodeState.FAILED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -180,14 +180,14 @@ class MessageFromConstDict(Leaf):
                 f"Error populating message of type {self._message_type.__name__}: "
                 f"{str(ex)}"
             )
-            return NodeMsg.FAILED
-        return NodeMsg.SUCCEEDED
+            return NodeState.FAILED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

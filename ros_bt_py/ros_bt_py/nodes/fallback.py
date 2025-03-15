@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.node import FlowControl, define_bt_node
@@ -47,10 +47,10 @@ class NameSwitch(FlowControl):
         name = self.inputs["name"]
         if name not in self.child_map:
             self.logwarn("Ticking without children. Is this really what you want?")
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
         # If we've previously succeeded or failed, untick all children
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             for child in self.children:
                 child.reset()
 
@@ -63,12 +63,12 @@ class NameSwitch(FlowControl):
     def _do_untick(self):
         for child in self.children:
             child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         for child in self.children:
             child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         for child in self.children:
@@ -118,35 +118,35 @@ class Fallback(FlowControl):
     def _do_tick(self):
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
         # If we've previously succeeded or failed, untick all children
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             for child in self.children:
                 child.reset()
 
         # Tick children until one returns SUCCEEDED or RUNNING
         for index, child in enumerate(self.children):
             result = child.tick()
-            if result == NodeMsg.SUCCEEDED or result == NodeMsg.RUNNING:
-                if result == NodeMsg.SUCCEEDED:
+            if result == NodeState.SUCCEEDED or result == NodeState.RUNNING:
+                if result == NodeState.SUCCEEDED:
                     # untick all children after the one that triggered this
                     # condition
                     for untick_child in self.children[index + 1 :]:
                         untick_child.untick()
                 return result
         # If all children failed, we too fail
-        return NodeMsg.FAILED
+        return NodeState.FAILED
 
     def _do_untick(self):
         for child in self.children:
             child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         for child in self.children:
             child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         for child in self.children:
@@ -204,11 +204,11 @@ class MemoryFallback(FlowControl):
     def _do_tick(self):
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
         # If we've previously succeeded or failed, reset
         # last_running_child and untick all children
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             self.last_running_child = 0
             for child in self.children:
                 child.reset()
@@ -218,29 +218,29 @@ class MemoryFallback(FlowControl):
             if index < self.last_running_child:
                 continue
             result = child.tick()
-            if result == NodeMsg.SUCCEEDED or result == NodeMsg.RUNNING:
-                if result == NodeMsg.RUNNING:
+            if result == NodeState.SUCCEEDED or result == NodeState.RUNNING:
+                if result == NodeState.RUNNING:
                     self.last_running_child = index
-                elif result == NodeMsg.SUCCEEDED:
+                elif result == NodeState.SUCCEEDED:
                     # untick all children after the one that triggered this
                     # condition
                     for untick_child in self.children[index + 1 :]:
                         untick_child.untick()
                 return result
         # If all children failed, we too fail
-        return NodeMsg.FAILED
+        return NodeState.FAILED
 
     def _do_untick(self):
         for child in self.children:
             child.untick()
         self.last_running_child = 0
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         for child in self.children:
             child.reset()
         self.last_running_child = 0
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         for child in self.children:

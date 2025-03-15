@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.node import Decorator, define_bt_node
@@ -50,12 +50,12 @@ class IgnoreFailure(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.FAILED:
-                return NodeMsg.SUCCEEDED
+            if result == NodeState.FAILED:
+                return NodeState.SUCCEEDED
             return result
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -64,12 +64,12 @@ class IgnoreFailure(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -88,19 +88,19 @@ class IgnoreRunning(Decorator):
         for child in self.children:
             child.setup()
         if self.options["running_is_success"]:
-            self.result = NodeMsg.SUCCEEDED
+            self.result = NodeState.SUCCEEDED
         else:
-            self.result = NodeMsg.FAILED
+            self.result = NodeState.FAILED
 
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.RUNNING:
+            if result == NodeState.RUNNING:
                 return self.result
             return result
 
         # Fails if we have no children
-        return NodeMsg.FAILED
+        return NodeState.FAILED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -109,12 +109,12 @@ class IgnoreRunning(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -135,12 +135,12 @@ class IgnoreSuccess(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.SUCCEEDED:
-                return NodeMsg.FAILED
+            if result == NodeState.SUCCEEDED:
+                return NodeState.FAILED
             return result
 
         # Fails if we have no children
-        return NodeMsg.FAILED
+        return NodeState.FAILED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -149,12 +149,12 @@ class IgnoreSuccess(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -177,12 +177,12 @@ class UntilSuccess(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.FAILED:
-                return NodeMsg.RUNNING
+            if result == NodeState.FAILED:
+                return NodeState.RUNNING
             return result
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -191,12 +191,12 @@ class UntilSuccess(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -219,14 +219,14 @@ class Inverter(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.FAILED:
-                return NodeMsg.SUCCEEDED
-            elif result == NodeMsg.SUCCEEDED:
-                return NodeMsg.FAILED
+            if result == NodeState.FAILED:
+                return NodeState.SUCCEEDED
+            elif result == NodeState.SUCCEEDED:
+                return NodeState.FAILED
             return result
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -235,12 +235,12 @@ class Inverter(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -269,18 +269,18 @@ class Retry(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.FAILED:
+            if result == NodeState.FAILED:
                 if self._retry_count < self.options["num_retries"]:
                     self._retry_count += 1
                     child.reset()
-                    return NodeMsg.RUNNING
+                    return NodeState.RUNNING
                 else:
                     self._retry_count = 0
-                    return NodeMsg.FAILED
+                    return NodeState.FAILED
             return result
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -290,12 +290,12 @@ class Retry(Decorator):
         self._retry_count = 0
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -326,19 +326,19 @@ class Repeat(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.FAILED:
-                return NodeMsg.FAILED
-            elif result == NodeMsg.SUCCEEDED:
+            if result == NodeState.FAILED:
+                return NodeState.FAILED
+            elif result == NodeState.SUCCEEDED:
                 if self._repeat_count < self.options["num_repeats"]:
                     self._repeat_count += 1
                     child.reset()
-                    return NodeMsg.RUNNING
+                    return NodeState.RUNNING
                 else:
-                    return NodeMsg.SUCCEEDED
+                    return NodeState.SUCCEEDED
             return result
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -348,12 +348,12 @@ class Repeat(Decorator):
         self._repeat_count = 0
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -394,19 +394,19 @@ class RepeatNoAutoReset(Repeat):
         if self._repeat_count < self.options["num_repeats"]:
             for child in self.children:
                 result = child.tick()
-                if result == NodeMsg.FAILED:
-                    return NodeMsg.FAILED
-                elif result == NodeMsg.SUCCEEDED:
+                if result == NodeState.FAILED:
+                    return NodeState.FAILED
+                elif result == NodeState.SUCCEEDED:
                     if self._repeat_count < self.options["num_repeats"]:
                         self._repeat_count += 1
                         child.reset()
-                        return NodeMsg.RUNNING
+                        return NodeState.RUNNING
                     else:
-                        return NodeMsg.SUCCEEDED
+                        return NodeState.SUCCEEDED
                 return result
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_reset(self):
         self._received_in = False
@@ -414,7 +414,7 @@ class RepeatNoAutoReset(Repeat):
         if self._repeat_count < self.options["num_repeats"]:
             for child in self.children:
                 return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -437,12 +437,12 @@ class RepeatAlways(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result != NodeMsg.RUNNING:
+            if result != NodeState.RUNNING:
                 child.reset()
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -451,12 +451,12 @@ class RepeatAlways(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -480,14 +480,14 @@ class RepeatUntilFail(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.FAILED:
-                return NodeMsg.FAILED
-            elif result == NodeMsg.SUCCEEDED:
+            if result == NodeState.FAILED:
+                return NodeState.FAILED
+            elif result == NodeState.SUCCEEDED:
                 child.reset()
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -496,12 +496,12 @@ class RepeatUntilFail(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -525,14 +525,14 @@ class RepeatIfFail(Decorator):
     def _do_tick(self):
         for child in self.children:
             result = child.tick()
-            if result == NodeMsg.FAILED:
+            if result == NodeState.FAILED:
                 child.reset()
-            elif result == NodeMsg.SUCCEEDED:
-                return NodeMsg.SUCCEEDED
-            return NodeMsg.RUNNING
+            elif result == NodeState.SUCCEEDED:
+                return NodeState.SUCCEEDED
+            return NodeState.RUNNING
 
         # Succeed if we have no children
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         for child in self.children:
@@ -541,12 +541,12 @@ class RepeatIfFail(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -575,7 +575,7 @@ class Optional(Decorator):
         if self.execute_child:
             return self.children[0].tick()
         else:
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         if self.execute_child:
@@ -585,13 +585,13 @@ class Optional(Decorator):
         if self.execute_child:
             return self.children[0].reset()
         else:
-            return NodeMsg.IDLE
+            return NodeState.IDLE
 
     def _do_untick(self):
         if self.execute_child:
             return self.children[0].untick()
         else:
-            return NodeMsg.IDLE
+            return NodeState.IDLE
 
     def _do_calculate_utility(self):
         for child in self.children:
@@ -622,7 +622,7 @@ class Watch(Decorator):
 
     def _do_tick(self):
         if len(self.children) == 0:
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
 
         child = self.children[0]
         if self.previous_watch != self.inputs["watch"]:
@@ -640,10 +640,10 @@ class Watch(Decorator):
         self.previous_watch = float("NaN")
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         self.previous_watch = float("NaN")
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE

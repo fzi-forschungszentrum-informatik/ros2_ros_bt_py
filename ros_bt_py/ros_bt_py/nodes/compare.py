@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
@@ -49,22 +49,22 @@ class Compare(Leaf):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if self.inputs["a"] == self.inputs["b"]:
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
 
         # If we didn't received both values yet, or we did and they're
         # not equal, fail
-        return NodeMsg.FAILED
+        return NodeState.FAILED
 
     def _do_untick(self):
         # Nothing to do
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         # Nothing to do
@@ -88,26 +88,26 @@ class CompareNewOnly(Leaf):
     """
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if self.inputs.is_updated("a") or self.inputs.is_updated("b"):
             if self.inputs["a"] == self.inputs["b"]:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
-                return NodeMsg.FAILED
-        return NodeMsg.RUNNING
+                return NodeState.FAILED
+        return NodeState.RUNNING
 
     def _do_untick(self):
         # Nothing to do
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         # Reset output to False, so we'll return False until we
         # receive a new input.
         self.inputs.reset_updated()
 
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         # Nothing to do
@@ -135,7 +135,7 @@ class CompareConstant(Leaf):
 
     def _do_setup(self):
         self._received_in = False
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if not self._received_in:
@@ -143,19 +143,19 @@ class CompareConstant(Leaf):
                 self._received_in = True
 
         if self._received_in and self.options["expected"] == self.inputs["in"]:
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
         else:
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
     def _do_untick(self):
         # Nothing to do
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         self.inputs.reset_updated()
         self._received_in = False
 
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         # Nothing to do
@@ -181,7 +181,7 @@ class ALessThanB(Leaf):
     def _do_setup(self):
         self._received_a = False
         self._received_b = False
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if not self._received_a:
@@ -192,21 +192,21 @@ class ALessThanB(Leaf):
                 self._received_b = True
         if self._received_a and self._received_b:
             if self.inputs["a"] < self.inputs["b"]:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
 
         # If we didn't received both values yet, or we did and they're
         # not equal, fail
-        return NodeMsg.FAILED
+        return NodeState.FAILED
 
     def _do_untick(self):
         # Nothing to do
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         self.inputs.reset_updated()
         self._received_a = False
         self._received_b = False
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         # Nothing to do
@@ -216,7 +216,7 @@ class ALessThanB(Leaf):
 class LessThanConstantImp:
     def _do_setup(self):
         self._received_in = False
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if not self._received_in:
@@ -224,19 +224,19 @@ class LessThanConstantImp:
                 self._received_in = True
 
         if self._received_in and self.inputs["a"] < self.options["target"]:
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
         else:
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
     def _do_untick(self):
         # Nothing to do
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         self.inputs.reset_updated()
         self._received_in = False
 
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         # Nothing to do

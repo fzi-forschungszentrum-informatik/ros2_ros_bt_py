@@ -29,8 +29,8 @@
 from typing import List, Optional, Dict
 from rclpy.node import Node
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
-from ros_bt_py_interfaces.msg import UtilityBounds, Tree, NodeDataLocation
+from ros_bt_py_interfaces.msg import NodeState
+from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
 from ros_bt_py_interfaces.srv import LoadTree
 
 from ros_bt_py.debug_manager import DebugManager
@@ -112,7 +112,7 @@ class Subtree(Leaf):
         response = LoadTree.Response()
         response = self.manager.load_tree(
             request=LoadTree.Request(
-                tree=Tree(
+                tree=TreeStructure(
                     path=self.options["subtree_path"].path,
                     name=self.name,
                 )
@@ -125,7 +125,7 @@ class Subtree(Leaf):
             self.logwarn(
                 f"Failed to load subtree {self.name}: {get_error_message(response)}"
             )
-            self.state = NodeMsg.BROKEN
+            self.state = NodeState.BROKEN
 
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = get_error_message(response)
@@ -278,7 +278,7 @@ class Subtree(Leaf):
 
     def _do_tick(self):
         if not self.root:
-            return NodeMsg.BROKEN
+            return NodeState.BROKEN
         new_state = self.root.tick()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
@@ -286,7 +286,7 @@ class Subtree(Leaf):
 
     def _do_untick(self):
         if not self.root:
-            return NodeMsg.BROKEN
+            return NodeState.BROKEN
         new_state = self.root.untick()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
@@ -294,7 +294,7 @@ class Subtree(Leaf):
 
     def _do_reset(self):
         if not self.root:
-            return NodeMsg.IDLE
+            return NodeState.IDLE
         new_state = self.root.reset()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
@@ -302,7 +302,7 @@ class Subtree(Leaf):
 
     def _do_shutdown(self):
         if not self.root:
-            return NodeMsg.SHUTDOWN
+            return NodeState.SHUTDOWN
         self.root.shutdown()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
             self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())

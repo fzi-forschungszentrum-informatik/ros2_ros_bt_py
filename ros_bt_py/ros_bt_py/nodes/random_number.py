@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import random
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.exceptions import BehaviorTreeException
 
@@ -55,16 +55,16 @@ class RandomInt(Leaf):
         self.outputs["random_number"] = random.randrange(
             self.options["min"], self.options["max"] + 1
         )
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -87,16 +87,16 @@ class RandomIntInputs(Leaf):
         self.outputs["random_number"] = random.randrange(
             self.inputs["min"], self.inputs["max"] + 1
         )
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 def validate_range(minimum, maximum):

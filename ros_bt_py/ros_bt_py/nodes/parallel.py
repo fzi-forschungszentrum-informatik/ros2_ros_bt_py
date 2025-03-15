@@ -28,7 +28,7 @@
 import math
 
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.exceptions import BehaviorTreeException
@@ -83,32 +83,32 @@ class Parallel(FlowControl):
     def _do_tick(self):
         # Just like Sequence and Fallback, reset after having returned
         # SUCCEEDED or FAILED once
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             for child in self.children:
                 child.reset()
 
         successes = 0
         failures = 0
         for child in self.children:
-            if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+            if child.state not in [NodeState.SUCCEEDED, NodeState.FAILED]:
                 child.tick()
-            if child.state == NodeMsg.SUCCEEDED:
+            if child.state == NodeState.SUCCEEDED:
                 successes += 1
-            if child.state == NodeMsg.FAILED:
+            if child.state == NodeState.FAILED:
                 failures += 1
         if successes >= self.options["needed_successes"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+                if child.state not in [NodeState.SUCCEEDED, NodeState.FAILED]:
                     child.untick()
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
         elif failures > len(self.children) - self.options["needed_successes"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+                if child.state not in [NodeState.SUCCEEDED, NodeState.FAILED]:
                     child.untick()
-            return NodeMsg.FAILED
-        return NodeMsg.RUNNING
+            return NodeState.FAILED
+        return NodeState.RUNNING
 
     def _do_shutdown(self):
         for child in self.children:
@@ -117,12 +117,12 @@ class Parallel(FlowControl):
     def _do_reset(self):
         for child in self.children:
             child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_calculate_utility(self):
         if len(self.children) < self.options["needed_successes"]:
@@ -258,32 +258,32 @@ class ParallelFailureTolerance(FlowControl):
     def _do_tick(self):
         # Just like Sequence and Fallback, reset after having returned
         # SUCCEEDED or FAILED once
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             for child in self.children:
                 child.reset()
 
         successes = 0
         failures = 0
         for child in self.children:
-            if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+            if child.state not in [NodeState.SUCCEEDED, NodeState.FAILED]:
                 child.tick()
-            if child.state == NodeMsg.SUCCEEDED:
+            if child.state == NodeState.SUCCEEDED:
                 successes += 1
-            if child.state == NodeMsg.FAILED:
+            if child.state == NodeState.FAILED:
                 failures += 1
         if successes >= self.options["needed_successes"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+                if child.state not in [NodeState.SUCCEEDED, NodeState.FAILED]:
                     child.untick()
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
         elif failures > self.options["tolerate_failures"]:
             # untick all running children
             for child in self.children:
-                if child.state not in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+                if child.state not in [NodeState.SUCCEEDED, NodeState.FAILED]:
                     child.untick()
-            return NodeMsg.FAILED
-        return NodeMsg.RUNNING
+            return NodeState.FAILED
+        return NodeState.RUNNING
 
     def _do_shutdown(self):
         for child in self.children:
@@ -292,10 +292,10 @@ class ParallelFailureTolerance(FlowControl):
     def _do_reset(self):
         for child in self.children:
             child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_calculate_utility(self):
         if len(self.children) < self.options["needed_successes"]:
