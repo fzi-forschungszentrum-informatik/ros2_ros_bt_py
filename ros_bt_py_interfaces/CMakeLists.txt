@@ -47,7 +47,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   # "msg/CapabilityExecutionStatus.msg"
   # "msg/CapabilityImplementation.msg"
-  # "msg/CapabilityInterface.msg"
+  "msg/CapabilityInterface.msg"
   # "msg/CapabilityIOBridgeData.msg"
 
   # "msg/SubtreeInfo.msg"

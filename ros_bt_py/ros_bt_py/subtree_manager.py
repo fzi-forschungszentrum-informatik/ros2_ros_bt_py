@@ -31,9 +31,9 @@ from typing import Dict
 
 from typeguard import typechecked
 
-from ros_bt_py_interfaces.msg import Tree
+from ros_bt_py_interfaces.msg import TreeStructure
 from ros_bt_py.exceptions import BehaviorTreeException
-from ros_bt_py_interfaces.msg import SubtreeInfo
+#from ros_bt_py_interfaces.msg import SubtreeInfo
 
 
 @typechecked
@@ -46,12 +46,12 @@ class SubtreeManager(object):
 
     def __init__(self):
 
-        self.subtrees: Dict[str, Tree] = {}
+        self.subtrees: Dict[str, TreeStructure] = {}
         self._publish_subtrees: bool = False
 
         self._lock = Lock()
-        with self._lock:
-            self._subtree_info_msg = SubtreeInfo()
+        #with self._lock:
+            #self._subtree_info_msg = SubtreeInfo()
 
     def set_publish_subtrees(
         self,
@@ -59,11 +59,12 @@ class SubtreeManager(object):
     ) -> None:
         self._publish_subtrees = publish_subtrees
 
-    def get_subtree_info_msg(self) -> SubtreeInfo:
-        with self._lock:
-            return deepcopy(self._subtree_info_msg)
+    def get_subtree_info_msg(self):
+        pass
+        #with self._lock:
+            #return deepcopy(self._subtree_info_msg)
 
-    def add_subtree_info(self, node_name: str, subtree_msg: Tree):
+    def add_subtree_info(self, node_name: str, subtree_msg: TreeStructure):
         """
         Publish subtree information.
 

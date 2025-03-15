@@ -29,6 +29,6 @@
 string name
 string description
 
-NodeData[] options
-NodeData[] inputs
-NodeData[] outputs
+NodeOption[] options
+NodeIO[] inputs
+NodeIO[] outputs

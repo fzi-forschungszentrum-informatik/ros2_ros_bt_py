@@ -50,7 +50,7 @@ from ros_bt_py_interfaces.msg import (
     TreeStructure,
     TreeState,
     TreeData,
-    SubtreeInfo,
+    #SubtreeInfo,
     MessageTypes,
     Packages,
 )
@@ -137,17 +137,17 @@ class TreeNode(Node):
             ),
         )
 
-        self.subtree_info_pub = self.create_publisher(
-            SubtreeInfo,
-            "~/debug/subtree_info",
-            callback_group=self.publisher_callback_group,
-            qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.BEST_EFFORT,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-                history=QoSHistoryPolicy.KEEP_LAST,
-                depth=1,
-            ),
-        )
+        #self.subtree_info_pub = self.create_publisher(
+        #    SubtreeInfo,
+        #    "~/debug/subtree_info",
+        #    callback_group=self.publisher_callback_group,
+        #    qos_profile=QoSProfile(
+        #        reliability=QoSReliabilityPolicy.BEST_EFFORT,
+        #        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        #        history=QoSHistoryPolicy.KEEP_LAST,
+        #        depth=1,
+        #    ),
+        #)
         self.node_diagnostics_pub = self.create_publisher(
             DiagnosticStatus,
             "~/debug/node_diagnostics",
@@ -268,8 +268,10 @@ class TreeNode(Node):
             module_list=params.node_modules,
             debug_manager=self.debug_manager,
             subtree_manager=self.subtree_manager,
-            publish_tree_callback=self.tree_pub.publish,
-            publish_subtree_info_callback=self.subtree_info_pub.publish,
+            publish_tree_structure_callback=self.tree_structure_pub.publish,
+            publish_tree_state_callback=self.tree_state_pub.publish,
+            publish_tree_data_callback=self.tree_data_pub.publish,
+            #publish_subtree_info_callback=self.subtree_info_pub.publish,
             publish_diagnostic_callback=self.ros_diagnostics_pub.publish,
             publish_tick_frequency_callback=self.tick_frequency_pub.publish,
             diagnostics_frequency=params.diagnostics_frequency_hz,

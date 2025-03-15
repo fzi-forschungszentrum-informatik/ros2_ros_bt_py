@@ -38,7 +38,7 @@ import rclpy.logging
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
-from ros_bt_py_interfaces.msg import MessageTypes, Package, Packages, Tree
+from ros_bt_py_interfaces.msg import MessageTypes, Package, Packages
 from ros_bt_py_interfaces.srv import (
     GetMessageFields,
     GetMessageConstantFields,
@@ -107,7 +107,6 @@ class PackageManager(object):
         # remove input and output values from nodes
         request.tree = remove_input_output_values(tree=request.tree)
         request.tree = set_node_state_to_shutdown(tree=request.tree)
-        request.tree.state = Tree.IDLE
 
         if request.storage_path not in self.tree_storage_directory_paths:
             response.success = False

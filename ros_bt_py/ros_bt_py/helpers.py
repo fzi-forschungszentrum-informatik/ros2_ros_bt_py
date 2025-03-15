@@ -34,7 +34,7 @@ from collections import OrderedDict
 
 import rosidl_runtime_py.utilities
 
-from ros_bt_py_interfaces.msg import CapabilityInterface, Node, Tree
+from ros_bt_py_interfaces.msg import NodeState, CapabilityInterface
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
@@ -55,7 +55,7 @@ def remove_input_output_values(tree):
 def set_node_state_to_shutdown(tree):
     """Set all node states to shutdown."""
     for node in tree.nodes:
-        node.state = Node.SHUTDOWN
+        node.state = NodeState.SHUTDOWN
     return tree
 
 
