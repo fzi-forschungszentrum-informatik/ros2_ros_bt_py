@@ -387,15 +387,12 @@ class TreeManager:
         # the environment to skip these calls.
         self.simulate_tick = simulate_tick
 
-        if name is None:
-            name = ""
-
         if tick_frequency_hz == 0.0:
             tick_frequency_hz = 10.0
 
         self.tick_sliding_window = [tick_frequency_hz] * 10
 
-        self.nodes = {}
+        self.nodes: dict[str, Node] = {}
 
         self._state_lock = Lock()
         self._edit_lock = RLock()
@@ -428,8 +425,8 @@ class TreeManager:
                 load_node_module(module_name)
         self.publish_structure(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-            if self.subtree_manager is not None
-            else None,
+                if self.subtree_manager is not None
+                else None,
         )
 
         if self.publish_diagnostic is not None:
@@ -512,6 +509,19 @@ class TreeManager:
         #if subtree_info_msg and self.publish_subtree_info:
         #    self.publish_subtree_info(subtree_info_msg)
 
+    def publish_state(
+            self,
+            subtree_info_msg = None, # : Optional[SubtreeInfo]
+        ):
+        """
+        Publish the current tree state using the callback supplied to the constructor.
+
+        In most cases, you'll want that callback to publish to a ROS
+        topic.
+        """
+        if self.publish_tree_state:
+            self.publish_tree_state(self.state_to_msg())
+
     def find_root(self) -> Optional[Node]:
         """
         Find the root node of the tree.
@@ -550,11 +560,10 @@ class TreeManager:
                 self._last_error = f"{ex}, {traceback.format_exc()}"
             else:
                 self._last_error = f"{ex}"
-            self.publish_structure(
+            self.publish_state(
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                if self.subtree_manager is not None
-                else None,
-                ticked=True,
+                    if self.subtree_manager is not None
+                    else None
             )
 
     def tick(self, once=None):
@@ -593,11 +602,10 @@ class TreeManager:
             root.setup()
             if root.state is not NodeState.IDLE:
                 self.set_state(TreeState.ERROR)
-                self.publish_structure(
+                self.publish_state(
                     subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                    if self.subtree_manager is not None
-                    else None,
-                    ticked=True,
+                        if self.subtree_manager is not None
+                        else None
                 )
                 return
 
@@ -606,11 +614,10 @@ class TreeManager:
             if self.get_state() == TreeState.STOP_REQUESTED:
                 break
             root.tick()
-            self.publish_structure(
+            self.publish_state(
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                if self.subtree_manager is not None
-                else None,
-                ticked=True,
+                    if self.subtree_manager is not None
+                    else None
             )
 
             if self._stop_after_result:
@@ -645,11 +652,10 @@ class TreeManager:
                 self.publish_tick_frequency(tick_frequency_msg)
             self.rate.sleep()
         self.set_state(TreeState.IDLE)
-        self.publish_structure(
+        self.publish_state(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-            if self.subtree_manager is not None
-            else None,
-            ticked=True,
+                if self.subtree_manager is not None
+                else None
         )
 
         # Ensure all nodes are stopped and not doing anything in
@@ -716,8 +722,8 @@ class TreeManager:
             self.tree_data = TreeData()
         self.publish_structure(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-            if self.subtree_manager is not None
-            else None,
+                if self.subtree_manager is not None
+                else None,
         )
         self.clear_diagnostics_name()
         return response
@@ -869,8 +875,8 @@ class TreeManager:
         response.success = True
         self.publish_structure(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-            if self.subtree_manager is not None
-            else None,
+                if self.subtree_manager is not None
+                else None,
         )
         get_logger("tree_manager").get_child(self.name).info("Successfully loaded tree")
         if self.publish_diagnostic is None:
@@ -902,8 +908,8 @@ class TreeManager:
                 self.subtree_manager.clear_subtrees()
                 self.publish_structure(
                     subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                    if self.subtree_manager is not None
-                    else None,
+                        if self.subtree_manager is not None
+                        else None,
                 )
             response.success = True
         else:
@@ -1061,11 +1067,6 @@ class TreeManager:
                 except TreeTopologyError as ex:
                     response.success = False
                     response.error_message = str(ex)
-                self.publish_structure(
-                    subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                    if self.subtree_manager is not None
-                    else None,
-                )
             else:
                 get_logger("tree_manager").get_child(self.name).info(
                     "Received stop command, but tree was not running"
@@ -1090,11 +1091,6 @@ class TreeManager:
                 # Now the tree is editable again - all nodes are in a state
                 # where they must be initialized.
                 self.set_state(TreeState.EDITABLE)
-            self.publish_structure(
-                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                if self.subtree_manager is not None
-                else None,
-            )
 
         elif request.command == ControlTreeExecution.Request.TICK_ONCE:
             if self._tick_thread.is_alive() or self.get_state() == TreeState.TICKING:
@@ -1238,11 +1234,6 @@ class TreeManager:
                     response.success = False
                     response.error_message = str(ex)
                     response.tree_state = self.get_state()
-            self.publish_structure(
-                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                if self.subtree_manager is not None
-                else None,
-            )
         elif request.command == ControlTreeExecution.Request.DO_NOTHING:
             get_logger("tree_manager").get_child(self.name).info(
                 "Doing nothing in this request"
@@ -1254,6 +1245,13 @@ class TreeManager:
                 response.error_message
             )
             response.success = False
+
+        # Publish tree state whenever an execution command is received
+        self.publish_state(
+            subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                if self.subtree_manager is not None
+                else None
+        )
 
         return response
 
@@ -2443,7 +2441,7 @@ class TreeManager:
             name = increment_name(name)
         return name
 
-    def structure_to_msg(self):
+    def structure_to_msg(self) -> TreeStructure:
         try:
             root = self.find_root()
             if root is not None:
@@ -2457,8 +2455,13 @@ class TreeManager:
                 f"Strange topology {exc}"
             )
             # build a tree_structure out of this strange topology, so the user can fix it in the editor
-            self.tree_structure.nodes = [node.to_msg() for node in self.nodes.values()]
+            self.tree_structure.nodes = [node.to_structure_msg() for node in self.nodes.values()]
         return self.tree_structure
+    
+    def state_to_msg(self) -> TreeState:
+        self.tree_state.state = self.get_state()
+        self.tree_state.node_states = [node.to_state_msg() for node in self.nodes.values()]
+        return self.tree_state
 
 
 def get_success(response):

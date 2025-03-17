@@ -1304,7 +1304,7 @@ class Node(object, metaclass=NodeMeta):
         subtree = TreeStructure(
             name=subtree_name,
             root_name=self.name,
-            nodes=[node.to_msg() for node in self.get_children_recursive()],
+            nodes=[node.to_structure_msg() for node in self.get_children_recursive()],
         )
 
         node_map = {node.name: node for node in subtree.nodes}
@@ -1616,7 +1616,7 @@ class Node(object, metaclass=NodeMeta):
             elif wiring.target.data_kind == NodeDataLocation.OPTION_DATA:
                 self.options[wiring.target.data_key] = None
 
-    def to_msg(self):
+    def to_structure_msg(self):
         """
         Populate a ROS message with the information from this Node.
 
@@ -1664,7 +1664,12 @@ class Node(object, metaclass=NodeMeta):
                 if self.node_config.max_children is not None
                 else -1
             ),
-            state=self.state,
+        )
+    
+    def to_state_msg(self):
+        return NodeState(
+            name=self.name,
+            state=self.state
         )
 
 

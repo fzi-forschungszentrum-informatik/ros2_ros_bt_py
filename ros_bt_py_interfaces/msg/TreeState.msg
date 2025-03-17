@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 string state
+NodeState[] node_states
 
 string IDLE = IDLE
 string EDITABLE = EDITABLE
