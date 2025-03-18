@@ -26,4 +26,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 string key
-string type # important if data is unset
+string serialized_type # important if data is unset

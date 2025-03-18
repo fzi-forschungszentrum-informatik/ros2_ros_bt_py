@@ -27,5 +27,5 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 Wiring wiring
-string data
-string type #TODO Maybe this is unnecessary
+string serialized_data
+string serialized_type #TODO Maybe this is unnecessary

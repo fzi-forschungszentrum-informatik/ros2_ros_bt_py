@@ -75,7 +75,7 @@ def _check_node_data_match(
 
 
 def _set_data_port(
-    data_map: NodeDataMap, configuration: List, type: str, permissive=False
+    data_map: NodeDataMap, configuration: List[NodeIO], type: str, permissive=False
 ) -> None:
     try:
         for msg in configuration:
@@ -1258,6 +1258,9 @@ class Node(object, metaclass=NodeMeta):
                 ros_node=ros_node,
             )
 
+        #TODO Nodes are currently instantiated without supplying values of inputs and outputs
+        # which seems reasonable, given those values aren't known at that time.
+        # That renders these function calls effectively a no-op.
         _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
         _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
 
@@ -1640,22 +1643,22 @@ class Node(object, metaclass=NodeMeta):
             options=[
                 NodeOption(
                     key=key,
-                    value=self.options.get_serialized(key),
-                    type=self.options.get_serialized_type(key),
+                    serialized_value=self.options.get_serialized(key),
+                    serialized_type=self.options.get_serialized_type(key),
                 )
                 for key in self.options
             ],
             inputs=[
                 NodeIO(
                     key=key,
-                    type=self.inputs.get_serialized_type(key),
+                    serialized_type=self.inputs.get_serialized_type(key),
                 )
                 for key in self.inputs
             ],
             outputs=[
                 NodeIO(
                     key=key,
-                    type=self.outputs.get_serialized_type(key),
+                    serialized_type=self.outputs.get_serialized_type(key),
                 )
                 for key in self.outputs
             ],

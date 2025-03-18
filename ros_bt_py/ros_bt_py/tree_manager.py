@@ -257,12 +257,12 @@ def get_available_nodes(
 
     def to_node_io(data_map):
         return [
-            NodeIO(key=name, type=json_encode(type_or_ref))
+            NodeIO(key=name, serialized_type=json_encode(type_or_ref))
             for (name, type_or_ref) in data_map.items()
         ]
     def to_node_option(data_map):
         return [
-            NodeOption(key=name, type=json_encode(type_or_ref))
+            NodeOption(key=name, serialized_type=json_encode(type_or_ref))
             for (name, type_or_ref) in data_map.items()
         ]
 
@@ -800,6 +800,15 @@ class TreeManager:
             wiring.target.node_name = prefix + wiring.target.node_name
         for public_datum in tree.public_node_data:
             public_datum.node_name = prefix + public_datum.node_name
+        for public_datum in tree.public_node_data:
+            if public_datum.data_kind == NodeDataLocation.OPTION_DATA:
+                response.success = False
+                response.error_message = (
+                    "public_node_data: option values cannot be public!"
+                )
+
+                return response
+
 
         # Clear existing tree, then replace it with the message's contents
         self.clear(None, ClearTree.Response())
