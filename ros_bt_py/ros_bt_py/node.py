@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 
 import abc, importlib, inspect, re
-from typing import Type, List, Dict, Optional
+from typing import Callable, Type, List, Dict, Optional
 
 import rclpy
 import rclpy.logging
@@ -57,7 +57,7 @@ from ros_bt_py.exceptions import BehaviorTreeException, NodeStateError, NodeConf
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.custom_types import TypeWrapper
-from ros_bt_py.helpers import get_default_value, json_decode
+from ros_bt_py.helpers import get_default_value, json_decode, json_encode
 
 
 
@@ -369,10 +369,10 @@ class Node(object, metaclass=NodeMeta):
         # Only used to make finding the root of the tree easier
         self.parent = None
         self._state = NodeState.UNINITIALIZED
-        self.children = []
+        self.children: list[Node] = []
 
-        self.subscriptions = []
-        self.subscribers = []
+        self.subscriptions: list[Wiring] = []
+        self.subscribers: list[tuple[Wiring, Callable, type]] = []
 
         self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager = debug_manager
@@ -1674,6 +1674,22 @@ class Node(object, metaclass=NodeMeta):
             name=self.name,
             state=self.state
         )
+    
+    def wire_data_msg_list(self):
+        data_list: list[WiringData] = []
+        for wiring, _, exp_type in self.subscribers:
+            # Since we iterate subscribers, `wiring.source` should refer to self.
+            source_map = self.get_data_map(wiring.source.data_kind)
+            key = wiring.source.data_key
+            if not source_map.is_updated(key):
+                continue # Don't publish stale data
+            wiring_data = WiringData()
+            wiring_data.wiring = wiring
+            wiring_data.serialized_data = source_map.get_serialized(key)
+            wiring_data.serialized_type = source_map.get_serialized_type(key)
+            wiring_data.serialized_expected_type = json_encode(exp_type)
+            data_list.append(wiring_data)
+        return data_list
 
 
 def load_node_module(package_name):

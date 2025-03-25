@@ -29,3 +29,4 @@
 Wiring wiring
 string serialized_data
 string serialized_type #TODO Maybe this is unnecessary
+string serialized_expected_type #TODO Maybe this is unnecessary

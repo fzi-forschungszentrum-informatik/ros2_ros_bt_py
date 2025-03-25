@@ -522,6 +522,19 @@ class TreeManager:
         if self.publish_tree_state:
             self.publish_tree_state(self.state_to_msg())
 
+    def publish_data(
+            self,
+            subtree_info_msg = None, # : Optional[SubtreeInfo]
+        ):
+        """
+        Publish the current tree data using the callback supplied to the constructor.
+
+        In most cases, you'll want that callback to publish to a ROS
+        topic.
+        """
+        if self.publish_tree_data:
+            self.publish_tree_data(self.data_to_msg())
+
     def find_root(self) -> Optional[Node]:
         """
         Find the root node of the tree.
@@ -628,6 +641,11 @@ class TreeManager:
                 # Return immediately, not unticking anything
                 self._once = False
                 self.set_state(TreeState.WAITING_FOR_TICK)
+                self.publish_data(
+                    subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                        if self.subtree_manager is not None
+                        else None
+                )
                 return
             tick_end_timestamp = self.ros_node.get_clock().now()
 
@@ -2471,6 +2489,12 @@ class TreeManager:
         self.tree_state.state = self.get_state()
         self.tree_state.node_states = [node.to_state_msg() for node in self.nodes.values()]
         return self.tree_state
+    
+    def data_to_msg(self) -> TreeData:
+        self.tree_data.wiring_data = []
+        for node in self.nodes.values():
+            self.tree_data.wiring_data.extend(node.wire_data_msg_list())
+        return self.tree_data
 
 
 def get_success(response):
