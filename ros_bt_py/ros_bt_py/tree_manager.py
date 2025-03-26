@@ -428,6 +428,13 @@ class TreeManager:
                 if self.subtree_manager is not None
                 else None,
         )
+        # Also publish data to overwrite any stale messages (relevant after restart)
+        #   state is published implicitly
+        self.publish_data(
+            subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                if self.subtree_manager is not None
+                else None,
+        )
 
         if self.publish_diagnostic is not None:
             self.ros_node.create_timer(
@@ -508,6 +515,7 @@ class TreeManager:
             self.publish_tree_structure(self.structure_to_msg())
         #if subtree_info_msg and self.publish_subtree_info:
         #    self.publish_subtree_info(subtree_info_msg)
+        self.publish_state(subtree_info_msg=subtree_info_msg)
 
     def publish_state(
             self,
@@ -534,6 +542,7 @@ class TreeManager:
         """
         if self.publish_tree_data:
             self.publish_tree_data(self.data_to_msg())
+        self.publish_state(subtree_info_msg=subtree_info_msg)
 
     def find_root(self) -> Optional[Node]:
         """
@@ -627,15 +636,6 @@ class TreeManager:
             if self.get_state() == TreeState.STOP_REQUESTED:
                 break
             root.tick()
-            self.publish_state(
-                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                    if self.subtree_manager is not None
-                    else None
-            )
-
-            if self._stop_after_result:
-                if root.state in [NodeState.FAILED, NodeState.SUCCEEDED]:
-                    break
 
             if self._once:
                 # Return immediately, not unticking anything
@@ -647,6 +647,18 @@ class TreeManager:
                         else None
                 )
                 return
+
+            self.publish_state(
+                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                    if self.subtree_manager is not None
+                    else None
+            )
+
+            if self._stop_after_result:
+                if root.state in [NodeState.FAILED, NodeState.SUCCEEDED]:
+                    break
+
+            
             tick_end_timestamp = self.ros_node.get_clock().now()
 
             duration: Duration = tick_end_timestamp - tick_start_timestamp
@@ -669,6 +681,7 @@ class TreeManager:
                 tick_frequency_msg.data = tick_frequency_avg
                 self.publish_tick_frequency(tick_frequency_msg)
             self.rate.sleep()
+
         self.set_state(TreeState.IDLE)
         self.publish_state(
             subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
@@ -1118,6 +1131,12 @@ class TreeManager:
                 # Now the tree is editable again - all nodes are in a state
                 # where they must be initialized.
                 self.set_state(TreeState.EDITABLE)
+            
+            self.publish_state(
+                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                    if self.subtree_manager is not None
+                    else None
+            )
 
         elif request.command == ControlTreeExecution.Request.TICK_ONCE:
             if self._tick_thread.is_alive() or self.get_state() == TreeState.TICKING:
@@ -1253,6 +1272,11 @@ class TreeManager:
                     self.set_state(TreeState.IDLE)
                     response.success = True
                     response.tree_state = self.get_state()
+                    self.publish_state(
+                        subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                            if self.subtree_manager is not None
+                            else None
+                    )
                 except TreeTopologyError as ex:
                     response.success = False
                     response.error_message = str(ex)
@@ -1261,6 +1285,13 @@ class TreeManager:
                     response.success = False
                     response.error_message = str(ex)
                     response.tree_state = self.get_state()
+            
+            self.publish_state(
+                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                    if self.subtree_manager is not None
+                    else None
+            )
+        
         elif request.command == ControlTreeExecution.Request.DO_NOTHING:
             get_logger("tree_manager").get_child(self.name).info(
                 "Doing nothing in this request"
@@ -1272,13 +1303,6 @@ class TreeManager:
                 response.error_message
             )
             response.success = False
-
-        # Publish tree state whenever an execution command is received
-        self.publish_state(
-            subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                if self.subtree_manager is not None
-                else None
-        )
 
         return response
 
@@ -2335,6 +2359,12 @@ class TreeManager:
                 if wiring in self.tree_structure.data_wirings:
                     self.tree_structure.data_wirings.remove(wiring)
             self.publish_structure(
+                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
+                if self.subtree_manager is not None
+                else None,
+            )
+            # Also publish data to remove all outdated wirings
+            self.publish_data(
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
                 else None,
