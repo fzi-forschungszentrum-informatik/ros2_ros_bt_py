@@ -4,6 +4,14 @@
 Creating Node Classes
 #####################
 
+.. toctree::
+   :maxdepth: 2
+
+   1. Create a new class
+   2. Fill in the NodeConfig
+   3. Implement the :code:`_do_` methods
+   4. Test your node!
+
 Say you are building a Behavior Tree, and want to do something more
 complex than the node classes in ``ros_bt_py.nodes`` or
 ``ros_bt_py.ros_nodes`` can support.

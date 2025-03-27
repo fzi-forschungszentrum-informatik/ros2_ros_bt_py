@@ -4,6 +4,12 @@
 Creating a Node Class package
 #############################
 
+.. toctree::
+   :maxdepth: 2
+
+   Package Creation
+   Example Package
+
 When adding more complex node classes it is strongly advised, that you create your own Python
 package for them, so you don't have to fork (or even have uncommited changes!!) in your
 ``ros_bt_py`` repository.
