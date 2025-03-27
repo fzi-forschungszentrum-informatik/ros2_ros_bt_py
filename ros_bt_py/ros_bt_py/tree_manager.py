@@ -2363,12 +2363,6 @@ class TreeManager:
                 if self.subtree_manager is not None
                 else None,
             )
-            # Also publish data to remove all outdated wirings
-            self.publish_data(
-                subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
-                if self.subtree_manager is not None
-                else None,
-            )
         return response
 
     def get_subtree(
