@@ -50,7 +50,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CapabilityInterface.msg"
   # "msg/CapabilityIOBridgeData.msg"
 
-  # "msg/SubtreeInfo.msg"
   "msg/NodeOption.msg"
   "msg/NodeIO.msg"
   "msg/NodeDataLocation.msg"
@@ -62,6 +61,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TreeStructure.msg"
   "msg/TreeState.msg"
   "msg/TreeData.msg"
+  "msg/TreeStructureList.msg"
+  "msg/TreeStateList.msg"
+  "msg/TreeDataList.msg"
   # "msg/TreeDataUpdate.msg"
 
   "msg/UtilityBounds.msg"

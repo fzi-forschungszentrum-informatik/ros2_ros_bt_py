@@ -1261,8 +1261,8 @@ class Node(object, metaclass=NodeMeta):
         #TODO Nodes are currently instantiated without supplying values of inputs and outputs
         # which seems reasonable, given those values aren't known at that time.
         # That renders these function calls effectively a no-op.
-        _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
-        _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
+        #_set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
+        #_set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
 
         return node_instance
 

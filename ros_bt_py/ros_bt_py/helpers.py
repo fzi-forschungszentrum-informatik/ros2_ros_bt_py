@@ -38,27 +38,6 @@ from ros_bt_py_interfaces.msg import NodeState, CapabilityInterface
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
-def remove_input_output_values(tree):
-    """
-    Remove all input and output values from the tree nodes.
-
-    This is achieved by replacing every nodes input/output serialized_value with "null"
-    """
-    for node in tree.nodes:
-        for node_input in node.inputs:
-            node_input.serialized_value = "null"
-        for node_output in node.outputs:
-            node_output.serialized_value = "null"
-    return tree
-
-
-def set_node_state_to_shutdown(tree):
-    """Set all node states to shutdown."""
-    for node in tree.nodes:
-        node.state = NodeState.SHUTDOWN
-    return tree
-
-
 class MathUnaryOperator(object):
     def __init__(self, operator='sqrt'):
         self.operator = operator

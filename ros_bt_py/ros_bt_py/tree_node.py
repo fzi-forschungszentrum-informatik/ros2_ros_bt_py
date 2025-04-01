@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-
 # Copyright 2023 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +28,7 @@
 """Module containing the main node for a ros_bt_py instance running the BT."""
 
 import rclpy
-from rclpy.executors import SingleThreadedExecutor, MultiThreadedExecutor
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.logging import get_logger
 from rclpy.node import Node
@@ -48,9 +45,11 @@ from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
     MessageChannels,
     TreeStructure,
+    TreeStructureList,
     TreeState,
+    TreeStateList,
     TreeData,
-    #SubtreeInfo,
+    TreeDataList,
     MessageTypes,
     Packages,
 )
@@ -102,8 +101,8 @@ class TreeNode(Node):
     def init_publisher(self):
         self.publisher_callback_group = ReentrantCallbackGroup()
         self.tree_structure_pub = self.create_publisher(
-            TreeStructure,
-            "~/tree_structure",
+            TreeStructureList,
+            "~/tree_structure_list",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -114,8 +113,8 @@ class TreeNode(Node):
         )
 
         self.tree_state_pub = self.create_publisher(
-            TreeState,
-            "~/tree_state",
+            TreeStateList,
+            "~/tree_state_list",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -126,8 +125,8 @@ class TreeNode(Node):
         )
 
         self.tree_data_pub = self.create_publisher(
-            TreeData,
-            "~/tree_data",
+            TreeDataList,
+            "~/tree_data_list",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
@@ -271,7 +270,6 @@ class TreeNode(Node):
             publish_tree_structure_callback=self.tree_structure_pub.publish,
             publish_tree_state_callback=self.tree_state_pub.publish,
             publish_tree_data_callback=self.tree_data_pub.publish,
-            #publish_subtree_info_callback=self.subtree_info_pub.publish,
             publish_diagnostic_callback=self.ros_diagnostics_pub.publish,
             publish_tick_frequency_callback=self.tick_frequency_pub.publish,
             diagnostics_frequency=params.diagnostics_frequency_hz,

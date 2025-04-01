@@ -106,7 +106,10 @@ class Subtree(Leaf):
         )
         self.load_subtree()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
-            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
+            self.subtree_manager.add_subtree_structure(
+                self.name, 
+                self.manager.structure_to_msg()
+            )
 
     def load_subtree(self) -> None:
         response = LoadTree.Response()
@@ -172,7 +175,7 @@ class Subtree(Leaf):
         subtree_inputs: Dict,
         subtree_outputs: Dict,
     ) -> None:
-        subtree_msg = self.manager.to_msg()
+        subtree_msg = self.manager.structure_to_msg()
         if self.options["use_io_nodes"]:
             for node in subtree_msg.nodes:
                 if node.module == "ros_bt_py.nodes.io":
@@ -229,7 +232,7 @@ class Subtree(Leaf):
         self._register_node_data(source_map=subtree_outputs, target_map=self.outputs)
 
         # Handle forwarding inputs and outputs using the subscribe mechanics:
-        for node_data in self.manager.to_msg().public_node_data:
+        for node_data in self.manager.structure_to_msg().public_node_data:
             # get the node name without prefix to match our renamed
             # inputs and outputs
             node_name = node_data.node_name
@@ -274,14 +277,26 @@ class Subtree(Leaf):
             )
         self.root.setup()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
-            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
+            # We have to publish the structure here in case publishing was enabled
+            #   after this node was initialized. Otherwise we never get a structure.
+            self.subtree_manager.add_subtree_structure(
+                self.name, 
+                self.manager.structure_to_msg()
+            )
+            self.subtree_manager.add_subtree_state(
+                self.name, 
+                self.manager.state_to_msg()
+            )
 
     def _do_tick(self):
         if not self.root:
             return NodeState.BROKEN
         new_state = self.root.tick()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
-            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
+            self.subtree_manager.add_subtree_state(
+                self.name, 
+                self.manager.state_to_msg()
+            )
         return new_state
 
     def _do_untick(self):
@@ -289,7 +304,10 @@ class Subtree(Leaf):
             return NodeState.BROKEN
         new_state = self.root.untick()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
-            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
+            self.subtree_manager.add_subtree_state(
+                self.name, 
+                self.manager.state_to_msg()
+            )
         return new_state
 
     def _do_reset(self):
@@ -297,7 +315,10 @@ class Subtree(Leaf):
             return NodeState.IDLE
         new_state = self.root.reset()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
-            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
+            self.subtree_manager.add_subtree_state(
+                self.name, 
+                self.manager.state_to_msg()
+            )
         return new_state
 
     def _do_shutdown(self):
@@ -305,7 +326,10 @@ class Subtree(Leaf):
             return NodeState.SHUTDOWN
         self.root.shutdown()
         if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
-            self.subtree_manager.add_subtree_info(self.name, self.manager.to_msg())
+            self.subtree_manager.add_subtree_state(
+                self.name, 
+                self.manager.state_to_msg()
+            )
 
     def _do_calculate_utility(self):
         self.root = self.manager.find_root()

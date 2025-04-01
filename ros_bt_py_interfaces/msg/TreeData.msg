@@ -26,6 +26,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# The empty string for the main tree, the tree prefix for subtrees
+string tree_id 
+
 WiringData[] wiring_data
 
 #TODO ??? public_data
