@@ -349,6 +349,12 @@ class TreeNode(Node):
             callback=self.tree_manager.set_publish_subtrees,
             callback_group=self.tree_manager_service_callback_group,
         )
+        self.set_publish_data_service = self.create_service(
+            SetBool,
+            "~/debug/set_publish_data",
+            callback=self.tree_manager.set_publish_data,
+            callback_group=self.tree_manager_service_callback_group,
+        )
 
         self.set_options_service = self.create_service(
             SetOptions,

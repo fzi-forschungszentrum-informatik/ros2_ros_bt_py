@@ -49,6 +49,7 @@ class SubtreeManager(object):
         self.subtree_states: Dict[str, TreeState] = {}
         self.subtree_data: Dict[str, TreeData] = {}
         self._publish_subtrees: bool = False
+        self._publish_data: bool = False
 
         self._lock = Lock()
 
@@ -94,7 +95,7 @@ class SubtreeManager(object):
 
     def add_subtree_data(self, node_name: str, subtree_msg: TreeData):
         with self._lock:
-            self.subtree_structures[node_name] = subtree_msg
+            self.subtree_data[node_name] = subtree_msg
 
     def clear_subtrees(self) -> None:
         with self._lock:
@@ -105,3 +106,11 @@ class SubtreeManager(object):
     def get_publish_subtrees(self) -> bool:
         with self._lock:
             return self._publish_subtrees
+        
+    def get_publish_data(self) -> bool:
+        with self._lock:
+            return self._publish_data
+        
+    def set_publish_data(self, value: bool):
+        with self._lock:
+            self._publish_data = value

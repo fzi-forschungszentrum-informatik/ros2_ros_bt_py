@@ -403,6 +403,7 @@ class TreeManager:
         self.tree_state = TreeState()
 
         self.tree_data = TreeData()
+        self.enable_publish_data = False
 
         self.diagnostic_array = DiagnosticArray()
         self.diagnostic_status = DiagnosticStatus()
@@ -490,10 +491,10 @@ class TreeManager:
         """
         Publish the current tree structure using the callback supplied to the constructor.
 
+        This also triggers a state publish.
+
         In most cases, you'll want that callback to publish to a ROS
         topic.
-
-        If debugging is enabled, also publish debug info.
         """
         if self.publish_tree_structure:
             structure_list = TreeStructureList()
@@ -527,10 +528,13 @@ class TreeManager:
         """
         Publish the current tree data using the callback supplied to the constructor.
 
+        This also checks if data publishing is enabled, so it's safe to call either way.
+        It will always trigger a state publish either way.
+
         In most cases, you'll want that callback to publish to a ROS
         topic.
         """
-        if self.publish_tree_data:
+        if self.publish_tree_data and self.enable_publish_data:
             data_list = TreeDataList()
             data_list.tree_data.extend(
                 self.subtree_manager.get_subtree_data()
@@ -624,19 +628,18 @@ class TreeManager:
                 break
             root.tick()
 
-            if self._once:
-                # Return immediately, not unticking anything
-                self._once = False
-                self.set_state(TreeState.WAITING_FOR_TICK)
-                self.publish_data()
-                return
-
-            self.publish_state()
+            self.publish_data()
 
             if self._stop_after_result:
                 if root.state in [NodeState.FAILED, NodeState.SUCCEEDED]:
                     break
 
+            if self._once:
+                # Return immediately, not unticking anything
+                self._once = False
+                self.set_state(TreeState.WAITING_FOR_TICK)
+                self.publish_state()
+                return
             
             tick_end_timestamp = self.ros_node.get_clock().now()
 
@@ -924,6 +927,16 @@ class TreeManager:
         else:
             response.success = False
             response.message = "Tree manager has no subtree manager."
+        return response
+
+    def set_publish_data(
+        self,
+        request: SetBool.Request,
+        response: SetBool.Response
+    ):
+        self.enable_publish_data = request.data
+        self.subtree_manager.set_publish_data(request.data)
+        response.success = True
         return response
 
     def control_execution(  # noqa: C901 # TODO: Remove this and simplfy the method.
@@ -1532,6 +1545,9 @@ class TreeManager:
             for data in self.tree_structure.public_node_data
             if data.node_name not in names_to_remove
         ]
+
+        #TODO Maybe remove data from subtree manager, 
+        #   so that we don't see stale trees?
 
         response.success = True
         self.publish_structure()

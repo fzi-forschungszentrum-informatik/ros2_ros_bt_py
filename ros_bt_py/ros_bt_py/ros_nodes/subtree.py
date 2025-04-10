@@ -297,6 +297,11 @@ class Subtree(Leaf):
                 self.name, 
                 self.manager.state_to_msg()
             )
+            if self.subtree_manager.get_publish_data():
+                self.subtree_manager.add_subtree_data(
+                    self.name,
+                    self.manager.data_to_msg()
+                )
         return new_state
 
     def _do_untick(self):
