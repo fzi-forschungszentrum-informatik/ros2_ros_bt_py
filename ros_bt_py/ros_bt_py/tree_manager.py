@@ -936,6 +936,11 @@ class TreeManager:
     ):
         self.enable_publish_data = request.data
         self.subtree_manager.set_publish_data(request.data)
+
+        # Clear data after disabling publish
+        if not request.data and self.publish_tree_data:
+            self.publish_tree_data(TreeDataList())
+
         response.success = True
         return response
 
