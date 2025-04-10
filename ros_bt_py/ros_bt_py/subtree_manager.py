@@ -53,9 +53,21 @@ class SubtreeManager(object):
 
         self._lock = Lock()
 
+    def get_publish_subtrees(self) -> bool:
+        with self._lock:
+            return self._publish_subtrees
+
     def set_publish_subtrees(self, publish_subtrees: bool):
         with self._lock:
             self._publish_subtrees = publish_subtrees
+        
+    def get_publish_data(self) -> bool:
+        with self._lock:
+            return self._publish_data
+        
+    def set_publish_data(self, value: bool):
+        with self._lock:
+            self._publish_data = value
 
     def get_subtree_structures(self) -> list[TreeStructure]:
         with self._lock:
@@ -103,14 +115,12 @@ class SubtreeManager(object):
             self.subtree_states.clear()
             self.subtree_data.clear()
 
-    def get_publish_subtrees(self) -> bool:
+    def remove_subtree(self, node_name: str):
         with self._lock:
-            return self._publish_subtrees
-        
-    def get_publish_data(self) -> bool:
-        with self._lock:
-            return self._publish_data
-        
-    def set_publish_data(self, value: bool):
-        with self._lock:
-            self._publish_data = value
+            if node_name in self.subtree_structures.keys():
+                del self.subtree_structures[node_name]
+            if node_name in self.subtree_states.keys():
+                del self.subtree_states[node_name]
+            if node_name in self.subtree_data.keys():
+                del self.subtree_data[node_name]
+

@@ -395,14 +395,16 @@ class TreeManager:
         # RUNNING for the first time
         self._stop_after_result = False
 
-        self.tree_structure = TreeStructure()
+        tree_id = name if name else ""
+
+        self.tree_structure = TreeStructure(tree_id=tree_id)
         self.tree_structure.name = name if name else ""
         self.tree_structure.tick_frequency_hz = tick_frequency_hz
         self.rate = self.ros_node.create_rate(self.tree_structure.tick_frequency_hz)
 
-        self.tree_state = TreeState()
+        self.tree_state = TreeState(tree_id=tree_id)
 
-        self.tree_data = TreeData()
+        self.tree_data = TreeData(tree_id=tree_id)
         self.enable_publish_data = False
 
         self.diagnostic_array = DiagnosticArray()
@@ -730,6 +732,7 @@ class TreeManager:
             self.tree_state = TreeState(state=TreeState.EDITABLE)
             self.tree_data = TreeData()
         self.publish_structure()
+        self.subtree_manager.clear_subtrees()
         self.clear_diagnostics_name()
         return response
 
@@ -1551,8 +1554,8 @@ class TreeManager:
             if data.node_name not in names_to_remove
         ]
 
-        #TODO Maybe remove data from subtree manager, 
-        #   so that we don't see stale trees?
+        for name in removed_names:
+            self.subtree_manager.remove_subtree(name)
 
         response.success = True
         self.publish_structure()
