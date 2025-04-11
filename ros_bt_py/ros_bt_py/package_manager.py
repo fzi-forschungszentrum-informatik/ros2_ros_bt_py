@@ -141,6 +141,7 @@ class PackageManager(object):
                         response.error_message = "Rename failed"
                         response.file_path = unique_save_filepath
                         return response
+                    split_save_filepath = unique_save_filepath
                 else:
                     if not request.allow_overwrite:
                         response.success = False
