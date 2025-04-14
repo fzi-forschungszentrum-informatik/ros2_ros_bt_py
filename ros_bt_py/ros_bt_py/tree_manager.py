@@ -1955,6 +1955,11 @@ class TreeManager:
                 error_message=f"Failed to transfer children to new node: {str(exc)}",
             )
 
+        # Once we make it to here without issues, clean up the old node's subtree
+        #   in case it had one
+        if request.rename_node and request.node_name != request.new_name:
+            self.subtree_manager.remove_subtree(request.node_name)
+
         # We made it!
         self.publish_structure()
         return SetOptions.Response(success=True)

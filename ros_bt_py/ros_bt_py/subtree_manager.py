@@ -116,11 +116,14 @@ class SubtreeManager(object):
             self.subtree_data.clear()
 
     def remove_subtree(self, node_name: str):
+
+        def query_dict(node_name: str, dict: dict[str, object]):
+            for tree_name in list(dict.keys()):
+                if tree_name == node_name or tree_name.startswith(f"{node_name}."):
+                    del dict[tree_name]
+
         with self._lock:
-            if node_name in self.subtree_structures.keys():
-                del self.subtree_structures[node_name]
-            if node_name in self.subtree_states.keys():
-                del self.subtree_states[node_name]
-            if node_name in self.subtree_data.keys():
-                del self.subtree_data[node_name]
+            query_dict(node_name, self.subtree_structures)
+            query_dict(node_name, self.subtree_states)
+            query_dict(node_name, self.subtree_data)
 
