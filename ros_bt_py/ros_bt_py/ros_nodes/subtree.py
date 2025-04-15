@@ -105,7 +105,7 @@ class Subtree(Leaf):
             subtree_manager=subtree_manager,
         )
         self.load_subtree()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager:
             self.subtree_manager.add_subtree_structure(
                 self.name, 
                 self.manager.structure_to_msg()
@@ -276,13 +276,7 @@ class Subtree(Leaf):
                 f"{self.options['subtree_path']} exist?"
             )
         self.root.setup()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
-            # We have to publish the structure here in case publishing was enabled
-            #   after this node was initialized. Otherwise we never get a structure.
-            self.subtree_manager.add_subtree_structure(
-                self.name, 
-                self.manager.structure_to_msg()
-            )
+        if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, 
                 self.manager.state_to_msg()
@@ -292,7 +286,7 @@ class Subtree(Leaf):
         if not self.root:
             return NodeState.BROKEN
         new_state = self.root.tick()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, 
                 self.manager.state_to_msg()
@@ -308,7 +302,7 @@ class Subtree(Leaf):
         if not self.root:
             return NodeState.BROKEN
         new_state = self.root.untick()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, 
                 self.manager.state_to_msg()
@@ -319,7 +313,7 @@ class Subtree(Leaf):
         if not self.root:
             return NodeState.IDLE
         new_state = self.root.reset()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, 
                 self.manager.state_to_msg()
@@ -330,7 +324,7 @@ class Subtree(Leaf):
         if not self.root:
             return NodeState.SHUTDOWN
         self.root.shutdown()
-        if self.subtree_manager and self.subtree_manager.get_publish_subtrees():
+        if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, 
                 self.manager.state_to_msg()

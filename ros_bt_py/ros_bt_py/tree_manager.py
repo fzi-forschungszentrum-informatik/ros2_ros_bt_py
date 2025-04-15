@@ -916,15 +916,6 @@ class TreeManager:
             self.subtree_manager.set_publish_subtrees(
                 publish_subtrees=request.data,
             )
-            if request.data:
-                self.control_execution(
-                    ControlTreeExecution.Request(
-                        command=ControlTreeExecution.Request.SETUP_AND_SHUTDOWN
-                    ),
-                    ControlTreeExecution.Response(),
-                )
-            else:
-                self.subtree_manager.clear_subtrees()
             self.publish_structure()
             response.success = True
         else:
