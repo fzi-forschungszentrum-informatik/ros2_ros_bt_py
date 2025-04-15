@@ -29,7 +29,7 @@ from unittest.mock import patch
 from rclpy.time import Time
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.ros_nodes.param import RosParamOptionDefaultInput
-from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
+from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
 
 import pytest
 
@@ -59,10 +59,10 @@ def test_node_success_none(ros_mock, clock_mock, parameter_mock):
         ros_node=ros_mock,
     )
     param_node.setup()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
     param_node.inputs["default_value"] = "tests"
     param_node.tick()
-    assert param_node.state == NodeMsg.SUCCEEDED
+    assert param_node.state == NodeState.SUCCEEDED
     assert param_node.outputs["param"] == "tests"
 
 
@@ -84,14 +84,14 @@ def test_node_success(ros_mock, clock_mock, parameter_mock):
         ros_node=ros_mock,
     )
     param_node.setup()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
     param_node.inputs["default_value"] = "tests"
     param_node.tick()
-    assert param_node.state == NodeMsg.SUCCEEDED
+    assert param_node.state == NodeState.SUCCEEDED
     assert param_node.outputs["param"] == "not_tests"
 
     param_node.shutdown()
-    assert param_node.state == NodeMsg.SHUTDOWN
+    assert param_node.state == NodeState.SHUTDOWN
 
 
 @patch("rclpy.node.Node")
@@ -109,13 +109,13 @@ def test_node_failure(ros_mock, clock_mock):
         ros_node=ros_mock,
     )
     param_node.setup()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
     param_node.inputs["default_value"] = "tests"
     param_node.tick()
-    assert param_node.state == NodeMsg.FAILURE
+    assert param_node.state == NodeState.FAILURE
 
     param_node.shutdown()
-    assert param_node.state == NodeMsg.SHUTDOWN
+    assert param_node.state == NodeState.SHUTDOWN
 
 
 @patch("rclpy.node.Node")
@@ -136,10 +136,10 @@ def test_node_failure_invalid_type(ros_mock, clock_mock, parameter_mock):
         ros_node=ros_mock,
     )
     param_node.setup()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
     param_node.inputs["default_value"] = "tests"
     param_node.tick()
-    assert param_node.state == NodeMsg.FAILURE
+    assert param_node.state == NodeState.FAILURE
 
 
 @patch("rclpy.node.Node")
@@ -160,20 +160,20 @@ def test_node_reset(ros_mock, clock_mock, parameter_mock):
         ros_node=ros_mock,
     )
     param_node.setup()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
     param_node.inputs["default_value"] = "tests"
     param_node.tick()
-    assert param_node.state == NodeMsg.SUCCEEDED
+    assert param_node.state == NodeState.SUCCEEDED
     assert param_node.outputs["param"] == "not_tests"
     param_node.reset()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
 
     param_node.tick()
-    assert param_node.state == NodeMsg.SUCCEEDED
+    assert param_node.state == NodeState.SUCCEEDED
     assert param_node.outputs["param"] == "not_tests"
 
     param_node.shutdown()
-    assert param_node.state == NodeMsg.SHUTDOWN
+    assert param_node.state == NodeState.SHUTDOWN
 
 
 @patch("rclpy.node.Node")
@@ -194,20 +194,20 @@ def test_node_untick(ros_mock, clock_mock, parameter_mock):
         ros_node=ros_mock,
     )
     param_node.setup()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
     param_node.inputs["default_value"] = "tests"
     param_node.tick()
-    assert param_node.state == NodeMsg.SUCCEEDED
+    assert param_node.state == NodeState.SUCCEEDED
     assert param_node.outputs["param"] == "not_tests"
     param_node.untick()
-    assert param_node.state == NodeMsg.IDLE
+    assert param_node.state == NodeState.IDLE
 
     param_node.tick()
-    assert param_node.state == NodeMsg.SUCCEEDED
+    assert param_node.state == NodeState.SUCCEEDED
     assert param_node.outputs["param"] == "not_tests"
 
     param_node.shutdown()
-    assert param_node.state == NodeMsg.SHUTDOWN
+    assert param_node.state == NodeState.SHUTDOWN
 
 
 def test_node_no_ros():

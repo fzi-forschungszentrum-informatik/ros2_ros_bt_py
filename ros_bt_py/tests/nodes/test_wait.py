@@ -30,7 +30,7 @@ import pytest
 import time
 
 from ros_bt_py.nodes.wait import Wait, WaitInput
-from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
+from ros_bt_py_interfaces.msg import NodeState
 
 
 class TestWait:
@@ -44,13 +44,13 @@ class TestWait:
     def test_node_success(self, wait_time: float):
         wait_node = Wait(options={"seconds_to_wait": wait_time})
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
@@ -64,27 +64,27 @@ class TestWait:
     def test_node_shutdown(self, wait_time: float):
         wait_node = Wait(options={"seconds_to_wait": wait_time})
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
         wait_node.shutdown()
-        assert wait_node.state == NodeMsg.SHUTDOWN
+        assert wait_node.state == NodeState.SHUTDOWN
 
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
@@ -98,25 +98,25 @@ class TestWait:
     def test_node_reset(self, wait_time: float):
         wait_node = Wait(options={"seconds_to_wait": wait_time})
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
         wait_node.reset()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
 
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
@@ -132,16 +132,16 @@ class TestWaitInput:
     def test_node_success(self, wait_time: float):
         wait_node = WaitInput()
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
 
         wait_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
@@ -155,30 +155,30 @@ class TestWaitInput:
     def test_node_shutdown(self, wait_time: float):
         wait_node = WaitInput()
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
 
         wait_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
         wait_node.shutdown()
-        assert wait_node.state == NodeMsg.SHUTDOWN
+        assert wait_node.state == NodeState.SHUTDOWN
 
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
@@ -192,27 +192,27 @@ class TestWaitInput:
     def test_node_reset(self, wait_time: float):
         wait_node = WaitInput()
         wait_node.setup()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
 
         wait_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
         wait_node.reset()
-        assert wait_node.state == NodeMsg.IDLE
+        assert wait_node.state == NodeState.IDLE
 
         start_time = time.time()
-        while NodeMsg.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeMsg.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == wait_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1

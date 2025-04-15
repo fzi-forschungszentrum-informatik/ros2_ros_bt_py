@@ -41,7 +41,6 @@ from ros_bt_py.custom_types import TypeWrapper, RosTopicType, ROS_TYPE_FULL
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
 
-#TODO What does this node do and what should it type input be?
 @define_bt_node(
     NodeConfig(
         version="0.1.0",

@@ -28,10 +28,9 @@
 from typing import Dict
 import pytest
 
-from std_srvs.srv import SetBool
 from ros_bt_py.custom_types import RosTopicType
 from ros_bt_py.ros_nodes.message_converters import MessageToFields
-from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
+from ros_bt_py_interfaces.msg import NodeState
 
 
 @pytest.mark.parametrize(
@@ -61,10 +60,10 @@ def test_node_success(message: type, fields: Dict[str, type]):
         },
     )
     unavailable_service.setup()
-    assert unavailable_service.state == NodeMsg.IDLE
+    assert unavailable_service.state == NodeState.IDLE
     unavailable_service.inputs["in"] = message.get_type_obj()()
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.SUCCEED
+    assert unavailable_service.state == NodeState.SUCCEED
     assert unavailable_service.outputs.__len__() == len(fields)
     print(f"{unavailable_service.outputs}")
     for field, value in fields.items():
