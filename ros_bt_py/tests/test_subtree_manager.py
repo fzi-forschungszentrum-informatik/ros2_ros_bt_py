@@ -29,6 +29,8 @@ import pytest
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py_interfaces.msg import Node, Tree
 from ros_bt_py.exceptions import BehaviorTreeException
+import uuid
+from ros_bt_py.ros_helpers import uuid_to_ros
 
 
 class TestSubtreeManager:
@@ -46,6 +48,7 @@ class TestSubtreeManager:
         return subtree_manager
 
     def test_add_subtree_info(self, subtree_manager):
+        node_ids = [uuid.uuid4(), uuid.uuid4()]
         subtree_fields = [
             {
                 "name": "subtree_0",
@@ -54,8 +57,12 @@ class TestSubtreeManager:
                 "nodes": [
                     Node(
                         name="node_0.0",
+                        node_id=uuid_to_ros(node_ids[0]),
                         state=Node.IDLE,
-                        child_names=["node_0.0.0", "node_0.0.1"],
+                        child_node_ids=[
+                            uuid_to_ros(uuid.uuid4()),
+                            uuid_to_ros(uuid.uuid4()),
+                        ],
                     )
                 ],
             },
@@ -66,8 +73,12 @@ class TestSubtreeManager:
                 "nodes": [
                     Node(
                         name="node_1.0",
+                        node_id=uuid_to_ros(node_ids[1]),
                         state=Node.RUNNING,
-                        child_names=["node_1.0.0", "node_1.0.1"],
+                        child_node_ids=[
+                            uuid_to_ros(uuid.uuid4()),
+                            uuid_to_ros(uuid.uuid4()),
+                        ],
                     )
                 ],
             },
@@ -80,7 +91,7 @@ class TestSubtreeManager:
         assert subtree_manager_subtree_states == []
 
         for i, tree in enumerate(subtrees):
-            subtree_manager.add_subtree_info("node_" + str(i), tree)
+            subtree_manager.add_subtree_info(node_ids[i], tree)
 
         subtree_manager_subtree_states = (
             subtree_manager.get_subtree_info_msg().subtree_states
@@ -93,7 +104,8 @@ class TestSubtreeManager:
                 assert getattr(subtree_manager_tree, field) == getattr(tree, field)
 
     def test_clear_subtrees(self, subtree_manager):
-        subtree_manager.add_subtree_info("node_name", Tree())
+        test_id = uuid.uuid4()
+        subtree_manager.add_subtree_info(test_id, Tree())
         subtree_manager_subtree_states = (
             subtree_manager.get_subtree_info_msg().subtree_states
         )
@@ -115,5 +127,6 @@ class TestSubtreeManager:
     def test_add_subtree_info_exception(
         self, subtree_manager_no_publish: SubtreeManager
     ):
+        test_id = uuid.uuid4()
         with pytest.raises(BehaviorTreeException):
-            subtree_manager_no_publish.add_subtree_info("node_name", Tree())
+            subtree_manager_no_publish.add_subtree_info(test_id, Tree())

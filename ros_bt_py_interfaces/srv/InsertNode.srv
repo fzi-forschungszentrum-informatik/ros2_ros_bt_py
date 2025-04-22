@@ -30,6 +30,6 @@
 string previous_child_name
 Node node
 ---
-string actual_node_name
+string actual_node_id
 bool success
 string error_message

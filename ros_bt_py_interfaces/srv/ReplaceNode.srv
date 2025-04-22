@@ -25,8 +25,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-string old_node_name
-string new_node_name
+unique_identifier_msgs/UUID old_node_id
+unique_identifier_msgs/UUID new_node_id
 ---
 bool success
 string error_message

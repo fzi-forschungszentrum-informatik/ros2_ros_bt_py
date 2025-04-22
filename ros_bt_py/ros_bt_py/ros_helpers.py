@@ -33,6 +33,9 @@ from rclpy.node import Node, Publisher
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py_interfaces.msg import MessageChannel, MessageChannels
+from unique_identifier_msgs.msg import UUID as ROS_UUID
+
+import uuid
 
 
 class LoggerLevel(object):
@@ -93,3 +96,13 @@ def publish_message_channels(node: Node, publisher: Publisher):
     for name, [interface, *_] in action.get_action_names_and_types(node):
         msg.actions.append(MessageChannel(name=name, type=interface))
     publisher.publish(msg)
+
+
+def ros_to_uuid(ros_uuid_msg):
+    return uuid.UUID(bytes=bytes(ros_uuid_msg.uuid))
+
+
+def uuid_to_ros(uuid):
+    ros_uuid = ROS_UUID()
+    ros_uuid.uuid = list(uuid.bytes)  # Convert UUID bytes back to list
+    return ros_uuid
