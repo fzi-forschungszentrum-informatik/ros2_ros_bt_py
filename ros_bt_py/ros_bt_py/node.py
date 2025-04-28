@@ -30,8 +30,12 @@
 from contextlib import contextmanager
 from copy import deepcopy
 
-import abc, importlib, inspect, re
+import abc
+import importlib
+import inspect
+import re
 from typing import Type, List, Dict, Optional
+import uuid
 
 import rclpy
 import rclpy.logging
@@ -50,7 +54,7 @@ from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.custom_types import TypeWrapper
 from ros_bt_py.helpers import get_default_value, json_decode
-
+from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 
 
 def _check_node_data_match(
@@ -94,21 +98,16 @@ def _connect_wirings(data_wirings: List, type: str) -> Dict:
     connected_wirings = {}
     for wiring in data_wirings:
         if wiring.source.data_kind == type:
-            if wiring.source.node_name in connected_wirings:
-                connected_wirings[wiring.source.node_name].append(
-                    wiring.source.data_key
-                )
+            if wiring.source.node_id in connected_wirings:
+                connected_wirings[wiring.source.node_id].append(wiring.source.data_key)
             else:
-                connected_wirings[wiring.source.node_name] = [wiring.source.data_key]
+                connected_wirings[wiring.source.node_id] = [wiring.source.data_key]
         elif wiring.target.data_kind == type:
-            if wiring.target.node_name in connected_wirings:
-                connected_wirings[wiring.target.node_name].append(
-                    wiring.target.data_key
-                )
+            if wiring.target.node_id in connected_wirings:
+                connected_wirings[wiring.target.node_id].append(wiring.target.data_key)
             else:
-                connected_wirings[wiring.target.node_name] = [wiring.target.data_key]
+                connected_wirings[wiring.target.node_id] = [wiring.target.data_key]
     return connected_wirings
-
 
 
 def define_bt_node(node_config):
@@ -329,6 +328,7 @@ class Node(object, metaclass=NodeMeta):
         ros_node: Optional[ROSNode] = None,
         succeed_always: bool = False,
         simulate_tick: bool = False,
+        node_id: Optional[uuid.UUID] = None,
     ):
         """
         Prepare class members.
@@ -358,6 +358,10 @@ class Node(object, metaclass=NodeMeta):
             self.name = name
         else:
             self.name = type(self).__name__
+        if node_id is not None:
+            self.node_id = node_id
+        else:
+            self.node_id = uuid.uuid4()
         # Only used to make finding the root of the tree easier
         self.parent = None
         self._state = NodeMsg.UNINITIALIZED
@@ -447,7 +451,7 @@ class Node(object, metaclass=NodeMeta):
         if self._ros_node is not None:
             return self._ros_node
         else:
-            error_msg = f"{self.name} nodes not have ROS node reference!"
+            error_msg = f"{self.node_id} nodes not have ROS node reference!"
             self.logerr(error_msg)
             raise RuntimeError(error_msg)
 
@@ -477,7 +481,12 @@ class Node(object, metaclass=NodeMeta):
                 raise BehaviorTreeException(
                     "Calling setup() is only allowed in states %s and %s, "
                     "but node %s is in state %s"
-                    % (NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN, self.name, self.state)
+                    % (
+                        NodeMsg.UNINITIALIZED,
+                        NodeMsg.SHUTDOWN,
+                        self.node_id,
+                        self.state,
+                    )
                 )
             self.state = self._do_setup()
             if self.state is None:
@@ -525,7 +534,8 @@ class Node(object, metaclass=NodeMeta):
                 # This might still not be the best solution but enables some flexibility
                 if input_name not in self.node_config.optional_options:
                     raise ValueError(
-                        f"Trying to tick a node ({self.name}) with an unset input ({input_name})!"
+                        f"Trying to tick a node ({self.node_id}) with an unset"
+                        f"  input ({input_name})!"
                     )
         self.inputs.handle_subscriptions()
 
@@ -605,7 +615,7 @@ class Node(object, metaclass=NodeMeta):
         """Raise an error if `self.state` is not in `allowed_states`."""
         if self.state not in allowed_states:
             raise NodeStateError(
-                f"Node {self.name} ({type(self).__name__}) was in invalid state "
+                f"Node {self.node_id} ({type(self).__name__}) was in invalid state "
                 f"'{self.state}' after action {action_name}. "
                 f"Allowed states: {str(allowed_states)}"
             )
@@ -763,7 +773,7 @@ class Node(object, metaclass=NodeMeta):
                 child.shutdown()
 
             unshutdown_children = [
-                f"{child.name} ({type(child).__name__}), state: {child.state}"
+                f"{child.node_id} ({type(child).__name__}), state: {child.state}"
                 for child in self.children
                 if child.state != NodeMsg.SHUTDOWN
             ]
@@ -828,9 +838,9 @@ class Node(object, metaclass=NodeMeta):
             has_upper_bound_failure=True,
         )
 
-    def get_child_index(self, child_name: str) -> Optional[int]:
+    def get_child_index(self, child_node_id: uuid.UUID) -> Optional[int]:
         """
-        Get the index in the `children` array of the child with the given name.
+        Get the index in the `children` array of the child with the given node id.
 
         This is useful if you want to replace a child with another node.
 
@@ -841,7 +851,7 @@ class Node(object, metaclass=NodeMeta):
 
         """
         try:
-            return [child.name for child in self.children].index(child_name)
+            return [child.node_id for child in self.children].index(child_node_id)
         except ValueError:
             return None
 
@@ -866,8 +876,8 @@ class Node(object, metaclass=NodeMeta):
             self.logerr(error_msg)
             raise BehaviorTreeException(error_msg)
 
-        if child.name in (child1.name for child1 in self.children):
-            raise KeyError(f'Already have a child with name "{child.name}"')
+        if child.node_id in (child1.node_id for child1 in self.children):
+            raise KeyError(f'Already have a child with node id "{child.node_id}"')
         if at_index is None:
             at_index = len(self.children)
 
@@ -881,19 +891,21 @@ class Node(object, metaclass=NodeMeta):
         # return self to allow chaining of addChild calls
         return self
 
-    def remove_child(self, child_name: str) -> "Node":
+    def remove_child(self, child_node_id: uuid.UUID) -> "Node":
         """
         Remove the child with the given name and return it.
 
-        :param basestring child_name: The name of the child to remove
+        :param basestring child_node_id: The node_id of the child to remove
 
         :rtype: Node
         :returns: The child that was just removed
         :raises: KeyError if no child with that name exists
         """
-        child_index = self.get_child_index(child_name)
+        child_index = self.get_child_index(child_node_id)
         if child_index is None:
-            raise KeyError(f'Node {self.name} has no child named "{child_name}"')
+            raise KeyError(
+                f'Node {self.node_id} has no child with node id "{child_node_id}"'
+            )
 
         tmp = self.children[child_index]
         del self.children[child_index]
@@ -964,7 +976,6 @@ class Node(object, metaclass=NodeMeta):
           * If an OptionRef references an option value that does not hold a `type`
 
         """
-
         # Find the values that are not OptionRefs first
         self._find_option_refs(
             source_map=source_map,
@@ -1034,11 +1045,12 @@ class Node(object, metaclass=NodeMeta):
     def __repr__(self):
         """Create a string representation of the node class."""
         return (
-            "%s(options=%r, name=%r), parent_name:%r, state:%r, inputs:%r, outputs:%r,"
+            "%s(options=%r,node_id=%r, name=%r), parent_name:%r, state:%r, inputs:%r, outputs:%r,"
             " children:%r"
             % (
                 type(self).__name__,
                 {key: self.options[key] for key in self.options},
+                self.node_id,
                 self.name,
                 self.parent.name if self.parent else "",
                 self.state,
@@ -1052,6 +1064,7 @@ class Node(object, metaclass=NodeMeta):
         """Check if all attributes of a node are equal."""
         return (
             self.name == other.name
+            and self.node_id == other.node_id
             and self.parent == other.parent
             and self.state == other.state
             and type(self).__module__ == type(other).__module__
@@ -1234,21 +1247,15 @@ class Node(object, metaclass=NodeMeta):
         # Instantiate node - this shouldn't do anything yet, since we don't
         # call setup()
         node_class.permissive = permissive
-        if msg.name:
-            node_instance = node_class(
-                name=msg.name,
-                options=options_dict,
-                debug_manager=debug_manager,
-                subtree_manager=subtree_manager,
-                ros_node=ros_node,
-            )
-        else:
-            node_instance = node_class(
-                options=options_dict,
-                debug_manager=debug_manager,
-                subtree_manager=subtree_manager,
-                ros_node=ros_node,
-            )
+
+        node_instance = node_class(
+            name=msg.name if msg.name else None,
+            node_id=ros_to_uuid(msg.node_id),
+            options=options_dict,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            ros_node=ros_node,
+        )
 
         _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
         _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
@@ -1295,18 +1302,18 @@ class Node(object, metaclass=NodeMeta):
         subtree_name = f"{self.name}_subtree"
         subtree = Tree(
             name=subtree_name,
-            root_name=self.name,
+            root_id=uuid_to_ros(self.node_id),
             nodes=[node.to_msg() for node in self.get_children_recursive()],
             state=Tree.IDLE,
         )
 
-        node_map = {node.name: node for node in subtree.nodes}
+        node_map = {node.node_id: node for node in subtree.nodes}
         incoming_connections = []
         outgoing_connections = []
         for node in self.get_children_recursive():
             for sub in node.subscriptions:
-                source_node = node_map.get(sub.source.node_name)
-                target_node = node_map.get(sub.target.node_name)
+                source_node = node_map.get(sub.source.node_id)
+                target_node = node_map.get(sub.target.node_id)
 
                 # For subscriptions where source and target are in the subtree,
                 # add a wiring.
@@ -1328,7 +1335,7 @@ class Node(object, metaclass=NodeMeta):
                     )
 
             for wiring, _, _ in node.subscribers:
-                if wiring.target.node_name not in node_map:
+                if wiring.target.node_id not in node_map:
                     subtree.public_node_data.append(wiring.source)
                     outgoing_connections.append(wiring)
 
@@ -1342,33 +1349,33 @@ class Node(object, metaclass=NodeMeta):
         for node in subtree.nodes:
             for node_input in node.inputs:
                 if (
-                    node.name not in connected_inputs
-                    or node_input.key not in connected_inputs[node.name]
+                    node.node_id not in connected_inputs
+                    or node_input.key not in connected_inputs[node.node_id]
                 ):
                     # Input is unconnected, list it as public
                     subtree.public_node_data.append(
                         NodeDataLocation(
-                            node_name=node.name,
+                            node_id=uuid_to_ros(node.node_id),
                             data_kind=NodeDataLocation.INPUT_DATA,
                             data_key=node_input.key,
                         )
                     )
             for node_output in node.outputs:
                 if (
-                    node.name not in connected_outputs
-                    or node_output.key not in connected_outputs[node.name]
+                    node.node_id not in connected_outputs
+                    or node_output.key not in connected_outputs[node.node_id]
                 ):
                     # Input is unconnected, list it as public
                     subtree.public_node_data.append(
                         NodeDataLocation(
-                            node_name=node.name,
+                            node_id=uuid_to_ros(node.node_id),
                             data_kind=NodeDataLocation.OUTPUT_DATA,
                             data_key=node_output.key,
                         )
                     )
         return subtree, incoming_connections, outgoing_connections
 
-    def find_node(self, other_name):
+    def find_node(self, other_node_id):
         """
         Try to find the node with the given name in the tree.
 
@@ -1384,7 +1391,7 @@ class Node(object, metaclass=NodeMeta):
             root = root.parent
 
         for node in root.get_children_recursive():
-            if node.name == other_name:
+            if node.node_id == other_node_id:
                 return node
 
         return None
@@ -1423,9 +1430,12 @@ class Node(object, metaclass=NodeMeta):
         BehaviorTreeException if `expected_type` and the actual type of
         the data are incompatible.
         """
-        if wiring.source.node_name != self.name:
+        wiring_source_node_id = ros_to_uuid(wiring.source.node_id)
+        wiring_target_node_id = ros_to_uuid(wiring.target.node_id)
+        if wiring_source_node_id != self.node_id:
             raise KeyError(
-                f"{self.name}: Trying to subscribe to another node ({wiring.source.node_name})"
+                f"{self.node_id}: Trying to subscribe to another node "
+                f"({wiring_source_node_id})"
             )
 
         for sub, _, _ in self.subscribers:
@@ -1433,7 +1443,8 @@ class Node(object, metaclass=NodeMeta):
                 if sub.source == wiring.source:
                     raise BehaviorTreeException("Duplicate subscription!")
                 self.logwarn(
-                    f"Subscriber {wiring.target.node_name} is subscribing to multiple sources "
+                    f"Subscriber {wiring_target_node_id} "
+                    f"is subscribing to multiple sources "
                     f"with the same target {wiring.target.data_kind}[{wiring.target.data_key}]"
                 )
 
@@ -1441,23 +1452,23 @@ class Node(object, metaclass=NodeMeta):
 
         if wiring.source.data_key not in source_map:
             raise KeyError(
-                f"Source key {self.name}.{wiring.source.data_kind}[{wiring.source.data_key}] "
+                f"Source key {self.node_id}.{wiring.source.data_kind}[{wiring.source.data_key}] "
                 "does not exist!"
             )
 
         if not issubclass(source_map.get_type(wiring.source.data_key), expected_type):
             raise BehaviorTreeException(
-                f"Type of {self.name}.{wiring.source.data_kind}[{wiring.source.data_key}] "
+                f"Type of {self.node_id}.{wiring.source.data_kind}[{wiring.source.data_key}] "
                 f"({source_map.get_type(wiring.source.data_key).__name__}) is not compatible with "
                 "Type of "
-                f"{wiring.target.node_name}.{wiring.target.data_kind}[{wiring.target.data_key}] "
+                f"{wiring_target_node_id}.{wiring.target.data_kind}[{wiring.target.data_key}] "
                 f"({expected_type})!"
             )
 
         source_map.subscribe(
             wiring.source.data_key,
             new_cb,
-            f"{wiring.target.node_name}.{wiring.target.data_kind}[{wiring.target.data_key}]",
+            f"{wiring_target_node_id}.{wiring.target.data_kind}[{wiring.target.data_key}]",
         )
         self.subscribers.append((deepcopy(wiring), new_cb, expected_type))
 
@@ -1474,7 +1485,7 @@ class Node(object, metaclass=NodeMeta):
         (`wiring.source`) and the data key inside this node we want to
         connect it to (`wiring.target`).
 
-        If we cannot find a node named `wiring.source.node_name`, or the location is
+        If we cannot find a node named `wiring.source.node_id`, or the location is
         otherwise invalid, this will raise a KeyError.
 
         :param `ros_bt_py_msgs.msg.NodeDataLocation` target:
@@ -1488,20 +1499,22 @@ class Node(object, metaclass=NodeMeta):
         target exists already, or if the types of source and target data
         are incompatible.
         """
-        if wiring.target.node_name != self.name:
+        wiring_target_node_id = ros_to_uuid(wiring.target.node_id)
+        wiring_source_node_id = ros_to_uuid(wiring.source.node_id)
+        if wiring_target_node_id != self.node_id:
             raise BehaviorTreeException(
-                f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+                f"Target of wiring ({wiring_target_node_id}) is not this node ({self.node_id})"
             )
 
         for sub in self.subscriptions:
             if sub.target == wiring.target:
                 if sub.source == wiring.source:
                     raise BehaviorTreeException("Duplicate subscription!")
-        source_node = self.find_node(wiring.source.node_name)
+        source_node = self.find_node(wiring_source_node_id)
         if not source_node:
             raise BehaviorTreeException(
-                f"Source node {wiring.source.node_name} does not exist or is not connected "
-                f"to target node {self.name}"
+                f"Source node {wiring_source_node_id} does not exist or is not connected "
+                f"to target node {self.node_id}"
             )
         try:
             source_map = source_node.get_data_map(wiring.source.data_kind)
@@ -1510,7 +1523,7 @@ class Node(object, metaclass=NodeMeta):
 
         if wiring.source.data_key not in source_map:
             raise KeyError(
-                f"Source key {source_node.name}."
+                f"Source key {source_node.node_id}."
                 f"{wiring.source.data_kind}[{wiring.source.data_key}] does not exist!"
             )
 
@@ -1521,7 +1534,7 @@ class Node(object, metaclass=NodeMeta):
 
         if wiring.target.data_key not in target_map:
             raise KeyError(
-                f"Target key {self.name}."
+                f"Target key {self.node_id}."
                 f"{wiring.target.data_kind}[{wiring.target.data_key}] does not exist!"
             )
 
@@ -1545,15 +1558,17 @@ class Node(object, metaclass=NodeMeta):
         the requested key does not exist in this node.
 
         """
-        if wiring.source.node_name != self.name:
+        wiring_source_node_id = ros_to_uuid(wiring.source.node_id)
+        if wiring_source_node_id != self.node_id:
             raise KeyError(
-                f"{self.name}: Trying to unsubscribe from another node ({wiring.source.node_name})"
+                f"{self.node_id}: Trying to unsubscribe from another node "
+                f"({wiring_source_node_id})"
             )
         source_map = self.get_data_map(wiring.source.data_kind)
 
         if wiring.source.data_key not in source_map:
             raise KeyError(
-                f"Source key {self.name}."
+                f"Source key {self.node_id}."
                 f"{wiring.source.data_kind}[{wiring.source.data_key}] does not exist!"
             )
 
@@ -1578,11 +1593,13 @@ class Node(object, metaclass=NodeMeta):
         If the given wiring's source node cannot be found from this
         node.
         """
-        if wiring.target.node_name != self.name:
+        wiring_target_node_id = ros_to_uuid(wiring.target.node_id)
+        wiring_source_node_id = ros_to_uuid(wiring.source.node_id)
+        if wiring_target_node_id != self.node_id:
             raise KeyError(
-                f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+                f"Target of wiring ({wiring_target_node_id}) is not this node ({self.node_id})"
             )
-        source_node = self.find_node(wiring.source.node_name)
+        source_node = self.find_node(wiring_source_node_id)
 
         if wiring not in self.subscriptions:
             # Nothing to do
@@ -1629,7 +1646,8 @@ class Node(object, metaclass=NodeMeta):
             node_class=node_type.__name__,
             version=self.node_config.version,
             name=self.name,
-            child_names=[child.name for child in self.children],
+            node_id=uuid_to_ros(self.node_id),
+            child_node_ids=[uuid_to_ros(child.node_id) for child in self.children],
             options=[
                 NodeDataMsg(
                     key=key,

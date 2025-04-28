@@ -28,6 +28,7 @@
 from copy import deepcopy
 from threading import Lock
 from typing import Dict
+import uuid
 
 from typeguard import typechecked
 
@@ -63,7 +64,7 @@ class SubtreeManager(object):
         with self._lock:
             return deepcopy(self._subtree_info_msg)
 
-    def add_subtree_info(self, node_name: str, subtree_msg: Tree):
+    def add_subtree_info(self, node_id: uuid.UUID, subtree_msg: Tree):
         """
         Publish subtree information.
 
@@ -73,22 +74,21 @@ class SubtreeManager(object):
         only happen when the `publish_subtrees` option is set via
         `set_publish_subtrees` in :class:`TreeManager`.
 
-        :param str node_name:
+        :param uuid.UUID node_nid:
 
-        The name of the subtree node. This will be prefixed to the
-        subtree name to ensure it is unique.
+        The node_id of the subtree node.
 
         :raises: `ros_bt_py.exceptions.BehaviorTreeException`
 
         If this method is called when `publish_subtrees` is `False`.
         """
-        subtree_name = f"{node_name}"
+        subtree_node_id = node_id
         with self._lock:
             if not self._publish_subtrees:
                 raise BehaviorTreeException(
                     "Trying to add subtree info when subtree publishing is disabled!"
                 )
-            self.subtrees[subtree_name] = subtree_msg
+            self.subtrees[subtree_node_id] = subtree_msg
             self._subtree_info_msg.subtree_states = list(self.subtrees.values())
 
     def clear_subtrees(self) -> None:

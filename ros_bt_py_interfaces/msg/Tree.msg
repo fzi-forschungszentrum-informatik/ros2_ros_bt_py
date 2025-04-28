@@ -32,7 +32,7 @@ string name
 # any. Can be a file:// or a package:// string. Please don't build
 # infinite loops using this.
 string path
-string root_name
+unique_identifier_msgs/UUID root_id
 Node[] nodes
 NodeDataWiring[] data_wirings
 float64 tick_frequency_hz

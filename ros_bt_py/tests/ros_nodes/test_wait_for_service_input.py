@@ -35,15 +35,14 @@ from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py.exceptions import BehaviorTreeException
 
 
-@mock.patch("rclpy.node.Node")
-@mock.patch("rclpy.client.Client")
 @mock.patch("rclpy.clock.Clock")
+@mock.patch("rclpy.client.Client")
+@mock.patch("rclpy.node.Node")
 def test_node_success(ros_mock, client_mock, clock_mock):
     client_mock.service_is_ready.return_value = False
     ros_mock.create_client.return_value = client_mock
     clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
     ros_mock.get_clock.return_value = clock_mock
-
     unavailable_service = WaitForServiceInput(
         options={
             "service_type": RosServiceType("std_srvs/srv/SetBool"),
@@ -51,6 +50,7 @@ def test_node_success(ros_mock, client_mock, clock_mock):
         },
         ros_node=ros_mock,
     )
+    print("")
 
     assert unavailable_service is not None
     unavailable_service.setup()
@@ -69,9 +69,9 @@ def test_node_success(ros_mock, client_mock, clock_mock):
     assert ros_mock.destroy_client.called
 
 
-@mock.patch("rclpy.node.Node")
-@mock.patch("rclpy.client.Client")
 @mock.patch("rclpy.clock.Clock")
+@mock.patch("rclpy.client.Client")
+@mock.patch("rclpy.node.Node")
 def test_node_failure(ros_mock, client_mock, clock_mock):
     client_mock.service_is_ready.return_value = False
     ros_mock.create_client.return_value = client_mock

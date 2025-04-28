@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # Name of the node to remove
-string node_name
+unique_identifier_msgs/UUID node_id
 # If false, the node's children will be orphaned.
 bool remove_children
 ---

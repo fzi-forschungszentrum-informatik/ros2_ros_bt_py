@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
+import uuid
 
 from ros_bt_py.node import FlowControl, define_bt_node
 from ros_bt_py.node_config import NodeConfig
@@ -34,18 +35,22 @@ from ros_bt_py.node_config import NodeConfig
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0", options={}, inputs={"name": str}, outputs={}, max_children=None
+        version="0.1.0",
+        options={},
+        inputs={"node_id": str},
+        outputs={},
+        max_children=None,
     )
 )
 class NameSwitch(FlowControl):
     def _do_setup(self):
-        self.child_map = {child.name.split(".")[-1]: child for child in self.children}
+        self.child_map = {child.node_id for child in self.children}
         for child in self.children:
             child.setup()
 
     def _do_tick(self):
-        name = self.inputs["name"]
-        if name not in self.child_map:
+        node_id = uuid.UUID(self.inputs["node_id"])
+        if node_id not in self.child_map:
             self.logwarn("Ticking without children. Is this really what you want?")
             return NodeMsg.FAILED
 
@@ -54,11 +59,11 @@ class NameSwitch(FlowControl):
             for child in self.children:
                 child.reset()
 
-        for child_name, child in self.child_map.items():
-            if not child_name == name:
+        for child_node_id, child in self.child_map.items():
+            if not child_node_id == node_id:
                 child.untick()
 
-        return self.child_map[name].tick()
+        return self.child_map[node_id].tick()
 
     def _do_untick(self):
         for child in self.children:

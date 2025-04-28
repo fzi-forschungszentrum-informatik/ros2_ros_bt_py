@@ -42,6 +42,8 @@ from rclpy.logging import get_logger
 import yaml
 import yaml.scanner
 from typeguard import typechecked
+import uuid
+from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 
 
 from ros_bt_py_interfaces.msg import (
@@ -91,7 +93,7 @@ from ros_bt_py.helpers import (
     json_encode,
     json_decode,
 )
-from ros_bt_py.node import Node, load_node_module, increment_name
+from ros_bt_py.node import Node, load_node_module
 from ros_bt_py.node_config import OptionRef
 
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
@@ -430,11 +432,11 @@ class TreeManager:
         """
         if self.tree_msg.name:
             self.diagnostic_status.name = os.path.splitext(self.tree_msg.name)[0]
-        elif self.tree_msg.root_name:
-            self.diagnostic_status.name = self.tree_msg.root_name
+        elif ros_to_uuid(self.tree_msg.root_id):
+            self.diagnostic_status.name = str(ros_to_uuid(self.tree_msg.root_id))
             get_logger("tree_manager").get_child(self.name).warn(
                 "No tree name was found. Diagnostics data from the behavior tree will be"
-                f"published under the name of the root_node: {self.tree_msg.root_name}"
+                f"published under the name of the root_node: {self.tree_msg.root_id}"
             )
         else:
             self.diagnostic_status.name = ""
@@ -548,9 +550,9 @@ class TreeManager:
 
         # First check for nodes with missing parents
         orphans = [
-            f'"{node.name}"(parent: {node.parent.name if node.parent else ""}")'
+            f'"{node.node_id}"(parent: {node.parent.node_id if node.parent else ""}")'
             for node in self.nodes.values()
-            if node.parent and node.parent.name not in self.nodes
+            if node.parent and node.parent.node_id not in self.nodes
         ]
         if orphans:
             raise MissingParentError(
@@ -563,7 +565,7 @@ class TreeManager:
             )
             return
         with self._state_lock:
-            self.tree_msg.root_name = root.name
+            self.tree_msg.root_id = uuid_to_ros(root.node_id)
         if root.state in (NodeMsg.UNINITIALIZED, NodeMsg.SHUTDOWN):
             root.setup()
             if root.state is not NodeMsg.IDLE:
@@ -633,25 +635,25 @@ class TreeManager:
 
     def find_nodes_in_cycles(self):
         """Return a list of all nodes in the tree that are part of cycles."""
-        safe_node_names = []
+        safe_node_ids = []
         nodes_in_cycles = []
-        # Follow the chain of parent nodes for each node name in self.nodes
-        for starting_name in self.nodes:
-            cycle_candidates = [starting_name]
-            current_node = self.nodes[starting_name]
+        # Follow the chain of parent nodes for each node_id in self.nodes
+        for starting_id in self.nodes:
+            cycle_candidates = [starting_id]
+            current_node = self.nodes[starting_id]
             while current_node.parent:
-                current_node = self.nodes[current_node.parent.name]
-                cycle_candidates.append(current_node.name)
-                if current_node.name == starting_name:
+                current_node = self.nodes[current_node.parent.node_id]
+                cycle_candidates.append(current_node.node_id)
+                if current_node.node_id == starting_id:
                     nodes_in_cycles.extend(cycle_candidates)
                     break
-                if current_node.name in safe_node_names:
+                if current_node.node_id in safe_node_ids:
                     # We've already checked for cycles from the parent node, no
                     # need to do that again.
-                    safe_node_names.extend(cycle_candidates)
+                    safe_node_ids.extend(cycle_candidates)
                     break
             if not current_node.parent:
-                safe_node_names.extend(cycle_candidates)
+                safe_node_ids.extend(cycle_candidates)
 
         return nodes_in_cycles
 
@@ -734,12 +736,6 @@ class TreeManager:
         load that.
 
         :param str prefix:
-
-        If set, all node names in the tree will be prefixed with this string.
-
-        This is used by the subtree node (using its own name as a
-        prefix, since that must be unique in the tree) to ensure
-        unique node names for easier debugging.
         """
         migrate_tree_request = MigrateTree.Request()
         migrate_tree_request.tree = request.tree
@@ -758,16 +754,7 @@ class TreeManager:
         else:
             prefix += "."
         # we should have a tree message with all the info we need now
-        # prefix all the node names, if prefix is not the empty string
         tree.name = prefix[:-1]
-        for node in tree.nodes:
-            node.name = prefix + node.name
-            node.child_names = [prefix + child_name for child_name in node.child_names]
-        for wiring in tree.data_wirings:
-            wiring.source.node_name = prefix + wiring.source.node_name
-            wiring.target.node_name = prefix + wiring.target.node_name
-        for public_datum in tree.public_node_data:
-            public_datum.node_name = prefix + public_datum.node_name
 
         for public_datum in tree.public_node_data:
             if public_datum.data_kind == NodeDataLocation.OPTION_DATA:
@@ -788,23 +775,23 @@ class TreeManager:
                 node
                 for node in tree.nodes
                 if (
-                    node.name not in self.nodes
-                    and all((name in self.nodes for name in node.child_names))
+                    node.node_id not in self.nodes
+                    and all((node_id in self.nodes for node_id in node.child_node_ids))
                 )
             ):
                 try:
                     instance = self.instantiate_node_from_msg(
                         node_msg=node,
                         ros_node=self.ros_node,
-                        allow_rename=False,
+                        generate_new_id=False,
                         permissive=request.permissive,
                     )
                     instance.simulate_tick = self.simulate_tick
                     instance.succeed_always = self.succeed_always
 
-                    for child_name in node.child_names:
-                        instance.add_child(self.nodes[child_name])
-                    self.nodes[node.name] = instance
+                    for child_node_id in node.child_node_ids:
+                        instance.add_child(self.nodes[child_node_id])
+                    self.nodes[node.node_id] = instance
                     added += 1
                 except BehaviorTreeException as exc:
                     response.success = False
@@ -847,7 +834,7 @@ class TreeManager:
         root = self.find_root()
         with self._state_lock:
             if root:
-                self.tree_msg.root_name = root.name
+                self.tree_msg.root_id = uuid_to_ros(root.node_id)
 
         response.success = True
         self.publish_info(
@@ -1269,9 +1256,9 @@ class TreeManager:
           A request describing the node to add.
         """
         internal_request = AddNodeAtIndex.Request(
-            parent_name=request.parent_name,
+            parent_node_id=ros_to_uuid(request.parent_node_id),
             node=request.node,
-            allow_rename=request.allow_rename,
+            generate_new_id=ros_to_uuid(request.generate_new_id),
             new_child_index=-1,
         )
         internal_response = AddNodeAtIndex.Response()
@@ -1281,7 +1268,7 @@ class TreeManager:
 
         response.success = internal_response.success
         response.error_message = internal_response.error_message
-        response.actual_node_name = internal_response.actual_node_name
+        response.actual_node_id = internal_response.actual_node_id
         return response
 
     @is_edit_service
@@ -1298,12 +1285,13 @@ class TreeManager:
             instance = self.instantiate_node_from_msg(
                 node_msg=request.node,
                 ros_node=self.ros_node,
-                allow_rename=request.allow_rename,
+                generate_new_id=request.generate_new_id,
             )
             response.success = True
-            response.actual_node_name = instance.name
+            response.actual_node_id = uuid_to_ros(instance.node_id)
         except Exception as exc:
             response.success = False
+
             response.error_message = str(exc)
             return response
 
@@ -1311,42 +1299,46 @@ class TreeManager:
         instance.simulate_tick = self.simulate_tick
 
         # Add node as child of the named parent, if any
-        if request.parent_name:
-            if request.parent_name not in self.nodes:
+        parent_node_id = ros_to_uuid(request.parent_node_id)
+        if parent_node_id:
+            if parent_node_id not in self.nodes:
                 response.success = False
                 response.error_message = (
-                    f"Parent {request.parent_name} of node "
-                    f"{instance.name} does not exist!"
+                    f"Parent {parent_node_id} of node "
+                    f"{instance.node_id} does not exist!"
                 )
                 # Remove node from tree
                 self.remove_node(
                     request=RemoveNode.Request(
-                        node_name=instance.name, remove_children=False
+                        node_id=uuid_to_ros(instance.node_id), remove_children=False
                     ),
                     response=RemoveNode.Response(),
                 )
                 return response
-            self.nodes[request.parent_name].add_child(
+            self.nodes[parent_node_id].add_child(
                 child=instance, at_index=request.new_child_index
             )
 
         # Add children from msg to node
         missing_children = []
-        for child_name in request.node.child_names:
-            if child_name in self.nodes:
-                instance.add_child(self.nodes[child_name])
+        child_node_ids = [
+            ros_to_uuid(node_id) for node_id in request.node.child_node_ids
+        ]
+        for child_node_id in child_node_ids:
+            if child_node_id in self.nodes:
+                instance.add_child(self.nodes[child_node_id])
             else:
-                missing_children.append(child_name)
+                missing_children.append(child_node_id)
         if missing_children:
             response.success = False
             response.error_message = (
-                f"Children for node {instance.name} are not "
+                f"Children for node {instance.node_id} are not "
                 f"in tree: {str(missing_children)}"
             )
             # Remove node from tree to restore state before insertion attempt
             self.remove_node(
                 request=RemoveNode.Request(
-                    node_name=instance.name, remove_children=False
+                    node_id=uuid_to_ros(instance.node_id), remove_children=False
                 ),
                 response=RemoveNode.Response(),
             )
@@ -1356,18 +1348,18 @@ class TreeManager:
             response.success = False
             response.error_message = (
                 f"Found cycles in tree {self.tree_msg.name} after inserting node "
-                f"{request.node.name} as {response.actual_node_name}. "
+                f"{ros_to_uuid(request.node.node_id)} as {ros_to_uuid(response.actual_node_id)}. "
                 f"Nodes in cycles: {str(nodes_in_cycles)}"
             )
             # First, remove all of the node's children to avoid infinite
             # recursion in remove_node()
-            for child_name in [c.name for c in instance.children]:
-                instance.remove_child(child_name)
+            for child_node_id in [c.node_id for c in instance.children]:
+                instance.remove_child(child_node_id)
 
             # Then remove the node from the tree
             self.remove_node(
                 request=RemoveNode.Request(
-                    node_name=instance.name, remove_children=False
+                    node_id=uuid_to_ros(instance.node_id), remove_children=False
                 ),
                 response=RemoveNode.Response(),
             )
@@ -1415,45 +1407,46 @@ class TreeManager:
         self, request: RemoveNode.Request, response: RemoveNode.Response
     ) -> RemoveNode.Response:
         """
-        Remove the node identified by `request.node_name` from the tree.
+        Remove the node identified by `request.node_id` from the tree.
 
         If the parent of the node removed supports enough children to
         take on all of the removed node's children, it will. Otherwise,
         children will be orphaned.
         """
-        if request.node_name not in self.nodes:
+        request_node_id = ros_to_uuid(request.node_id)
+        if request_node_id not in self.nodes:
             response.success = False
             response.error_message = (
-                f"No node with name {request.node_name} in tree {self.tree_msg.name}"
+                f"No node with name {request_node_id} in tree {self.tree_msg.name}"
             )
             return response
 
         # Shutdown node - this should also shutdown all children, but you
         # never know, so check later.
-        self.nodes[request.node_name].shutdown()
-        names_to_remove = [request.node_name]
+        self.nodes[request_node_id].shutdown()
+        node_ids_to_remove = [request_node_id]
         if request.remove_children:
-            add_children_of = [request.node_name]
+            add_children_of = [request_node_id]
             children_added = set()
             while add_children_of:
-                name = add_children_of.pop()
-                if name not in self.nodes:
+                node_id = add_children_of.pop()
+                if node_id not in self.nodes:
                     response.success = False
                     response.error_message = (
-                        f"Error while removing children of node {request.node_name}: "
-                        f"No node with name {name} in tree {self.tree_msg.name}"
+                        f"Error while removing children of node {request_node_id}: "
+                        f"No node with name id {node_id} in tree {self.tree_msg.name}"
                     )
                     return response
-                if name not in children_added:
-                    names_to_remove.extend(
-                        [child.name for child in self.nodes[name].children]
+                if node_id not in children_added:
+                    node_ids_to_remove.extend(
+                        [child.node_id for child in self.nodes[node_id].children]
                     )
                     add_children_of.extend(
-                        [child.name for child in self.nodes[name].children]
+                        [child.node_id for child in self.nodes[node_id].children]
                     )
         else:
             # If we're not removing the children, at least set their parent to None
-            for child in self.nodes[request.node_name].children:
+            for child in self.nodes[request_node_id].children:
                 child.parent = None
 
         # Unwire wirings that have removed nodes as source or target
@@ -1463,8 +1456,8 @@ class TreeManager:
                     wiring
                     for wiring in self.tree_msg.data_wirings
                     if (
-                        wiring.source.node_name in names_to_remove
-                        or wiring.target.node_name in names_to_remove
+                        ros_to_uuid(wiring.source.node_id) in node_ids_to_remove
+                        or ros_to_uuid(wiring.target.node_id) in node_ids_to_remove
                     )
                 ]
             ),
@@ -1478,44 +1471,47 @@ class TreeManager:
         # set to prevent us from removing a node twice - no node
         # *should* have more than one parent, but better safe than
         # sorry
-        removed_names = set()
-        for name in reversed(names_to_remove):
-            if name in removed_names:
+        removed_node_ids = set()
+        for node_id in reversed(node_ids_to_remove):
+            if node_id in removed_node_ids:
                 continue
-            removed_names.add(name)
+            removed_node_ids.add(node_id)
             # Check if node is already in shutdown state. If not, call
             # shutdown, but warn, because the parent node should have
             # done that!
-            if self.nodes[name].state != NodeMsg.SHUTDOWN:
+            if self.nodes[node_id].state != NodeMsg.SHUTDOWN:
                 # It's reasonable to expect parent to not be None here, since
                 # the node is one of a list of children
-                parent_name = self.nodes[name].parent.name
+                parent_node_id = self.nodes[node_id].parent.node_id
                 get_logger("tree_manager").get_child(self.name).warn(
-                    f"Node {name} was not shut down. Check parent node {parent_name} "
-                    f"({type(self.nodes[parent_name]).__name__}) "
+                    f"Node {node_id} was not shut down. Check parent node {parent_node_id} "
+                    f"({type(self.nodes[parent_node_id]).__name__}) "
                     f"for proper implementation of _do_shutdown()",
                 )
-                self.nodes[name].shutdown()
+                self.nodes[node_id].shutdown()
 
             # If we have a parent, remove the node from that parent
-            if self.nodes[name].parent and self.nodes[name].parent.name in self.nodes:
-                self.nodes[self.nodes[name].parent.name].remove_child(name)
-            del self.nodes[name]
+            if (
+                self.nodes[node_id].parent
+                and self.nodes[node_id].parent.node_id in self.nodes
+            ):
+                self.nodes[self.nodes[node_id].parent.node_id].remove_child(node_id)
+            del self.nodes[node_id]
 
         # Keep tree_msg up-to-date
         self.tree_msg.data_wirings = [
             wiring
             for wiring in self.tree_msg.data_wirings
             if (
-                wiring.source.node_name not in names_to_remove
-                and wiring.target.node_name not in names_to_remove
+                ros_to_uuid(wiring.source.node_node_id) not in node_ids_to_remove
+                and ros_to_uuid(wiring.target.node_id) not in node_ids_to_remove
             )
         ]
 
         self.tree_msg.public_node_data = [
             data
             for data in self.tree_msg.public_node_data
-            if data.node_name not in names_to_remove
+            if data.node_id not in node_ids_to_remove
         ]
 
         response.success = True
@@ -1531,14 +1527,15 @@ class TreeManager:
         self, request: MorphNode.Request, response: MorphNode.Response
     ) -> MorphNode.Response:
         """Morphs the flow control node into the new node provided in `request.new_node`."""
-        if request.node_name not in self.nodes:
+        request_node_id = ros_to_uuid(request.node_id)
+        if request_node_id not in self.nodes:
             response.success = False
             response.error_message = (
-                f"No node with name {request.node_name} in tree {self.tree_msg.name}"
+                f"No node with name {request_node_id} in tree {self.tree_msg.name}"
             )
             return response
 
-        old_node = self.nodes[request.node_name]
+        old_node = self.nodes[request_node_id]
 
         try:
             new_node = Node.from_msg(request.new_node, ros_node=self.ros_node)
@@ -1552,7 +1549,11 @@ class TreeManager:
             wirings=[
                 wiring
                 for wiring in self.tree_msg.data_wirings
-                if old_node.name in [wiring.source.node_name, wiring.target.node_name]
+                if old_node.node_id
+                in [
+                    ros_to_uuid(wiring.source.node_id),
+                    ros_to_uuid(wiring.target.node_id),
+                ]
             ]
         )
 
@@ -1562,7 +1563,7 @@ class TreeManager:
             return MorphNode.Response(
                 success=False,
                 error_message=(
-                    f"Failed to unwire data for node {old_node.name}: "
+                    f"Failed to unwire data for node {old_node.node_id}: "
                     f"{get_error_message(unwire_resp)}"
                 ),
             )
@@ -1572,22 +1573,23 @@ class TreeManager:
             parent = old_node.parent
             # Remember the old index so we can insert the new instance at
             # the same position
-            old_child_index = parent.get_child_index(old_node.name)
+            old_child_index = parent.get_child_index(old_node.node_id)
 
             if old_child_index is None:
                 return MorphNode.Response(
                     success=False,
                     error_message=(
-                        f"Parent of node {old_node.name} claims to have no child with that name?!"
+                        f"Parent of node {old_node.node_id} claims to have no child "
+                        f"with that node id?!"
                     ),
                 )
-            parent.remove_child(old_node.name)
+            parent.remove_child(old_node.node_id)
 
             try:
                 parent.add_child(new_node, at_index=old_child_index)
             except (KeyError, BehaviorTreeException) as ex:
                 error_message = (
-                    f"Failed to add new instance of node {old_node.name}: {str(ex)}"
+                    f"Failed to add new instance of node {old_node.node_id}: {str(ex)}"
                 )
                 try:
                     parent.add_child(old_node, at_index=old_child_index)
@@ -1609,14 +1611,14 @@ class TreeManager:
                 return MorphNode.Response(success=False, error_message=error_message)
 
         # Move the children from old to new
-        for child_name in [child.name for child in old_node.children]:
-            child = old_node.remove_child(child_name)
-            if child_name != new_node.name:
+        for child_node_id in [child.node_id for child in old_node.children]:
+            child = old_node.remove_child(child_node_id)
+            if child_node_id != new_node.node_id:
                 new_node.add_child(child)
 
         # Add the new node to self.nodes
-        del self.nodes[old_node.name]
-        self.nodes[new_node.name] = new_node
+        del self.nodes[old_node.node_id]
+        self.nodes[new_node.node_id] = new_node
 
         # Re-wire all the data, just as it was before
         # FIXME: this should be a best-effort rewiring, only re-wire identical input/outputs
@@ -1626,7 +1628,7 @@ class TreeManager:
         rewire_resp = self.wire_data(request=new_wire_request, response=rewire_resp)
         if not get_success(rewire_resp):
             response.error_message = (
-                f"Failed to re-wire data to new node {new_node.name}:"
+                f"Failed to re-wire data to new node {new_node.node_id}:"
                 f" {get_error_message(rewire_resp)}"
             )
             response.success = False
@@ -1650,29 +1652,17 @@ class TreeManager:
         This is an "edit service", i.e. it can only be used when the
         tree has not yet been initialized or has been shut down.
         """
-        if request.node_name not in self.nodes:
+        request_node_id = ros_to_uuid(request.node_id)
+        if request_node_id not in self.nodes:
             return SetOptions.Response(
                 success=False,
                 error_message=(
-                    f"Unable to find node {request.node_name} in tree "
+                    f"Unable to find node {request_node_id} in tree "
                     f"{self.tree_msg.name}"
                 ),
             )
 
-        if (
-            request.rename_node
-            and request.new_name != request.node_name
-            and request.new_name in self.nodes
-        ):
-            return SetOptions.Response(
-                success=False,
-                error_message=(
-                    f"Unable to rename node {request.node_name} to {request.new_name} "
-                    "- a node with that name exists already."
-                ),
-            )
-
-        node = self.nodes[request.node_name]
+        node = self.nodes[request_node_id]
         unknown_options = []
         preliminary_incompatible_options = []
         try:
@@ -1776,6 +1766,7 @@ class TreeManager:
             debug_manager=node.debug_manager,
             subtree_manager=node.subtree_manager,
             ros_node=self.ros_node,
+            node_id=node.node_id,
         )
 
         # Use this request to unwire any data connections the existing
@@ -1788,7 +1779,11 @@ class TreeManager:
             wirings=[
                 wiring
                 for wiring in self.tree_msg.data_wirings
-                if node.name in [wiring.source.node_name, wiring.target.node_name]
+                if node.node_id
+                in [
+                    ros_to_uuid(wiring.source.node_id),
+                    ros_to_uuid(wiring.target.node_id),
+                ]
             ]
         )
 
@@ -1798,7 +1793,7 @@ class TreeManager:
             return SetOptions.Response(
                 success=False,
                 error_message=(
-                    f"Failed to unwire data for node {node.name}: "
+                    f"Failed to unwire data for node {node.node_id}: "
                     f"{get_error_message(unwire_resp)}"
                 ),
             )
@@ -1808,22 +1803,22 @@ class TreeManager:
             parent = node.parent
             # Remember the old index so we can insert the new instance at
             # the same position
-            old_child_index = parent.get_child_index(node.name)
+            old_child_index = parent.get_child_index(node.node_id)
 
             if old_child_index is None:
                 return SetOptions.Response(
                     success=False,
                     error_message=(
-                        f"Parent of node {node.name} claims to "
+                        f"Parent of node {node.node_id} claims to "
                         f"have no child with that name?!"
                     ),
                 )
 
             try:
-                parent.remove_child(node.name)
+                parent.remove_child(node.node_id)
             except KeyError as ex:
                 error_message = (
-                    f"Failed to remove old instance of node {node.name}: {str(ex)}"
+                    f"Failed to remove old instance of node {node.node_id}: {str(ex)}"
                 )
                 rewire_resp = WireNodeData.Response()
                 rewire_resp = self.wire_data(request=wire_request, response=rewire_resp)
@@ -1840,7 +1835,7 @@ class TreeManager:
                 parent.add_child(new_node, at_index=old_child_index)
             except (KeyError, BehaviorTreeException) as ex:
                 error_message = (
-                    f"Failed to add new instance of node {node.name}: {str(ex)}"
+                    f"Failed to add new instance of node {node.node_id}: {str(ex)}"
                 )
                 try:
                     parent.add_child(node, at_index=old_child_index)
@@ -1862,33 +1857,33 @@ class TreeManager:
                 return SetOptions.Response(success=False, error_message=error_message)
 
         # Add the new node to self.nodes
-        del self.nodes[node.name]
-        self.nodes[new_node.name] = new_node
+        del self.nodes[node.node_id]
+        self.nodes[new_node.node_id] = new_node
 
         # Re-wire all the data, just as it was before
         new_wire_request = deepcopy(wire_request)
         if request.rename_node:
             for wiring in new_wire_request.wirings:
-                if wiring.source.node_name == node.name:
-                    wiring.source.node_name = new_node.name
-                if wiring.target.node_name == node.name:
-                    wiring.target.node_name = new_node.name
+                if ros_to_uuid(wiring.source.node_id) == node.node_id:
+                    wiring.source.node_id = uuid_to_ros(new_node.node_id)
+                if ros_to_uuid(wiring.target.node_id) == node.node_id:
+                    wiring.target.node_id = uuid_to_ros(new_node.node_id)
 
         rewire_resp = WireNodeData.Response()
         rewire_resp = self.wire_data(request=new_wire_request, response=rewire_resp)
         if not get_success(rewire_resp):
             error_message = (
-                f"Failed to re-wire data to new node {new_node.name}: "
+                f"Failed to re-wire data to new node {new_node.node_id}: "
                 f"{get_error_message(rewire_resp)}"
             )
             # Try to undo everything, starting with removing the new
             # node from the node dict
-            del self.nodes[new_node.name]
-            self.nodes[node.name] = node
+            del self.nodes[new_node.node_id]
+            self.nodes[node.node_id] = node
 
             if parent is not None:
                 try:
-                    parent.remove_child(new_node.name)
+                    parent.remove_child(new_node.node_id)
                     parent.add_child(node, at_index=old_child_index)
                 except (KeyError, BehaviorTreeException) as ex:
                     error_message += f"\nError restoring old node: {str(ex)}"
@@ -1900,7 +1895,7 @@ class TreeManager:
             )
             if not get_success(recovery_wire_response):
                 error_message += (
-                    f"\nFailed to re-wire data to restored node {node.name}: "
+                    f"\nFailed to re-wire data to restored node {node.node_id}: "
                     f"{get_error_message(recovery_wire_response)}"
                 )
                 self.set_state(Tree.ERROR)
@@ -1911,11 +1906,11 @@ class TreeManager:
             # This line is important: The list comprehension creates a
             # new list that won't be affected by calling
             # remove_child()!
-            for child_name in [child.name for child in node.children]:
+            for child_node_id in [child.node_id for child in node.children]:
                 get_logger("tree_manager").get_child(self.name).info(
-                    f"Moving child {child_name}"
+                    f"Moving child {child_node_id}"
                 )
-                new_node.add_child(node.remove_child(child_name))
+                new_node.add_child(node.remove_child(child_node_id))
         except BehaviorTreeException as exc:
             self.set_state(Tree.ERROR)
 
@@ -1937,17 +1932,19 @@ class TreeManager:
         self, request: MoveNode.Request, response: MoveNode.Response
     ) -> MoveNode.Response:
         """Move the named node to a different parent and insert it at the given index."""
-        if request.node_name not in self.nodes:
+        request_node_id = ros_to_uuid(request.node_id)
+        if request_node_id not in self.nodes:
             return MoveNode.Response(
                 success=False,
-                error_message=f'Node to be moved ("{request.node_name}") is not in tree.',
+                error_message=f'Node to be moved ("{request_node_id}") is not in tree.',
             )
 
         # Empty parent name -> just remove node from parent
-        if request.new_parent_name == "":
-            node = self.nodes[request.node_name]
+        request_new_parent_node_id = ros_to_uuid(request.new_parent_node_id)
+        if request_new_parent_node_id == uuid.UUID(int=0):
+            node = self.nodes[request_node_id]
             if node.parent is not None:
-                node.parent.remove_child(node.name)
+                node.parent.remove_child(node.node_id)
             self.publish_info(
                 subtree_info_msg=self.subtree_manager.get_subtree_info_msg()
                 if self.subtree_manager is not None
@@ -1955,25 +1952,25 @@ class TreeManager:
             )
             return MoveNode.Response(success=True)
 
-        if request.new_parent_name not in self.nodes:
+        if ros_to_uuid(request.new_parent_node_id) not in self.nodes:
             return MoveNode.Response(
                 success=False,
-                error_message=f'New parent ("{request.new_parent_name}") is not in tree.',
+                error_message=f'New parent ("{request_new_parent_node_id}") is not in tree.',
             )
 
         new_parent_max_children = self.nodes[
-            request.new_parent_name
+            request_new_parent_node_id
         ].node_config.max_children
         if (
             new_parent_max_children is not None
-            and len(self.nodes[request.new_parent_name].children)
+            and len(self.nodes[request_new_parent_node_id].children)
             == new_parent_max_children
         ):
             return MoveNode.Response(
                 success=False,
                 error_message=(
-                    f"Cannot move node {request.node_name} to new parent node "
-                    f"{request.new_parent_name}. "
+                    f"Cannot move node {request_node_id} to new parent node "
+                    f"{request.new_parent_node_id}. "
                     "Parent node already has the maximum number "
                     f"of children ({new_parent_max_children})."
                 ),
@@ -1981,27 +1978,27 @@ class TreeManager:
 
         # If the new parent is part of the moved node's subtree, we'd
         # get a cycle, so check for that and fail if true!
-        if request.new_parent_name in [
-            subtree_node.name
-            for subtree_node in self.nodes[request.node_name].get_subtree_msg()[0].nodes
+        if request_new_parent_node_id in [
+            ros_to_uuid(subtree_node.node_id)
+            for subtree_node in self.nodes[request.node_id].get_subtree_msg()[0].nodes
         ]:
             return MoveNode.Response(
                 success=False,
                 error_message=(
-                    f"Cannot move node {request.node_name} to new parent node "
-                    f"{request.new_parent_name}. "
-                    f"{request.new_parent_name} is a child of {request.node_name}!"
+                    f"Cannot move node {request_node_id} to new parent node "
+                    f"{request_new_parent_node_id}. "
+                    f"{request_new_parent_node_id} is a child of {request_node_id}!"
                 ),
             )
 
         # Remove node from old parent, if any
-        old_parent = self.nodes[request.node_name].parent
+        old_parent = self.nodes[request_node_id].parent
         if old_parent is not None:
-            old_parent.remove_child(request.node_name)
+            old_parent.remove_child(request_node_id)
 
         # Add node to new parent
-        self.nodes[request.new_parent_name].add_child(
-            child=self.nodes[request.node_name], at_index=request.new_child_index
+        self.nodes[request_new_parent_node_id].add_child(
+            child=self.nodes[request_node_id], at_index=request.new_child_index
         )
 
         self.publish_info(
@@ -2022,22 +2019,22 @@ class TreeManager:
         only if `new_node` supports that number of children. Otherwise,
         this will return an error and leave the tree unchanged.
         """
-        if request.old_node_name not in self.nodes:
+        request_old_node_id = ros_to_uuid(request.old_node_id)
+        request_new_node_id = ros_to_uuid(request.new_node_id)
+        if request_old_node_id not in self.nodes:
             return ReplaceNode.Response(
                 success=False,
-                error_message=f'Node to be replaced ("{request.old_node_name}") is not in tree.',
+                error_message=f'Node to be replaced ("{request_old_node_id}") is not in tree.',
             )
-        if request.new_node_name not in self.nodes:
+        if request_new_node_id not in self.nodes:
             return ReplaceNode.Response(
                 success=False,
-                error_message=f'Replacement node ("{request.new_node_name}") is not in tree.',
+                error_message=f'Replacement node ("{request_new_node_id}") is not in tree.',
             )
 
-        old_node = self.nodes[request.old_node_name]
+        old_node = self.nodes[request_old_node_id]
 
-        new_node_max_children = self.nodes[
-            request.new_node_name
-        ].node_config.max_children
+        new_node_max_children = self.nodes[request_new_node_id].node_config.max_children
         # We're *replacing* one of the children, so there should only
         # be an issue if there were too many children before. Which
         # shouldn't happen. But you know, better safe than sorry!
@@ -2048,10 +2045,10 @@ class TreeManager:
             return ReplaceNode.Response(
                 success=False,
                 error_message=(
-                    f'Replacement node ("{request.new_node_name}") does not support the number of'
-                    f"children required ({request.old_node_name} has "
+                    f'Replacement node ("{request_new_node_id}") does not support the number of'
+                    f"children required ({request_old_node_id} has "
                     f"{len(old_node.children)} children, "
-                    f"{request.new_node_name} supports {new_node_max_children}."
+                    f"{request_new_node_id} supports {new_node_max_children}."
                 ),
             )
 
@@ -2069,12 +2066,12 @@ class TreeManager:
         old_node_child_index = 0
         if old_node_parent is not None:
             for index, child in enumerate(old_node_parent.children):
-                if child.name == request.old_node_name:
+                if child.node_id == request.old_node_id:
                     old_node_child_index = index
                     break
 
         # Get the new node
-        new_node = self.nodes[request.new_node_name]
+        new_node = self.nodes[request_new_node_id]
 
         # If it has the same parent as the old node, check its index, too.
         #
@@ -2097,25 +2094,25 @@ class TreeManager:
         if (
             new_node.parent is not None
             and old_node_parent is not None
-            and new_node.parent.name == old_node_parent.name
+            and new_node.parent.node_id == old_node_parent.node_id
             and old_node_child_index > 0
         ):
             for index, child in enumerate(new_node.parent.children):
-                if child.name == request.new_node_name:
+                if child.node_id == request_new_node_id:
                     if index < old_node_child_index:
                         old_node_child_index -= 1
                     break
 
         # Move the children from old to new
-        for child_name in [child.name for child in old_node.children]:
-            child = old_node.remove_child(child_name)
-            if child_name != new_node.name:
+        for child_node_id in [child.node_id for child in old_node.children]:
+            child = old_node.remove_child(child_node_id)
+            if child_node_id != new_node.node_id:
                 new_node.add_child(child)
         # Remove the old node (we just moved the children, so we can
         # set remove_children to True)
         res = RemoveNode.Response()
         res = self.remove_node(
-            RemoveNode.Request(node_name=request.old_node_name, remove_children=True),
+            RemoveNode.Request(node_id=request.old_node_id, remove_children=True),
             res,
         )
 
@@ -2135,8 +2132,8 @@ class TreeManager:
         if old_node_parent is not None:
             self.move_node(
                 MoveNode.Request(
-                    node_name=request.new_node_name,
-                    new_parent_name=old_node_parent.name,
+                    node_id=request.new_node_id,
+                    new_parent_node_id=old_node_parent.node_id,
                     new_child_index=old_node_child_index,
                 ),
                 MoveNode.Response(),
@@ -2174,11 +2171,11 @@ class TreeManager:
 
         successful_wirings = []
         for wiring in request.wirings:
-            target_node = root.find_node(wiring.target.node_name)
+            target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
             if not target_node:
                 response.success = False
                 response.error_message = (
-                    f"Target node {wiring.target.node_name} does not exist"
+                    f"Target node {ros_to_uuid(wiring.target.node_id)} does not exist"
                 )
                 break
             try:
@@ -2195,7 +2192,7 @@ class TreeManager:
         if not response.success:
             # Undo the successful wirings
             for wiring in successful_wirings:
-                target_node = root.find_node(wiring.target.node_name)
+                target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
                 try:
                     target_node.unwire_data(wiring)
                 except (KeyError, BehaviorTreeException) as ex:
@@ -2249,11 +2246,11 @@ class TreeManager:
 
         successful_unwirings = []
         for wiring in request.wirings:
-            target_node = root.find_node(wiring.target.node_name)
+            target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
             if not target_node:
                 response.success = False
                 response.error_message = (
-                    f"Target node {wiring.target.node_name} does not exist"
+                    f"Target node {ros_to_uuid(wiring.target.node_id)} does not exist"
                 )
                 break
             try:
@@ -2269,7 +2266,7 @@ class TreeManager:
         if not response.success:
             # Re-Wire the successful unwirings
             for wiring in successful_unwirings:
-                target_node = root.find_node(wiring.target.node_name)
+                target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
                 try:
                     target_node.wire_data(wiring)
                 except (KeyError, BehaviorTreeException) as ex:
@@ -2302,23 +2299,19 @@ class TreeManager:
     def get_subtree(
         self, request: GetSubtree.Request, response: GetSubtree.Response
     ) -> GetSubtree.Response:
-        if request.subtree_root_name not in self.nodes:
+        subtree_root_id = ros_to_uuid(request.subtree_root_id)
+        if subtree_root_id not in self.nodes:
             response.success = False
-            response.error_message = (
-                f'Node "{request.subtree_root_name}" does not exist!'
-            )
+            response.error_message = f'Node "{subtree_root_id}" does not exist!'
             return response
         try:
             response.success = (True,)
-            response.subtree = (
-                self.nodes[request.subtree_root_name].get_subtree_msg()[0],
-            )
+            response.subtree = (self.nodes[subtree_root_id].get_subtree_msg()[0],)
             return response
         except BehaviorTreeException as exc:
             response.success = False
             response.error_message = (
-                "Error retrieving subtree rooted at "
-                f"{request.subtree_root_name}: {str(exc)}"
+                "Error retrieving subtree rooted at " f"{subtree_root_id}: {str(exc)}"
             )
             return response
 
@@ -2341,14 +2334,17 @@ class TreeManager:
         else:
             nodes = set()
             for node in whole_tree.nodes:
-                nodes.add(node.name)
+                nodes.add(node.node_id)
 
             nodes_to_keep = set()
             nodes_to_remove = set()
             for node in whole_tree.nodes:
                 for search_node in request.nodes:
-                    if node.name == search_node or search_node in node.child_names:
-                        nodes_to_keep.add(node.name)
+                    if (
+                        node.node_id == search_node
+                        or search_node in node.child_node_ids
+                    ):
+                        nodes_to_keep.add(node.node_id)
 
             for node in nodes:
                 if node not in nodes_to_keep:
@@ -2369,9 +2365,9 @@ class TreeManager:
             )
 
             if load_response.success:
-                for node_name in nodes_to_remove:
+                for node_id in nodes_to_remove:
                     manager.remove_node(
-                        RemoveNode.Request(node_name=node_name, remove_children=False),
+                        RemoveNode.Request(node_id=node_id, remove_children=False),
                         RemoveNode.Response(),
                     )
                 root = manager.find_root()
@@ -2380,7 +2376,7 @@ class TreeManager:
                         "No nodes in tree"
                     )
                 else:
-                    manager.tree_msg.root_name = root.name
+                    manager.tree_msg.root_id = uuid_to_ros(root.node_id)
                 response.success = True
                 response.tree = manager.to_msg()
         return response
@@ -2392,7 +2388,7 @@ class TreeManager:
     def instantiate_node_from_msg(
         self,
         node_msg: NodeMsg,
-        allow_rename: bool,
+        generate_new_id: bool,
         ros_node: rclpy.node.Node,
         permissive: bool = False,
     ) -> Node:
@@ -2409,22 +2405,12 @@ class TreeManager:
         except AttributeError as exc:
             raise BehaviorTreeException(str(exc))
 
-        if node_instance.name in self.nodes:
-            if allow_rename:
-                node_instance.name = self.make_name_unique(node_instance.name)
-            else:
-                raise BehaviorTreeException(
-                    f'Node with name "{node_instance.name}" exists already'
-                )
-
-        self.nodes[node_instance.name] = node_instance
+        if node_instance.node_id in self.nodes:
+            if generate_new_id:
+                node_instance.node_id = uuid.UUID4()
+        self.nodes[node_instance.node_id] = node_instance
 
         return node_instance
-
-    def make_name_unique(self, name):
-        while name in self.nodes:
-            name = increment_name(name)
-        return name
 
     def to_msg(self, ticked=False):
         if ticked:
