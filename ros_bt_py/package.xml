@@ -15,12 +15,7 @@
   <depend>ros_bt_py_interfaces</depend>
   <depend>std_msgs</depend>
   <depend>diagnostic_msgs</depend>
-
   <exec_depend>example_interfaces</exec_depend>
-
-  <test_depend>std_srvs</test_depend>
-  <test_depend>geometry_msgs</test_depend>
-  <test_depend>sensor_msgs</test_depend>
 
   <!-- ROS dependencies -->
   <depend>rclpy</depend>
@@ -28,6 +23,7 @@
   <depend version_gte="0.3.4">generate_parameter_library_py</depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>ros_bt_py_web_gui</exec_depend>
+
 
   <!-- Python3 dependencies -->
   <depend>python3-toml</depend>
@@ -45,6 +41,11 @@
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
+
+  <test_depend>std_srvs</test_depend>
+  <test_depend>geometry_msgs</test_depend>
+  <test_depend>sensor_msgs</test_depend>
+  <test_depend>example_interfaces</test_depend>
 
   <export>
     <build_type>ament_python</build_type>
