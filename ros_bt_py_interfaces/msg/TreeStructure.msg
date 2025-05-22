@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright 2025 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,12 +25,21 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# This can be a fully populated message, or one that has the "path" member set
-# to a file:// or package:// URI
-TreeStructure tree
----
-TreeStructure tree
-# Indicates if the tree was migrated or not
-bool migrated
-bool success
-string error_message
+
+# The empty string for the main tree, the tree prefix for subtrees
+string tree_id 
+
+# A descriptive name for this tree. At runtime, this is chosen by the
+# tree manager node.
+string name
+# A string pointing to a YAML file to read a tree from, if
+# any. Can be a file:// or a package:// string. Please don't build
+# infinite loops using this.
+string path
+string root_name
+NodeStructure[] nodes
+Wiring[] data_wirings
+float64 tick_frequency_hz
+
+# These are accessible when using this tree as a subtree
+NodeDataLocation[] public_node_data

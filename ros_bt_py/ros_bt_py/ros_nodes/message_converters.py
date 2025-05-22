@@ -30,7 +30,7 @@ from typing import Optional, Dict
 
 
 from ros_bt_py.custom_types import RosTopicType
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from rclpy.node import Node
 
 from ros_bt_py.debug_manager import DebugManager
@@ -88,7 +88,7 @@ class MessageToFields(Leaf):
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         for field in self.outputs:
@@ -97,16 +97,16 @@ class MessageToFields(Leaf):
                 self.outputs[field] = list(value)
             else:
                 self.outputs[field] = value
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -167,7 +167,7 @@ class FieldsToMessage(Leaf):
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         msg = self._message_type()
@@ -176,13 +176,13 @@ class FieldsToMessage(Leaf):
             setattr(msg, field, self.inputs[field])
 
         self.outputs["out"] = msg
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

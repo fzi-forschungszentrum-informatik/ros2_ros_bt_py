@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-
 # Copyright 2023 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +28,7 @@
 """Module containing the main node for a ros_bt_py instance running the BT."""
 
 import rclpy
-from rclpy.executors import SingleThreadedExecutor, MultiThreadedExecutor
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.logging import get_logger
 from rclpy.node import Node
@@ -47,8 +44,12 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
     MessageChannels,
-    Tree,
-    SubtreeInfo,
+    TreeStructure,
+    TreeStructureList,
+    TreeState,
+    TreeStateList,
+    TreeData,
+    TreeDataList,
     MessageTypes,
     Packages,
 )
@@ -99,29 +100,53 @@ class TreeNode(Node):
 
     def init_publisher(self):
         self.publisher_callback_group = ReentrantCallbackGroup()
-        self.tree_pub = self.create_publisher(
-            Tree,
-            "~/tree",
+        self.tree_structure_pub = self.create_publisher(
+            TreeStructureList,
+            "~/tree_structure_list",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                reliability=QoSReliabilityPolicy.RELIABLE,
                 durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
             ),
         )
 
-        self.subtree_info_pub = self.create_publisher(
-            SubtreeInfo,
-            "~/debug/subtree_info",
+        self.tree_state_pub = self.create_publisher(
+            TreeStateList,
+            "~/tree_state_list",
             callback_group=self.publisher_callback_group,
             qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                reliability=QoSReliabilityPolicy.RELIABLE,
                 durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
             ),
         )
+
+        self.tree_data_pub = self.create_publisher(
+            TreeDataList,
+            "~/tree_data_list",
+            callback_group=self.publisher_callback_group,
+            qos_profile=QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+        )
+
+        #self.subtree_info_pub = self.create_publisher(
+        #    SubtreeInfo,
+        #    "~/debug/subtree_info",
+        #    callback_group=self.publisher_callback_group,
+        #    qos_profile=QoSProfile(
+        #        reliability=QoSReliabilityPolicy.BEST_EFFORT,
+        #        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        #        history=QoSHistoryPolicy.KEEP_LAST,
+        #        depth=1,
+        #    ),
+        #)
         self.node_diagnostics_pub = self.create_publisher(
             DiagnosticStatus,
             "~/debug/node_diagnostics",
@@ -242,8 +267,9 @@ class TreeNode(Node):
             module_list=params.node_modules,
             debug_manager=self.debug_manager,
             subtree_manager=self.subtree_manager,
-            publish_tree_callback=self.tree_pub.publish,
-            publish_subtree_info_callback=self.subtree_info_pub.publish,
+            publish_tree_structure_callback=self.tree_structure_pub.publish,
+            publish_tree_state_callback=self.tree_state_pub.publish,
+            publish_tree_data_callback=self.tree_data_pub.publish,
             publish_diagnostic_callback=self.ros_diagnostics_pub.publish,
             publish_tick_frequency_callback=self.tick_frequency_pub.publish,
             diagnostics_frequency=params.diagnostics_frequency_hz,
@@ -321,6 +347,12 @@ class TreeNode(Node):
             SetBool,
             "~/debug/set_publish_subtrees",
             callback=self.tree_manager.set_publish_subtrees,
+            callback_group=self.tree_manager_service_callback_group,
+        )
+        self.set_publish_data_service = self.create_service(
+            SetBool,
+            "~/debug/set_publish_data",
+            callback=self.tree_manager.set_publish_data,
             callback_group=self.tree_manager_service_callback_group,
         )
 
@@ -401,7 +433,7 @@ class TreeNode(Node):
             self.get_logger().info(
                 f"loading default tree: {params.default_tree.tree_path}"
             )
-            tree = Tree(path=params.default_tree.tree_path)
+            tree = TreeStructure(path=params.default_tree.tree_path)
             load_tree_request = LoadTree.Request(
                 tree=tree, permissive=params.default_tree.load_default_tree_permissive
             )
@@ -430,7 +462,7 @@ class TreeNode(Node):
 
     def shutdown(self):
         """Shut down tree node in a safe way."""
-        if self.tree_manager.get_state() not in [Tree.IDLE, Tree.EDITABLE, Tree.ERROR]:
+        if self.tree_manager.get_state() not in [TreeState.IDLE, TreeState.EDITABLE, TreeState.ERROR]:
             self.get_logger().info("Shutting down Behavior Tree")
             response = self.tree_manager.control_execution(
                 ControlTreeExecution.Request(

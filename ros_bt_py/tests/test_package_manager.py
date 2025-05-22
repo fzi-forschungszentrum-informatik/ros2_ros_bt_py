@@ -42,7 +42,7 @@ class TestPackageManager:
         [
             ("geometry_msgs/msg/Twist", []),
             (
-                "ros_bt_py_interfaces/msg/Node",
+                "ros_bt_py_interfaces/msg/NodeState",
                 [
                     "UNINITIALIZED",
                     "IDLE",

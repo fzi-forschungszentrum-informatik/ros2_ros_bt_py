@@ -31,9 +31,8 @@ from typing import Dict
 
 from typeguard import typechecked
 
-from ros_bt_py_interfaces.msg import Tree
+from ros_bt_py_interfaces.msg import TreeStructure, TreeState, TreeData
 from ros_bt_py.exceptions import BehaviorTreeException
-from ros_bt_py_interfaces.msg import SubtreeInfo
 
 
 @typechecked
@@ -46,56 +45,85 @@ class SubtreeManager(object):
 
     def __init__(self):
 
-        self.subtrees: Dict[str, Tree] = {}
+        self.subtree_structures: Dict[str, TreeStructure] = {}
+        self.subtree_states: Dict[str, TreeState] = {}
+        self.subtree_data: Dict[str, TreeData] = {}
         self._publish_subtrees: bool = False
+        self._publish_data: bool = False
 
         self._lock = Lock()
+
+    def get_publish_subtrees(self) -> bool:
         with self._lock:
-            self._subtree_info_msg = SubtreeInfo()
+            return self._publish_subtrees
 
-    def set_publish_subtrees(
-        self,
-        publish_subtrees: bool,
-    ) -> None:
-        self._publish_subtrees = publish_subtrees
-
-    def get_subtree_info_msg(self) -> SubtreeInfo:
+    def set_publish_subtrees(self, publish_subtrees: bool):
         with self._lock:
-            return deepcopy(self._subtree_info_msg)
+            self._publish_subtrees = publish_subtrees
+        
+    def get_publish_data(self) -> bool:
+        with self._lock:
+            return self._publish_data
+        
+    def set_publish_data(self, value: bool):
+        with self._lock:
+            self._publish_data = value
 
-    def add_subtree_info(self, node_name: str, subtree_msg: Tree):
+    def get_subtree_structures(self) -> list[TreeStructure]:
+        with self._lock:
+            if not self._publish_subtrees:
+                return []
+            return [ deepcopy(tree) for tree in self.subtree_structures.values() ]
+        
+    def get_subtree_states(self) -> list[TreeState]:
+        with self._lock:
+            if not self._publish_subtrees:
+                return []
+            return [ deepcopy(tree) for tree in self.subtree_states.values() ]
+        
+    def get_subtree_data(self) -> list[TreeData]:
+        with self._lock:
+            if not self._publish_subtrees:
+                return []
+            return [ deepcopy(tree) for tree in self.subtree_data.values() ]
+
+    def add_subtree_structure(self, node_name: str, subtree_msg: TreeStructure):
         """
         Publish subtree information.
 
         Used by the :class:`ros_bt_py.nodes.Subtree`.
 
-        Serialization of subtrees (and calling this method) should
-        only happen when the `publish_subtrees` option is set via
-        `set_publish_subtrees` in :class:`TreeManager`.
-
         :param str node_name:
 
         The name of the subtree node. This will be prefixed to the
         subtree name to ensure it is unique.
-
-        :raises: `ros_bt_py.exceptions.BehaviorTreeException`
-
-        If this method is called when `publish_subtrees` is `False`.
         """
-        subtree_name = f"{node_name}"
         with self._lock:
-            if not self._publish_subtrees:
-                raise BehaviorTreeException(
-                    "Trying to add subtree info when subtree publishing is disabled!"
-                )
-            self.subtrees[subtree_name] = subtree_msg
-            self._subtree_info_msg.subtree_states = list(self.subtrees.values())
+            self.subtree_structures[node_name] = subtree_msg
+
+    def add_subtree_state(self, node_name: str, subtree_msg: TreeState):
+        with self._lock:
+            self.subtree_states[node_name] = subtree_msg
+
+    def add_subtree_data(self, node_name: str, subtree_msg: TreeData):
+        with self._lock:
+            self.subtree_data[node_name] = subtree_msg
 
     def clear_subtrees(self) -> None:
         with self._lock:
-            self.subtrees.clear()
-            self._subtree_info_msg.subtree_states = []
+            self.subtree_structures.clear()
+            self.subtree_states.clear()
+            self.subtree_data.clear()
 
-    def get_publish_subtrees(self) -> bool:
+    def remove_subtree(self, node_name: str):
+
+        def query_dict(node_name: str, dict: dict[str, object]):
+            for tree_name in list(dict.keys()):
+                if tree_name == node_name or tree_name.startswith(f"{node_name}."):
+                    del dict[tree_name]
+
         with self._lock:
-            return self._publish_subtrees
+            query_dict(node_name, self.subtree_structures)
+            query_dict(node_name, self.subtree_states)
+            query_dict(node_name, self.subtree_data)
+

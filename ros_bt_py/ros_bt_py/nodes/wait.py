@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from time import time
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
@@ -53,7 +53,7 @@ class Wait(Leaf):
 
     def _do_setup(self):
         self.first_tick = True
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         now = time()
@@ -62,19 +62,19 @@ class Wait(Leaf):
             self.end_time = self.start_time + self.options["seconds_to_wait"]
             self.first_tick = False
         if now >= self.end_time:
-            return NodeMsg.SUCCESS
+            return NodeState.SUCCESS
         else:
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
     def _do_shutdown(self):
         self._do_reset()
 
     def _do_reset(self):
         self.first_tick = True
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -97,7 +97,7 @@ class WaitInput(Leaf):
 
     def _do_setup(self):
         self.first_tick = True
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         now = time()
@@ -106,16 +106,16 @@ class WaitInput(Leaf):
             self.end_time = self.start_time + self.inputs["seconds_to_wait"]
             self.first_tick = False
         if now >= self.end_time:
-            return NodeMsg.SUCCESS
+            return NodeState.SUCCESS
         else:
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
     def _do_shutdown(self):
         self._do_reset()
 
     def _do_reset(self):
         self.first_tick = True
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

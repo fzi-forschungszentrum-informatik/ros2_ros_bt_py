@@ -36,7 +36,7 @@ from rclpy.qos import (
 from threading import Lock
 from rclpy.time import Time
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.exceptions import BehaviorTreeException
@@ -131,7 +131,7 @@ class TopicSubscriber(Leaf):
             callback=self._callback,
             qos_profile=self._qos_profile,
         )
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _callback(self, msg):
         with self._lock:
@@ -140,10 +140,10 @@ class TopicSubscriber(Leaf):
     def _do_tick(self):
         with self._lock:
             if self._msg is None:
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
             self.outputs["message"] = self._msg
             self._msg = None
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         self._msg = None
@@ -155,15 +155,15 @@ class TopicSubscriber(Leaf):
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
-        return NodeMsg.SHUTDOWN
+        return NodeState.SHUTDOWN
 
     def _do_reset(self):
         # discard the last received message
         self._msg = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_calculate_utility(self):
         if not self.has_ros_node:
@@ -280,7 +280,7 @@ class TopicMemorySubscriber(Leaf):
             callback=self._callback,
             qos_profile=self._qos_profile,
         )
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _callback(self, msg):
         with self._lock:
@@ -297,11 +297,11 @@ class TopicMemorySubscriber(Leaf):
                         ).nanoseconds
                         / 1e9
                     ) > self.options["memory_delay"]:
-                        return NodeMsg.FAILED
+                        return NodeState.FAILED
 
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
             self.outputs["message"] = self._msg
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         self._msg = None
@@ -314,16 +314,16 @@ class TopicMemorySubscriber(Leaf):
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         # discard the last received message
         self._msg = None
         self._msg_timestamp = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_calculate_utility(self):
         if not self.has_ros_node:
@@ -425,14 +425,14 @@ class TopicPublisher(Leaf):
             topic=self._topic_name,
             qos_profile=self._qos_profile,
         )
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         # Only publish a new message if our input data has been updated - the
         # old one is latched anyway.
         if self.inputs.is_updated("message"):
             self._publisher.publish(self.inputs["message"])
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         # Unregister the publisher
@@ -444,7 +444,7 @@ class TopicPublisher(Leaf):
         self._publisher = None
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

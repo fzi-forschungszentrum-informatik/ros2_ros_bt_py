@@ -28,7 +28,7 @@
 string name
 bool boo
 string new_option
-Tree tree
+TreeStructure tree
 ---
 bool success
 string error_message

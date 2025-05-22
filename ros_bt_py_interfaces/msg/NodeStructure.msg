@@ -25,4 +25,25 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-Tree[] subtree_states
+# The python module the node is from
+string module
+# The python class name of the node
+string node_class
+# The version of this node
+string version
+
+# The maximum amount of children this node supports, where -1 means
+# infinite children
+int32 max_children
+
+## These are run-time parameters
+# Each node name must be unique in its tree. This does not count for
+# subtrees, as they're handled separately.
+string name
+# Order is important for child_names!
+string[] child_names
+NodeOption[] options
+NodeIO[] inputs
+NodeIO[] outputs
+
+

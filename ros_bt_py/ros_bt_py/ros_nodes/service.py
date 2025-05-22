@@ -33,7 +33,7 @@ from rclpy.duration import Duration
 from rclpy.time import Time
 
 from ros_bt_py.custom_types import RosServiceName, RosServiceType
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.debug_manager import DebugManager
@@ -140,7 +140,7 @@ class ServiceInput(Leaf):
                 "ROS service node does not have ROS node reference!"
             )
 
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         if self._service_client is not None:
@@ -152,15 +152,15 @@ class ServiceInput(Leaf):
         for k, v in self._response_type.get_fields_and_field_types().items():
             self.outputs[k] = None
 
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if self.simulate_tick:
             self.logdebug(f"Simulating tick. {self.name} is not executing!")
             if self.succeed_always:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
         # If the service name changed
         if self.inputs.is_updated("service_name"):
@@ -175,7 +175,7 @@ class ServiceInput(Leaf):
                 )
             else:
                 self.logerr(f"No ROS node available for node: {self.name}!")
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
@@ -214,18 +214,18 @@ class ServiceInput(Leaf):
                     f"{self._last_request} timed out after {seconds_since_call} seconds"
                 )
                 self._service_request_future.cancel()
-                return NodeMsg.FAILED
+                return NodeState.FAILED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
         else:
-            new_state = NodeMsg.SUCCEEDED
+            new_state = NodeState.SUCCEEDED
             if self._service_request_future.done():
                 res = self._service_request_future.result()
                 fields = res.get_fields_and_field_types().items()
                 for k, v in fields:
                     self.outputs[k] = getattr(res, k)
             if self._service_request_future.cancelled():
-                new_state = NodeMsg.FAILED
+                new_state = NodeState.FAILED
             self._service_request_future = None
             self._reported_result = True
             return new_state
@@ -237,7 +237,7 @@ class ServiceInput(Leaf):
         ):
             self._service_request_future.cancel()
         self._service_request_future = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         self._service_request_future = None
@@ -323,12 +323,12 @@ class WaitForService(Leaf):
         if self.simulate_tick:
             self.logdebug(f"Simulating tick. {self.name} is not executing!")
             if self.succeed_always:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
         if self._service_client.service_is_ready():
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
         else:
             if self._last_service_call_time is None:
                 self._last_service_call_time = self.ros_node.get_clock().now()
@@ -339,17 +339,17 @@ class WaitForService(Leaf):
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
             ]:
-                return NodeMsg.FAILED
+                return NodeState.FAILED
             else:
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_untick(self):
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         self._ros_node.destroy_client(self._service_client)
@@ -402,9 +402,9 @@ class WaitForServiceInput(Leaf):
         if self.simulate_tick:
             self.logdebug(f"Simulating tick. {self.name} is not executing!")
             if self.succeed_always:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
         if self._service_client is None:
             self._service_client = self.ros_node.create_client(
@@ -412,7 +412,7 @@ class WaitForServiceInput(Leaf):
             )
 
         if self._service_client.service_is_ready():
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
         else:
             if self._last_service_call_time is None:
                 self._last_service_call_time = self.ros_node.get_clock().now()
@@ -423,20 +423,20 @@ class WaitForServiceInput(Leaf):
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
             ]:
-                return NodeMsg.FAILED
+                return NodeState.FAILED
             else:
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_untick(self):
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         if self._service_client is not None:
             self.ros_node.destroy_service(self._service_client)
             self._service_client = None
         self._last_service_call_time = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         self._last_service_call_time = None
@@ -584,14 +584,14 @@ class ServiceForSetType(Leaf):
             and self.options["fail_if_not_available"]
         ):
             self._service_available = False
-            return NodeMsg.BROKEN
+            return NodeState.BROKEN
 
         self._last_service_call_time: Optional[Time] = None
         self._service_request_future: Optional[Future] = None
         self._last_request = None
         self._reported_result: bool = False
         self.set_output_none()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         if (
@@ -604,18 +604,18 @@ class ServiceForSetType(Leaf):
         self._last_request = None
         self._reported_result: bool = False
         self.set_output_none()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if self.simulate_tick:
             self.logdebug(f"Simulating tick. {self.name} is not executing!")
             if self.succeed_always:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
         if not self._service_available or self._service_client is None:
-            return NodeMsg.FAILED
+            return NodeState.FAILED
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
@@ -630,12 +630,12 @@ class ServiceForSetType(Leaf):
 
         if self._service_request_future is None:
             self.logerr("Service request future is unexpecedly none!")
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
         if self._service_request_future.cancelled():
             self.logdebug("Service request was cancelled!")
             self._service_request_future = None
-            return NodeMsg.FAILURE
+            return NodeState.FAILURE
 
         if not self._service_request_future.done():
             # If the call takes longer than the specified timeout, abort the
@@ -656,14 +656,14 @@ class ServiceForSetType(Leaf):
                 )
                 self._service_request_future.cancel()
                 self._service_request_future = None
-                return NodeMsg.FAILED
+                return NodeState.FAILED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
         else:
             if self.set_outputs():
-                new_state = NodeMsg.SUCCEEDED
+                new_state = NodeState.SUCCEEDED
             else:
-                new_state = NodeMsg.FAILED
+                new_state = NodeState.FAILED
             self._reported_result = True
             self._service_request_future = None
             return new_state
@@ -674,7 +674,7 @@ class ServiceForSetType(Leaf):
             and not self._service_request_future.done()
         ):
             self._service_request_future.cancel()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         self._do_reset()
@@ -806,7 +806,7 @@ class Service(Leaf):
                 "ROS service node does not have ROS node reference!"
             )
 
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         if self._service_client is not None:
@@ -819,15 +819,15 @@ class Service(Leaf):
         for k, v in self._response_type.get_fields_and_field_types().items():
             self.outputs[k] = None
 
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         if self.simulate_tick:
             self.logdebug(f"Simulating tick. {self.name} is not executing!")
             if self.succeed_always:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
 
         #TODO Can't this be in `_do_setup`?
         if self._service_client is None:
@@ -839,7 +839,7 @@ class Service(Leaf):
                 )
             else:
                 self.logerr(f"No ROS node available for node: {self.name}!")
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
@@ -877,11 +877,11 @@ class Service(Leaf):
                     f"{self._last_request} timed out after {seconds_since_call} seconds"
                 )
                 self._service_request_future.cancel()
-                return NodeMsg.FAILED
+                return NodeState.FAILED
 
-            return NodeMsg.RUNNING
+            return NodeState.RUNNING
         else:
-            new_state = NodeMsg.SUCCEEDED
+            new_state = NodeState.SUCCEEDED
             if self._service_request_future.done():
                 res = self._service_request_future.result()
                 fields = res.get_fields_and_field_types().items()
@@ -889,7 +889,7 @@ class Service(Leaf):
                     self.outputs[k] = getattr(res, k)
 
             if self._service_request_future.cancelled():
-                new_state = NodeMsg.FAILED
+                new_state = NodeState.FAILED
 
             self._service_request_future = None
             self._reported_result = True
@@ -901,7 +901,7 @@ class Service(Leaf):
             and not self._service_request_future.done()
         ):
             self._service_request_future.cancel()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         if self._service_client is not None:

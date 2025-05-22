@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright 2025 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,6 +25,23 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-string key
-string serialized_value
-string serialized_type # important if data is unset
+
+string name
+
+# Should be one of the constants below
+string state
+
+string UNINITIALIZED = UNINITIALIZED
+string IDLE = IDLE
+string UNASSIGNED = UNASSIGNED
+string ASSIGNED = ASSIGNED
+string RUNNING = RUNNING
+string SUCCEEDED = SUCCEEDED
+string SUCCEED = SUCCEEDED
+string SUCCESS = SUCCEEDED
+string FAILED = FAILED
+string FAIL = FAILED
+string FAILURE = FAILED
+string BROKEN = BROKEN
+string PAUSED = PAUSED
+string SHUTDOWN = SHUTDOWN

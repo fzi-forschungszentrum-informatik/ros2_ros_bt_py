@@ -32,7 +32,7 @@ from std_srvs.srv import SetBool
 from ros_bt_py.custom_types import RosServiceType
 from ros_bt_py.ros_nodes.service import ServiceInput
 from rclpy.time import Time
-from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
+from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 
 
@@ -61,20 +61,20 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         future_mock.done.return_value = True
 
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.SUCCEEDED
+        assert unavailable_service.state == NodeState.SUCCEEDED
         assert unavailable_service.outputs["success"]
 
         unavailable_service.shutdown()
-        assert unavailable_service.state == NodeMsg.SHUTDOWN
+        assert unavailable_service.state == NodeState.SHUTDOWN
         assert ros_mock.destroy_client.called
 
     @mock.patch("rclpy.node.Node")
@@ -102,11 +102,11 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.FAILED
+        assert unavailable_service.state == NodeState.FAILED
 
     @mock.patch("rclpy.node.Node")
     @mock.patch("rclpy.client.Client")
@@ -133,15 +133,15 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         clock_mock.now.return_value = Time(seconds=10)
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.FAILED
+        assert unavailable_service.state == NodeState.FAILED
 
     @mock.patch("rclpy.node.Node")
     @mock.patch("rclpy.client.Client")
@@ -174,25 +174,25 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         future_mock.done.return_value = True
 
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.SUCCEEDED
+        assert unavailable_service.state == NodeState.SUCCEEDED
         assert unavailable_service.outputs["success"]
 
         unavailable_service.reset()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         assert ros_mock.destroy_client.called
         assert ros_mock.destroy_client.call_count == 1
 
         unavailable_service.shutdown()
-        assert unavailable_service.state == NodeMsg.SHUTDOWN
+        assert unavailable_service.state == NodeState.SHUTDOWN
         assert ros_mock.destroy_client.called
         assert ros_mock.destroy_client.call_count == 1
 
@@ -227,16 +227,16 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         future_mock.done.return_value = True
 
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.SUCCEEDED
+        assert unavailable_service.state == NodeState.SUCCEEDED
         assert unavailable_service.outputs["success"]
 
         unavailable_service.reset()
@@ -254,16 +254,16 @@ class TestServiceInput:
             Time(seconds=4),
         ]
 
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         future_mock.done.return_value = True
 
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.SUCCEEDED
+        assert unavailable_service.state == NodeState.SUCCEEDED
         assert not unavailable_service.outputs["success"]
 
     def test_node_no_ros(self):
@@ -310,12 +310,12 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.ros_node = None
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.FAILED
+        assert unavailable_service.state == NodeState.FAILED
 
     @mock.patch("rclpy.node.Node")
     @mock.patch("rclpy.client.Client")
@@ -348,15 +348,15 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         unavailable_service.inputs["service_name"] = "bla"
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
         assert ros_mock.destroy_client.called
 
     @mock.patch("rclpy.node.Node")
@@ -390,14 +390,14 @@ class TestServiceInput:
 
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         unavailable_service.untick()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         assert future_mock.cancel.called
 
     @mock.patch("rclpy.node.Node")
@@ -440,7 +440,7 @@ class TestServiceInput:
         )
         assert unavailable_service_2 is not None
         unavailable_service_2.setup()
-        assert unavailable_service_2.state == NodeMsg.IDLE
+        assert unavailable_service_2.state == NodeState.IDLE
         bounds_2 = unavailable_service_2.calculate_utility()
         assert bounds_2 == UtilityBounds()
 
@@ -474,11 +474,11 @@ class TestServiceInput:
         )
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
         unavailable_service.tick()
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         client_mock.service_is_ready.return_value = False
         bounds = unavailable_service.calculate_utility()
@@ -524,7 +524,7 @@ class TestServiceInput:
         )
         assert unavailable_service is not None
         unavailable_service.setup()
-        assert unavailable_service.state == NodeMsg.IDLE
+        assert unavailable_service.state == NodeState.IDLE
 
         unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
         unavailable_service.inputs["data"] = SetBool.Request().data
@@ -532,9 +532,9 @@ class TestServiceInput:
         unavailable_service.simulate_tick = True
         unavailable_service.tick()
         assert not client_mock.call_async.called
-        assert unavailable_service.state == NodeMsg.RUNNING
+        assert unavailable_service.state == NodeState.RUNNING
 
         unavailable_service.succeed_always = True
         unavailable_service.tick()
         assert not client_mock.call_async.called
-        assert unavailable_service.state == NodeMsg.SUCCEEDED
+        assert unavailable_service.state == NodeState.SUCCEEDED

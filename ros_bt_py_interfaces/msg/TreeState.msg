@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright 2025 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,12 +25,16 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# This can be a fully populated message, or one that has the "path" member set
-# to a file:// or package:// URI
-TreeStructure tree
----
-TreeStructure tree
-# Indicates if the tree was migrated or not
-bool migrated
-bool success
-string error_message
+
+# The empty string for the main tree, the tree prefix for subtrees
+string tree_id 
+
+string state
+NodeState[] node_states
+
+string IDLE = IDLE
+string EDITABLE = EDITABLE
+string TICKING = TICKING
+string WAITING_FOR_TICK = WAITING_FOR_TICK
+string STOP_REQUESTED = STOP_REQUESTED
+string ERROR = ERROR

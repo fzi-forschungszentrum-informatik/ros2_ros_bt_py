@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """BT nodes to get values from containers and other nodes."""
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.node import Decorator, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
@@ -61,7 +61,7 @@ class GetConstListItem(Decorator):
             # gratuitously!
             self.inputs["list"] = []
             self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
@@ -71,22 +71,22 @@ class GetConstListItem(Decorator):
         if self.inputs.is_updated("list"):
             try:
                 self.outputs["item"] = self.inputs["list"][self.options["index"]]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             except IndexError:
                 self.logerr(
                     "List index %d out of bound for list %s"
                     % (self.options["index"], self.inputs["list"])
                 )
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         else:
             if self.options["succeed_on_stale_data"]:
                 # We don't need to check whether we have gotten any
                 # data at all, because if we hadn't the tick method
                 # would raise an error
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 self.loginfo("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_shutdown(self):
         pass
@@ -95,10 +95,10 @@ class GetConstListItem(Decorator):
         self.outputs["item"] = None
         self.outputs.reset_updated()
         self._do_setup()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -128,7 +128,7 @@ class GetListItem(Decorator):
             # gratuitously!
             self.inputs["list"] = []
             self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
@@ -138,19 +138,19 @@ class GetListItem(Decorator):
         if self.inputs.is_updated("list") or self.inputs.is_updated("index"):
             try:
                 self.outputs["item"] = self.inputs["list"][self.inputs["index"]]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             except IndexError:
                 self.logdebug(
                     "List index %d out of bound for list %s"
                     % (self.inputs["index"], self.inputs["list"])
                 )
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_shutdown(self):
         pass
@@ -160,10 +160,10 @@ class GetListItem(Decorator):
         self.outputs.reset_updated()
         self._do_setup()
         self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -186,7 +186,7 @@ class GetDictItem(Decorator):
             # gratuitously!
             self.inputs["dict"] = {}
             self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
@@ -196,18 +196,18 @@ class GetDictItem(Decorator):
         if self.inputs.is_updated("dict"):
             try:
                 self.outputs["value"] = self.inputs["dict"][self.options["key"]]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             except KeyError:
                 self.logdebug(
                     f"Key {self.options['key']} is not in dict {str(self.inputs['dict'])}"
                 )
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_shutdown(self):
         pass
@@ -217,10 +217,10 @@ class GetDictItem(Decorator):
         self.outputs.reset_updated()
         self._do_setup()
         self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -243,7 +243,7 @@ class GetMultipleDictItems(Decorator):
             # gratuitously!
             self.inputs["dict"] = {}
             self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
@@ -255,19 +255,19 @@ class GetMultipleDictItems(Decorator):
                 self.outputs["values"] = [
                     self.inputs["dict"][k] for k in self.options["keys"]
                 ]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             except KeyError:
                 self.logdebug(
                     f"One of the key ({self.options['keys']}) is not in dict "
                     f"{str(self.inputs['dict'])}"
                 )
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_shutdown(self):
         pass
@@ -277,10 +277,10 @@ class GetMultipleDictItems(Decorator):
         self.outputs.reset_updated()
         self._do_setup()
         self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -303,7 +303,7 @@ class GetDictItemFromKey(Decorator):
             # gratuitously!
             self.inputs["key"] = ""
             self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
@@ -313,18 +313,18 @@ class GetDictItemFromKey(Decorator):
         if self.inputs.is_updated("key"):
             try:
                 self.outputs["value"] = self.options["dict"][self.inputs["key"]]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             except KeyError:
                 self.logdebug(
                     f"Key {self.inputs['key']} is not in dict {str(self.options['dict'])}"
                 )
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_shutdown(self):
         pass
@@ -334,10 +334,10 @@ class GetDictItemFromKey(Decorator):
         self.outputs.reset_updated()
         self._do_setup()
         self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -367,7 +367,7 @@ class GetAttr(Decorator):
             # gratuitously!
             self.inputs["object"] = object()
             self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         # Tick child (if any) so it can produce its output before we process it
@@ -380,19 +380,19 @@ class GetAttr(Decorator):
                 self.outputs["attr"] = rgetattr(
                     self.inputs["object"], self.options["attr_name"]
                 )
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             except AttributeError:
                 self.logdebug(
                     f"Object {self.inputs['object']} does not have attribute "
                     f"{self.options['attr_name']}"
                 )
-                return NodeMsg.FAILED
+                return NodeState.FAILED
         else:
             if self.options["succeed_on_stale_data"]:
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 self.logdebug("No new data since last tick!")
-                return NodeMsg.RUNNING
+                return NodeState.RUNNING
 
     def _do_shutdown(self):
         pass
@@ -402,7 +402,7 @@ class GetAttr(Decorator):
         self.outputs.reset_updated()
         self._do_setup()
         self.inputs.reset_updated()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

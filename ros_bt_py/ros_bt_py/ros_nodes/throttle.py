@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Decorator, define_bt_node
@@ -57,7 +57,7 @@ class Throttle(Decorator):
             raise BehaviorTreeException(error_msg)
 
         self._last_tick = None
-        self._last_result = NodeMsg.FAILED
+        self._last_result = NodeState.FAILED
         for child in self.children:
             child.setup()
 
@@ -70,7 +70,7 @@ class Throttle(Decorator):
         ):
             for child in self.children:
                 result = child.tick()
-                if result == NodeMsg.RUNNING:
+                if result == NodeState.RUNNING:
                     return result
                 self._last_result = result
                 self._last_tick = current_time
@@ -84,12 +84,12 @@ class Throttle(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -129,12 +129,12 @@ class ThrottleSuccess(Decorator):
         ):
             for child in self.children:
                 result = child.tick()
-                if result == NodeMsg.RUNNING:
+                if result == NodeState.RUNNING:
                     return result
-                if result == NodeMsg.SUCCEEDED:
+                if result == NodeState.SUCCEEDED:
                     self._last_success_tick = current_time
                     return result
-        return NodeMsg.FAILED
+        return NodeState.FAILED
 
     def _do_shutdown(self):
         self._last_success_tick = None
@@ -144,9 +144,9 @@ class ThrottleSuccess(Decorator):
     def _do_reset(self):
         for child in self.children:
             return child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
         for child in self.children:
             return child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE

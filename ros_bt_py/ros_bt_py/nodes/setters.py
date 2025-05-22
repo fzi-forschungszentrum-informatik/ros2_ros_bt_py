@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from copy import deepcopy
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
@@ -53,16 +53,16 @@ class AppendListItem(Leaf):
         if self.inputs.is_updated("list") or self.inputs.is_updated("value"):
             self.outputs["new_list"] = self.inputs["list"] + [self.inputs["value"]]
 
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -88,16 +88,16 @@ class SetAttr(Leaf):
             obj = deepcopy(self.inputs["object"])
             rsetattr(obj, self.options["attr_name"], self.inputs["attr_value"])
             self.outputs["new_object"] = obj
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -120,13 +120,13 @@ class SetDictItem(Leaf):
             obj = deepcopy(self.inputs["object"])
             obj[self.options["attr_name"]] = self.inputs["attr_value"]
             self.outputs["new_object"] = obj
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

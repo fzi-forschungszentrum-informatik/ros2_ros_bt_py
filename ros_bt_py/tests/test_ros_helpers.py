@@ -28,7 +28,7 @@
 import pytest
 from ros_bt_py.ros_helpers import get_message_constant_fields
 from std_msgs.msg import Header, String, Int32
-from ros_bt_py_interfaces.msg import Node, NodeDataLocation
+from ros_bt_py_interfaces.msg import NodeState, NodeDataLocation
 from ros_bt_py.exceptions import BehaviorTreeException
 import unittest.mock as mock
 
@@ -38,7 +38,7 @@ class TestRosHelpers:
         "message_class, expected_members",
         [
             (
-                Node,
+                NodeState,
                 [
                     "UNINITIALIZED",
                     "IDLE",

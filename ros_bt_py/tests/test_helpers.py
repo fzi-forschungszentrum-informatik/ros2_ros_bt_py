@@ -27,12 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from ros_bt_py.helpers import (
     get_default_value,
-    remove_input_output_values,
 )
-from ros_bt_py_interfaces.msg import Tree, Node, NodeData
-import logging
-import rclpy
-import rclpy.logging
 import pytest
 import unittest.mock as mock
 from collections import OrderedDict
@@ -40,27 +35,6 @@ from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
 class TestHelpers:
-    def test_remove_input_output_values(self):
-        nodes = [
-            Node(
-                inputs=[
-                    NodeData(serialized_value=f"some_value_{i}") for i in range(10)
-                ],
-                outputs=[
-                    NodeData(serialized_value=f"some_value_{i}") for i in range(10)
-                ],
-            )
-            for _ in range(10)
-        ]
-        input_tree = Tree()
-        input_tree.nodes = nodes
-        output_tree = remove_input_output_values(input_tree)
-        for node in output_tree.nodes:
-            for node_input in node.inputs:
-                assert node_input.serialized_value == "null"
-            for node_output in node.outputs:
-                assert node_output.serialized_value == "null"
-
     @pytest.mark.parametrize(
         "data_type, expected_output, ros",
         [

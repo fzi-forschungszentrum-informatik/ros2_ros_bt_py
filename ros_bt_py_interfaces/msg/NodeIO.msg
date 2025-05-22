@@ -25,12 +25,5 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# This can be a fully populated message, or one that has the "path" member set
-# to a file:// or package:// URI
-TreeStructure tree
----
-TreeStructure tree
-# Indicates if the tree was migrated or not
-bool migrated
-bool success
-string error_message
+string key
+string serialized_type # important if data is unset

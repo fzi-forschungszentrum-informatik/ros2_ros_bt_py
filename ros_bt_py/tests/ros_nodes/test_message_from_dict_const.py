@@ -28,9 +28,7 @@
 import pytest
 from ros_bt_py.custom_types import RosTopicType
 from ros_bt_py.ros_nodes.messages_from_dict import MessageFromConstDict
-from std_msgs.msg import Int64, String, Bool
-from ros_bt_py_interfaces.srv import ChangeTreeName
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 
 @pytest.mark.parametrize(
@@ -44,7 +42,7 @@ from ros_bt_py_interfaces.msg import Node as NodeMsg
 def test_node_success(message, message_dict):
     node = MessageFromConstDict(options={"message_type": message, "dict": message_dict})
     node.setup()
-    assert node.state == NodeMsg.IDLE
+    assert node.state == NodeState.IDLE
     node.tick()
     out_message = node.outputs["message"]
     assert out_message is not None
@@ -52,7 +50,7 @@ def test_node_success(message, message_dict):
         assert getattr(out_message, attr) == attr_value
 
     node.shutdown()
-    assert node.state == NodeMsg.SHUTDOWN
+    assert node.state == NodeState.SHUTDOWN
 
 
 @pytest.mark.parametrize(
@@ -66,27 +64,27 @@ def test_node_success(message, message_dict):
 def test_node_untick(message, message_dict):
     node = MessageFromConstDict(options={"message_type": message, "dict": message_dict})
     node.setup()
-    assert node.state == NodeMsg.IDLE
+    assert node.state == NodeState.IDLE
 
     node.tick()
-    assert node.state == NodeMsg.SUCCEED
+    assert node.state == NodeState.SUCCEED
     out_message = node.outputs["message"]
     assert out_message is not None
     for attr, attr_value in message_dict.items():
         assert getattr(out_message, attr) == attr_value
 
     node.untick()
-    assert node.state == NodeMsg.IDLE
+    assert node.state == NodeState.IDLE
 
     node.tick()
-    assert node.state == NodeMsg.SUCCEED
+    assert node.state == NodeState.SUCCEED
     out_message = node.outputs["message"]
     assert out_message is not None
     for attr, attr_value in message_dict.items():
         assert getattr(out_message, attr) == attr_value
 
     node.shutdown()
-    assert node.state == NodeMsg.SHUTDOWN
+    assert node.state == NodeState.SHUTDOWN
 
 
 @pytest.mark.parametrize(
@@ -100,27 +98,27 @@ def test_node_untick(message, message_dict):
 def test_node_reset(message, message_dict):
     node = MessageFromConstDict(options={"message_type": message, "dict": message_dict})
     node.setup()
-    assert node.state == NodeMsg.IDLE
+    assert node.state == NodeState.IDLE
 
     node.tick()
-    assert node.state == NodeMsg.SUCCEED
+    assert node.state == NodeState.SUCCEED
     out_message = node.outputs["message"]
     assert out_message is not None
     for attr, attr_value in message_dict.items():
         assert getattr(out_message, attr) == attr_value
 
     node.reset()
-    assert node.state == NodeMsg.IDLE
+    assert node.state == NodeState.IDLE
 
     node.tick()
-    assert node.state == NodeMsg.SUCCEED
+    assert node.state == NodeState.SUCCEED
     out_message = node.outputs["message"]
     assert out_message is not None
     for attr, attr_value in message_dict.items():
         assert getattr(out_message, attr) == attr_value
 
     node.shutdown()
-    assert node.state == NodeMsg.SHUTDOWN
+    assert node.state == NodeState.SHUTDOWN
 
 
 @pytest.mark.parametrize(
@@ -129,9 +127,9 @@ def test_node_reset(message, message_dict):
 def test_node_failure(message, message_dict):
     node = MessageFromConstDict(options={"message_type": message, "dict": message_dict})
     node.setup()
-    assert node.state == NodeMsg.IDLE
+    assert node.state == NodeState.IDLE
     node.tick()
-    assert node.state == NodeMsg.FAILURE
+    assert node.state == NodeState.FAILURE
 
     out_message = node.outputs["message"]
     assert out_message is None

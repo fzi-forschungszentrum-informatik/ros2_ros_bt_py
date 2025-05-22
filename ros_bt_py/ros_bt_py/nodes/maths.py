@@ -30,7 +30,7 @@ import math
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -131,16 +131,16 @@ class Convert(Leaf):
             elif self.options["input_type"] is float:
                 if self.options["output_type"] is int:
                     self.outputs["out"] = int(self.inputs["in"])
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -257,16 +257,16 @@ class Operation(Leaf):
         self.outputs["result"] = self.operators[self.options["operator"].operator](
             self.inputs["a"], self.inputs["b"]
         )
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
@@ -393,13 +393,13 @@ class UnaryOperation(Leaf):
         self.outputs["result"] = self.operators[self.options["operator"].operator](
             self.inputs["in"]
         )
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

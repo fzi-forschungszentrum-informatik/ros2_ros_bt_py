@@ -28,7 +28,7 @@
 # This child of the new node's parent will be moved to become a child
 # of the new node.
 string previous_child_name
-Node node
+NodeStructure node
 ---
 string actual_node_name
 bool success
