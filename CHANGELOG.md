@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add git cliff for changelog management by @Oberacda
 
 ### Changed
+- Changle cliff.toml by @Oberacda
+- Update changelog by @github-actions[bot]
 - Fix changelog ci job by @Oberacda
 - Fix changelog ci job by @Oberacda
 - Merge pull request #177 from fzi-forschungszentrum-informatik/update-web-gui-to-4.0.1 by @Oberacda in [#177](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/177)
@@ -37,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Remove data publish on unwire, since that dumps all data (tree is shutdown) by @Doomse
+
+## New Contributors
+* @github-actions[bot] made their first contribution
 
 ## [0.3.0] - 2025-02-26
 
@@ -75,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Remove non-functional enum node by @Doomse
+
 
 ## [0.2.0] - 2025-01-23
 
@@ -122,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove empty action. by @Oberacda
 - Remove checks that are now redundant by @Doomse
 
+
 ## [0.1.1] - 2024-11-04
 
 ### Added
@@ -149,6 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed shoving ref which was not defined by @nspielbau
 - Removed some !-marks by @nspielbau
 - Remove docu build from README by @nspielbau
+
 
 ## [0.1.0] - 2024-10-28
 
@@ -259,6 +267,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## New Contributors
 * @sea-bass made their first contribution
+
 ## [0.0.1] - 2024-02-22
 
 ### Added
@@ -424,6 +433,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * @ made their first contribution in [#57](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/57)
 * @fmauch made their first contribution
 * @t-schnell made their first contribution
+
 [unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.3.0..HEAD
 [0.3.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.2.0..v0.3.0
 [0.2.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.1..v0.2.0
