@@ -1,0 +1,15 @@
+{
+  "short_name": "RosBtPy",
+  "name": "Ros-based behavior tree library web editor",
+  "icons": [
+    {
+      "src": "ros_bt_py.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
