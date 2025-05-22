@@ -4,6 +4,11 @@
 Advanced Tutorial
 #################
 
+.. toctree::
+   :maxdepth: 2
+
+   Using OptionRefs
+
 In this Tutorial more advanced concepts are introduced.
 
 ****************

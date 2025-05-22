@@ -2,6 +2,12 @@
 Getting Started
 ###############
 
+.. toctree::
+   :maxdepth: 2
+
+   installation
+   running_ros_bt_py
+
 ************
 Installation
 ************
