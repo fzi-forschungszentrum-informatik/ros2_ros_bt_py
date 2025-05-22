@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add git cliff for changelog management by @Oberacda
 
 ### Changed
+- Release 0.4.0 by @Oberacda
 - Update changelog by @github-actions[bot]
 - Merge pull request #144 from mdeitersen/add_action_tests by @Oberacda in [#144](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/144)
 - Fix import error by @Oberacda
