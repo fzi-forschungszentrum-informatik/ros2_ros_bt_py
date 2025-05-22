@@ -586,7 +586,7 @@ class Action(Leaf):
             self._action_available = False
             if (
                 "fail_if_not_available" not in self.options
-                or not self.options["fail_if_not_available"]
+                or self.options["fail_if_not_available"]
             ):
                 raise BehaviorTreeException(
                     f"Action server {self._action_name} not available after waiting "

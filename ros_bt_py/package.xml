@@ -15,12 +15,7 @@
   <depend>ros_bt_py_interfaces</depend>
   <depend>std_msgs</depend>
   <depend>diagnostic_msgs</depend>
-
   <exec_depend>example_interfaces</exec_depend>
-
-  <test_depend>std_srvs</test_depend>
-  <test_depend>geometry_msgs</test_depend>
-  <test_depend>sensor_msgs</test_depend>
 
   <!-- ROS dependencies -->
   <depend>rclpy</depend>
@@ -46,6 +41,10 @@
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
+
+  <test_depend>std_srvs</test_depend>
+  <test_depend>geometry_msgs</test_depend>
+  <test_depend>sensor_msgs</test_depend>
   <test_depend>example_interfaces</test_depend>
 
   <export>
