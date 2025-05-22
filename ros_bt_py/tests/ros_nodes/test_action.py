@@ -31,7 +31,7 @@ import unittest.mock as mock
 from example_interfaces.action import Fibonacci
 from ros_bt_py.ros_nodes.action import Action
 from rclpy.time import Time
-from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
+from ros_bt_py_interfaces.msg import NodeState as NodeMsg, UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 
 
