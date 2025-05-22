@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+
 - Merge pull request #175 from fzi-forschungszentrum-informatik/update-web-gui-to-4.0.0 by @Oberacda in [#175](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/175)
 - Update Web-GUI to 4.0.0 by @Oberacda
 - Merge pull request #171 from Doomse/tree-message-rework by @Oberacda in [#171](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/171)
@@ -29,15 +30,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rework message types by @Doomse
 
 ### Removed
+
 - Remove data publish on unwire, since that dumps all data (tree is shutdown) by @Doomse
 
 ## [0.3.0] - 2025-02-26
 
 ### Added
+
 - Add custom types by @Doomse
 - Add typing hints for builtin by @Doomse
 
 ### Changed
+
 - Update changelog for v0.3.0 by @Oberacda
 - Merge pull request #165 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.3.1 by @Oberacda in [#165](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/165)
 - Update changelog by @Oberacda
@@ -64,14 +68,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switch to best_effort for tree publishing. by @Oberacda
 
 ### Fixed
+
 - Fix message constant fields service including tests by @Doomse
 
 ### Removed
+
 - Remove non-functional enum node by @Doomse
 
 ## [0.2.0] - 2025-01-23
 
 ### Added
+
 - Add handler to allow the loading of old trees. by @Oberacda
 - Add default values to Ros Message types by @Doomse
 - Add action name discovery by @Doomse
@@ -81,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added line between icons and header by @nspielbau
 
 ### Changed
+
 - Update changelog for v0.2.0 by @Oberacda
 - Merge pull request #154 from fzi-forschungszentrum-informatik/type-system-web-update by @Oberacda in [#154](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/154)
 - Fix invalid default value. by @Oberacda
@@ -112,12 +120,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update Web-GUI to release/3.1.0 by @Oberacda in [#150](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/150)
 
 ### Removed
+
 - Remove empty action. by @Oberacda
 - Remove checks that are now redundant by @Doomse
 
 ## [0.1.1] - 2024-11-04
 
 ### Added
+
 - Added documentation fix to changelog by @nspielbau
 - Added mock imports for autodoc by @nspielbau
 - Added tree storage path documentation by @nspielbau
@@ -125,6 +135,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added manual documentation build to doc dir by @nspielbau in [#134](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/134)
 
 ### Changed
+
 - Update changelog for v0.1.1 by @Oberacda
 - Merge pull request #146 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.0.0 by @Oberacda in [#146](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/146)
 - Update Web-GUI to release/3.0.0 by @Oberacda
@@ -138,6 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped doc version by @nspielbau in [#133](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/133)
 
 ### Removed
+
 - Removed faulty header by @nspielbau
 - Removed shoving ref which was not defined by @nspielbau
 - Removed some !-marks by @nspielbau
@@ -146,6 +158,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2024-10-28
 
 ### Added
+
 - Added more complex tutorials by @nspielbau
 - Added ROS interfacing by @nspielbau in [#118](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/118)
 - Adding subtree section by @nspielbau
@@ -173,6 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Jazzy / Ubuntu 24.04 to Git issue template by @sea-bass
 
 ### Changed
+
 - Merge pull request #131 from fzi-forschungszentrum-informatik/dev by @Oberacda in [#131](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/131)
 - Update changelog for release v0.1.0
 - Made RandomIntInput consistent with RandomInt by @nspielbau in [#123](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/123)
@@ -211,7 +225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge branch 'fb_remove_debug_code' into update-web-gui-to-release/2.0.5 by @Oberacda in [#77](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/77)
 - Deleted duplicated conditional statement by @mdeitersen
 - Replaced NodeDiagnostics message with DiagnosticStatus message by @mdeitersen
-- Replaced  SetExecutionMode.srv for setting collect_node_diagnostics in DebugManager and publish_subtrees in SubtreeManager  with two seperate services by @mdeitersen
+- Replaced SetExecutionMode.srv for setting collect_node_diagnostics in DebugManager and publish_subtrees in SubtreeManager with two seperate services by @mdeitersen
 - Moved subtree manager from debug manager to another class by @mdeitersen
 - Merge branch 'fix_create_subtree_from_nodes' into update-web-gui-to-release/2.0.4 by @Oberacda in [#76](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/76)
 - Fixed optional options to be a list by @nspielbau
@@ -235,7 +249,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Packages list only ever contained one item by @Oberacda
 
 ### Removed
-- Remove _setting_up variable. by @Oberacda
+
+- Remove \_setting_up variable. by @Oberacda
 - Remove unneeded passthrough parameter. by @Oberacda
 - Remove Client import in action.py by @Oberacda
 - Remove verbose logging. by @Oberacda
@@ -251,10 +266,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove ament_auto_lint from ros_bt_py_web_gui by @Oberacda
 
 ## New Contributors
-* @sea-bass made their first contribution
+
+- @sea-bass made their first contribution
+
 ## [0.0.1] - 2024-02-22
 
 ### Added
+
 - Added basic template for CHANGELOG by @nspielbau in [#54](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/54)
 - Add documentation link to README. by @Oberacda
 - Add missing theme dependency/ by @Oberacda
@@ -290,6 +308,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ament_lint linters to pre-commit. by @Oberacda
 
 ### Changed
+
 - Merge pull request #59 from fzi-forschungszentrum-informatik/dev by @Oberacda in [#59](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/59)
 - Update version numbers to match changelog. by @Oberacda
 - Fix invalid subtree creation while saving a tree. by @Oberacda in [#58](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/58)
@@ -356,7 +375,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Port service nodes by @Oberacda
 - Merge branch 'update_readme' into 'main' by @Oberacda
 - Merge branch 'fb_add_basic_nodes' into 'main' by @Oberacda
-- Import node modules in __init__.py by @Oberacda
+- Import node modules in **init**.py by @Oberacda
 - Adapted to new folder structure for src files by @t-schnell
 - Porting of ROS independent nodes
 - Merge branch 'add_documentation' into 'main' by @Oberacda
@@ -404,6 +423,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial commit. by @Oberacda
 
 ### Removed
+
 - Remove dependencies that are not covered by rosdep by @Oberacda in [#49](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/49)
 - Removed fix_yaml by @mdeitersen
 - Remove usage of an invalid constructor for the subtree class. by @Oberacda
@@ -412,11 +432,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove test parameter that is ros2 version dependent. by @Oberacda
 
 ## New Contributors
-* @Oberacda made their first contribution in [#59](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/59)
-* @nspielbau made their first contribution in [#54](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/54)
-* @ made their first contribution in [#57](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/57)
-* @fmauch made their first contribution
-* @t-schnell made their first contribution
+
+- @Oberacda made their first contribution in [#59](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/59)
+- @nspielbau made their first contribution in [#54](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/54)
+- @ made their first contribution in [#57](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/57)
+- @fmauch made their first contribution
+- @t-schnell made their first contribution
+
 [unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.3.0..HEAD
 [0.3.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.2.0..v0.3.0
 [0.2.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.1..v0.2.0
