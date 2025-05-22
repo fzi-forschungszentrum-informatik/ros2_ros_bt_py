@@ -8,9 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added tests for action node by @mdeitersen
 - Add git cliff for changelog management by @Oberacda
 
 ### Changed
+- Merge pull request #144 from mdeitersen/add_action_tests by @Oberacda in [#144](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/144)
+- Fix import error by @Oberacda
+- Update changelog by @github-actions[bot]
+- Changed theme to be inline with ros2 documentation
+- Update changelog by @github-actions[bot]
+- Fix issues with action fail on available by @Oberacda
+- Updated package.xml and CMakeLists.txt by @mdeitersen
+- Corrected import path by @mdeitersen
+- Fix seconds_running calculation error in action by @mdeitersen
+- Update changelog by @github-actions[bot]
 - Merge pull request #170 from Lukas1407/docu-rework by @Oberacda in [#170](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/170)
 - Changed theme to be inline with ros2 documentation
 - Update changelog by @github-actions[bot]
@@ -42,7 +53,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix initially apparent errors (from message class rework) by @Doomse
 - Rework message types by @Doomse
 
+### Fixed
+- Fix mock usage by @mdeitersen
+
 ### Removed
+- Remove commented out code by @mdeitersen
 - Remove data publish on unwire, since that dumps all data (tree is shutdown) by @Doomse
 
 ## New Contributors
