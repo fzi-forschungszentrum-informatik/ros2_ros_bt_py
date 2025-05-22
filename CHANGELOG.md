@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add git cliff for changelog management by @Oberacda
 
 ### Changed
+- Merge pull request #170 from Lukas1407/docu-rework by @Oberacda in [#170](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/170)
+- Changed theme to be inline with ros2 documentation
+- Update changelog by @github-actions[bot]
 - Changle cliff.toml by @Oberacda
 - Update changelog by @github-actions[bot]
 - Changle cliff.toml by @Oberacda
