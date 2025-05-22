@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changle cliff.toml by @Oberacda
 - Update changelog by @github-actions[bot]
+- Changle cliff.toml by @Oberacda
+- Update changelog by @github-actions[bot]
 - Fix changelog ci job by @Oberacda
 - Fix changelog ci job by @Oberacda
 - Merge pull request #177 from fzi-forschungszentrum-informatik/update-web-gui-to-4.0.1 by @Oberacda in [#177](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/177)
