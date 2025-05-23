@@ -78,6 +78,8 @@ commit_preprocessors = [
 ]
 # regex for parsing and grouping commits
 commit_parsers = [
+  { message = "^Update changelog", skip= true },
+  { footer = "^changelog: ?ignore", skip = true },
   { message = "^[a|A]dd", group = "Added" },
   { message = "^[s|S]upport", group = "Added" },
   { message = "^[r|R]emove", group = "Removed" },
@@ -86,8 +88,9 @@ commit_parsers = [
   { message = "^.*: remove", group = "Removed" },
   { message = "^.*: delete", group = "Removed" },
   { message = "^test", group = "Fixed" },
-  { message = "^fix", group = "Fixed" },
+  { message = "^[f|F]ix", group = "Fixed" },
   { message = "^.*: fix", group = "Fixed" },
+  { message = "^Merge", group = "Merged" },
   { message = "^.*", group = "Changed" },
 ]
 # filter out the commits that are not matched by commit parsers
@@ -96,3 +99,7 @@ filter_commits = false
 topo_order = false
 # sort the commits inside sections by oldest/newest order
 sort_commits = "newest"
+
+[remote.github]
+owner = "fzi-forschungszentrum-informatik"
+repo = "ros2_ros_bt_py"

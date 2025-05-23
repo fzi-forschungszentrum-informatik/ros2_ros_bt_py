@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- Merge pull request #178 from fzi-forschungszentrum-informatik/fix_launch_file by @Oberacda in [#178](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/178)
+### Added
+- Add remote repo info in cliff.toml
+
+### Fixed
+- Put merges in seperate changelog section
+- Exclude changelog changes from changelog.
 - Fix launch file sets invalid parameter values. by @Oberacda
-- Update changelog by @github-actions[bot]
 
 
 ## [0.4.0] - 2025-05-22
@@ -21,34 +24,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Release 0.4.0 by @Oberacda
-- Update changelog by @github-actions[bot]
-- Merge pull request #144 from mdeitersen/add_action_tests by @Oberacda in [#144](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/144)
-- Fix import error by @Oberacda
-- Update changelog by @github-actions[bot]
 - Changed theme to be inline with ros2 documentation
-- Update changelog by @github-actions[bot]
-- Fix issues with action fail on available by @Oberacda
 - Updated package.xml and CMakeLists.txt by @mdeitersen
 - Corrected import path by @mdeitersen
-- Fix seconds_running calculation error in action by @mdeitersen
-- Update changelog by @github-actions[bot]
-- Merge pull request #170 from Lukas1407/docu-rework by @Oberacda in [#170](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/170)
 - Changed theme to be inline with ros2 documentation
-- Update changelog by @github-actions[bot]
 - Changle cliff.toml by @Oberacda
-- Update changelog by @github-actions[bot]
 - Changle cliff.toml by @Oberacda
-- Update changelog by @github-actions[bot]
-- Fix changelog ci job by @Oberacda
-- Fix changelog ci job by @Oberacda
-- Merge pull request #177 from fzi-forschungszentrum-informatik/update-web-gui-to-4.0.1 by @Oberacda in [#177](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/177)
 - Update Web-GUI to 4.0.1 by @Oberacda
-- Merge pull request #175 from fzi-forschungszentrum-informatik/update-web-gui-to-4.0.0 by @Oberacda in [#175](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/175)
 - Update Web-GUI to 4.0.0 by @Oberacda
-- Merge pull request #171 from Doomse/tree-message-rework by @Oberacda in [#171](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/171)
 - Update tests to new tree message types by @Doomse
 - Always collect subtree messages and toggle publishing in manager. by @Doomse
-- Fix cleanup of outdated subtrees by @Doomse
 - Properly set tree ids and clean up outdated subtree by @Doomse
 - Clear tree data on disable by @Doomse
 - Manually enable data publish, data is published with every tick by @Doomse
@@ -60,11 +45,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update tree manager part1 by @Doomse
 - Update imports for state constants by @Doomse
 - Update service definitions by @Doomse
-- Fix initially apparent errors (from message class rework) by @Doomse
 - Rework message types by @Doomse
 
 ### Fixed
+- Fix import error by @Oberacda
+- Fix issues with action fail on available by @Oberacda
 - Fix mock usage by @mdeitersen
+- Fix seconds_running calculation error in action by @mdeitersen
+- Fix changelog ci job by @Oberacda
+- Fix changelog ci job by @Oberacda
+- Fix cleanup of outdated subtrees by @Doomse
+- Fix initially apparent errors (from message class rework) by @Doomse
+
+### Merged
+- Merge pull request #144 from mdeitersen/add_action_tests by @Oberacda in [#144](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/144)
+- Merge pull request #170 from Lukas1407/docu-rework by @Oberacda in [#170](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/170)
+- Merge pull request #177 from fzi-forschungszentrum-informatik/update-web-gui-to-4.0.1 by @Oberacda in [#177](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/177)
+- Merge pull request #175 from fzi-forschungszentrum-informatik/update-web-gui-to-4.0.0 by @Oberacda in [#175](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/175)
+- Merge pull request #171 from Doomse/tree-message-rework by @Oberacda in [#171](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/171)
 
 ### Removed
 - Remove commented out code by @mdeitersen
@@ -80,24 +78,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add typing hints for builtin by @Doomse
 
 ### Changed
-- Update changelog for v0.3.0 by @Oberacda
-- Merge pull request #165 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.3.1 by @Oberacda in [#165](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/165)
-- Update changelog by @Oberacda
 - Update Web-GUI to release/3.3.1 by @Oberacda
-- Merge pull request #164 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.3.0 by @Oberacda in [#164](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/164)
-- Merge branch 'main' into update-web-gui-to-release/3.3.0 by @Oberacda
-- Update changelog by @Oberacda
-- Update changelog. by @Oberacda
 - Update Web-GUI to release/3.3.0 by @Oberacda
-- Merge pull request #163 from fzi-forschungszentrum-informatik/fix_memory_subscriber by @Oberacda in [#163](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/163)
-- Fixed TopicSubscriber node behavior by @Oberacda
-- Merge pull request #161 from Doomse/node-meta-fix by @Oberacda in [#161](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/161)
 - Integrate abc into NodeMeta and Node classes by @Doomse
 - Reenable Node metaclass and fix docstring generator by @Doomse
-- Merge pull request #162 from Doomse/enum-values by @Oberacda in [#162](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/162)
 - Update tests for EnumFields node by @Doomse
 - Apply TopicType to EnumFields by @Doomse
-- Merge pull request #159 from Doomse/type-hints by @Oberacda in [#159](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/159)
 - Update ConstFields Service by @Doomse
 - Integrate TypeWrapper with compatibility conversions by @Doomse
 - Implement generic type wrapper by @Doomse
@@ -106,7 +92,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switch to best_effort for tree publishing. by @Oberacda
 
 ### Fixed
+- Fixed TopicSubscriber node behavior by @Oberacda
 - Fix message constant fields service including tests by @Doomse
+
+### Merged
+- Merge pull request #165 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.3.1 by @Oberacda in [#165](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/165)
+- Merge pull request #164 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.3.0 by @Oberacda in [#164](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/164)
+- Merge branch 'main' into update-web-gui-to-release/3.3.0 by @Oberacda
+- Merge pull request #163 from fzi-forschungszentrum-informatik/fix_memory_subscriber by @Oberacda in [#163](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/163)
+- Merge pull request #161 from Doomse/node-meta-fix by @Oberacda in [#161](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/161)
+- Merge pull request #162 from Doomse/enum-values by @Oberacda in [#162](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/162)
+- Merge pull request #159 from Doomse/type-hints by @Oberacda in [#159](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/159)
 
 ### Removed
 - Remove non-functional enum node by @Doomse
@@ -124,11 +120,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added line between icons and header by @nspielbau
 
 ### Changed
-- Update changelog for v0.2.0 by @Oberacda
-- Merge pull request #154 from fzi-forschungszentrum-informatik/type-system-web-update by @Oberacda in [#154](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/154)
+- Restructure MessageType publlishing by @Doomse
+- Keep maths types in helpers.py for compatibility by @Doomse
+- Implement Ros Topic types by @Doomse
+- Implement Ros Action types and baseclasses by @Doomse
+- Publish names and types of existing topics and services. Actions still missing by @Doomse
+- Move math types to new location by @Doomse
+- Implement FilePath type by @Doomse
+- Updated Changelog by @nspielbau
+- Updated gif by @nspielbau
+- Update CI workflow. by @Oberacda
+- Update Web-GUI to release/3.2.3 by @Oberacda
+- Update Web-GUI to release/3.1.0 by @Oberacda in [#150](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/150)
+
+### Fixed
 - Fix invalid default value. by @Oberacda
-- Merge pull request #156 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.2.2 by @Oberacda
-- Merge branch 'type-system-web-update' into update-web-gui-to-release/3.2.2 by @Oberacda
 - Fix test_wait_for_service_input by @Oberacda
 - Fix test_wait_for_service by @Oberacda
 - Fix test_service_input by @Oberacda
@@ -137,22 +143,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix test_message_from_dict_const by @Oberacda
 - Fix test_message_from_dict by @Oberacda
 - Fix test_fields_to_message by @Oberacda
-- Merge pull request #151 from Doomse/type_system by @Oberacda
-- Restructure MessageType publlishing by @Doomse
-- Keep maths types in helpers.py for compatibility by @Doomse
-- Implement Ros Topic types by @Doomse
-- Implement Ros Action types and baseclasses by @Doomse
-- Publish names and types of existing topics and services. Actions still missing by @Doomse
-- Move math types to new location by @Doomse
-- Implement FilePath type by @Doomse
-- Merge pull request #143 from fzi-forschungszentrum-informatik/rework_landing_page by @Oberacda in [#143](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/143)
-- Updated Changelog by @nspielbau
-- Updated gif by @nspielbau
 - Fixed up README by @nspielbau
+
+### Merged
+- Merge pull request #154 from fzi-forschungszentrum-informatik/type-system-web-update by @Oberacda in [#154](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/154)
+- Merge pull request #156 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.2.2 by @Oberacda
+- Merge branch 'type-system-web-update' into update-web-gui-to-release/3.2.2 by @Oberacda
+- Merge pull request #151 from Doomse/type_system by @Oberacda
+- Merge pull request #143 from fzi-forschungszentrum-informatik/rework_landing_page by @Oberacda in [#143](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/143)
 - Merge pull request #158 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.2.3 by @Oberacda in [#158](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/158)
-- Update CI workflow. by @Oberacda
-- Update Web-GUI to release/3.2.3 by @Oberacda
-- Update Web-GUI to release/3.1.0 by @Oberacda in [#150](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/150)
 
 ### Removed
 - Remove empty action. by @Oberacda
@@ -169,17 +168,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added manual documentation build to doc dir by @nspielbau in [#134](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/134)
 
 ### Changed
-- Update changelog for v0.1.1 by @Oberacda
-- Merge pull request #146 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.0.0 by @Oberacda in [#146](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/146)
 - Update Web-GUI to release/3.0.0 by @Oberacda
-- Merge pull request #139 from fzi-forschungszentrum-informatik/fix_documentation_build by @Oberacda in [#139](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/139)
+- Bumped doc version by @nspielbau in [#133](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/133)
+
+### Fixed
 - Fixed module path for autodoc by @nspielbau
-- Merge pull request #141 from fzi-forschungszentrum-informatik/doc_tree_storage_path by @Oberacda in [#141](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/141)
-- Update changelog. by @Oberacda in [#136](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/136)
 - Fix documentation makefile back to tabs. by @Oberacda
+
+### Merged
+- Merge pull request #146 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.0.0 by @Oberacda in [#146](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/146)
+- Merge pull request #139 from fzi-forschungszentrum-informatik/fix_documentation_build by @Oberacda in [#139](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/139)
+- Merge pull request #141 from fzi-forschungszentrum-informatik/doc_tree_storage_path by @Oberacda in [#141](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/141)
 - Merge pull request #126 from sea-bass/distros-in-ci by @Oberacda in [#126](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/126)
 - Merge branch 'main' into distros-in-ci by @Oberacda
-- Bumped doc version by @nspielbau in [#133](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/133)
 
 ### Removed
 - Removed faulty header by @nspielbau
@@ -218,66 +219,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Jazzy / Ubuntu 24.04 to Git issue template by @sea-bass
 
 ### Changed
-- Merge pull request #131 from fzi-forschungszentrum-informatik/dev by @Oberacda in [#131](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/131)
-- Update changelog for release v0.1.0
 - Made RandomIntInput consistent with RandomInt by @nspielbau in [#123](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/123)
 - Updated RandomInt Node description by @nspielbau
 - Adjusted RandomInt to make more sense by @nspielbau
-- Fixed package name by @nspielbau in [#125](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/125)
-- Fix bug: unable remove Action node with initial default values by @mdeitersen in [#120](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/120)
 - Reworked getting started and added tutorials by @nspielbau
 - Reworked header levels by @nspielbau
 - Renamed chapter to fit better by @nspielbau
 - Updated landing page by @nspielbau
 - Add missing attributes in topic.py by @Oberacda
 - Switch to MultiThreadedExecutor. by @Oberacda
-- Update changelog. by @Oberacda in [#109](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/109)
 - Cleanly shut down tree node. by @Oberacda
-- Fix invalid usage of self.tree.state by @Oberacda
-- Fix undeclared state variable in action node. by @Oberacda
 - Updated CHANGELOG by @nspielbau in [#103](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/103)
-- Fix missing check for feedback in action node. by @Oberacda
 - Adapted tests for Service nodes by @mdeitersen in [#100](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/100)
 - Show action goal, result and feedback fields in Action nodes by @mdeitersen
 - Directly show service request and response fields in Service nodes. by @Oberacda
-- Fix self.name is None error. by @Oberacda
 - Enabled default value on launch by @nspielbau in [#93](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/93)
-- Merge pull request #95 from fzi-forschungszentrum-informatik/fb_fix_module_list by @Oberacda in [#95](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/95)
-- Merge pull request #78 from fzi-forschungszentrum-informatik/fb_remove_debug_code by @Oberacda in [#78](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/78)
-- Fix service call mock assert. by @Oberacda
-- Fix style issues. by @Oberacda
-- Fix error with subtree initializations. by @Oberacda
-- Merge branch 'dev' into fb_remove_debug_code by @Oberacda
 - Overwrite output method by @nspielbau in [#89](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/89)
 - Result can now be processed when using ABC Actions by @nspielbau in [#84](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/84)
 - Ignore parameters module in test_import.py by @Oberacda
-- Fix symlink install parameter_library bug. by @Oberacda
 - Reset wait nodes before shutdown. by @Oberacda
-- Merge branch 'fb_remove_debug_code' into update-web-gui-to-release/2.0.5 by @Oberacda in [#77](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/77)
 - Deleted duplicated conditional statement by @mdeitersen
 - Replaced NodeDiagnostics message with DiagnosticStatus message by @mdeitersen
 - Replaced  SetExecutionMode.srv for setting collect_node_diagnostics in DebugManager and publish_subtrees in SubtreeManager  with two seperate services by @mdeitersen
 - Moved subtree manager from debug manager to another class by @mdeitersen
-- Merge branch 'fix_create_subtree_from_nodes' into update-web-gui-to-release/2.0.4 by @Oberacda in [#76](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/76)
-- Fixed optional options to be a list by @nspielbau
-- Fixed typo by @nspielbau
 - Okay this seems to work, idk why by @nspielbau
-- Fixed assert by @nspielbau
 - Changed order inside asserts by @nspielbau
-- Fix cancellation of goal. by @Oberacda in [#63](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/63)
-- Fix variable names in action node. by @Oberacda
-- Fix action state machine. by @Oberacda
-- Fix action broken status after succeeding. by @Oberacda
 - Update Web-GUI to release/2.0.3 by @Oberacda in [#61](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/61)
-- Fixed imports in docs: creating_node_classes.rst in [#62](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/62)
 - Updated TOC in all CONTRIBUTING.md files
 - Update Web-GUI to release/2.0.4 by @Oberacda
 - Update Web-GUI to release/2.0.5 by @Oberacda
 - Update industrial_ci.yml by @sea-bass
 - Update industrial_ci.yml by @sea-bass
 - Update BUG-REPORT.yml by @sea-bass in [#117](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/117)
-- Fixed Python version by @nspielbau
 - Packages list only ever contained one item by @Oberacda
+
+### Fixed
+- Fixed package name by @nspielbau in [#125](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/125)
+- Fix bug: unable remove Action node with initial default values by @mdeitersen in [#120](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/120)
+- Fix invalid usage of self.tree.state by @Oberacda
+- Fix undeclared state variable in action node. by @Oberacda
+- Fix missing check for feedback in action node. by @Oberacda
+- Fix self.name is None error. by @Oberacda
+- Fix service call mock assert. by @Oberacda
+- Fix style issues. by @Oberacda
+- Fix error with subtree initializations. by @Oberacda
+- Fix symlink install parameter_library bug. by @Oberacda
+- Fixed optional options to be a list by @nspielbau
+- Fixed typo by @nspielbau
+- Fixed assert by @nspielbau
+- Fix cancellation of goal. by @Oberacda in [#63](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/63)
+- Fix variable names in action node. by @Oberacda
+- Fix action state machine. by @Oberacda
+- Fix action broken status after succeeding. by @Oberacda
+- Fixed imports in docs: creating_node_classes.rst in [#62](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/62)
+- Fixed Python version by @nspielbau
+
+### Merged
+- Merge pull request #131 from fzi-forschungszentrum-informatik/dev by @Oberacda in [#131](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/131)
+- Merge pull request #95 from fzi-forschungszentrum-informatik/fb_fix_module_list by @Oberacda in [#95](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/95)
+- Merge pull request #78 from fzi-forschungszentrum-informatik/fb_remove_debug_code by @Oberacda in [#78](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/78)
+- Merge branch 'dev' into fb_remove_debug_code by @Oberacda
+- Merge branch 'fb_remove_debug_code' into update-web-gui-to-release/2.0.5 by @Oberacda in [#77](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/77)
+- Merge branch 'fix_create_subtree_from_nodes' into update-web-gui-to-release/2.0.4 by @Oberacda in [#76](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/76)
 
 ### Removed
 - Remove _setting_up variable. by @Oberacda
@@ -336,16 +339,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ament_lint linters to pre-commit. by @Oberacda
 
 ### Changed
-- Merge pull request #59 from fzi-forschungszentrum-informatik/dev by @Oberacda in [#59](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/59)
 - Update version numbers to match changelog. by @Oberacda
-- Fix invalid subtree creation while saving a tree. by @Oberacda in [#58](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/58)
-- Fix missing parameters in nodes. by @Oberacda
 - Update Web-GUI to release/2.0.2 in [#57](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/57)
-- Merge branch 'main' into dev by @Oberacda
 - Perform unwiring first before removing node by @mdeitersen in [#53](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/53)
 - Set all node states to shutdown and tree state to idle when saving a tree by @mdeitersen in [#51](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/51)
-- Merge pull request #47 from mdeitersen/add_helper_tests by @Oberacda in [#47](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/47)
-- Merge branch 'main' into add_helper_tests by @Oberacda
 - Only upload single test report and tag code coverage by @Oberacda
 - Update Readme. by @Oberacda
 - Update industrial_ci.yml by @Oberacda
@@ -353,36 +350,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update industrial_ci.yml by @Oberacda
 - Update industrial_ci.yml by @Oberacda
 - Update industrial_ci.yml by @Oberacda
-- Fix github variables error by @Oberacda
-- Fix github variables error by @Oberacda
-- Fix github variable problem. by @Oberacda
-- Fix missing package.xml dependencies. by @Oberacda
-- Fix ci configuration. by @Oberacda
-- Merge branch 'prepare_github_release' into 'main' by @Oberacda
 - Prepare GitHub Release. by @Oberacda
 - Implement proper type completion for the JSON Editor. by @Oberacda
 - Update webgui JSON input. by @Oberacda
-- Merge branch 'main' into fb_web_gui_json_editor_type_completion by @Oberacda
-- Merge branch 'main' into fix_subtree_constructor by @Oberacda
-- Merge branch 'fix_ci_rolling_allow_to_fail' into 'main'
-- Fix inconsistent style. by @Oberacda
-- Merge branch 'fb_load_save' into 'main' by @fmauch
-- Fix missing parameter in PackageManager tests by @Oberacda
 - Implement save_to_path fuction by @Oberacda
-- Merge branch 'fix_installation_code_snippets' into 'main'
-- Fixed code snippets by @nspielbau
 - Use double backticks for referencing code snipptets in RST by @fmauch
-- Fix subtree constructor by @Oberacda
-- Merge branch 'fix_destruction_error' into 'main' by @fmauch
-- Fix service destruction error. by @Oberacda
-- Fix topic destruction_error by @Oberacda
-- Fix message converters drag and drop. by @Oberacda
-- Merge branch 'port_ros_nodes' into 'main' by @fmauch
-- Fix service call and message autocompletion by @Oberacda
-- Fix error with invalid ros_node reference by @Oberacda
-- Fix node imports and tree_manager service calls. by @Oberacda
-- Fix gitlab-ci.yml by @Oberacda
-- Merge branch 'main' into 'port_ros_nodes' by @Oberacda
 - Port file.py nodes by @Oberacda
 - Port throttle.py nodes. by @Oberacda
 - Port subtree.py by @Oberacda
@@ -400,54 +372,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enable reports for test coverage by @Oberacda
 - Update ci config by @Oberacda
 - Port service nodes by @Oberacda
-- Merge branch 'update_readme' into 'main' by @Oberacda
-- Merge branch 'fb_add_basic_nodes' into 'main' by @Oberacda
 - Import node modules in __init__.py by @Oberacda
 - Adapted to new folder structure for src files by @t-schnell
 - Porting of ROS independent nodes
-- Merge branch 'add_documentation' into 'main' by @Oberacda
-- Fix author in latex report by @Oberacda
 - Print web gui URL during startup. by @Oberacda
-- Merge branch 'add_web_gui' into 'main' by @Oberacda
 - Switch to master ci_scripts branch. by @Oberacda
 - Switch to fix_coverage_eos2 CI branch. by @Oberacda
-- Fix CI errors for web_gui. by @Oberacda
 - Update web_gui to use new interfaces. by @Oberacda
-- Merge branch 'port_tree_manager' into 'main' by @Oberacda
-- Fix pipeline test reporting. by @Oberacda
-- Fix pipeline test reporting. by @Oberacda
 - Configure pytest to respect generated code. by @Oberacda
-- Fix service callback signatures in package_manager. by @Oberacda
 - Switch to generate_parameter_library by @Oberacda
-- Fix parameter loading and add launchfile. by @Oberacda
 - Make tree node executable. by @Oberacda
-- Fix type errors. by @Oberacda
 - Port tree_node.py by @Oberacda
 - Port tree_manager.py by @Oberacda
 - Port package_manager.py by @fmauch
-- Fix pyproject.toml by @Oberacda
-- Fix toml error in CI. by @Oberacda
 - Port package_manager.py by @Oberacda
 - Try importing each submodule from ros_bt_py by @Oberacda
-- Fix node import by @fmauch
 - Try importing each submodule from ros_bt_py by @fmauch
 - Port node class and related code by @fmauch
 - Port debug_manager.py by @Oberacda
-- Fix code style issues. by @Oberacda
 - Port node.py by @Oberacda
 - Port node_config.py by @Oberacda
 - Port node_data.py by @Oberacda
 - Port helper functions by @fmauch
 - Run linters as part of pre-commit not colcon test. by @Oberacda
-- Fix code style issues. by @Oberacda
 - Ignore invalid warning from flake8. by @Oberacda
 - Port ros_helpers class. by @Oberacda
 - Port helpers.py by @Oberacda
 - Port exceptions.py by @Oberacda
+- Initial commit. by @Oberacda
+
+### Fixed
+- Fix invalid subtree creation while saving a tree. by @Oberacda in [#58](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/58)
+- Fix missing parameters in nodes. by @Oberacda
+- Fix github variables error by @Oberacda
+- Fix github variables error by @Oberacda
+- Fix github variable problem. by @Oberacda
+- Fix missing package.xml dependencies. by @Oberacda
+- Fix ci configuration. by @Oberacda
+- Fix inconsistent style. by @Oberacda
+- Fix missing parameter in PackageManager tests by @Oberacda
+- Fixed code snippets by @nspielbau
+- Fix subtree constructor by @Oberacda
+- Fix service destruction error. by @Oberacda
+- Fix topic destruction_error by @Oberacda
+- Fix message converters drag and drop. by @Oberacda
+- Fix service call and message autocompletion by @Oberacda
+- Fix error with invalid ros_node reference by @Oberacda
+- Fix node imports and tree_manager service calls. by @Oberacda
+- Fix gitlab-ci.yml by @Oberacda
+- Fix author in latex report by @Oberacda
+- Fix CI errors for web_gui. by @Oberacda
+- Fix pipeline test reporting. by @Oberacda
+- Fix pipeline test reporting. by @Oberacda
+- Fix service callback signatures in package_manager. by @Oberacda
+- Fix parameter loading and add launchfile. by @Oberacda
+- Fix type errors. by @Oberacda
+- Fix pyproject.toml by @Oberacda
+- Fix toml error in CI. by @Oberacda
+- Fix node import by @fmauch
+- Fix code style issues. by @Oberacda
+- Fix code style issues. by @Oberacda
 - Fix missing import in interfaces CMakeLists.txt by @Oberacda
 - Fix CI configuration and add pre-commit to CI. by @Oberacda
 - Fix pipeline config. by @Oberacda
-- Initial commit. by @Oberacda
+
+### Merged
+- Merge pull request #59 from fzi-forschungszentrum-informatik/dev by @Oberacda in [#59](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/59)
+- Merge branch 'main' into dev by @Oberacda
+- Merge pull request #47 from mdeitersen/add_helper_tests by @Oberacda in [#47](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/47)
+- Merge branch 'main' into add_helper_tests by @Oberacda
+- Merge branch 'prepare_github_release' into 'main' by @Oberacda
+- Merge branch 'main' into fb_web_gui_json_editor_type_completion by @Oberacda
+- Merge branch 'main' into fix_subtree_constructor by @Oberacda
+- Merge branch 'fix_ci_rolling_allow_to_fail' into 'main'
+- Merge branch 'fb_load_save' into 'main' by @fmauch
+- Merge branch 'fix_installation_code_snippets' into 'main'
+- Merge branch 'fix_destruction_error' into 'main' by @fmauch
+- Merge branch 'port_ros_nodes' into 'main' by @fmauch
+- Merge branch 'main' into 'port_ros_nodes' by @Oberacda
+- Merge branch 'update_readme' into 'main' by @Oberacda
+- Merge branch 'fb_add_basic_nodes' into 'main' by @Oberacda
+- Merge branch 'add_documentation' into 'main' by @Oberacda
+- Merge branch 'add_web_gui' into 'main' by @Oberacda
+- Merge branch 'port_tree_manager' into 'main' by @Oberacda
 
 ### Removed
 - Remove dependencies that are not covered by rosdep by @Oberacda in [#49](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/49)
