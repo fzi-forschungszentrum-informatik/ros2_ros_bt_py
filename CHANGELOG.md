@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Merge pull request #178 from fzi-forschungszentrum-informatik/fix_launch_file by @Oberacda in [#178](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/178)
+- Fix launch file sets invalid parameter values. by @Oberacda
+- Update changelog by @github-actions[bot]
+
+
 ## [0.4.0] - 2025-05-22
 
 ### Added
@@ -456,6 +464,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * @fmauch made their first contribution
 * @t-schnell made their first contribution
 
+[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.4.0..HEAD
 [0.4.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.3.0..v0.4.0
 [0.3.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.2.0..v0.3.0
 [0.2.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.1.1..v0.2.0
