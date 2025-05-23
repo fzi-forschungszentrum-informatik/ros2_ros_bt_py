@@ -86,8 +86,10 @@ commit_parsers = [
   { message = "^.*: remove", group = "Removed" },
   { message = "^.*: delete", group = "Removed" },
   { message = "^test", group = "Fixed" },
-  { message = "^fix", group = "Fixed" },
+  { message = "^[f|F]ix", group = "Fixed" },
   { message = "^.*: fix", group = "Fixed" },
+  { message = "^Update changelog", skip= true },
+  { footer = "^changelog: ?ignore", skip = true },
   { message = "^.*", group = "Changed" },
 ]
 # filter out the commits that are not matched by commit parsers
