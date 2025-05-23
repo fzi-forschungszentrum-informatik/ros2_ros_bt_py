@@ -8,12 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Add remote repo info in cliff.toml
+- Add remote repo info in cliff.toml by @Oberacda
 
 ### Fixed
-- Put merges in seperate changelog section
-- Exclude changelog changes from changelog.
+- Put merges in seperate changelog section by @Oberacda
+- Exclude changelog changes from changelog. by @Oberacda
 - Fix launch file sets invalid parameter values. by @Oberacda
+
+### Merged
+- Merge pull request #179 from fzi-forschungszentrum-informatik/fix_exclude_changelog_changes by @Oberacda in [#179](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/179)
+- Merge branch 'main' into fix_exclude_changelog_changes by @Oberacda
+- Merge pull request #178 from fzi-forschungszentrum-informatik/fix_launch_file by @Oberacda in [#178](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/178)
 
 
 ## [0.4.0] - 2025-05-22
