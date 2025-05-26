@@ -26,11 +26,8 @@ jobs:
       - name: Install ament linters
         run: |
           sudo apt-get update
-          sudo apt-get install -y git
           sudo apt-get install -y ros-${{ matrix.ros }}-ament-copyright
           sudo apt-get install -y ros-${{ matrix.ros }}-ament-xmllint
-          sudo apt-get install -y ros-${{ matrix.ros }}-ament-flake8
-          sudo apt-get install -y ros-${{ matrix.ros }}-ament-pep257
           sudo apt-get install -y ros-${{ matrix.ros }}-ament-lint-cmake
       - name: Run pre-commit
         run: |
