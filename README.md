@@ -1,24 +1,26 @@
-[![ROS Industrial CI](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml/badge.svg)](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/industrial_ci.yml)
+[![Verfiy, Build & Test](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/build_test.yml/badge.svg?branch=main)](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/actions/workflows/build_test.yml)
 [![codecov](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py/graph/badge.svg?token=CRF3GMWWG3)](https://codecov.io/gh/fzi-forschungszentrum-informatik/ros2_ros_bt_py)
 [![Documentation](https://img.shields.io/badge/Documentation-Github_Pages-blue)](https://fzi-forschungszentrum-informatik.github.io/ros2_ros_bt_py/index.html)
+
 ---
 
 # Welcome to ros_bt_py!
 
-This is a [Behavior Tree](https://en.wikipedia.org/wiki/Behavior_tree_(artificial_intelligence,_robotics_and_control)) library meant to be an alternative to [BehaviorTree.cpp](https://www.behaviortree.dev/), [SMACH](http://wiki.ros.org/smach), [FlexBE](http://wiki.ros.org/flexbe) and the like.
+This is a [Behavior Tree](<https://en.wikipedia.org/wiki/Behavior_tree_(artificial_intelligence,_robotics_and_control)>) library meant to be an alternative to [BehaviorTree.cpp](https://www.behaviortree.dev/), [SMACH](http://wiki.ros.org/smach), [FlexBE](http://wiki.ros.org/flexbe) and the like.
 
 It includes a ReactJS-based web GUI and all the building blocks you need to build advanced mission
 control Behavior Trees without writing a single line of code!
 
 **ros_bt_py** is a plug-and-play solution for all your ROS 2 deliberation needs including:
 
-* Intuitive interfacing with **ROS Actions** and **Services** through run-time configurable Node Classes
-* Explicit and type-safe **Dataflow** utilizing a drag-and-drop based datagraph.
-* Easy customization and expansion of the available Node Classes as **Python Modules**
+- Intuitive interfacing with **ROS Actions** and **Services** through run-time configurable Node Classes
+- Explicit and type-safe **Dataflow** utilizing a drag-and-drop based datagraph.
+- Easy customization and expansion of the available Node Classes as **Python Modules**
 
 ros_bt_py has been the subject of multiple publications:
-* [Distributed Behavior Trees for Heterogeneous Robot Teams](https://arxiv.org/pdf/2309.08253)
-* [Behavior Tree Capabilities for Dynamic Multi-Robot Task Allocation with Heterogeneous Robot Teams](https://arxiv.org/pdf/2402.02833)
+
+- [Distributed Behavior Trees for Heterogeneous Robot Teams](https://arxiv.org/pdf/2309.08253)
+- [Behavior Tree Capabilities for Dynamic Multi-Robot Task Allocation with Heterogeneous Robot Teams](https://arxiv.org/pdf/2402.02833)
 
 <p align="center"><img src="bt_py.gif"></p>
 
@@ -46,6 +48,7 @@ Then you can just build the package with your preferred method i.e. `colcon buil
 ## Running
 
 The command
+
 ```bash
 $ ros2 launch ros_bt_py ros_bt_py.launch.py enable_web_interface:=True
 ```
@@ -57,7 +60,7 @@ Afterwards, you can open `http://localhost:8085/index.html` to use the editor.
 ### Launch Options
 
 | **Launch Argument**            | **Description**                                                                             | **Default Value**                             |
-|--------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------|
+| ------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | robot_namespace                | Namespace to launch all ros_bt_py nodes in!                                                 | /                                             |
 | node_modules                   | List of python packages that contain nodes to be loaded on startup.                         | _"['ros_bt_py.nodes','ros_bt_py.ros_nodes']"_ |
 | tree_storage_paths             | List of storage paths for trees.                                                            | _"['$HOME/.ros']"_                            |
