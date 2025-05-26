@@ -539,15 +539,14 @@ class Action(Leaf):
         goal_msg = self._goal_type()
         for field in goal_msg._fields_and_field_types:
             node_inputs[field] = type(getattr(goal_msg, field))
-            
+
         result_msg = self._result_type()
         for field in result_msg._fields_and_field_types:
             node_outputs["result_" + field] = type(getattr(result_msg, field))
-            
+
         feedback_msg = self._feedback_type()
         for field in feedback_msg._fields_and_field_types:
             node_outputs["feedback_" + field] = type(getattr(feedback_msg, field))
-            
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)

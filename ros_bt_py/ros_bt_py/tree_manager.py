@@ -259,6 +259,7 @@ def get_available_nodes(
             NodeIO(key=name, serialized_type=json_encode(type_or_ref))
             for (name, type_or_ref) in data_map.items()
         ]
+
     def to_node_option(data_map):
         return [
             NodeOption(key=name, serialized_type=json_encode(type_or_ref))
@@ -305,7 +306,9 @@ class TreeManager:
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
         tick_frequency_hz: float = 10.0,
-        publish_tree_structure_callback: Optional[Callable[[TreeStructureList], None]] = None,
+        publish_tree_structure_callback: Optional[
+            Callable[[TreeStructureList], None]
+        ] = None,
         publish_tree_state_callback: Optional[Callable[[TreeStateList], None]] = None,
         publish_tree_data_callback: Optional[Callable[[TreeDataList], None]] = None,
         publish_diagnostic_callback: Optional[Callable[[DiagnosticArray], None]] = None,
@@ -508,8 +511,8 @@ class TreeManager:
         self.publish_state()
 
     def publish_state(
-            self,
-        ):
+        self,
+    ):
         """
         Publish the current tree state using the callback supplied to the constructor.
 
@@ -518,15 +521,13 @@ class TreeManager:
         """
         if self.publish_tree_state:
             state_list = TreeStateList()
-            state_list.tree_states.extend(
-                self.subtree_manager.get_subtree_states()
-            )
+            state_list.tree_states.extend(self.subtree_manager.get_subtree_states())
             state_list.tree_states.append(self.state_to_msg())
             self.publish_tree_state(state_list)
 
     def publish_data(
-            self,
-        ):
+        self,
+    ):
         """
         Publish the current tree data using the callback supplied to the constructor.
 
@@ -538,9 +539,7 @@ class TreeManager:
         """
         if self.publish_tree_data and self.enable_publish_data:
             data_list = TreeDataList()
-            data_list.tree_data.extend(
-                self.subtree_manager.get_subtree_data()
-            )
+            data_list.tree_data.extend(self.subtree_manager.get_subtree_data())
             data_list.tree_data.append(self.data_to_msg())
             self.publish_tree_data(data_list)
         self.publish_state()
@@ -642,7 +641,7 @@ class TreeManager:
                 self.set_state(TreeState.WAITING_FOR_TICK)
                 self.publish_state()
                 return
-            
+
             tick_end_timestamp = self.ros_node.get_clock().now()
 
             duration: Duration = tick_end_timestamp - tick_start_timestamp
@@ -818,7 +817,6 @@ class TreeManager:
 
                 return response
 
-
         # Clear existing tree, then replace it with the message's contents
         self.clear(None, ClearTree.Response())
         # add nodes whose children exist already, until all nodes are there
@@ -881,8 +879,10 @@ class TreeManager:
             )
             self.tree_structure.tick_frequency_hz = 10.0
 
-        self.rate = self.ros_node.create_rate(frequency=self.tree_structure.tick_frequency_hz)
-        
+        self.rate = self.ros_node.create_rate(
+            frequency=self.tree_structure.tick_frequency_hz
+        )
+
         # Ensure Tree is editable after loading
         self.tree_state = TreeState(tree_id=tree.tree_id)
         self.set_state(TreeState.EDITABLE)
@@ -923,11 +923,7 @@ class TreeManager:
             response.message = "Tree manager has no subtree manager."
         return response
 
-    def set_publish_data(
-        self,
-        request: SetBool.Request,
-        response: SetBool.Response
-    ):
+    def set_publish_data(self, request: SetBool.Request, response: SetBool.Response):
         self.enable_publish_data = request.data
         self.subtree_manager.set_publish_data(request.data)
 
@@ -1112,7 +1108,7 @@ class TreeManager:
                 # Now the tree is editable again - all nodes are in a state
                 # where they must be initialized.
                 self.set_state(TreeState.EDITABLE)
-            
+
             self.publish_state()
 
         elif request.command == ControlTreeExecution.Request.TICK_ONCE:
@@ -1207,7 +1203,9 @@ class TreeManager:
                         self._stop_after_result = True
                     # Use provided tick frequency, if any
                     if request.tick_frequency_hz != 0:
-                        self.tree_structure.tick_frequency_hz = request.tick_frequency_hz
+                        self.tree_structure.tick_frequency_hz = (
+                            request.tick_frequency_hz
+                        )
                         self.rate = self.ros_node.create_rate(
                             frequency=self.tree_structure.tick_frequency_hz
                         )
@@ -1258,9 +1256,9 @@ class TreeManager:
                     response.success = False
                     response.error_message = str(ex)
                     response.tree_state = self.get_state()
-            
+
             self.publish_state()
-        
+
         elif request.command == ControlTreeExecution.Request.DO_NOTHING:
             get_logger("tree_manager").get_child(self.name).info(
                 "Doing nothing in this request"
@@ -1451,7 +1449,8 @@ class TreeManager:
         if request.node_name not in self.nodes:
             response.success = False
             response.error_message = (
-                f"No node with name {request.node_name} in tree {self.tree_structure.name}"
+                f"No node with name {request.node_name} in "
+                f"tree {self.tree_structure.name}"
             )
             return response
 
@@ -1560,7 +1559,8 @@ class TreeManager:
         if request.node_name not in self.nodes:
             response.success = False
             response.error_message = (
-                f"No node with name {request.node_name} in tree {self.tree_structure.name}"
+                f"No node with name {request.node_name} in"
+                f" tree {self.tree_structure.name}"
             )
             return response
 
@@ -1742,10 +1742,10 @@ class TreeManager:
                     if other_type == our_type:
                         incompatible = False
                     elif inspect.isclass(other_type):
-                        deserialized_options[
-                            key
-                        ] = message_converter.convert_dictionary_to_ros_message(
-                            other_type, deserialized_options[key]
+                        deserialized_options[key] = (
+                            message_converter.convert_dictionary_to_ros_message(
+                                other_type, deserialized_options[key]
+                            )
                         )
                         incompatible = False
                     else:
@@ -2438,15 +2438,20 @@ class TreeManager:
             get_logger("tree_manager").get_child(self.name).warn(
                 f"Strange topology {exc}"
             )
-            # build a tree_structure out of this strange topology, so the user can fix it in the editor
-            self.tree_structure.nodes = [node.to_structure_msg() for node in self.nodes.values()]
+            # build a tree_structure out of this strange topology,
+            # so the user can fix it in the editor
+            self.tree_structure.nodes = [
+                node.to_structure_msg() for node in self.nodes.values()
+            ]
         return self.tree_structure
-    
+
     def state_to_msg(self) -> TreeState:
         self.tree_state.state = self.get_state()
-        self.tree_state.node_states = [node.to_state_msg() for node in self.nodes.values()]
+        self.tree_state.node_states = [
+            node.to_state_msg() for node in self.nodes.values()
+        ]
         return self.tree_state
-    
+
     def data_to_msg(self) -> TreeData:
         self.tree_data.wiring_data = []
         for node in self.nodes.values():

@@ -60,11 +60,11 @@ class SubtreeManager(object):
     def set_publish_subtrees(self, publish_subtrees: bool):
         with self._lock:
             self._publish_subtrees = publish_subtrees
-        
+
     def get_publish_data(self) -> bool:
         with self._lock:
             return self._publish_data
-        
+
     def set_publish_data(self, value: bool):
         with self._lock:
             self._publish_data = value
@@ -73,19 +73,19 @@ class SubtreeManager(object):
         with self._lock:
             if not self._publish_subtrees:
                 return []
-            return [ deepcopy(tree) for tree in self.subtree_structures.values() ]
-        
+            return [deepcopy(tree) for tree in self.subtree_structures.values()]
+
     def get_subtree_states(self) -> list[TreeState]:
         with self._lock:
             if not self._publish_subtrees:
                 return []
-            return [ deepcopy(tree) for tree in self.subtree_states.values() ]
-        
+            return [deepcopy(tree) for tree in self.subtree_states.values()]
+
     def get_subtree_data(self) -> list[TreeData]:
         with self._lock:
             if not self._publish_subtrees:
                 return []
-            return [ deepcopy(tree) for tree in self.subtree_data.values() ]
+            return [deepcopy(tree) for tree in self.subtree_data.values()]
 
     def add_subtree_structure(self, node_name: str, subtree_msg: TreeStructure):
         """
@@ -126,4 +126,3 @@ class SubtreeManager(object):
             query_dict(node_name, self.subtree_structures)
             query_dict(node_name, self.subtree_states)
             query_dict(node_name, self.subtree_data)
-

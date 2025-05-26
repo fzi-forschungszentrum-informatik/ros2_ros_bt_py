@@ -118,8 +118,8 @@ class CompareNewOnly(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "compare_type": TypeWrapper(type, info=TYPE_BUILTIN), 
-            "expected": OptionRef("compare_type")
+            "compare_type": TypeWrapper(type, info=TYPE_BUILTIN),
+            "expected": OptionRef("compare_type"),
         },
         inputs={"in": OptionRef("compare_type")},
         outputs={},

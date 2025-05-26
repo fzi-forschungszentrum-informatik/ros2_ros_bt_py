@@ -107,8 +107,7 @@ class Subtree(Leaf):
         self.load_subtree()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_structure(
-                self.name, 
-                self.manager.structure_to_msg()
+                self.name, self.manager.structure_to_msg()
             )
 
     def load_subtree(self) -> None:
@@ -208,16 +207,16 @@ class Subtree(Leaf):
                 node_name = node_name[len(self.name) + 1 :]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
-                subtree_inputs[
-                    f"{node_name}.{node_data.data_key}"
-                ] = self.manager.nodes[node_data.node_name].inputs.get_type(
-                    node_data.data_key
+                subtree_inputs[f"{node_name}.{node_data.data_key}"] = (
+                    self.manager.nodes[node_data.node_name].inputs.get_type(
+                        node_data.data_key
+                    )
                 )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
-                subtree_outputs[
-                    f"{node_name}.{node_data.data_key}"
-                ] = self.manager.nodes[node_data.node_name].outputs.get_type(
-                    node_data.data_key
+                subtree_outputs[f"{node_name}.{node_data.data_key}"] = (
+                    self.manager.nodes[node_data.node_name].outputs.get_type(
+                        node_data.data_key
+                    )
                 )
 
     def _register_data_forwarding(
@@ -278,8 +277,7 @@ class Subtree(Leaf):
         self.root.setup()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, 
-                self.manager.state_to_msg()
+                self.name, self.manager.state_to_msg()
             )
 
     def _do_tick(self):
@@ -288,13 +286,11 @@ class Subtree(Leaf):
         new_state = self.root.tick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, 
-                self.manager.state_to_msg()
+                self.name, self.manager.state_to_msg()
             )
             if self.subtree_manager.get_publish_data():
                 self.subtree_manager.add_subtree_data(
-                    self.name,
-                    self.manager.data_to_msg()
+                    self.name, self.manager.data_to_msg()
                 )
         return new_state
 
@@ -304,8 +300,7 @@ class Subtree(Leaf):
         new_state = self.root.untick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, 
-                self.manager.state_to_msg()
+                self.name, self.manager.state_to_msg()
             )
         return new_state
 
@@ -315,8 +310,7 @@ class Subtree(Leaf):
         new_state = self.root.reset()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, 
-                self.manager.state_to_msg()
+                self.name, self.manager.state_to_msg()
             )
         return new_state
 
@@ -326,8 +320,7 @@ class Subtree(Leaf):
         self.root.shutdown()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, 
-                self.manager.state_to_msg()
+                self.name, self.manager.state_to_msg()
             )
 
     def _do_calculate_utility(self):

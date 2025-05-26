@@ -93,7 +93,7 @@ class MessageToFields(Leaf):
     def _do_tick(self):
         for field in self.outputs:
             value = getattr(self.inputs["in"], field)
-            if type(value) == tuple and self.outputs.get_type(field) == list:
+            if isinstance(value, tuple) and self.outputs.get_type(field) == list:
                 self.outputs[field] = list(value)
             else:
                 self.outputs[field] = value

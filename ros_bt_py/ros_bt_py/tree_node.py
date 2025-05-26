@@ -136,7 +136,7 @@ class TreeNode(Node):
             ),
         )
 
-        #self.subtree_info_pub = self.create_publisher(
+        # self.subtree_info_pub = self.create_publisher(
         #    SubtreeInfo,
         #    "~/debug/subtree_info",
         #    callback_group=self.publisher_callback_group,
@@ -146,7 +146,7 @@ class TreeNode(Node):
         #        history=QoSHistoryPolicy.KEEP_LAST,
         #        depth=1,
         #    ),
-        #)
+        # )
         self.node_diagnostics_pub = self.create_publisher(
             DiagnosticStatus,
             "~/debug/node_diagnostics",
@@ -462,7 +462,11 @@ class TreeNode(Node):
 
     def shutdown(self):
         """Shut down tree node in a safe way."""
-        if self.tree_manager.get_state() not in [TreeState.IDLE, TreeState.EDITABLE, TreeState.ERROR]:
+        if self.tree_manager.get_state() not in [
+            TreeState.IDLE,
+            TreeState.EDITABLE,
+            TreeState.ERROR,
+        ]:
             self.get_logger().info("Shutting down Behavior Tree")
             response = self.tree_manager.control_execution(
                 ControlTreeExecution.Request(

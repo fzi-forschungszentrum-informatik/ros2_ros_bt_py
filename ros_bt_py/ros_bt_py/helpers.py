@@ -39,19 +39,22 @@ from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
 class MathUnaryOperator(object):
-    def __init__(self, operator='sqrt'):
+    def __init__(self, operator="sqrt"):
         self.operator = operator
+
 
 class MathBinaryOperator(object):
-    def __init__(self, operator='+'):
+    def __init__(self, operator="+"):
         self.operator = operator
 
+
 class MathOperandType(object):
-    def __init__(self, operand_type='float'):
+    def __init__(self, operand_type="float"):
         self.operand_type = operand_type
 
+
 class MathUnaryOperandType(object):
-    def __init__(self, operand_type='float'):
+    def __init__(self, operand_type="float"):
         self.operand_type = operand_type
 
 
@@ -108,7 +111,9 @@ def json_decode(data):
 
 def build_message_field_dicts(message_object: Any) -> tuple[dict, dict]:
     """
-    Thin wrapper over `get_field_values_and_types` that allows passing a whole message object,
+    Thin wrapper over `get_field_values_and_types`.
+
+    This allows passing a whole message object,
     this will then iterate over all the message object's fields.
 
     See the docs of `get_field_values_and_types` for details on what is returned.
@@ -117,23 +122,26 @@ def build_message_field_dicts(message_object: Any) -> tuple[dict, dict]:
     values_dict = {}
     types_dict = {}
     for field_name, field_type in message_object.get_fields_and_field_types().items():
-        values_dict[field_name], types_dict[field_name] = \
-            get_field_values_and_types(
-                field_type,
-                getattr(message_object, field_name),
-                getattr(default_message, field_name)
-            )
+        values_dict[field_name], types_dict[field_name] = get_field_values_and_types(
+            field_type,
+            getattr(message_object, field_name),
+            getattr(default_message, field_name),
+        )
     return values_dict, types_dict
 
 
-def get_field_values_and_types(field_type: str, field_value: Optional[Any], optional_default: Optional[Any]=None) -> tuple[Any, dict]:
+def get_field_values_and_types(
+    field_type: str, field_value: Optional[Any], optional_default: Optional[Any] = None
+) -> tuple[Any, dict]:
     """
-    Given a corresponding type string, current value and (optional) default value,
-    recursively identify the values and types of all fields.
+    Recursively identify the values and types of all fields.
+
+    Given a corresponding type string, current value and (optional) default value.
     The default_value is used to obtain custom defaults set at message definition,
     if omitted, it will be recovered where possible, and fallbacks will be used where it's not.
 
-    The field values are returned as a simple recursive dictionary ending in values of buit-in types.
+    The field values are returned as a simple recursive dictionary,
+    ending in values of buit-in types.
     These are only valid if field_value is not None
 
     The field types are given as a dictionary with three keys:
@@ -144,16 +152,16 @@ def get_field_values_and_types(field_type: str, field_value: Optional[Any], opti
         - 'default_value': the default value of the built-in type, None otherwise
         - 'nested_type': depending on the value of own_type, this is:
             - None for built-in types
-            - a (recursive) dict with field names and types for message classes 
+            - a (recursive) dict with field names and types for message classes
             - a dict with a type specification (this) for 'sequence'
-        - 'max_length': only relevant for 'sequence' and 'string' types, 
+        - 'max_length': only relevant for 'sequence' and 'string' types,
             equals -1 if it's unbounded and for all other types
         - 'is_static': specifies if the max_length of 'sequence' is forced,
             meaing the sequence has to be exactly this length. False for all other types
     """
-    #Checks if the type matches a sequence definition and extracts the element-type and bounds
+    # Checks if the type matches a sequence definition and extracts the element-type and bounds
     match_sequence = re.match(r"sequence<([\w\/<>]+)(?:, (\d+))?>", field_type)
-    #Checks if the type matches an array definition and extracts the element-type and bounds
+    # Checks if the type matches an array definition and extracts the element-type and bounds
     match_array = re.match(r"([\w\/<>]*)\[(\d+)\]", field_type)
     # Parse sequence and array types
     if match_sequence or match_array:
@@ -176,20 +184,20 @@ def get_field_values_and_types(field_type: str, field_value: Optional[Any], opti
             max_len = int(max_len_str)
         _, nested_type = get_field_values_and_types(nested_type_str, None)
         nested_values = []
-        if not field_value is None:
+        if field_value is not None:
             for val in field_value:
                 nval, _ = get_field_values_and_types(nested_type_str, val)
                 nested_values.append(nval)
         return nested_values, {
-            'own_type': field_type,
-            'default_value': None, 
-            'nested_type': nested_type,
-            'max_length': max_len,
-            'is_static': is_static,
+            "own_type": field_type,
+            "default_value": None,
+            "nested_type": nested_type,
+            "max_length": max_len,
+            "is_static": is_static,
         }
-    
+
     # Check if the type matches a message type
-    if field_type.find('/') != -1:
+    if field_type.find("/") != -1:
         # Get default field values
         default_value = optional_default
         if optional_default is None:
@@ -200,51 +208,53 @@ def get_field_values_and_types(field_type: str, field_value: Optional[Any], opti
         nested_type = {}
         for fname, ftype in default_value.get_fields_and_field_types().items():
             nested_value[fname], nested_type[fname] = get_field_values_and_types(
-                ftype, 
+                ftype,
                 getattr(field_value, fname, None),
                 getattr(default_value, fname),
             )
         return nested_value, {
-            'own_type': field_type,
-            'default_value': None,
-            'nested_type': nested_type,
-            'max_length': -1,
-            'is_static': False,
+            "own_type": field_type,
+            "default_value": None,
+            "nested_type": nested_type,
+            "max_length": -1,
+            "is_static": False,
         }
-    
+
     # Parse built-in types
     fallback_default: Any = None
     max_len = -1
-    if field_type.find('bool') != -1:
+    if field_type.find("bool") != -1:
         fallback_default = False
-    elif field_type.find('int') != -1 or \
-        field_type.find('long') != -1 or \
-        field_type.find('char') != -1:
+    elif (
+        field_type.find("int") != -1
+        or field_type.find("long") != -1
+        or field_type.find("char") != -1
+    ):
         fallback_default = 0
-    elif field_type.find('float') != -1 or \
-        field_type.find('double') != -1:
+    elif field_type.find("float") != -1 or field_type.find("double") != -1:
         fallback_default = 0.0
-    elif field_type.find('octet') != -1:
-        fallback_default = b'\x00'
-    elif field_type.find('string') != -1:
-        fallback_default = ''
+    elif field_type.find("octet") != -1:
+        fallback_default = b"\x00"
+    elif field_type.find("string") != -1:
+        fallback_default = ""
         match_length = re.match(r"\w+<(\d+)>", field_type)
         if match_length:
-            max_len = int( match_length[1] )
+            max_len = int(match_length[1])
     else:
-        rclpy.logging.get_logger("package_manager") \
-            .warn(f"Unidentified built-in type {field_type}")
-        
+        rclpy.logging.get_logger("package_manager").warn(
+            f"Unidentified built-in type {field_type}"
+        )
+
     default_value = optional_default
     if optional_default is None:
         default_value = fallback_default
 
     return field_value, {
-        'own_type': field_type,
-        'default_value': default_value,
-        'nested_type': None,
-        'max_length': max_len,
-        'is_static': False,
+        "own_type": field_type,
+        "default_value": default_value,
+        "nested_type": None,
+        "max_length": max_len,
+        "is_static": False,
     }
 
 

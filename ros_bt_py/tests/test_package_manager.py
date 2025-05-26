@@ -78,7 +78,6 @@ class TestPackageManager:
         for constant in constant_values:
             assert constant in response.field_names
 
-
     @pytest.mark.parametrize(
         "msg_type", ["test_msgs/msg/Bla", "ros_bt_py_interfaces/msg/None"]
     )

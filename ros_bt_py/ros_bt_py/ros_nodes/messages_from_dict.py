@@ -41,7 +41,6 @@ from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py_interfaces.msg import NodeState
 
 
-
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
@@ -121,8 +120,8 @@ class MessageFromDict(Leaf):
     NodeConfig(
         version="0.9.0",
         options={
-            "message_type": RosTopicType, 
-            "dict": TypeWrapper(dict, info=DICT_ROS)
+            "message_type": RosTopicType,
+            "dict": TypeWrapper(dict, info=DICT_ROS),
         },
         inputs={},
         outputs={},
@@ -168,7 +167,7 @@ class MessageFromConstDict(Leaf):
     def _do_tick(self):
         message = self._message_type()
         try:
-            #TODO Maybe we should enable using 'auto' headers and 'now' timestamps and
+            # TODO Maybe we should enable using 'auto' headers and 'now' timestamps and
             # immediately call their respective callbacks?
             set_message_fields(
                 message,
