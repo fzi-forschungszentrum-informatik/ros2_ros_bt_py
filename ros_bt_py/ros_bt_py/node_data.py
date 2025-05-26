@@ -92,7 +92,7 @@ class NodeData(object):
         """Check whether `new_value` has a type that matches this NodeData object."""
         if self._static and self.updated:
             return False
-        
+
         if isinstance(self.data_type, TypeWrapper):
             real_data_type = self.data_type.actual_type
         else:
@@ -119,7 +119,7 @@ class NodeData(object):
         """
         if self._static and self.updated:
             raise Exception("Trying to overwrite data in static NodeData object")
-        
+
         if isinstance(self.data_type, TypeWrapper):
             real_data_type = self.data_type.actual_type
         else:

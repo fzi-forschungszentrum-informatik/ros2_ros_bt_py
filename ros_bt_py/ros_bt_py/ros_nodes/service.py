@@ -46,7 +46,6 @@ import abc
 from typing import Any, Optional, Dict
 
 
-
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
@@ -117,7 +116,6 @@ class ServiceInput(Leaf):
         response_msg = self._response_type()
         for field in response_msg._fields_and_field_types:
             node_outputs[field] = type(getattr(response_msg, field))
-                
 
         self.node_config.extend(
             NodeConfig(
@@ -180,9 +178,9 @@ class ServiceInput(Leaf):
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
             self._last_request = self._request_type()
-            fields: dict[
-                str, type
-            ] = self._last_request.get_fields_and_field_types().items()
+            fields: dict[str, type] = (
+                self._last_request.get_fields_and_field_types().items()
+            )
             for k, v in fields:
                 setattr(self._last_request, k, self.inputs[k])
 
@@ -287,23 +285,23 @@ class WaitForService(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
     def __init__(
-        self, 
-        options = None, 
-        debug_manager = None, 
-        subtree_manager = None, 
-        name = None, 
-        ros_node = None, 
-        succeed_always = False, 
-        simulate_tick = False
+        self,
+        options=None,
+        debug_manager=None,
+        subtree_manager=None,
+        name=None,
+        ros_node=None,
+        succeed_always=False,
+        simulate_tick=False,
     ):
         super().__init__(
-            options, 
-            debug_manager, 
-            subtree_manager, 
-            name, 
-            ros_node, 
-            succeed_always, 
-            simulate_tick
+            options,
+            debug_manager,
+            subtree_manager,
+            name,
+            ros_node,
+            succeed_always,
+            simulate_tick,
         )
 
         self._service_type = self.options["service_type"].get_type_obj()
@@ -369,23 +367,23 @@ class WaitForServiceInput(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
     def __init__(
-        self, 
-        options = None, 
-        debug_manager = None, 
-        subtree_manager = None, 
-        name = None, 
-        ros_node = None, 
-        succeed_always = False, 
-        simulate_tick = False
+        self,
+        options=None,
+        debug_manager=None,
+        subtree_manager=None,
+        name=None,
+        ros_node=None,
+        succeed_always=False,
+        simulate_tick=False,
     ):
         super().__init__(
-            options, 
-            debug_manager, 
-            subtree_manager, 
-            name, 
-            ros_node, 
-            succeed_always, 
-            simulate_tick
+            options,
+            debug_manager,
+            subtree_manager,
+            name,
+            ros_node,
+            succeed_always,
+            simulate_tick,
         )
 
         self._service_type = self.options["service_type"].get_type_obj()
@@ -783,7 +781,6 @@ class Service(Leaf):
         response_msg = self._response_type()
         for field in response_msg._fields_and_field_types:
             node_outputs[field] = type(getattr(response_msg, field))
-                
 
         self.node_config.extend(
             NodeConfig(
@@ -829,7 +826,7 @@ class Service(Leaf):
 
             return NodeState.RUNNING
 
-        #TODO Can't this be in `_do_setup`?
+        # TODO Can't this be in `_do_setup`?
         if self._service_client is None:
             if self.has_ros_node:
                 self._service_client = self.ros_node.create_client(
@@ -844,9 +841,9 @@ class Service(Leaf):
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
             self._last_request = self._request_type()
-            fields: dict[
-                str, type
-            ] = self._last_request.get_fields_and_field_types().items()
+            fields: dict[str, type] = (
+                self._last_request.get_fields_and_field_types().items()
+            )
             for k, v in fields:
                 setattr(self._last_request, k, self.inputs[k])
 

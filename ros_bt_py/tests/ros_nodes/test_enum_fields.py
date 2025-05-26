@@ -33,11 +33,11 @@ from ros_bt_py.ros_nodes.enum import EnumFields
 
 
 @pytest.mark.parametrize(
-    "message,constants", 
+    "message,constants",
     [
         (RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14),
-        (RosTopicType("std_msgs/msg/Int64"), 0)
-    ]
+        (RosTopicType("std_msgs/msg/Int64"), 0),
+    ],
 )
 def test_node_success(message, constants):
     enum_node = EnumFields(
@@ -56,12 +56,8 @@ def test_node_success(message, constants):
     assert enum_node.state == NodeState.SHUTDOWN
 
 
-
 @pytest.mark.parametrize(
-    "message,constants", 
-    [
-        (RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)
-    ]
+    "message,constants", [(RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)]
 )
 def test_node_reset(message, constants):
     enum_node = EnumFields(
@@ -88,10 +84,7 @@ def test_node_reset(message, constants):
 
 
 @pytest.mark.parametrize(
-    "message,constants", 
-    [
-        (RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)
-    ]
+    "message,constants", [(RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)]
 )
 def test_node_untick(message, constants):
     enum_node = EnumFields(

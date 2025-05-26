@@ -45,5 +45,3 @@ string[] child_names
 NodeOption[] options
 NodeIO[] inputs
 NodeIO[] outputs
-
-

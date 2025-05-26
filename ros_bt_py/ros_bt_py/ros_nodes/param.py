@@ -147,8 +147,8 @@ class RosParamOptionDefaultInput(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "param_type": TypeWrapper(type, info=TYPE_BUILTIN), 
-            "default_value": OptionRef("param_type")
+            "param_type": TypeWrapper(type, info=TYPE_BUILTIN),
+            "default_value": OptionRef("param_type"),
         },
         inputs={"param_name": str},
         outputs={"param": OptionRef("param_type")},

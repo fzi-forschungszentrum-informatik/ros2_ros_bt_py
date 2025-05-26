@@ -25,7 +25,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import json, os
+import json
+import os
 import ament_index_python
 from ament_index_python import PackageNotFoundError
 
@@ -49,10 +50,7 @@ from ros_bt_py_interfaces.srv import (
 )
 
 from ros_bt_py.node import increment_name
-from ros_bt_py.helpers import (
-    json_encode,
-    build_message_field_dicts
-)
+from ros_bt_py.helpers import json_encode, build_message_field_dicts
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
 
@@ -102,7 +100,6 @@ class PackageManager(object):
         Always returns the path under which the tree was saved
         in response.file_path in the package:// style
         """
-
         if request.storage_path not in self.tree_storage_directory_paths:
             response.success = False
             response.error_message = "Storage container does not exist on host!"
@@ -186,23 +183,17 @@ class PackageManager(object):
             packages
         ).items():
             for message in package_messages:
-                message_types.topics.append(
-                    package + "/" + message
-                )
+                message_types.topics.append(package + "/" + message)
         for package, package_services in rosidl_runtime_py.get_service_interfaces(
             packages
         ).items():
             for service in package_services:
-                message_types.services.append(
-                    package + "/" + service
-                )
+                message_types.services.append(package + "/" + service)
         for package, package_actions in rosidl_runtime_py.get_action_interfaces(
             packages
         ).items():
             for action in package_actions:
-                message_types.actions.append(
-                    package + "/" + action
-                )
+                message_types.actions.append(package + "/" + action)
 
         self.message_list_pub.publish(message_types)
 
@@ -240,10 +231,12 @@ class PackageManager(object):
             )
         return response
 
-    #TODO Maybe instead of introducing a new message type,
+    # TODO Maybe instead of introducing a new message type,
     # constant_fields should also be returned as a dict?
     def get_message_constant_fields_handler(
-        self, request: GetMessageConstantFields.Request, response: GetMessageConstantFields.Response
+        self,
+        request: GetMessageConstantFields.Request,
+        response: GetMessageConstantFields.Response,
     ):
         try:
             message_class = rosidl_runtime_py.utilities.get_message(

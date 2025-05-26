@@ -30,7 +30,10 @@
 from contextlib import contextmanager
 from copy import deepcopy
 
-import abc, importlib, inspect, re
+import abc
+import importlib
+import inspect
+import re
 from typing import Callable, Type, List, Dict, Optional
 
 import rclpy
@@ -58,7 +61,6 @@ from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.custom_types import TypeWrapper
 from ros_bt_py.helpers import get_default_value, json_decode, json_encode
-
 
 
 def _check_node_data_match(
@@ -116,7 +118,6 @@ def _connect_wirings(data_wirings: List, type: str) -> Dict:
             else:
                 connected_wirings[wiring.target.node_name] = [wiring.target.data_key]
     return connected_wirings
-
 
 
 def define_bt_node(node_config):
@@ -481,11 +482,19 @@ class Node(object, metaclass=NodeMeta):
             report_state = self.debug_manager.report_state(self, "SETUP")
 
         with report_state:
-            if self.state != NodeState.UNINITIALIZED and self.state != NodeState.SHUTDOWN:
+            if (
+                self.state != NodeState.UNINITIALIZED
+                and self.state != NodeState.SHUTDOWN
+            ):
                 raise BehaviorTreeException(
                     "Calling setup() is only allowed in states %s and %s, "
                     "but node %s is in state %s"
-                    % (NodeState.UNINITIALIZED, NodeState.SHUTDOWN, self.name, self.state)
+                    % (
+                        NodeState.UNINITIALIZED,
+                        NodeState.SHUTDOWN,
+                        self.name,
+                        self.state,
+                    )
                 )
             self.state = self._do_setup()
             if self.state is None:
@@ -659,7 +668,8 @@ class Node(object, metaclass=NodeMeta):
                 raise BehaviorTreeException("Trying to untick uninitialized node!")
             self.state = self._do_untick()
             self.raise_if_in_invalid_state(
-                allowed_states=[NodeState.IDLE, NodeState.PAUSED], action_name="untick()"
+                allowed_states=[NodeState.IDLE, NodeState.PAUSED],
+                action_name="untick()",
             )
 
             self.outputs.reset_updated()
@@ -972,7 +982,6 @@ class Node(object, metaclass=NodeMeta):
           * If an OptionRef references an option value that does not hold a `type`
 
         """
-
         # Find the values that are not OptionRefs first
         self._find_option_refs(
             source_map=source_map,
@@ -1258,11 +1267,11 @@ class Node(object, metaclass=NodeMeta):
                 ros_node=ros_node,
             )
 
-        #TODO Nodes are currently instantiated without supplying values of inputs and outputs
+        # TODO Nodes are currently instantiated without supplying values of inputs and outputs
         # which seems reasonable, given those values aren't known at that time.
         # That renders these function calls effectively a no-op.
-        #_set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
-        #_set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
+        # _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
+        # _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
 
         return node_instance
 
@@ -1668,13 +1677,10 @@ class Node(object, metaclass=NodeMeta):
                 else -1
             ),
         )
-    
+
     def to_state_msg(self):
-        return NodeState(
-            name=self.name,
-            state=self.state
-        )
-    
+        return NodeState(name=self.name, state=self.state)
+
     def wire_data_msg_list(self):
         data_list: list[WiringData] = []
         for wiring, _, exp_type in self.subscribers:
@@ -1682,7 +1688,7 @@ class Node(object, metaclass=NodeMeta):
             source_map = self.get_data_map(wiring.source.data_kind)
             key = wiring.source.data_key
             if not source_map.is_updated(key):
-                continue # Don't publish stale data
+                continue  # Don't publish stale data
             wiring_data = WiringData()
             wiring_data.wiring = wiring
             wiring_data.serialized_data = source_map.get_serialized(key)

@@ -36,8 +36,8 @@ from ros_bt_py.custom_types import TypeWrapper, TYPE_BUILTIN
     NodeConfig(
         version="0.1.0",
         options={
-            "constant_type": TypeWrapper(type, info=TYPE_BUILTIN), 
-            "constant_value": OptionRef("constant_type")
+            "constant_type": TypeWrapper(type, info=TYPE_BUILTIN),
+            "constant_value": OptionRef("constant_type"),
         },
         inputs={},
         outputs={"constant": OptionRef("constant_type")},
@@ -49,7 +49,7 @@ class Constant(Leaf):
     """
     Provide a set value as an output.
 
-    If you're looking to generate Ros Messages, 
+    If you're looking to generate Ros Messages,
     MessageFromConstDict and other message converters provide a better experience
 
     Useful to provide parameters to Subtrees.
