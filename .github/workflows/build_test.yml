@@ -1,4 +1,4 @@
-name: ROS Industrial CI
+name: Verfiy, Build & Test
 
 permissions:
   checks: write
@@ -11,7 +11,34 @@ on:
     - cron: "04 23 * * *"
 
 jobs:
+  pre-commit:
+    strategy:
+      matrix:
+        ros: [kilted, jazzy]
+    runs-on: ubuntu-latest
+    container: ros:${{ matrix.ros }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pre-commit
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pre-commit
+      - name: Install ament linters
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-copyright
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-xmllint
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-flake8
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-pep257
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-lint-cmake
+      - name: Run pre-commit
+        run: |
+          . /opt/ros/${{ matrix.ros }}/setup.sh
+          git config --global --add safe.directory $(pwd)
+          pre-commit run --all
   industrial_ci:
+    needs: pre-commit
     env:
       ICI_BASEDIR: $GITHUB_WORKSPACE
     strategy:
@@ -19,7 +46,7 @@ jobs:
         distro:
           - humble
           - jazzy
-          - rolling
+          - kilted
 
     runs-on: ubuntu-latest
     steps:
