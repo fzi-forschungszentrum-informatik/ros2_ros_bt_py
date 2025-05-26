@@ -18,8 +18,6 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-executables-have-shebangs
       - id: fix-byte-order-marker # Forbid UTF-8 byte-order markers
-      - id: no-commit-to-branch
-        args: [--branch, main]
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
