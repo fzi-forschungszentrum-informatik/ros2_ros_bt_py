@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge branch 'main' into fix_exclude_changelog_changes by @Oberacda
 - Merge pull request #178 from fzi-forschungszentrum-informatik/fix_launch_file by @Oberacda in [#178](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/178)
 
+### Removed
+- Remove no-main commit check. by @Oberacda
+
 
 ## [0.4.0] - 2025-05-22
 
