@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Update status badge. by @Oberacda
 - Use flake8 instead of ament_flake8 by @Oberacda
 
 ### Fixed
