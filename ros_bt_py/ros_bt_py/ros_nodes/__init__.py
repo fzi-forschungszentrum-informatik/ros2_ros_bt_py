@@ -28,6 +28,7 @@
 from . import service
 from . import action
 from . import enum
+from . import enum_switch
 from . import file
 from . import message_converters
 from . import messages_from_dict
