@@ -123,7 +123,7 @@ class TopicSubscriber(Leaf):
         depth = self.options["depth"]
 
         self._qos_profile = QoSProfile(
-            reliability=reliability_policy, history=durability_policy, depth=depth
+            reliability=reliability_policy, durability=durability_policy, depth=depth
         )
         self._subscriber = self.ros_node.create_subscription(
             msg_type=self._topic_type,
@@ -272,7 +272,7 @@ class TopicMemorySubscriber(Leaf):
         depth = self.options["depth"]
 
         self._qos_profile = QoSProfile(
-            reliability=reliability_policy, history=durability_policy, depth=depth
+            reliability=reliability_policy, durability=durability_policy, depth=depth
         )
         self._subscriber = self.ros_node.create_subscription(
             msg_type=self._topic_type,
