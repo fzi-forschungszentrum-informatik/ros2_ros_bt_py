@@ -16,12 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use flake8 instead of ament_flake8 by @Oberacda
 
 ### Fixed
+- Fix TopicSubscriber durability policy by @RobertWilbrandt
 - Fix formatting. by @Oberacda
 - Put merges in seperate changelog section by @Oberacda
 - Exclude changelog changes from changelog. by @Oberacda
 - Fix launch file sets invalid parameter values. by @Oberacda
 
 ### Merged
+- Merge pull request #184 from RobertWilbrandt/topic_durability_policy by @Oberacda in [#184](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/184)
 - Merge pull request #180 from fzi-forschungszentrum-informatik/add_pre-commit_ci by @Oberacda in [#180](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/180)
 - Merge pull request #179 from fzi-forschungszentrum-informatik/fix_exclude_changelog_changes by @Oberacda in [#179](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/179)
 - Merge branch 'main' into fix_exclude_changelog_changes by @Oberacda
@@ -30,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Remove no-main commit check. by @Oberacda
 
+## New Contributors
+* @RobertWilbrandt made their first contribution
 
 ## [0.4.0] - 2025-05-22
 
