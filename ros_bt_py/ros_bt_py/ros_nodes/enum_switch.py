@@ -41,7 +41,7 @@ from ros_bt_py.exceptions import BehaviorTreeException
     NodeConfig(
         version="0.1.0",
         options={"ros_message_type": TypeWrapper(RosTopicType, info=ROS_TYPE_FULL)},
-        inputs={"case": int},
+        inputs={},
         outputs={},
         max_children=None,
     )
@@ -71,8 +71,29 @@ class EnumSwitch(FlowControl):
 
         self.possible_children = get_message_constant_fields(self._message_class)
 
+        # Raise Error if no possible children
         if not self.possible_children:
             raise ValueError(f"{self._message_class} has no constant fields")
+
+        # Check if all constants have equal type and raise error if not. Otherwise set input to
+        # constant type
+        pchild_types = [
+            type(getattr(self._message_class, field))
+            for field in self.possible_children
+        ]
+        if len(set(pchild_types)) > 1:
+            raise ValueError(
+                f"{self._message_class} contains constant fields of multiple types"
+            )
+
+        node_inputs = {"case": pchild_types[0]}
+
+        self.node_config.extend(
+            NodeConfig(options={}, inputs=node_inputs, outputs={}, max_children=None)
+        )
+        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
+
+        # Create possible child dict
 
         self.msg = self._message_class()
 
