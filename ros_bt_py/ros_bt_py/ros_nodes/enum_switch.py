@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.node import FlowControl, define_bt_node
@@ -99,16 +99,16 @@ class EnumSwitch(FlowControl):
             e_name = self.pchild_dict[name]
         else:
             self.logwarn("Input did not match possible children.")
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
         if e_name not in self.child_map:
             self.logwarn(
                 "Ticking without matching child. Is this really what you want?"
             )
-            return NodeMsg.FAILED
+            return NodeState.FAILED
 
         # If we've previously succeeded or failed, untick all children
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             for child in self.children:
                 child.reset()
 
@@ -121,12 +121,12 @@ class EnumSwitch(FlowControl):
     def _do_untick(self):
         for child in self.children:
             child.untick()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         for child in self.children:
             child.reset()
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         for child in self.children:
