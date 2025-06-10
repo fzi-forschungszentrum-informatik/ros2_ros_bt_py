@@ -72,9 +72,7 @@ class EnumSwitch(FlowControl):
         self.possible_children = get_message_constant_fields(self._message_class)
 
         if not self.possible_children:
-            raise BehaviorTreeException(
-                "%s has no constant fields" % (self.options["ros_message_type"])
-            )
+            self.logerr(f"{self._message_class} has no constant fields")
 
         self.msg = self._message_class()
 
