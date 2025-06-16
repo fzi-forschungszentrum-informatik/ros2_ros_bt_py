@@ -418,8 +418,8 @@ class TestAction:
         )
         assert action_node.state == NodeMsg.RUNNING
 
-        assert (
-            action_node.outputs["feedback_sequence"] == feedback_mock.feedback.sequence
+        assert action_node.outputs["feedback_sequence"] == list(
+            feedback_mock.feedback.sequence
         )
         assert action_node.outputs["result_sequence"] is None
 
@@ -427,6 +427,8 @@ class TestAction:
         running_goal_future_mock.done.return_value = True
         action_node.tick()
         assert action_node.state == NodeMsg.SUCCEEDED
-        assert action_node.outputs["result_sequence"] == goal_result.result.sequence
+        assert action_node.outputs["result_sequence"] == list(
+            goal_result.result.sequence
+        )
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
