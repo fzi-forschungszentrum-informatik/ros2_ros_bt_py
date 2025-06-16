@@ -147,7 +147,7 @@ class NodeData(object):
             # Silently convert ints to float
             elif real_data_type == float and isinstance(new_value, int):
                 new_value = float(new_value)
-            if self.data_type == list and isinstance(new_value, array.array):
+            elif real_data_type == list and isinstance(new_value, array.array):
                 new_value = list(new_value)
             else:
                 if type(new_value) is dict and "py/type" in new_value:
