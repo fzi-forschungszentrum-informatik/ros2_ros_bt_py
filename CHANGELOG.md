@@ -8,14 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added type checks for action feedback and result by @nspielbau
+- Added silent conversion of arrays to lists by @nspielbau
+- Added helper function for setting data graph nodes by @nspielbau
 - Add pre-commit-ci job and rename workflow. by @Oberacda
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Explicitly cast test sequences to lists by @nspielbau
 - Update status badge. by @Oberacda
 - Use flake8 instead of ament_flake8 by @Oberacda
 
 ### Fixed
+- Fix elif statement by @nspielbau
+- Fixed data type in/outputs by @nspielbau
 - Fix TopicSubscriber durability policy by @RobertWilbrandt
 - Fix formatting. by @Oberacda
 - Put merges in seperate changelog section by @Oberacda
@@ -23,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix launch file sets invalid parameter values. by @Oberacda
 
 ### Merged
+- Merge pull request #106 from fzi-forschungszentrum-informatik/fb_check_list_from_srv_res by @Oberacda in [#106](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/106)
 - Merge pull request #184 from RobertWilbrandt/topic_durability_policy by @Oberacda in [#184](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/184)
 - Merge pull request #180 from fzi-forschungszentrum-informatik/add_pre-commit_ci by @Oberacda in [#180](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/180)
 - Merge pull request #179 from fzi-forschungszentrum-informatik/fix_exclude_changelog_changes by @Oberacda in [#179](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/179)
