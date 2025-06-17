@@ -421,12 +421,14 @@ class TestAction:
         assert action_node.outputs["feedback_sequence"] == list(
             feedback_mock.feedback.sequence
         )
+        assert isinstance(action_node.outputs["feedback_sequence"], list)
         assert action_node.outputs["result_sequence"] is None
 
         # Result available
         running_goal_future_mock.done.return_value = True
         action_node.tick()
         assert action_node.state == NodeMsg.SUCCEEDED
+        assert isinstance(action_node.outputs["result_sequence"], list)
         assert action_node.outputs["result_sequence"] == list(
             goal_result.result.sequence
         )
