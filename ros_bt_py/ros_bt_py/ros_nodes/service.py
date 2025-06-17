@@ -41,9 +41,12 @@ from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.ros_helpers import get_message_field_type
 
 import abc
 from typing import Any, Optional, Dict
+
+import array
 
 
 @define_bt_node(
@@ -111,11 +114,11 @@ class ServiceInput(Leaf):
 
         request_msg = self._request_type()
         for field in request_msg._fields_and_field_types:
-            node_inputs[field] = type(getattr(request_msg, field))
+            node_inputs[field] = get_message_field_type(request_msg, field)
 
         response_msg = self._response_type()
         for field in response_msg._fields_and_field_types:
-            node_outputs[field] = type(getattr(response_msg, field))
+            node_outputs[field] = get_message_field_type(response_msg, field)
 
         self.node_config.extend(
             NodeConfig(
@@ -776,11 +779,11 @@ class Service(Leaf):
 
         request_msg = self._request_type()
         for field in request_msg._fields_and_field_types:
-            node_inputs[field] = type(getattr(request_msg, field))
+            node_inputs[field] = get_message_field_type(request_msg, field)
 
         response_msg = self._response_type()
         for field in response_msg._fields_and_field_types:
-            node_outputs[field] = type(getattr(response_msg, field))
+            node_outputs[field] = get_message_field_type(response_msg, field)
 
         self.node_config.extend(
             NodeConfig(

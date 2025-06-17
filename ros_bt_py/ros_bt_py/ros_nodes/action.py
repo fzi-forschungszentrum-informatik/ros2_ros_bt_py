@@ -45,6 +45,7 @@ from ros_bt_py.node_config import NodeConfig
 from rclpy.node import Node
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
+from ros_bt_py.ros_helpers import get_message_field_type
 import inspect
 from std_msgs.msg import Int64
 
@@ -538,15 +539,17 @@ class Action(Leaf):
 
         goal_msg = self._goal_type()
         for field in goal_msg._fields_and_field_types:
-            node_inputs[field] = type(getattr(goal_msg, field))
+            node_inputs[field] = get_message_field_type(goal_msg, field)
 
         result_msg = self._result_type()
         for field in result_msg._fields_and_field_types:
-            node_outputs["result_" + field] = type(getattr(result_msg, field))
+            node_outputs["result_" + field] = get_message_field_type(result_msg, field)
 
         feedback_msg = self._feedback_type()
         for field in feedback_msg._fields_and_field_types:
-            node_outputs["feedback_" + field] = type(getattr(feedback_msg, field))
+            node_outputs["feedback_" + field] = get_message_field_type(
+                feedback_msg, field
+            )
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
