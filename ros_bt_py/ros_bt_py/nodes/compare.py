@@ -31,6 +31,7 @@ from ros_bt_py.helpers import BTNodeState
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.custom_types import TypeWrapper, TYPE_BUILTIN
 
 
 @define_bt_node(
@@ -118,7 +119,10 @@ class CompareNewOnly(Leaf):
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"compare_type": type, "expected": OptionRef("compare_type")},
+        options={
+            "compare_type": TypeWrapper(type, info=TYPE_BUILTIN),
+            "expected": OptionRef("compare_type"),
+        },
         inputs={"in": OptionRef("compare_type")},
         outputs={},
         max_children=0,

@@ -30,9 +30,10 @@ import pytest
 import unittest.mock as mock
 from std_srvs.srv import SetBool
 from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.custom_types import RosServiceName, RosServiceType
 from ros_bt_py.ros_nodes.service import Service
 from rclpy.time import Time
-from ros_bt_py_interfaces.msg import Node as NodeMsg, UtilityBounds
+from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 
 
@@ -53,8 +54,8 @@ def test_node_success(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -104,8 +105,8 @@ def test_node_failure(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -138,8 +139,8 @@ def test_node_timeout(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -182,8 +183,8 @@ def test_node_reset_shutdown(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -235,8 +236,8 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -285,16 +286,17 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
 
 
 def test_node_no_ros():
-    unavailable_service = Service(
-        options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
-            "wait_for_response_seconds": 5.0,
-            "wait_for_service_seconds": 5.0,
-            "fail_if_not_available": True,
-        },
-        ros_node=None,
-    )
+    with pytest.raises(BehaviorTreeException):
+        unavailable_service = Service(
+            options={
+                "service_name": RosServiceName(name="this_service_does_not_exist"),
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
+                "wait_for_response_seconds": 5.0,
+                "wait_for_service_seconds": 5.0,
+                "fail_if_not_available": True,
+            },
+            ros_node=None,
+        )
 
     assert unavailable_service is not None
     result = unavailable_service.setup()
@@ -325,8 +327,8 @@ def test_node_untick(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -370,8 +372,8 @@ def test_node_utility_no_ros(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -384,8 +386,8 @@ def test_node_utility_no_ros(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service_2 = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,
@@ -420,8 +422,8 @@ def test_node_utility(ros_mock, client_mock, future_mock, clock_mock):
 
     unavailable_service = Service(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_response_seconds": 5.0,
             "wait_for_service_seconds": 5.0,
             "fail_if_not_available": True,

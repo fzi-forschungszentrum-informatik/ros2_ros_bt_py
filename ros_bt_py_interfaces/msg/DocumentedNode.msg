@@ -42,28 +42,12 @@ int32 max_children
 string name
 # Order is important for child_names!
 string[] child_names
-NodeData[] options
-NodeData[] inputs
-NodeData[] outputs
+NodeOption[] options
+NodeIO[] inputs
+NodeIO[] outputs
 
 # Documentation
 string doc
 
 # Tags
 string[] tags
-
-# Should be one of the constants below
-string state
-
-string UNINITIALIZED = UNINITIALIZED
-string IDLE = IDLE
-string RUNNING = RUNNING
-string SUCCEEDED = SUCCEEDED
-string SUCCEED = SUCCEEDED
-string SUCCESS = SUCCEEDED
-string FAILED = FAILED
-string FAIL = FAILED
-string FAILURE = FAILED
-string BROKEN = BROKEN
-string PAUSED = PAUSED
-string SHUTDOWN = SHUTDOWN

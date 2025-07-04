@@ -33,7 +33,9 @@ from types import ModuleType
 
 from result import Err, Ok, Result, as_result
 
+import abc
 import importlib
+import inspect
 import re
 from typing import (
     Any,
@@ -52,12 +54,20 @@ import rclpy
 import rclpy.logging
 from rclpy.node import Node as ROSNode
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
-from ros_bt_py_interfaces.msg import NodeData as NodeDataMsg
-from ros_bt_py_interfaces.msg import NodeDataLocation, NodeDataWiring
-from ros_bt_py_interfaces.msg import Tree
 from ros_bt_py_interfaces.msg import UtilityBounds
 from typeguard import typechecked
+from ros_bt_py_interfaces.msg import (
+    NodeStructure,
+    NodeState,
+    NodeOption,
+    NodeIO,
+    NodeDataLocation,
+    Wiring,
+    WiringData,
+    TreeStructure,
+    TreeState,
+    TreeData,
+)
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -69,12 +79,13 @@ from ros_bt_py.exceptions import (
 )
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode
+from ros_bt_py.custom_types import TypeWrapper
+from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode, json_encode
 
 
 @typechecked
 def _check_node_data_match(
-    node_config: Dict[str, Type], node_data: Sequence[NodeDataMsg]
+    node_config: Dict[str, Type], node_data: Sequence[NodeIO | NodeOption]
 ) -> bool:
     for data in node_data:
         try:
@@ -88,7 +99,7 @@ def _check_node_data_match(
 
 @typechecked
 def _set_data_port(
-    data_map: NodeDataMap, configuration: List[NodeDataMsg], type: str, permissive=False
+    data_map: NodeDataMap, configuration: Sequence[NodeIO], type: str, permissive=False
 ) -> Result[None, BehaviorTreeException | AttributeError]:
     try:
         for msg in configuration:
@@ -180,19 +191,12 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[Type["Node"]], Type["No
                     )
         node_class._node_config = node_config
 
-        # Find unimplemented required methods
-        missing_methods = set()
-        for member in dir(node_class):
-            if getattr(getattr(node_class, member, None), "_required", False):
-                missing_methods.add(member)
-
-        if missing_methods:
-            # Don't register the class if it doesn't implement all required
-            # methods
+        if inspect.isabstract(node_class):
+            # Don't register abstract classes
             rclpy.logging.get_logger(node_class.__name__).warn(
                 f"Assigned NodeData to class {node_class.__name__}, but did not register "
                 f"the class because it does not implement all required methods. "
-                f"Missing methods: {str(missing_methods)}",
+                f"Missing methods: {', '.join(node_class.__abstractmethods__)}",
             )
             return node_class
 
@@ -252,7 +256,7 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[Type["Node"]], Type["No
     return inner_dec
 
 
-class NodeMeta(type):
+class NodeMeta(abc.ABCMeta):
     """
     Override the __doc__ property to add a list of BT params.
 
@@ -285,10 +289,21 @@ class NodeMeta(type):
             if self._node_config.options:
                 param_table.append("*Options*\n\n")
                 for option_key in self._node_config.options:
-                    param_table.append(
-                        f"* {option_key}: :class:"
-                        f"`{self._node_config.options[option_key].__name__}`\n"
-                    )
+                    if isinstance(self._node_config.options[option_key], OptionRef):
+                        param_table.append(
+                            f"* {option_key}: ``{str(self._node_config.options[option_key])}``\n"
+                        )
+                    elif isinstance(self._node_config.options[option_key], TypeWrapper):
+                        param_table.append(
+                            f"* {option_key}: :class:"
+                            f"`{self._node_config.options[option_key].actual_type.__name__}` "
+                            f"(`{self._node_config.options[option_key].info}`)\n"
+                        )
+                    else:
+                        param_table.append(
+                            f"* {option_key}: :class:"
+                            f"`{self._node_config.options[option_key].__name__}`\n"
+                        )
                 param_table.append("\n")
             if self._node_config.inputs:
                 param_table.append("*Inputs*\n\n")
@@ -322,7 +337,7 @@ class NodeMeta(type):
             return self._doc
 
 
-class Node(object):
+class Node(object, metaclass=NodeMeta):
     """
     Base class for Behavior Tree nodes.
 
@@ -346,8 +361,6 @@ class Node(object):
       single child and work with that child's result - for instance, a *Decorator*
       could invert `FAILED` into `SUCCEEDED`.
     """
-
-    __metaclass__ = NodeMeta
 
     @contextmanager
     def _dummy_report_state(self):
@@ -398,12 +411,12 @@ class Node(object):
         else:
             self.name = type(self).__name__
         # Only used to make finding the root of the tree easier
-        self.parent: Optional["Node"] = None
+        self.parent: Optional[Node] = None
         self._state: BTNodeState = BTNodeState.UNINITIALIZED
-        self.children: List["Node"] = []
+        self.children: List[Node] = []
 
-        self.subscriptions: List[NodeDataWiring] = []
-        self.subscribers: List[Tuple[NodeDataWiring, Callable[[Type], None], Type]] = []
+        self.subscriptions: list[Wiring] = []
+        self.subscribers: list[tuple[Wiring, Callable[[type], None], type]] = []
 
         self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager: Optional[DebugManager] = debug_manager
@@ -512,11 +525,11 @@ class Node(object):
             report_state = self.debug_manager.report_state(self, "SETUP")
 
         with report_state:
-            if self.state != NodeMsg.UNINITIALIZED and self.state != NodeMsg.SHUTDOWN:
+            if self.state != NodeState.UNINITIALIZED and self.state != NodeState.SHUTDOWN:
                 return Err(
                     NodeStateError(
                         "Calling setup() is only allowed in states "
-                        f"{NodeMsg.UNINITIALIZED} and {NodeMsg.SHUTDOWN}, "
+                        f"{NodeState.UNINITIALIZED} and {NodeState.SHUTDOWN}, "
                         f"but node {self.name} is in state {self.state}"
                     )
                 )
@@ -530,7 +543,7 @@ class Node(object):
 
         return setup_result
 
-    @_required
+    @abc.abstractmethod
     @typechecked
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
@@ -589,7 +602,7 @@ class Node(object):
             report_tick = self.debug_manager.report_tick(self)
 
         with report_tick:
-            if self.state is NodeMsg.UNINITIALIZED:
+            if self.state is NodeState.UNINITIALIZED:
                 return Err(BehaviorTreeException("Trying to tick uninitialized node!"))
 
             unset_options: List[str] = []
@@ -630,11 +643,11 @@ class Node(object):
 
             valid_state_result = self.check_if_in_invalid_state(
                 allowed_states=[
-                    NodeMsg.RUNNING,
-                    NodeMsg.SUCCEEDED,
-                    NodeMsg.FAILED,
-                    NodeMsg.ASSIGNED,
-                    NodeMsg.UNASSIGNED,
+                    NodeState.RUNNING,
+                    NodeState.SUCCEEDED,
+                    NodeState.FAILED,
+                    NodeState.ASSIGNED,
+                    NodeState.UNASSIGNED,
                 ],
                 action_name="tick()",
             )
@@ -659,7 +672,7 @@ class Node(object):
             )
         return Ok(None)
 
-    @_required
+    @abc.abstractmethod
     @typechecked
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
@@ -691,7 +704,7 @@ class Node(object):
             report_state = self.debug_manager.report_state(self, "UNTICK")
 
         with report_state:
-            if self.state is NodeMsg.UNINITIALIZED:
+            if self.state is NodeState.UNINITIALIZED:
                 return Err(
                     BehaviorTreeException("Trying to untick uninitialized node!")
                 )
@@ -703,7 +716,8 @@ class Node(object):
                 return untick_result
 
             check_state_result = self.check_if_in_invalid_state(
-                allowed_states=[NodeMsg.IDLE, NodeMsg.PAUSED], action_name="untick()"
+                allowed_states=[NodeState.IDLE, NodeState.PAUSED],
+                action_name="untick()",
             )
             if check_state_result.is_err():
                 return Err(check_state_result.unwrap_err())
@@ -711,7 +725,7 @@ class Node(object):
             self.outputs.reset_updated()
             return Ok(self.state)
 
-    @_required
+    @abc.abstractmethod
     @typechecked
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
@@ -765,7 +779,7 @@ class Node(object):
                 self.state = BTNodeState.BROKEN
                 return reset_result
             valid_state_result = self.check_if_in_invalid_state(
-                allowed_states=[NodeMsg.IDLE], action_name="reset()"
+                allowed_states=[NodeState.IDLE], action_name="reset()"
             )
 
             if valid_state_result.is_err():
@@ -773,7 +787,7 @@ class Node(object):
 
             return Ok(self.state)
 
-    @_required
+    @abc.abstractmethod
     @typechecked
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
@@ -844,7 +858,7 @@ class Node(object):
                 )
             return Ok(self.state)
 
-    @_required
+    @abc.abstractmethod
     @typechecked
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
@@ -875,6 +889,7 @@ class Node(object):
         """
         return self._do_calculate_utility()
 
+    # TODO Should this be flagged as abstract?
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         """
         Calculate utility values. This is a default implementation.
@@ -919,8 +934,8 @@ class Node(object):
 
     @typechecked
     def add_child(
-        self, child: "Node", at_index: Optional[int] = None
-    ) -> Result["Node", BehaviorTreeException | TreeTopologyError]:
+        self, child: Node, at_index: Optional[int] = None
+    ) -> Result[Node, BehaviorTreeException | TreeTopologyError]:
         """Add a child to this node at the given index."""
         if (
             self.node_config.max_children is not None
@@ -1232,8 +1247,8 @@ class Node(object):
     @classmethod
     @typechecked
     def from_msg(
-        cls: Type["Node"],
-        msg: NodeMsg,
+        cls: Type[Node],
+        msg: NodeStructure,
         ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -1360,13 +1375,16 @@ class Node(object):
                 ros_node=ros_node,
             )
 
-        _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
-        _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
+        # TODO Nodes are currently instantiated without supplying values of inputs and outputs
+        # which seems reasonable, given those values aren't known at that time.
+        # That renders these function calls effectively a no-op.
+        # _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
+        # _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
 
         return Ok(node_instance)
 
     @typechecked
-    def get_children_recursive(self) -> Generator["Node", None, None]:
+    def get_children_recursive(self) -> Generator[Node, None, None]:
         """Return all nodes that are below this node in the parent-child hirachy recursively."""
         yield self
         for child in self.children:
@@ -1409,11 +1427,10 @@ class Node(object):
 
         """
         subtree_name = f"{self.name}_subtree"
-        subtree = Tree(
+        subtree = TreeStructure(
             name=subtree_name,
             root_name=self.name,
-            nodes=[node.to_msg() for node in self.get_children_recursive()],
-            state=Tree.IDLE,
+            nodes=[node.to_structure_msg() for node in self.get_children_recursive()],
         )
 
         node_map: Dict[str, NodeMsg] = {node.name: node for node in subtree.nodes}
@@ -1428,7 +1445,7 @@ class Node(object):
                 # add a wiring.
                 if source_node and target_node:
                     subtree.data_wirings.append(
-                        NodeDataWiring(source=sub.source, target=sub.target)
+                        Wiring(source=sub.source, target=sub.target)
                     )
                 # In the other cases, add that datum to public_node_data
                 elif source_node:
@@ -1487,7 +1504,7 @@ class Node(object):
         return Ok((subtree, incoming_connections, outgoing_connections))
 
     @typechecked
-    def find_node(self, other_name: str) -> Optional["Node"]:
+    def find_node(self, other_name: str) -> Optional[Node]:
         """
         Try to find the node with the given name in the tree.
 
@@ -1776,7 +1793,7 @@ class Node(object):
         return Ok(None)
 
     @typechecked
-    def to_msg(self) -> NodeMsg:
+    def to_structure_msg(self) -> NodeStructure:
         """
         Populate a ROS message with the information from this Node.
 
@@ -1791,14 +1808,14 @@ class Node(object):
         """
         node_type = type(self)
 
-        return NodeMsg(
+        return NodeStructure(
             module=node_type.__module__,
             node_class=node_type.__name__,
             version=self.node_config.version,
             name=self.name,
             child_names=[child.name for child in self.children],
             options=[
-                NodeDataMsg(
+                NodeOption(
                     key=key,
                     serialized_value=self.options.get_serialized(key),
                     serialized_type=self.options.get_serialized_type(key),
@@ -1806,17 +1823,15 @@ class Node(object):
                 for key in self.options
             ],
             inputs=[
-                NodeDataMsg(
+                NodeIO(
                     key=key,
-                    serialized_value=self.inputs.get_serialized(key),
                     serialized_type=self.inputs.get_serialized_type(key),
                 )
                 for key in self.inputs
             ],
             outputs=[
-                NodeDataMsg(
+                NodeIO(
                     key=key,
-                    serialized_value=self.outputs.get_serialized(key),
                     serialized_type=self.outputs.get_serialized_type(key),
                 )
                 for key in self.outputs
@@ -1828,6 +1843,26 @@ class Node(object):
             ),
             state=self.state,
         )
+
+def to_state_msg(self):
+        return NodeState(name=self.name, state=self.state)
+
+    def wire_data_msg_list(self):
+        data_list: list[WiringData] = []
+        for wiring, _, exp_type in self.subscribers:
+            # Since we iterate subscribers, `wiring.source` should refer to self.
+            source_map = self.get_data_map(wiring.source.data_kind)
+            key = wiring.source.data_key
+            if not source_map.is_updated(key):
+                continue  # Don't publish stale data
+            wiring_data = WiringData()
+            wiring_data.wiring = wiring
+            wiring_data.serialized_data = source_map.get_serialized(key)
+            wiring_data.serialized_type = source_map.get_serialized_type(key)
+            wiring_data.serialized_expected_type = json_encode(exp_type)
+            data_list.append(wiring_data)
+        return data_list
+
 
 
 @typechecked

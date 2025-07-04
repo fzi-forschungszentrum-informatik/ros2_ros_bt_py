@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
-from ros_bt_py_interfaces.srv import GetMessageFields
+from ros_bt_py_interfaces.srv import GetMessageConstantFields
 from ros_bt_py.package_manager import PackageManager
 
 from typing import List
@@ -42,7 +42,7 @@ class TestPackageManager:
         [
             ("geometry_msgs/msg/Twist", []),
             (
-                "ros_bt_py_interfaces/msg/Node",
+                "ros_bt_py_interfaces/msg/NodeState",
                 [
                     "UNINITIALIZED",
                     "IDLE",
@@ -65,11 +65,10 @@ class TestPackageManager:
     def test_get_message_constant_fields_successful(
         self, package_manager: PackageManager, msg_type: str, constant_values: List[str]
     ):
-        request = GetMessageFields.Request()
-        request.service = False
+        request = GetMessageConstantFields.Request()
         request.message_type = msg_type
 
-        response = GetMessageFields.Response()
+        response = GetMessageConstantFields.Response()
         response = package_manager.get_message_constant_fields_handler(
             request=request, response=response
         )
@@ -79,30 +78,16 @@ class TestPackageManager:
         for constant in constant_values:
             assert constant in response.field_names
 
-    def test_get_message_constant_fields_service(self, package_manager: PackageManager):
-        request = GetMessageFields.Request()
-        request.service = True
-
-        response = GetMessageFields.Response()
-        response = package_manager.get_message_constant_fields_handler(
-            request=request, response=response
-        )
-
-        assert response is not None
-        assert not response.success
-        assert len(response.error_message) > 0
-
     @pytest.mark.parametrize(
         "msg_type", ["test_msgs/msg/Bla", "ros_bt_py_interfaces/msg/None"]
     )
     def test_get_message_constant_fields_invalid_msgs(
         self, package_manager: PackageManager, msg_type: str
     ):
-        request = GetMessageFields.Request()
+        request = GetMessageConstantFields.Request()
         request.message_type = msg_type
-        request.service = False
 
-        response = GetMessageFields.Response()
+        response = GetMessageConstantFields.Response()
         response = package_manager.get_message_constant_fields_handler(
             request=request, response=response
         )

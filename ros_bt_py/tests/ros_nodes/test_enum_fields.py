@@ -27,13 +27,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-from ros_bt_py.exceptions import BehaviorTreeException
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py.custom_types import RosTopicType
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py.ros_nodes.enum import EnumFields
-from std_msgs.msg import String, Int64
 
 
-@pytest.mark.parametrize("message,constants", [(NodeMsg, 14)])
+@pytest.mark.parametrize(
+    "message,constants",
+    [
+        (RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14),
+        (RosTopicType("std_msgs/msg/Int64"), 0),
+    ],
+)
 def test_node_success(message, constants):
     enum_node = EnumFields(
         options={
@@ -41,27 +46,19 @@ def test_node_success(message, constants):
         }
     )
     enum_node.setup()
-    assert enum_node.state == NodeMsg.IDLE
+    assert enum_node.state == NodeState.IDLE
 
     enum_node.tick()
-    assert enum_node.state == NodeMsg.SUCCEED
+    assert enum_node.state == NodeState.SUCCEED
     assert len(enum_node.outputs) == constants
 
     enum_node.shutdown()
-    assert enum_node.state == NodeMsg.SHUTDOWN
+    assert enum_node.state == NodeState.SHUTDOWN
 
 
-@pytest.mark.parametrize("message", [(String), (Int64)])
-def test_node_exception(message):
-    with pytest.raises(BehaviorTreeException):
-        EnumFields(
-            options={
-                "ros_message_type": message,
-            }
-        )
-
-
-@pytest.mark.parametrize("message,constants", [(NodeMsg, 14)])
+@pytest.mark.parametrize(
+    "message,constants", [(RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)]
+)
 def test_node_reset(message, constants):
     enum_node = EnumFields(
         options={
@@ -69,24 +66,26 @@ def test_node_reset(message, constants):
         }
     )
     enum_node.setup()
-    assert enum_node.state == NodeMsg.IDLE
+    assert enum_node.state == NodeState.IDLE
 
     enum_node.tick()
-    assert enum_node.state == NodeMsg.SUCCEED
+    assert enum_node.state == NodeState.SUCCEED
     assert len(enum_node.outputs) == constants
 
     enum_node.reset()
-    assert enum_node.state == NodeMsg.IDLE
+    assert enum_node.state == NodeState.IDLE
 
     enum_node.tick()
-    assert enum_node.state == NodeMsg.SUCCEED
+    assert enum_node.state == NodeState.SUCCEED
     assert len(enum_node.outputs) == constants
 
     enum_node.shutdown()
-    assert enum_node.state == NodeMsg.SHUTDOWN
+    assert enum_node.state == NodeState.SHUTDOWN
 
 
-@pytest.mark.parametrize("message,constants", [(NodeMsg, 14)])
+@pytest.mark.parametrize(
+    "message,constants", [(RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)]
+)
 def test_node_untick(message, constants):
     enum_node = EnumFields(
         options={
@@ -94,18 +93,18 @@ def test_node_untick(message, constants):
         }
     )
     enum_node.setup()
-    assert enum_node.state == NodeMsg.IDLE
+    assert enum_node.state == NodeState.IDLE
 
     enum_node.tick()
-    assert enum_node.state == NodeMsg.SUCCEED
+    assert enum_node.state == NodeState.SUCCEED
     assert len(enum_node.outputs) == constants
 
     enum_node.untick()
-    assert enum_node.state == NodeMsg.IDLE
+    assert enum_node.state == NodeState.IDLE
 
     enum_node.tick()
-    assert enum_node.state == NodeMsg.SUCCEED
+    assert enum_node.state == NodeState.SUCCEED
     assert len(enum_node.outputs) == constants
 
     enum_node.shutdown()
-    assert enum_node.state == NodeMsg.SHUTDOWN
+    assert enum_node.state == NodeState.SHUTDOWN

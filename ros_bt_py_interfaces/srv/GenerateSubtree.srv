@@ -27,6 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 string[] nodes
 ---
-Tree tree
+TreeStructure tree
 bool success
 string error_message

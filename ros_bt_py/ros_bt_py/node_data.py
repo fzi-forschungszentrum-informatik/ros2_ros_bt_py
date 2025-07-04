@@ -30,7 +30,20 @@ import rclpy
 import rclpy.logging
 from result import Err, Ok, Result
 
+from ros_bt_py.custom_types import (
+    FilePath,
+    RosActionName,
+    RosActionType,
+    RosServiceName,
+    RosServiceType,
+    RosTopicName,
+    RosTopicType,
+)
 from ros_bt_py.helpers import json_encode
+from ros_bt_py.ros_helpers import get_interface_name
+from ros_bt_py.custom_types import TypeWrapper
+
+import array
 
 
 def from_string(data_type, string_value, static=False):
@@ -50,7 +63,7 @@ class NodeData(object):
     update (the initial value, if not empty, counts as an update!)
     """
 
-    def __init__(self, data_type, initial_value=None, static=False):
+    def __init__(self, data_type: type | TypeWrapper, initial_value=None, static=False):
         self.updated = False
         self._value = None
         self._serialized_value = json_encode(None)
@@ -84,11 +97,16 @@ class NodeData(object):
         if self._static and self.updated:
             return False
 
-        if isinstance(new_value, self.data_type) or new_value is None:
+        if isinstance(self.data_type, TypeWrapper):
+            real_data_type = self.data_type.actual_type
+        else:
+            real_data_type = self.data_type
+
+        if isinstance(new_value, real_data_type) or new_value is None:
             return True
 
         # Special case for int and float
-        if self.data_type == float and isinstance(new_value, int):
+        if real_data_type == float and isinstance(new_value, int):
             return True
 
         return False
@@ -105,20 +123,44 @@ class NodeData(object):
         """
         if self._static and self.updated:
             raise Exception("Trying to overwrite data in static NodeData object")
-        if not isinstance(new_value, self.data_type) and new_value is not None:
+
+        if isinstance(self.data_type, TypeWrapper):
+            real_data_type = self.data_type.actual_type
+        else:
+            real_data_type = self.data_type
+
+        if not isinstance(new_value, real_data_type) and new_value is not None:
+            # Convert str based params to the FilePath or Ros...Name format.
+            if real_data_type in [
+                RosServiceName,
+                RosTopicName,
+                RosActionName,
+                FilePath,
+            ] and isinstance(new_value, str):
+                new_value = real_data_type(new_value)
+            # Convert Ros...Type from type variables!
+            elif real_data_type in [
+                RosServiceType,
+                RosActionType,
+                RosTopicType,
+            ] and isinstance(new_value, type):
+                new_value_type = get_interface_name(new_value)
+                new_value = real_data_type(new_value_type)
             # Silently convert ints to float
-            if self.data_type == float and isinstance(new_value, int):
+            elif real_data_type == float and isinstance(new_value, int):
                 new_value = float(new_value)
+            elif real_data_type == list and isinstance(new_value, array.array):
+                new_value = list(new_value)
             else:
                 if type(new_value) is dict and "py/type" in new_value:
                     raise TypeError(
-                        f"Expected data to be of type {self.data_type.__name__},"
+                        f"Expected data to be of type {real_data_type.__name__},"
                         f"got {type(new_value).__name__} instead. "
                         f"Looks like failed jsonpickle decode, "
                         f"does type {new_value['py/type']} exist?"
                     )
                 raise TypeError(
-                    f"Expected data to be of type {self.data_type.__name__}, "
+                    f"Expected data to be of type {real_data_type.__name__}, "
                     f"got {type(new_value).__name__} instead"
                 )
         if self._serialized_value is not None and new_value != self._value:

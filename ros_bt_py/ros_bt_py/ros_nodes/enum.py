@@ -28,7 +28,7 @@
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -36,91 +36,15 @@ from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
-from ros_bt_py.ros_helpers import EnumValue, get_message_constant_fields
+from ros_bt_py.custom_types import TypeWrapper, RosTopicType, ROS_TYPE_FULL
+
+from ros_bt_py.ros_helpers import get_message_constant_fields
 
 
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"ros_message_type": type, "constant_name": EnumValue},
-        inputs={},
-        outputs={},
-        max_children=0,
-    )
-)
-class Enum(Leaf):
-    """Expose a constant in a ROS message as an output."""
-
-    def __init__(
-        self,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
-        super(Enum, self).__init__(
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
-        )
-
-        node_outputs = {}
-
-        constants = get_message_constant_fields(self.options["ros_message_type"])
-
-        if not constants:
-            raise BehaviorTreeException(
-                f"{self.options['ros_message_type']} has no constant fields"
-            )
-
-        if self.options["constant_name"].enum_value not in constants:
-            raise BehaviorTreeException(
-                "{self.options['ros_message_type']} has no field {self.options['constant_name']}"
-            )
-
-        self.msg = self.options["ros_message_type"]()
-
-        node_outputs["out"] = type(
-            getattr(self.msg, self.options["constant_name"].enum_value)
-        )
-
-        # TODO: Use result type.
-        self.node_config.extend(
-            NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
-        )
-
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
-
-    def _do_setup(self):
-        return NodeMsg.IDLE
-
-    def _do_tick(self):
-        self.outputs["out"] = getattr(
-            self.msg, self.options["constant_name"].enum_value
-        )
-        return NodeMsg.SUCCEEDED
-
-    def _do_untick(self):
-        return NodeMsg.IDLE
-
-    def _do_shutdown(self):
-        pass
-
-    def _do_reset(self):
-        return NodeMsg.IDLE
-
-
-@define_bt_node(
-    NodeConfig(
-        version="0.1.0",
-        options={"ros_message_type": type},
+        options={"ros_message_type": TypeWrapper(RosTopicType, info=ROS_TYPE_FULL)},
         inputs={},
         outputs={},
         max_children=0,
@@ -153,19 +77,14 @@ class EnumFields(Leaf):
             simulate_tick=simulate_tick,
         )
 
+        self._message_class = self.options["ros_message_type"].get_type_obj()
+
         node_outputs = {}
 
-        constants = get_message_constant_fields(self.options["ros_message_type"])
-
-        if not constants:
-            raise BehaviorTreeException(
-                f"{self.options['ros_message_type']} has no constant fields"
-            )
-
-        self.msg = self.options["ros_message_type"]()
+        constants = get_message_constant_fields(self._message_class)
 
         for field in constants:
-            node_outputs[field] = type(getattr(self.msg, field))
+            node_outputs[field] = type(getattr(self._message_class, field))
 
         # TODO: Use result type.
         self.node_config.extend(
@@ -175,18 +94,18 @@ class EnumFields(Leaf):
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
         for field in self.outputs:
-            self.outputs[field] = getattr(self.msg, field)
-        return NodeMsg.SUCCEEDED
+            self.outputs[field] = getattr(self._message_class, field)
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

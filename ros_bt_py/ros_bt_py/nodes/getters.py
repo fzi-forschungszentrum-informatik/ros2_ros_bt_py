@@ -446,6 +446,7 @@ class GetAttr(Decorator):
 
         if self.inputs.is_updated("object"):
             try:
+                # TODO Maybe it would be nice to allow for calling 0-argument functions this way?
                 self.outputs["attr"] = rgetattr(
                     self.inputs["object"], self.options["attr_name"]
                 )

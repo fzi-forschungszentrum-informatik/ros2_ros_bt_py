@@ -1,0 +1,94 @@
+name: Verfiy, Build & Test
+
+permissions:
+  checks: write
+  pull-requests: write
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "04 23 * * *"
+
+jobs:
+  pre-commit:
+    strategy:
+      matrix:
+        ros: [kilted, jazzy]
+    runs-on: ubuntu-latest
+    container: ros:${{ matrix.ros }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pre-commit
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pre-commit
+      - name: Install ament linters
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-copyright
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-xmllint
+          sudo apt-get install -y ros-${{ matrix.ros }}-ament-lint-cmake
+      - name: Run pre-commit
+        run: |
+          . /opt/ros/${{ matrix.ros }}/setup.sh
+          git config --global --add safe.directory $(pwd)
+          pre-commit run --all
+  industrial_ci:
+    needs: pre-commit
+    env:
+      ICI_BASEDIR: $GITHUB_WORKSPACE
+    strategy:
+      matrix:
+        distro:
+          - humble
+          - jazzy
+          - kilted
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: "ros-industrial/industrial_ci@master"
+        env:
+          ROS_DISTRO: ${{ matrix.distro }}
+          BASEDIR: ${{ github.workspace }}/.build
+          ROS_REPO: main
+          ROSDEP_SKIP_KEYS: result-pip
+          AFTER_INSTALL_TARGET_DEPENDENCIES: 'if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "rolling" ]; then pip3 install --break-system-packages coverage[toml] result; else pip3 install coverage[toml] result; fi;'
+          ENABLE_COVERAGE_TESTING: "true"
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Test Results (ROS ${{ matrix.distro }})
+          path: |
+            .build/target_ws/build/ros_bt_py/pytest.xml
+            .build/target_ws/build/**/*xunit.xml
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        env:
+          ROS_DISTRO: ${{ matrix.distro }}
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          directory: .build/
+          env_vars: ROS_DISTRO
+
+  publish_test_reports:
+    name: "Publish Tests Results"
+    needs: industrial_ci
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.xml"

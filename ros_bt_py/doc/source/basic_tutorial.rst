@@ -4,6 +4,18 @@
 Basic Tutorial
 ##############
 
+.. toctree::
+   :maxdepth: 2
+
+   Starting up ros_bt_py
+   Examining the Interface
+   Writing your first BT
+   Working with bt_py
+   Understanding Flow Control
+   Writing a more complex BT
+   Using Subtrees
+   Using ROS Interfaces with ros_bt_py
+
 *********************
 Starting up ros_bt_py
 *********************

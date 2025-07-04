@@ -46,26 +46,53 @@ ros_bt_py was created with the following goals in mind:
 
 It is meant as a high level control option similar to SMACH or FlexBE.
 
-*****************
-Table of Contents
-*****************
+*************************
+Getting Started
+*************************
 
 .. toctree::
-    :maxdepth: 2
+   :maxdepth: 2
 
-    getting_started
-    basic_tutorial
-    advanced_tutorial
-    creating_a_node_class_package
-    creating_node_classes
-    testing_node_classes
-    advanced_launch_configuration
-    utility_functions
-    api
+   getting_started
 
+*************************
+Tutorials
+*************************
+
+.. toctree::
+   :maxdepth: 2
+
+   tutorials
+
+*********************
+Custom Node Creation
+*********************
+
+.. toctree::
+   :maxdepth: 2
+
+   node_creation
+
+**************************
+Configuration & Utilities
+**************************
+
+.. toctree::
+   :maxdepth: 2
+
+   configuration
+
+*************
+API Reference
+*************
+
+.. toctree::
+   :maxdepth: 2
+
+   api
 
 ******************
-Indices and tables
+Indices and Tables
 ******************
 
 * :ref:`genindex`

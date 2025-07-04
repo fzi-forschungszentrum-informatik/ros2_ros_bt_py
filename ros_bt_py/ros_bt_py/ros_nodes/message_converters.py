@@ -29,20 +29,22 @@ import inspect
 from typing import Optional, Dict
 
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py.custom_types import RosTopicType
+from ros_bt_py_interfaces.msg import NodeState
 from rclpy.node import Node
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.ros_helpers import get_message_field_type
 
 
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"input_type": type},
-        inputs={"in": OptionRef("input_type")},
+        options={"input_type": RosTopicType},
+        inputs={},
         outputs={},
         max_children=0,
     )
@@ -68,62 +70,53 @@ class MessageToFields(Leaf):
             simulate_tick=simulate_tick,
         )
 
+        self._message_type = self.options["input_type"].get_type_obj()
+
+        node_inputs = {"in": self._message_type}
         node_outputs = {}
 
-        self.passthrough = True
-
-        if inspect.isclass(self.options["input_type"]):
-            try:
-                msg = self.options["input_type"]()
-                for field in msg._fields_and_field_types:
-                    node_outputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            except AttributeError:
-                node_outputs["out"] = self.options["input_type"]
-                self.logwarn(f"Non message type passed to: {self.name}")
-        else:
-            node_outputs["out"] = self.options["input_type"]
+        msg = self._message_type()
+        for field in msg._fields_and_field_types:
+            node_outputs[field] = get_message_field_type(msg, field)
 
         # TODO: Use result type.
         self.node_config.extend(
-            NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
+            NodeConfig(
+                options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
+            )
         )
 
+        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
-        if self.passthrough:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            for field in self.outputs:
-                value = getattr(self.inputs["in"], field)
-                if isinstance(value, tuple) and isinstance(
-                    self.outputs.get_type(field), list
-                ):
-                    self.outputs[field] = list(value)
-                else:
-                    self.outputs[field] = value
-        return NodeMsg.SUCCEEDED
+        for field in self.outputs:
+            value = getattr(self.inputs["in"], field)
+            if isinstance(value, tuple) and self.outputs.get_type(field) == list:
+                self.outputs[field] = list(value)
+            else:
+                self.outputs[field] = value
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
 
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"output_type": type},
+        options={"output_type": RosTopicType},
         inputs={},
-        outputs={"out": OptionRef("output_type")},
+        outputs={},
         max_children=0,
     )
 )
@@ -157,49 +150,43 @@ class FieldsToMessage(Leaf):
             simulate_tick=simulate_tick,
         )
 
+        self._message_type = self.options["output_type"].get_type_obj()
+
         node_inputs = {}
+        node_outputs = {"out": self._message_type}
 
-        self.passthrough = True
+        msg = self._message_type()
+        for field in msg._fields_and_field_types:
+            node_inputs[field] = get_message_field_type(msg, field)
 
-        if inspect.isclass(self.options["output_type"]):
-            try:
-                msg = self.options["output_type"]()
-                for field in msg._fields_and_field_types:
-                    node_inputs[field] = type(getattr(msg, field))
-                self.passthrough = False
-            except AttributeError:
-                node_inputs["in"] = self.options["output_type"]
-                self.logwarn(f"Non message type passed to: {self.name}")
-        else:
-            node_inputs["in"] = self.options["output_type"]
 
         # TODO: Use result type.
         self.node_config.extend(
-            NodeConfig(options={}, inputs=node_inputs, outputs={}, max_children=0)
+            NodeConfig(
+                options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
+            )
         )
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
+        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_tick(self):
-        if self.passthrough:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            msg = self.options["output_type"]()
+        msg = self._message_type()
 
-            for field in msg._fields_and_field_types:
-                setattr(msg, field, self.inputs[field])
+        for field in msg._fields_and_field_types:
+            setattr(msg, field, self.inputs[field])
 
-            self.outputs["out"] = msg
-        return NodeMsg.SUCCEEDED
+        self.outputs["out"] = msg
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE

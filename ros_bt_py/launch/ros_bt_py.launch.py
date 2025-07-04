@@ -138,13 +138,13 @@ def generate_launch_description():
             {"tree_storage_paths": tree_storage_paths_value},
             {"show_traceback_on_exception": show_traceback_on_exception_value},
             {"diagnostics_frequency_hz": diagnostics_frequency_hz_value},
-            {"default_tree/load_default_tree": load_default_tree_value},
+            {"default_tree.load_default_tree": load_default_tree_value},
             {
-                "default_tree/load_default_tree_permissive": load_default_tree_permissive_value
+                "default_tree.load_default_tree_permissive": load_default_tree_permissive_value
             },
-            {"default_tree/tree_path": default_tree_path_value},
-            {"default_tree/tick_frequency_hz": default_tree_tick_frequency_hz_value},
-            {"default_tree/control_command": default_tree_control_command_value},
+            {"default_tree.tree_path": default_tree_path_value},
+            {"default_tree.tick_frequency_hz": default_tree_tick_frequency_hz_value},
+            {"default_tree.control_command": default_tree_control_command_value},
         ],
     )
 

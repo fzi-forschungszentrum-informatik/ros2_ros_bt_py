@@ -28,10 +28,10 @@
 import pytest
 
 import unittest.mock as mock
-from std_srvs.srv import SetBool
+from ros_bt_py.custom_types import RosServiceName, RosServiceType
 from ros_bt_py.ros_nodes.service import WaitForService
 from rclpy.time import Time
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py.exceptions import BehaviorTreeException
 
 
@@ -46,8 +46,8 @@ def test_node_success(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -55,17 +55,17 @@ def test_node_success(ros_mock, client_mock, clock_mock):
 
     assert unavailable_service is not None
     unavailable_service.setup()
-    assert unavailable_service.state == NodeMsg.IDLE
+    assert unavailable_service.state == NodeState.IDLE
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
 
     client_mock.service_is_ready.return_value = True
 
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.SUCCEEDED
+    assert unavailable_service.state == NodeState.SUCCEEDED
 
     unavailable_service.shutdown()
-    assert unavailable_service.state == NodeMsg.SHUTDOWN
+    assert unavailable_service.state == NodeState.SHUTDOWN
     assert ros_mock.destroy_client.called
 
 
@@ -80,8 +80,8 @@ def test_node_failure(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -89,15 +89,15 @@ def test_node_failure(ros_mock, client_mock, clock_mock):
 
     assert unavailable_service is not None
     unavailable_service.setup()
-    assert unavailable_service.state == NodeMsg.IDLE
+    assert unavailable_service.state == NodeState.IDLE
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
 
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.FAILED
+    assert unavailable_service.state == NodeState.FAILED
 
     unavailable_service.shutdown()
-    assert unavailable_service.state == NodeMsg.SHUTDOWN
+    assert unavailable_service.state == NodeState.SHUTDOWN
     assert ros_mock.destroy_client.called
 
 
@@ -118,8 +118,8 @@ def test_node_reset(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -127,20 +127,20 @@ def test_node_reset(ros_mock, client_mock, clock_mock):
 
     assert unavailable_service is not None
     unavailable_service.setup()
-    assert unavailable_service.state == NodeMsg.IDLE
+    assert unavailable_service.state == NodeState.IDLE
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
     unavailable_service.reset()
     assert unavailable_service._last_service_call_time is None
 
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
 
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
 
     unavailable_service.shutdown()
-    assert unavailable_service.state == NodeMsg.SHUTDOWN
+    assert unavailable_service.state == NodeState.SHUTDOWN
     assert ros_mock.destroy_client.called
 
 
@@ -148,8 +148,8 @@ def test_node_no_ros():
     with pytest.raises(BehaviorTreeException):
         unavailable_service = WaitForService(
             options={
-                "service_name": "this_service_does_not_exist",
-                "service_type": SetBool,
+                "service_name": RosServiceName("this_service_does_not_exist"),
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_service_seconds": 5.0,
             },
             ros_node=None,
@@ -176,8 +176,8 @@ def test_node_untick(ros_mock, client_mock, clock_mock):
 
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
@@ -185,20 +185,20 @@ def test_node_untick(ros_mock, client_mock, clock_mock):
 
     assert unavailable_service is not None
     unavailable_service.setup()
-    assert unavailable_service.state == NodeMsg.IDLE
+    assert unavailable_service.state == NodeState.IDLE
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
     unavailable_service.untick()
     assert unavailable_service._last_service_call_time is None
 
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
 
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
 
     unavailable_service.shutdown()
-    assert unavailable_service.state == NodeMsg.SHUTDOWN
+    assert unavailable_service.state == NodeState.SHUTDOWN
     assert ros_mock.destroy_client.called
 
 
@@ -216,23 +216,22 @@ def test_node_simulate_tick(ros_mock, client_mock, clock_mock):
         Time(seconds=4),
     ]
     ros_mock.get_clock.return_value = clock_mock
-
     unavailable_service = WaitForService(
         options={
-            "service_name": "this_service_does_not_exist",
-            "service_type": SetBool,
+            "service_name": RosServiceName("this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
             "wait_for_service_seconds": 5.0,
         },
         ros_node=ros_mock,
     )
     assert unavailable_service is not None
     unavailable_service.setup()
-    assert unavailable_service.state == NodeMsg.IDLE
+    assert unavailable_service.state == NodeState.IDLE
 
     unavailable_service.simulate_tick = True
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.RUNNING
+    assert unavailable_service.state == NodeState.RUNNING
 
     unavailable_service.succeed_always = True
     unavailable_service.tick()
-    assert unavailable_service.state == NodeMsg.SUCCEEDED
+    assert unavailable_service.state == NodeState.SUCCEEDED

@@ -25,19 +25,20 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.custom_types import TypeWrapper, TYPE_BUILTIN
 
 
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
         options={
-            "param_type": type,
+            "param_type": TypeWrapper(type, info=TYPE_BUILTIN),
             "default_value": OptionRef("param_type"),
             "param_name": str,
         },
@@ -59,28 +60,28 @@ class RosParamOption(Leaf):
 
     def _do_tick(self):
         if not self.ros_node.has_parameter(self.options["param_name"]):
-            return NodeMsg.FAILURE
+            return NodeState.FAILURE
         else:
             param = self.ros_node.get_parameter(self.options["param_name"])
             param_value = param.value
             if param_value is None:
                 self.outputs["param"] = self.options["default_value"]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 if isinstance(param_value, self.options["param_type"]):
                     self.outputs["param"] = param_value
-                    return NodeMsg.SUCCEEDED
+                    return NodeState.SUCCEEDED
                 else:
-                    return NodeMsg.FAILED
+                    return NodeState.FAILED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_calculate_utility(self):
         return UtilityBounds()
@@ -90,7 +91,7 @@ class RosParamOption(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "param_type": type,
+            "param_type": TypeWrapper(type, info=TYPE_BUILTIN),
             "param_name": str,
         },
         inputs={
@@ -115,28 +116,28 @@ class RosParamOptionDefaultInput(Leaf):
     def _do_tick(self):
         if not self.ros_node.has_parameter(self.options["param_name"]):
             self.outputs["param"] = self.inputs["default_value"]
-            return NodeMsg.FAILURE
+            return NodeState.FAILURE
         else:
             param = self.ros_node.get_parameter(self.options["param_name"])
             param_value = param.value
             if param_value is None:
                 self.outputs["param"] = self.inputs["default_value"]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 if isinstance(param_value, self.options["param_type"]):
                     self.outputs["param"] = param_value
-                    return NodeMsg.SUCCEEDED
+                    return NodeState.SUCCEEDED
                 else:
-                    return NodeMsg.FAILED
+                    return NodeState.FAILED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_calculate_utility(self):
         return UtilityBounds()
@@ -145,7 +146,10 @@ class RosParamOptionDefaultInput(Leaf):
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"param_type": type, "default_value": OptionRef("param_type")},
+        options={
+            "param_type": TypeWrapper(type, info=TYPE_BUILTIN),
+            "default_value": OptionRef("param_type"),
+        },
         inputs={"param_name": str},
         outputs={"param": OptionRef("param_type")},
         max_children=0,
@@ -165,28 +169,28 @@ class RosParamInput(Leaf):
     def _do_tick(self):
         if not self.ros_node.has_parameter(self.inputs["param_name"]):
             self.outputs["param"] = self.options["default_value"]
-            return NodeMsg.FAILURE
+            return NodeState.FAILURE
         else:
             param = self.ros_node.get_parameter(self.inputs["param_name"])
             param_value = param.value
             if param_value is None:
                 self.outputs["param"] = self.options["default_value"]
-                return NodeMsg.SUCCEEDED
+                return NodeState.SUCCEEDED
             else:
                 if isinstance(param_value, self.options["param_type"]):
                     self.outputs["param"] = param_value
-                    return NodeMsg.SUCCEEDED
+                    return NodeState.SUCCEEDED
                 else:
-                    return NodeMsg.FAILED
+                    return NodeState.FAILED
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_calculate_utility(self):
         return UtilityBounds()

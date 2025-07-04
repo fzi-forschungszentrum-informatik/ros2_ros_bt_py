@@ -29,11 +29,12 @@
 from rclpy.utilities import ament_index_python
 import yaml
 
-from ros_bt_py_interfaces.msg import Node as NodeMsg
+from ros_bt_py_interfaces.msg import NodeState
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
+from ros_bt_py.custom_types import FilePath
 
 
 class LoadFileError(Exception):
@@ -74,7 +75,7 @@ def load_file(path):
 @define_bt_node(
     NodeConfig(
         version="0.1.0",
-        options={"file_path": str},
+        options={"file_path": FilePath},
         inputs={},
         outputs={
             "load_success": bool,
@@ -103,7 +104,7 @@ class YamlListOption(Leaf):
         self.outputs["load_error_msg"] = ""
 
         try:
-            data = load_file(self.options["file_path"])
+            data = load_file(self.options["file_path"].path)
             if data and isinstance(data, list):
                 self.outputs["load_success"] = True
                 self.data = data
@@ -117,14 +118,14 @@ class YamlListOption(Leaf):
             self.outputs["content"] = self.data
             self.outputs["line_count"] = len(self.data)
 
-            return NodeMsg.SUCCEEDED
-        return NodeMsg.FAILED
+            return NodeState.SUCCEEDED
+        return NodeState.FAILED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
@@ -166,7 +167,7 @@ class YamlListInput(Leaf):
                 data = load_file(self.inputs["file_path"])
             except LoadFileError as ex:
                 self.outputs["load_error_msg"] = str(ex)
-                return NodeMsg.FAILED
+                return NodeState.FAILED
 
             if data and isinstance(data, list):
                 self.data = data
@@ -175,15 +176,15 @@ class YamlListInput(Leaf):
                 self.outputs["line_count"] = len(self.data)
             else:
                 self.outputs["load_error_msg"] = "Yaml file should be a list"
-        return NodeMsg.SUCCEEDED if self.outputs["load_success"] else NodeMsg.FAILED
+        return NodeState.SUCCEEDED if self.outputs["load_success"] else NodeState.FAILED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         self.inputs.reset_updated()
         self.data = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass
@@ -220,7 +221,7 @@ class YamlDictInput(Leaf):
                 data = load_file(self.inputs["file_path"])
             except LoadFileError as ex:
                 self.outputs["load_error_msg"] = str(ex)
-                return NodeMsg.FAILED
+                return NodeState.FAILED
 
             if data and isinstance(data, dict):
                 self.data = data
@@ -228,15 +229,15 @@ class YamlDictInput(Leaf):
                 self.outputs["content"] = self.data
             else:
                 self.outputs["load_error_msg"] = "Yaml file should be a dict"
-        return NodeMsg.SUCCEEDED if self.outputs["load_success"] else NodeMsg.FAILED
+        return NodeState.SUCCEEDED if self.outputs["load_success"] else NodeState.FAILED
 
     def _do_untick(self):
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         self.inputs.reset_updated()
         self.data = None
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         pass

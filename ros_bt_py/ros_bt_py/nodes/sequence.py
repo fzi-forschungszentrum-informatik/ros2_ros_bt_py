@@ -86,23 +86,23 @@ class Sequence(FlowControl):
             return Ok(BTNodeState.SUCCEEDED)
 
         # If we've previously succeeded or failed, untick all children
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             for child in self.children:
                 child_reset_result = child.reset()
                 if child_reset_result.is_err():
                     return child_reset_result
 
         # Tick children until one returns FAILED or RUNNING
-        result = NodeMsg.FAILED
+        result = NodeState.FAILED
         for index, child in enumerate(self.children):
             result = child.tick()
             if result.is_err():
                 return result
             else:
                 state = result.unwrap()
-            if state != NodeMsg.SUCCEEDED:
+            if state != NodeState.SUCCEEDED:
                 # For all states other than RUNNING...
-                if state != NodeMsg.RUNNING:
+                if state != NodeState.RUNNING:
                     # ...untick all children after the one that hasn't
                     # succeeded
                     for untick_child in self.children[index + 1 :]:
@@ -190,11 +190,11 @@ class MemorySequence(FlowControl):
     def _do_tick(self):
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
-            return NodeMsg.SUCCEEDED
+            return NodeState.SUCCEEDED
 
         # If we've previously succeeded or failed, reset
         # last_running_child and untick all children
-        if self.state in [NodeMsg.SUCCEEDED, NodeMsg.FAILED]:
+        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
             self.last_running_child = 0
             for child in self.children:
                 child.reset()
@@ -205,8 +205,8 @@ class MemorySequence(FlowControl):
                 continue
             result = child.tick()
 
-            if result != NodeMsg.SUCCEEDED:
-                if result == NodeMsg.RUNNING:
+            if result != NodeState.SUCCEEDED:
+                if result == NodeState.RUNNING:
                     self.last_running_child = index
                 else:
                     # For all states other than RUNNING, untick all
@@ -215,19 +215,19 @@ class MemorySequence(FlowControl):
                         untick_child.untick()
                 return result
         # If all children succeeded, we too succeed
-        return NodeMsg.SUCCEEDED
+        return NodeState.SUCCEEDED
 
     def _do_untick(self):
         for child in self.children:
             child.untick()
         self.last_running_child = 0
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_reset(self):
         for child in self.children:
             child.reset()
         self.last_running_child = 0
-        return NodeMsg.IDLE
+        return NodeState.IDLE
 
     def _do_shutdown(self):
         for child in self.children:

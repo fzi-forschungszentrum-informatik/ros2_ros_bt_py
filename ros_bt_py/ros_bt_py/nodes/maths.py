@@ -39,8 +39,8 @@ from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef
 
-from ros_bt_py.helpers import MathUnaryOperator, MathBinaryOperator
-from ros_bt_py.helpers import MathOperandType, MathUnaryOperandType
+from ros_bt_py.custom_types import MathUnaryOperator, MathBinaryOperator
+from ros_bt_py.custom_types import MathOperandType, MathUnaryOperandType
 
 
 @define_bt_node(

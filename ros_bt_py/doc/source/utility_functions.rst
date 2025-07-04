@@ -50,7 +50,7 @@ all available robots calculate their local Utility Function values for
 the entire BT, and the "best" one gets to execute it.
 
 What constitutes the best value and how shoving works in general is
-described in :ref:`shoving`.
+described in shoving.
 
 ****
 How?
