@@ -27,9 +27,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """BT node to encapsulate a part of a tree in a reusable subtree."""
 from typing import List, Optional, Dict
+
+from result import Result, Ok, Err
+
 from rclpy.node import Node
 
-from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
 from ros_bt_py_interfaces.srv import LoadTree
 
@@ -42,6 +44,7 @@ from ros_bt_py.node import Node as BTNode
 from ros_bt_py.node_config import NodeConfig
 
 from ros_bt_py.custom_types import FilePath
+from ros_bt_py.helpers import BTNodeState
 
 
 @define_bt_node(
@@ -77,8 +80,6 @@ class Subtree(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         """Create the tree manager, load the subtree."""
         super().__init__(
@@ -87,13 +88,11 @@ class Subtree(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
         if not self.has_ros_node:
-            raise BehaviorTreeException(
+            return Err(BehaviorTreeException(
                 "{self.name} does not have a reference to a ROS Node!"
-            )
+            ))
 
         self.root: Optional[BTNode] = None
         # since the subtree gets a prefix, we can just have it use the
@@ -128,7 +127,7 @@ class Subtree(Leaf):
             self.logwarn(
                 f"Failed to load subtree {self.name}: {get_error_message(response)}"
             )
-            self.state = NodeState.BROKEN
+            self.state = BTNodeState.BROKEN
 
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = get_error_message(response)
@@ -270,26 +269,23 @@ class Subtree(Leaf):
                     )
 
     def _do_setup(self):
-        # FIXME: This does not use the result!
-        self.root = self.manager.find_root()
-        if self.root is None:
-            raise BehaviorTreeException(
-                "Cannot find root in subtree, does the subtree "
-                f"{self.options['subtree_path']} exist?"
-            )
-        self.root.setup()
+        find_root_result = self.manager.find_root()
+        if find_root_result.is_err():
+            return find_root_result
+        self.root = find_root_result.unwrap()
+        setup_root_result = self.root.setup()
         if self.subtree_manager:
-            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
+        return setup_root_result
 
     def _do_tick(self):
         if not self.root:
-            return NodeState.BROKEN
-        new_state = self.root.tick()
+            #TODO Should this be an Err() ???
+            return Ok(BTNodeState.BROKEN)
+        tick_root_result = self.root.tick()
         if self.subtree_manager:
-            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
@@ -297,49 +293,47 @@ class Subtree(Leaf):
                 self.subtree_manager.add_subtree_data(
                     self.name, self.manager.data_to_msg()
                 )
-        return new_state
+        return tick_root_result
 
     def _do_untick(self):
         if not self.root:
-            return NodeState.BROKEN
-        new_state = self.root.untick()
+            #TODO Should this be an Err() ???
+            return Ok(BTNodeState.BROKEN)
+        untick_root_result = self.root.untick()
         if self.subtree_manager:
-            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
-        return new_state
+        return untick_root_result
 
     def _do_reset(self):
         if not self.root:
-            return NodeState.IDLE
-        new_state = self.root.reset()
+            return Ok(BTNodeState.IDLE)
+        reset_root_result = self.root.reset()
         if self.subtree_manager:
-            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
-        return new_state
+        return reset_root_result
 
     def _do_shutdown(self):
         if not self.root:
-            return NodeState.SHUTDOWN
-        self.root.shutdown()
+            return Ok(BTNodeState.SHUTDOWN)
+        shutdown_root_result = self.root.shutdown()
         if self.subtree_manager:
-            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
+        return shutdown_root_result
 
     def _do_calculate_utility(self):
-        # FIXME: This does not use the result!
-        self.root = self.manager.find_root()
-        if self.root is not None:
-            return self.root.calculate_utility()
-        else:
+        find_root_result = self.manager.find_root()
+        if find_root_result.is_err():
             return UtilityBounds(
                 has_lower_bound_success=False,
                 has_upper_bound_success=False,
                 has_lower_bound_failure=False,
                 has_upper_bound_failure=False,
             )
+        self.root = find_root_result.unwrap()
+        return self.root.calculate_utility()

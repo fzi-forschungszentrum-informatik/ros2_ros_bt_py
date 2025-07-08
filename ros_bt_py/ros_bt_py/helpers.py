@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from enum import StrEnum
 from typing import Any, Optional
+import rclpy
 import jsonpickle
 import functools
 import re
@@ -42,39 +43,16 @@ from typing import Optional
 
 @typechecked
 class BTNodeState(StrEnum):
-    UNINITIALIZED = Node.UNINITIALIZED
-    IDLE = Node.IDLE
-    UNASSIGNED = Node.UNASSIGNED
-    ASSIGNED = Node.ASSIGNED
-    RUNNING = Node.RUNNING
-    SUCCEEDED = Node.SUCCEEDED
-    FAILED = Node.FAILED
-    BROKEN = Node.BROKEN
-    PAUSED = Node.PAUSED
-    SHUTDOWN = Node.SHUTDOWN
-
-
-@typechecked
-def remove_input_output_values(tree: Tree) -> Tree:
-    """
-    Remove all input and output values from the tree nodes.
-
-    This is achieved by replacing every nodes input/output serialized_value with "null"
-    """
-    for node in tree.nodes:
-        for node_input in node.inputs:
-            node_input.serialized_value = "null"
-        for node_output in node.outputs:
-            node_output.serialized_value = "null"
-    return tree
-
-
-@typechecked
-def set_node_state_to_shutdown(tree: Tree) -> Tree:
-    """Set all node states to shutdown."""
-    for node in tree.nodes:
-        node.state = Node.SHUTDOWN
-    return tree
+    UNINITIALIZED = NodeState.UNINITIALIZED
+    IDLE = NodeState.IDLE
+    UNASSIGNED = NodeState.UNASSIGNED
+    ASSIGNED = NodeState.ASSIGNED
+    RUNNING = NodeState.RUNNING
+    SUCCEEDED = NodeState.SUCCEEDED
+    FAILED = NodeState.FAILED
+    BROKEN = NodeState.BROKEN
+    PAUSED = NodeState.PAUSED
+    SHUTDOWN = NodeState.SHUTDOWN
 
 
 class MathUnaryOperator(object):

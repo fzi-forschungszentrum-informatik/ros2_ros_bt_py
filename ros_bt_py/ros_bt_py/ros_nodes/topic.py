@@ -27,6 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import Dict, Optional
 
+from result import Result, Ok, Err
+
 from rclpy.node import Node
 from rclpy.qos import (
     QoSDurabilityPolicy,
@@ -36,12 +38,12 @@ from rclpy.qos import (
 from threading import Lock
 from rclpy.time import Time
 
-from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.custom_types import RosTopicName, RosTopicType
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -80,8 +82,6 @@ class TopicSubscriber(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(TopicSubscriber, self).__init__(
             options=options,
@@ -89,8 +89,6 @@ class TopicSubscriber(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._topic_type = self.options["topic_type"].get_type_obj()
@@ -131,7 +129,7 @@ class TopicSubscriber(Leaf):
             callback=self._callback,
             qos_profile=self._qos_profile,
         )
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _callback(self, msg):
         with self._lock:
@@ -140,10 +138,10 @@ class TopicSubscriber(Leaf):
     def _do_tick(self):
         with self._lock:
             if self._msg is None:
-                return NodeState.RUNNING
+                return Ok(BTNodeState.RUNNING)
             self.outputs["message"] = self._msg
             self._msg = None
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
         self._msg = None
@@ -155,15 +153,15 @@ class TopicSubscriber(Leaf):
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
-        return NodeState.SHUTDOWN
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         # discard the last received message
         self._msg = None
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_calculate_utility(self):
         if not self.has_ros_node:
@@ -223,8 +221,6 @@ class TopicMemorySubscriber(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(TopicMemorySubscriber, self).__init__(
             options=options,
@@ -232,8 +228,6 @@ class TopicMemorySubscriber(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._topic_type = self.options["topic_type"].get_type_obj()
@@ -254,7 +248,7 @@ class TopicMemorySubscriber(Leaf):
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a refrence to a ROS node!"
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
 
         self._msg = None
         self._msg_timestamp: Optional[Time] = self._ros_node.get_clock().now()
@@ -280,7 +274,7 @@ class TopicMemorySubscriber(Leaf):
             callback=self._callback,
             qos_profile=self._qos_profile,
         )
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _callback(self, msg):
         with self._lock:
@@ -297,11 +291,11 @@ class TopicMemorySubscriber(Leaf):
                         ).nanoseconds
                         / 1e9
                     ) > self.options["memory_delay"]:
-                        return NodeState.FAILED
+                        return Ok(BTNodeState.FAILED)
 
-                return NodeState.RUNNING
+                return Ok(BTNodeState.RUNNING)
             self.outputs["message"] = self._msg
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
         self._msg = None
@@ -314,16 +308,16 @@ class TopicMemorySubscriber(Leaf):
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_reset(self):
         # discard the last received message
         self._msg = None
         self._msg_timestamp = None
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_calculate_utility(self):
         if not self.has_ros_node:
@@ -374,8 +368,6 @@ class TopicPublisher(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(TopicPublisher, self).__init__(
             options=options,
@@ -383,8 +375,6 @@ class TopicPublisher(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._topic_type = self.options["topic_type"].get_type_obj()
@@ -402,7 +392,7 @@ class TopicPublisher(Leaf):
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a refrence to a ROS node!"
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
 
         reliability_policy = (
             QoSReliabilityPolicy.RELIABLE
@@ -425,14 +415,14 @@ class TopicPublisher(Leaf):
             topic=self._topic_name,
             qos_profile=self._qos_profile,
         )
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         # Only publish a new message if our input data has been updated - the
         # old one is latched anyway.
         if self.inputs.is_updated("message"):
             self._publisher.publish(self.inputs["message"])
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
         # Unregister the publisher
@@ -444,7 +434,7 @@ class TopicPublisher(Leaf):
         self._publisher = None
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)

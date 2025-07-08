@@ -30,7 +30,7 @@ import math
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from result import Ok, Err
+from result import Result, Ok, Err
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -67,8 +67,6 @@ class Convert(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(Convert, self).__init__(
             options=options,
@@ -76,8 +74,6 @@ class Convert(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
         # check the possible conversions here
 
@@ -97,10 +93,10 @@ class Convert(Leaf):
         ] in [int, float]:
             pass
         else:
-            raise BehaviorTreeException(
+            return Err(BehaviorTreeException(
                 'Conversion between "%s" and "%s" not implemented'
                 % (self.options["input_type"], self.options["output_type"])
-            )
+            ))
 
     def _do_setup(self):
         return Ok(BTNodeState.IDLE)
@@ -181,8 +177,6 @@ class Operation(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(Operation, self).__init__(
             options=options,
@@ -190,8 +184,6 @@ class Operation(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
         self.operators = {}
         self.operators["add"] = operator.add
@@ -221,9 +213,9 @@ class Operation(Leaf):
         self.operators["^"] = operator.xor
 
         if self.options["operator"].operator not in self.operators:
-            raise BehaviorTreeException(
+            return Err(BehaviorTreeException(
                 f"Operator {self.options['operator'].operator} is not recognized."
-            )
+            ))
 
         self.operand_type = None
 
@@ -247,7 +239,7 @@ class Operation(Leaf):
             )
         )
         if extend_result.is_err():
-            raise BehaviorTreeException("Node config could not be extended!")
+            return Err(BehaviorTreeException("Node config could not be extended!"))
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
@@ -312,8 +304,6 @@ class UnaryOperation(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(UnaryOperation, self).__init__(
             options=options,
@@ -321,8 +311,6 @@ class UnaryOperation(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
         self.operators = {}
         self.operators["not"] = operator.not_
@@ -362,9 +350,9 @@ class UnaryOperation(Leaf):
         self.operators["lgamma"] = math.lgamma
 
         if self.options["operator"].operator not in self.operators:
-            raise BehaviorTreeException(
+            return Err(BehaviorTreeException(
                 f"Operator {self.options['operator'].operator} is not recognized."
-            )
+            ))
 
         self.operand_type = None
 
@@ -385,7 +373,7 @@ class UnaryOperation(Leaf):
             )
         )
         if extend_result.is_err():
-            raise BehaviorTreeException("Node config could not be extended!")
+            return Err(BehaviorTreeException("Node config could not be extended!"))
 
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)

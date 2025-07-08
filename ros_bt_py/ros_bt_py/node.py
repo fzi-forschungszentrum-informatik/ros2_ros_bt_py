@@ -47,7 +47,6 @@ from typing import (
     Sequence,
     Dict,
     Optional,
-    TypeVar,
 )
 
 import rclpy
@@ -98,38 +97,8 @@ def _check_node_data_match(
 
 
 @typechecked
-def _set_data_port(
-    data_map: NodeDataMap, configuration: Sequence[NodeIO], type: str, permissive=False
-) -> Result[None, BehaviorTreeException | AttributeError]:
-    try:
-        for msg in configuration:
-            try:
-                data_map[msg.key] = json_decode(msg.serialized_value)
-            except KeyError as exc:
-                rclpy.logging.get_logger(data_map.name).warn(
-                    f"Could not set a non existing {type} {str(exc)}"
-                )
-            except AttributeError as exc:
-                if permissive:
-                    data_map[msg.key] = None
-                else:
-                    return Err(
-                        AttributeError(
-                            f"AttributeError, maybe a ROS Message definition changed. {str(exc)}"
-                        )
-                    )
-    except ValueError as exc:
-        return Err(
-            BehaviorTreeException(
-                f"Failed to instantiate node from message: {str(exc)}"
-            )
-        )
-    return Ok(None)
-
-
-@typechecked
 def _connect_wirings(
-    data_wirings: List[NodeDataWiring], type: str
+    data_wirings: List[Wiring], type: str
 ) -> Dict[str, List[str]]:
     connected_wirings: Dict[str, List[str]] = {}
     for wiring in data_wirings:
@@ -148,21 +117,6 @@ def _connect_wirings(
             else:
                 connected_wirings[wiring.target.node_name] = [wiring.target.data_key]
     return connected_wirings
-
-
-TCallable = TypeVar("TCallable", bound=Callable)
-
-
-def _required(meth: TCallable) -> TCallable:
-    """
-    Mark a method as required.
-
-    Not using :module:`abc` here because a subclass with missing
-    methods could still be instantiated and used, just not as part of
-    a BT.
-    """
-    setattr(meth, "_required", True)
-    return meth
 
 
 @typechecked
@@ -525,11 +479,11 @@ class Node(object, metaclass=NodeMeta):
             report_state = self.debug_manager.report_state(self, "SETUP")
 
         with report_state:
-            if self.state != NodeState.UNINITIALIZED and self.state != NodeState.SHUTDOWN:
+            if self.state != BTNodeState.UNINITIALIZED and self.state != BTNodeState.SHUTDOWN:
                 return Err(
                     NodeStateError(
                         "Calling setup() is only allowed in states "
-                        f"{NodeState.UNINITIALIZED} and {NodeState.SHUTDOWN}, "
+                        f"{BTNodeState.UNINITIALIZED} and {BTNodeState.SHUTDOWN}, "
                         f"but node {self.name} is in state {self.state}"
                     )
                 )
@@ -602,7 +556,7 @@ class Node(object, metaclass=NodeMeta):
             report_tick = self.debug_manager.report_tick(self)
 
         with report_tick:
-            if self.state is NodeState.UNINITIALIZED:
+            if self.state is BTNodeState.UNINITIALIZED:
                 return Err(BehaviorTreeException("Trying to tick uninitialized node!"))
 
             unset_options: List[str] = []
@@ -643,11 +597,11 @@ class Node(object, metaclass=NodeMeta):
 
             valid_state_result = self.check_if_in_invalid_state(
                 allowed_states=[
-                    NodeState.RUNNING,
-                    NodeState.SUCCEEDED,
-                    NodeState.FAILED,
-                    NodeState.ASSIGNED,
-                    NodeState.UNASSIGNED,
+                    BTNodeState.RUNNING,
+                    BTNodeState.SUCCEEDED,
+                    BTNodeState.FAILED,
+                    BTNodeState.ASSIGNED,
+                    BTNodeState.UNASSIGNED,
                 ],
                 action_name="tick()",
             )
@@ -704,7 +658,7 @@ class Node(object, metaclass=NodeMeta):
             report_state = self.debug_manager.report_state(self, "UNTICK")
 
         with report_state:
-            if self.state is NodeState.UNINITIALIZED:
+            if self.state is BTNodeState.UNINITIALIZED:
                 return Err(
                     BehaviorTreeException("Trying to untick uninitialized node!")
                 )
@@ -716,7 +670,7 @@ class Node(object, metaclass=NodeMeta):
                 return untick_result
 
             check_state_result = self.check_if_in_invalid_state(
-                allowed_states=[NodeState.IDLE, NodeState.PAUSED],
+                allowed_states=[BTNodeState.IDLE, BTNodeState.PAUSED],
                 action_name="untick()",
             )
             if check_state_result.is_err():
@@ -779,7 +733,7 @@ class Node(object, metaclass=NodeMeta):
                 self.state = BTNodeState.BROKEN
                 return reset_result
             valid_state_result = self.check_if_in_invalid_state(
-                allowed_states=[NodeState.IDLE], action_name="reset()"
+                allowed_states=[BTNodeState.IDLE], action_name="reset()"
             )
 
             if valid_state_result.is_err():
@@ -934,8 +888,8 @@ class Node(object, metaclass=NodeMeta):
 
     @typechecked
     def add_child(
-        self, child: Node, at_index: Optional[int] = None
-    ) -> Result[Node, BehaviorTreeException | TreeTopologyError]:
+        self, child: "Node", at_index: Optional[int] = None
+    ) -> Result["Node", BehaviorTreeException | TreeTopologyError]:
         """Add a child to this node at the given index."""
         if (
             self.node_config.max_children is not None
@@ -1247,7 +1201,7 @@ class Node(object, metaclass=NodeMeta):
     @classmethod
     @typechecked
     def from_msg(
-        cls: Type[Node],
+        cls: Type["Node"],
         msg: NodeStructure,
         ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
@@ -1375,16 +1329,10 @@ class Node(object, metaclass=NodeMeta):
                 ros_node=ros_node,
             )
 
-        # TODO Nodes are currently instantiated without supplying values of inputs and outputs
-        # which seems reasonable, given those values aren't known at that time.
-        # That renders these function calls effectively a no-op.
-        # _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
-        # _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
-
         return Ok(node_instance)
 
     @typechecked
-    def get_children_recursive(self) -> Generator[Node, None, None]:
+    def get_children_recursive(self) -> Generator["Node", None, None]:
         """Return all nodes that are below this node in the parent-child hirachy recursively."""
         yield self
         for child in self.children:
@@ -1395,7 +1343,7 @@ class Node(object, metaclass=NodeMeta):
     def get_subtree_msg(
         self,
     ) -> Result[
-        Tuple[Tree, List[NodeDataWiring], List[NodeDataWiring]], BehaviorTreeException
+        Tuple[TreeStructure, List[Wiring], List[Wiring]], BehaviorTreeException
     ]:
         """
         Populate a TreeMsg with the subtree rooted at this node.
@@ -1433,9 +1381,9 @@ class Node(object, metaclass=NodeMeta):
             nodes=[node.to_structure_msg() for node in self.get_children_recursive()],
         )
 
-        node_map: Dict[str, NodeMsg] = {node.name: node for node in subtree.nodes}
-        incoming_connections: List[NodeDataWiring] = []
-        outgoing_connections: List[NodeDataWiring] = []
+        node_map: Dict[str, NodeStructure] = {node.name: node for node in subtree.nodes}
+        incoming_connections: List[Wiring] = []
+        outgoing_connections: List[Wiring] = []
         for node in self.get_children_recursive():
             for sub in node.subscriptions:
                 source_node = node_map.get(sub.source.node_name)
@@ -1504,7 +1452,7 @@ class Node(object, metaclass=NodeMeta):
         return Ok((subtree, incoming_connections, outgoing_connections))
 
     @typechecked
-    def find_node(self, other_name: str) -> Optional[Node]:
+    def find_node(self, other_name: str) -> Optional["Node"]:
         """
         Try to find the node with the given name in the tree.
 
@@ -1528,7 +1476,7 @@ class Node(object, metaclass=NodeMeta):
     @typechecked
     def _subscribe(
         self,
-        wiring: NodeDataWiring,
+        wiring: Wiring,
         new_cb: Callable[[Type], None],
         expected_type: Type,
     ) -> Result[None, BehaviorTreeException]:
@@ -1614,7 +1562,7 @@ class Node(object, metaclass=NodeMeta):
         return Ok(None)
 
     @typechecked
-    def wire_data(self, wiring: NodeDataWiring) -> Result[None, BehaviorTreeException]:
+    def wire_data(self, wiring: Wiring) -> Result[None, BehaviorTreeException]:
         """
         Wire a piece of Nodedata from another node to this node.
 
@@ -1697,7 +1645,7 @@ class Node(object, metaclass=NodeMeta):
 
     @typechecked
     def _unsubscribe(
-        self, wiring: NodeDataWiring
+        self, wiring: Wiring
     ) -> Result[None, BehaviorTreeException]:
         """
         Unsubscribe from a piece of NodeData this node has.
@@ -1741,7 +1689,7 @@ class Node(object, metaclass=NodeMeta):
 
     @typechecked
     def unwire_data(
-        self, wiring: NodeDataWiring
+        self, wiring: Wiring
     ) -> Result[None, BehaviorTreeException]:
         """
         Unwire the given wiring.
@@ -1844,7 +1792,7 @@ class Node(object, metaclass=NodeMeta):
             state=self.state,
         )
 
-def to_state_msg(self):
+    def to_state_msg(self):
         return NodeState(name=self.name, state=self.state)
 
     def wire_data_msg_list(self):

@@ -539,7 +539,7 @@ class RepeatUntilFail(Decorator):
             return Ok(BTNodeState.RUNNING)
 
         # Succeed if we have no children
-        return BTNodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
         for child in self.children:
@@ -587,7 +587,7 @@ class RepeatIfFail(Decorator):
                     return reset_result
             elif result.value == BTNodeState.SUCCEEDED:
                 return Ok(BTNodeState.SUCCEEDED)
-            return BTNodeState.RUNNING
+            return Ok(BTNodeState.RUNNING)
 
         # Succeed if we have no children
         return Ok(BTNodeState.SUCCEEDED)

@@ -28,11 +28,11 @@
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from ros_bt_py_interfaces.msg import NodeState
+from result import Result, Ok
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
-from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
@@ -64,8 +64,6 @@ class EnumFields(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(EnumFields, self).__init__(
             options=options,
@@ -73,8 +71,6 @@ class EnumFields(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._message_class = self.options["ros_message_type"].get_type_obj()
@@ -94,18 +90,18 @@ class EnumFields(Leaf):
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
     def _do_setup(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         for field in self.outputs:
             self.outputs[field] = getattr(self._message_class, field)
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)

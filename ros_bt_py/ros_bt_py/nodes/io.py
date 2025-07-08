@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from result import Ok
+from result import Result, Ok, Err
 from ros_bt_py.node import IO, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef
 
@@ -120,9 +120,9 @@ class IOInput(IO):
                 if not self.inputs.is_updated(input_name):
                     self.logdebug("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
-                    raise ValueError(
+                    return Err(ValueError(
                         f"Trying to tick a node with an unset input ({input_name})!"
-                    )
+                    ))
         self.inputs.handle_subscriptions()
         return Ok(None)
 
@@ -232,9 +232,9 @@ class IOOutput(IO):
                 if not self.inputs.is_updated(input_name):
                     self.logdebug("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
-                    raise ValueError(
+                    return Err(ValueError(
                         f"Trying to tick a node with an unset input ({input_name})!"
-                    )
+                    ))
         self.inputs.handle_subscriptions()
         return Ok(None)
 

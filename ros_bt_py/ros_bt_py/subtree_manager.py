@@ -95,7 +95,7 @@ class SubtreeManager(object):
 
     def add_subtree_structure(
         self, node_name: str, subtree_msg: TreeStructure
-    ) -> Result[None, BehaviorTreeException]:
+    ) -> None:
         """
         Publish subtree information.
 
@@ -116,8 +116,6 @@ class SubtreeManager(object):
     def add_subtree_data(self, node_name: str, subtree_msg: TreeData):
         with self._lock:
             self.subtree_data[node_name] = subtree_msg
-
-        return Ok(None)
 
     def clear_subtrees(self) -> None:
         with self._lock:

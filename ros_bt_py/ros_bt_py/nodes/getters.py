@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """BT nodes to get values from containers and other nodes."""
 
-from result import Ok, Err
+from result import Result, Ok, Err
 
 from ros_bt_py.node import Decorator, define_bt_node, BTNodeState
 from ros_bt_py.node_config import NodeConfig, OptionRef

@@ -30,7 +30,6 @@ from result import Ok, Result
 from typeguard import typechecked
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
-from ros_bt_py_interfaces.msg import Node as NodeMsg
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.node import FlowControl, Node, define_bt_node
@@ -86,23 +85,23 @@ class Sequence(FlowControl):
             return Ok(BTNodeState.SUCCEEDED)
 
         # If we've previously succeeded or failed, untick all children
-        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
+        if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
                 child_reset_result = child.reset()
                 if child_reset_result.is_err():
                     return child_reset_result
 
         # Tick children until one returns FAILED or RUNNING
-        result = NodeState.FAILED
+        result = BTNodeState.FAILED
         for index, child in enumerate(self.children):
             result = child.tick()
             if result.is_err():
                 return result
             else:
                 state = result.unwrap()
-            if state != NodeState.SUCCEEDED:
+            if state != BTNodeState.SUCCEEDED:
                 # For all states other than RUNNING...
-                if state != NodeState.RUNNING:
+                if state != BTNodeState.RUNNING:
                     # ...untick all children after the one that hasn't
                     # succeeded
                     for untick_child in self.children[index + 1 :]:
@@ -185,16 +184,19 @@ class MemorySequence(FlowControl):
     def _do_setup(self):
         self.last_running_child = 0
         for child in self.children:
-            child.setup()
+            child_result = child.setup()
+            if child_result.is_err():
+                return child_result
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
-            return NodeState.SUCCEEDED
+            return Ok(BTNodeState.SUCCEEDED)
 
         # If we've previously succeeded or failed, reset
         # last_running_child and untick all children
-        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
+        if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             self.last_running_child = 0
             for child in self.children:
                 child.reset()
@@ -203,10 +205,15 @@ class MemorySequence(FlowControl):
         for index, child in enumerate(self.children):
             if index < self.last_running_child:
                 continue
-            result = child.tick()
 
-            if result != NodeState.SUCCEEDED:
-                if result == NodeState.RUNNING:
+            result = child.tick()
+            if result.is_err():
+                return result
+            else:
+                state = result.unwrap()
+
+            if state != BTNodeState.SUCCEEDED:
+                if state == BTNodeState.RUNNING:
                     self.last_running_child = index
                 else:
                     # For all states other than RUNNING, untick all
@@ -215,24 +222,31 @@ class MemorySequence(FlowControl):
                         untick_child.untick()
                 return result
         # If all children succeeded, we too succeed
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self):
         for child in self.children:
-            child.untick()
+            untick_result = child.untick()
+            if untick_result.is_err():
+                return untick_result
         self.last_running_child = 0
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_reset(self):
         for child in self.children:
-            child.reset()
+            reset_result = child.reset()
+            if reset_result.is_err():
+                return reset_result
         self.last_running_child = 0
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self):
         for child in self.children:
-            child.shutdown()
+            shutdown_result = child.shutdown()
+            if shutdown_result.is_err():
+                return shutdown_result
         self.last_running_child = 0
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self):
         return calculate_utility_sequence(self.children)

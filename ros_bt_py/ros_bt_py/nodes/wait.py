@@ -27,10 +27,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from time import time
 
-from ros_bt_py_interfaces.msg import NodeState
+from result import Result, Ok
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
+from ros_bt_py.helpers import BTNodeState
 
 
 @define_bt_node(
@@ -53,7 +54,7 @@ class Wait(Leaf):
 
     def _do_setup(self):
         self.first_tick = True
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         now = time()
@@ -62,19 +63,20 @@ class Wait(Leaf):
             self.end_time = self.start_time + self.options["seconds_to_wait"]
             self.first_tick = False
         if now >= self.end_time:
-            return NodeState.SUCCESS
+            return Ok(BTNodeState.SUCCESS)
         else:
-            return NodeState.RUNNING
+            return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        self._do_reset()
+        self.first_tick = True
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.first_tick = True
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -97,7 +99,7 @@ class WaitInput(Leaf):
 
     def _do_setup(self):
         self.first_tick = True
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         now = time()
@@ -106,16 +108,17 @@ class WaitInput(Leaf):
             self.end_time = self.start_time + self.inputs["seconds_to_wait"]
             self.first_tick = False
         if now >= self.end_time:
-            return NodeState.SUCCESS
+            return Ok(BTNodeState.SUCCESS)
         else:
-            return NodeState.RUNNING
+            return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self):
-        self._do_reset()
+        self.first_tick = True
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
         self.first_tick = True
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)

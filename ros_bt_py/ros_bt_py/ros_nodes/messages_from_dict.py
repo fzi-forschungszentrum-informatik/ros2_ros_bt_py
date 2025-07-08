@@ -29,16 +29,18 @@
 
 from typing import Dict, Optional
 
+from result import Result, Ok
+
 from rclpy.node import Node
 from rosidl_runtime_py.set_message import set_message_fields
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.custom_types import RosTopicType, TypeWrapper, DICT_ROS
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 
-from ros_bt_py_interfaces.msg import NodeState
 
 
 @define_bt_node(
@@ -60,8 +62,6 @@ class MessageFromDict(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
     ):
         super(MessageFromDict, self).__init__(
             options=options,
@@ -69,8 +69,6 @@ class MessageFromDict(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._message_type = self.options["message_type"].get_type_obj()
@@ -87,7 +85,7 @@ class MessageFromDict(Leaf):
         pass
 
     def _do_tick(self):
-        if self.inputs.is_updated("dict") or self.state == NodeState.IDLE:
+        if self.inputs.is_updated("dict") or self.state == BTNodeState.IDLE:
             message = self._message_type()
             try:
                 set_message_fields(
@@ -103,17 +101,17 @@ class MessageFromDict(Leaf):
                     f"Error populating message of type {self._message_type.__name__}: "
                     f"{str(ex)}"
                 )
-                return NodeState.FAILED
-        return NodeState.SUCCEEDED
+                return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -179,14 +177,14 @@ class MessageFromConstDict(Leaf):
                 f"Error populating message of type {self._message_type.__name__}: "
                 f"{str(ex)}"
             )
-            return NodeState.FAILED
-        return NodeState.SUCCEEDED
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)

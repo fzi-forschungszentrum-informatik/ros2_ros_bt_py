@@ -25,9 +25,11 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import NodeState
+from result import Result, Ok
+
 from builtin_interfaces.msg import Time
 
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import define_bt_node, Leaf
 from ros_bt_py.node_config import NodeConfig
 
@@ -50,13 +52,13 @@ class GetTimeNow(Leaf):
     def _do_tick(self):
         current_time = self.ros_node.get_clock().now()
         self.outputs["current_time"] = current_time.to_msg()
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
         pass
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)

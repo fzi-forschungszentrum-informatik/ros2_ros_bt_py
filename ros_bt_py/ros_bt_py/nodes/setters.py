@@ -27,11 +27,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from copy import deepcopy
 
-from ros_bt_py_interfaces.msg import NodeState
+from result import Result, Ok
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.helpers import rsetattr
+from ros_bt_py.helpers import rsetattr, BTNodeState
 
 
 @define_bt_node(
@@ -47,22 +47,22 @@ class AppendListItem(Leaf):
     """Appends `item` to the end of `list`."""
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         if self.inputs.is_updated("list") or self.inputs.is_updated("value"):
             self.outputs["new_list"] = self.inputs["list"] + [self.inputs["value"]]
 
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -81,23 +81,23 @@ class SetAttr(Leaf):
     """Set the attribute named `attr` in `object`."""
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         if self.inputs.is_updated("object") or self.inputs.is_updated("attr_value"):
             obj = deepcopy(self.inputs["object"])
             rsetattr(obj, self.options["attr_name"], self.inputs["attr_value"])
             self.outputs["new_object"] = obj
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -113,20 +113,20 @@ class SetDictItem(Leaf):
     """Set the attribute named `attr` in `object`."""
 
     def _do_setup(self):
-        pass
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self):
         if self.inputs.is_updated("object") or self.inputs.is_updated("attr_value"):
             obj = deepcopy(self.inputs["object"])
             obj[self.options["attr_name"]] = self.inputs["attr_value"]
             self.outputs["new_object"] = obj
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self):
-        pass
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
     def _do_untick(self):
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
