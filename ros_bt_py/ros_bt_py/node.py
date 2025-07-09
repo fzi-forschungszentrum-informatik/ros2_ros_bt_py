@@ -796,8 +796,8 @@ class Node(object, metaclass=NodeMeta):
                 self.state = BTNodeState.BROKEN
                 return shutdown_result
 
-            if self.state is None:
-                self.state = BTNodeState.SHUTDOWN
+            #if self.state is None:
+            #    self.state = BTNodeState.SHUTDOWN
 
             for child in self.children:
                 child.shutdown()

@@ -366,23 +366,27 @@ class TreeManager:
                 "No callback for publishing tree frequency provided"
             )
 
-        self.debug_manager = debug_manager
-        if not self.debug_manager:
+        self.debug_manager: DebugManager
+        if debug_manager is None:
             get_logger("tree_manager").get_child(name).info(
                 "Tree manager instantiated without explicit debug manager "
                 "- building our own with default parameters"
             )
             self.debug_manager = DebugManager(ros_node=self.ros_node)
-        self.debug_manager: DebugManager
+        else:
+            self.debug_manager = debug_manager
+        
 
-        self.subtree_manager = subtree_manager
-        if not self.subtree_manager:
+        
+        self.subtree_manager: SubtreeManager
+        if subtree_manager is None:
             get_logger("tree_manager").get_child(name).info(
                 "Tree manager instantiated without explicit subtree manager "
                 "- building our own with default parameters"
             )
             self.subtree_manager = SubtreeManager()
-        self.subtree_manager: SubtreeManager
+        else:
+            self.subtree_manager = subtree_manager
 
         if tick_frequency_hz == 0.0:
             tick_frequency_hz = 10.0
@@ -402,6 +406,10 @@ class TreeManager:
         tree_id = name if name else ""
 
         self.tree_structure = TreeStructure(tree_id=tree_id)
+        # These reassignments makes the typing happy, 
+        #   because they ensure that `.append .extent .remove ...` exists
+        self.tree_structure.data_wirings = list()
+        self.tree_structure.public_node_data = list()
         self.tree_structure.name = self.name
         self.tree_structure.tick_frequency_hz = tick_frequency_hz
         self.rate = self.ros_node.create_rate(self.tree_structure.tick_frequency_hz)
@@ -671,7 +679,8 @@ class TreeManager:
 
             tick_end_timestamp = self.ros_node.get_clock().now()
 
-            duration: Duration = tick_end_timestamp - tick_start_timestamp
+            duration: Duration = tick_end_timestamp - tick_start_timestamp # type: ignore
+            # We know that Time - Time = Duration
             tick_rate = self.tree_structure.tick_frequency_hz
 
             if (1 / tick_rate) > (duration.nanoseconds * 1e9):
@@ -762,6 +771,10 @@ class TreeManager:
                 name="",
                 tick_frequency_hz=self.tree_structure.tick_frequency_hz,
             )
+            # These reassignments makes the typing happy, 
+            #   because they ensure that `.append .extent .remove ...` exists
+            self.tree_structure.data_wirings = list()
+            self.tree_structure.public_node_data = list()
             self.tree_state = TreeState(state=TreeState.EDITABLE)
             self.tree_data = TreeData()
         self.publish_structure()
@@ -916,6 +929,10 @@ class TreeManager:
         tree.data_wirings = updated_wirings
 
         self.tree_structure = tree
+        # These reassignments makes the typing happy, 
+        #   because they ensure that `.append .extent .remove ...` exists
+        self.tree_structure.data_wirings = list(tree.data_wirings)
+        self.tree_structure.public_node_data = list(tree.public_node_data)
         if self.tree_structure.tick_frequency_hz == 0.0:
             get_logger("tree_manager").get_child(self.name).warn(
                 "Tick frequency of loaded tree is 0, defaulting to 10Hz"
@@ -1666,7 +1683,7 @@ class TreeManager:
                 self.nodes[name].shutdown()
 
             # If we have a parent, remove the node from that parent
-            if self.nodes[name].parent and self.nodes[name].parent.name in self.nodes:
+            if self.nodes[name].parent is not None and self.nodes[name].parent.name in self.nodes:
                 self.nodes[self.nodes[name].parent.name].remove_child(name)
             del self.nodes[name]
 

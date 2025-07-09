@@ -31,7 +31,7 @@ from result import Result, Ok, Err
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
-from ros_bt_py.node import Leaf, define_bt_node, BTNodeState
+from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
 

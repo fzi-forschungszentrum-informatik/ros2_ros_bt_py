@@ -406,7 +406,7 @@ class TopicPublisher(Leaf):
         depth = self.options["depth"]
 
         self._qos_profile = QoSProfile(
-            reliability=reliability_policy, history=durability_policy, depth=depth
+            reliability=reliability_policy, durability=durability_policy, depth=depth
         )
 
         self._publisher = self.ros_node.create_publisher(
