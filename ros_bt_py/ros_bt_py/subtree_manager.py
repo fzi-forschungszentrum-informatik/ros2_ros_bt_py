@@ -93,9 +93,7 @@ class SubtreeManager(object):
                 return []
             return [deepcopy(tree) for tree in self.subtree_data.values()]
 
-    def add_subtree_structure(
-        self, node_name: str, subtree_msg: TreeStructure
-    ) -> None:
+    def add_subtree_structure(self, node_name: str, subtree_msg: TreeStructure) -> None:
         """
         Publish subtree information.
 

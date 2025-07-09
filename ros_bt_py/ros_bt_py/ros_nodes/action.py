@@ -212,10 +212,12 @@ class ActionForSetType(Leaf):
                 "fail_if_not_available" not in self.options
                 or not self.options["fail_if_not_available"]
             ):
-                return Err(BehaviorTreeException(
-                    f"Action server {self._action_name} not available after waiting "
-                    f"{self.options['wait_for_action_server_seconds']} seconds!"
-                ))
+                return Err(
+                    BehaviorTreeException(
+                        f"Action server {self._action_name} not available after waiting "
+                        f"{self.options['wait_for_action_server_seconds']} seconds!"
+                    )
+                )
 
         self._last_goal_time: Optional[Time] = None
         self.set_output_none()
@@ -227,7 +229,9 @@ class ActionForSetType(Leaf):
         with self._lock:
             self._feedback = feedback
 
-    def _do_tick_wait_for_action_complete(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_wait_for_action_complete(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         if self._running_goal_handle is None or self._running_goal_future is None:
             self._internal_state = ActionStates.FINISHED
             return Ok(BTNodeState.BROKEN)
@@ -282,7 +286,9 @@ class ActionForSetType(Leaf):
 
         return Ok(BTNodeState.RUNNING)
 
-    def _do_tick_cancel_running_goal(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_cancel_running_goal(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         if self._running_goal_handle is None:
             self.logwarn(
                 "Goal cancellation was requested, but there is no handle to the running goal!"
@@ -294,7 +300,9 @@ class ActionForSetType(Leaf):
         self._internal_state = ActionStates.WAITING_FOR_GOAL_CANCELLATION
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_tick_wait_for_cancel_complete(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_wait_for_cancel_complete(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         if self._cancel_goal_future is None:
             self.logwarn(
                 "Waiting for goal cancellation to complete, but the future is none!"
@@ -335,7 +343,9 @@ class ActionForSetType(Leaf):
 
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_tick_wait_for_new_goal_complete(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_wait_for_new_goal_complete(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         """Tick to wait for the new goal to be accepted by the action server!."""
         if self._new_goal_request_future is None:
             self.logerr(
@@ -457,13 +467,15 @@ class ActionForSetType(Leaf):
             return Ok(UtilityBounds(can_execute=False))
         if not self._ac.server_is_ready():
             return Ok(UtilityBounds(can_execute=False))
-        return Ok(UtilityBounds(
-            can_execute=True,
-            has_lower_bound_success=True,
-            has_upper_bound_success=True,
-            has_lower_bound_failure=True,
-            has_upper_bound_failure=True,
-        ))
+        return Ok(
+            UtilityBounds(
+                can_execute=True,
+                has_lower_bound_success=True,
+                has_upper_bound_success=True,
+                has_lower_bound_failure=True,
+                has_upper_bound_failure=True,
+            )
+        )
 
 
 @define_bt_node(
@@ -584,10 +596,12 @@ class Action(Leaf):
                 "fail_if_not_available" not in self.options
                 or self.options["fail_if_not_available"]
             ):
-                return Err(BehaviorTreeException(
-                    f"Action server {self._action_name} not available after waiting "
-                    f"{self.options['wait_for_action_server_seconds']} seconds!"
-                ))
+                return Err(
+                    BehaviorTreeException(
+                        f"Action server {self._action_name} not available after waiting "
+                        f"{self.options['wait_for_action_server_seconds']} seconds!"
+                    )
+                )
 
         self._last_goal_time: Optional[Time] = None
 
@@ -604,7 +618,9 @@ class Action(Leaf):
         with self._lock:
             self._feedback = feedback
 
-    def _do_tick_wait_for_action_complete(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_wait_for_action_complete(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         if self._running_goal_handle is None or self._running_goal_future is None:
             self._internal_state = ActionStates.FINISHED
             return Ok(BTNodeState.BROKEN)
@@ -667,7 +683,9 @@ class Action(Leaf):
 
         return Ok(BTNodeState.RUNNING)
 
-    def _do_tick_cancel_running_goal(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_cancel_running_goal(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         if self._running_goal_handle is None:
             self.logwarn(
                 "Goal cancellation was requested, but there is no handle to the running goal!"
@@ -679,7 +697,9 @@ class Action(Leaf):
         self._internal_state = ActionStates.WAITING_FOR_GOAL_CANCELLATION
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_tick_wait_for_cancel_complete(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_wait_for_cancel_complete(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         if self._cancel_goal_future is None:
             self.logwarn(
                 "Waiting for goal cancellation to complete, but the future is none!"
@@ -723,7 +743,9 @@ class Action(Leaf):
 
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_tick_wait_for_new_goal_complete(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick_wait_for_new_goal_complete(
+        self,
+    ) -> Result[BTNodeState, BehaviorTreeException]:
         """Tick to wait for the new goal to be accepted by the action server!."""
         if self._new_goal_request_future is None:
             self.logerr(
@@ -849,10 +871,12 @@ class Action(Leaf):
             return Ok(UtilityBounds(can_execute=False))
         if not self._ac.server_is_ready():
             return Ok(UtilityBounds(can_execute=False))
-        return Ok(UtilityBounds(
-            can_execute=True,
-            has_lower_bound_success=True,
-            has_upper_bound_success=True,
-            has_lower_bound_failure=True,
-            has_upper_bound_failure=True,
-        ))
+        return Ok(
+            UtilityBounds(
+                can_execute=True,
+                has_lower_bound_success=True,
+                has_upper_bound_success=True,
+                has_lower_bound_failure=True,
+                has_upper_bound_failure=True,
+            )
+        )

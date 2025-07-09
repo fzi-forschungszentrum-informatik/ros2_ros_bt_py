@@ -98,9 +98,7 @@ def _check_node_data_match(
 
 
 @typechecked
-def _connect_wirings(
-    data_wirings: List[Wiring], type: str
-) -> Dict[str, List[str]]:
+def _connect_wirings(data_wirings: List[Wiring], type: str) -> Dict[str, List[str]]:
     connected_wirings: Dict[str, List[str]] = {}
     for wiring in data_wirings:
         if wiring.source.data_kind == type:
@@ -184,10 +182,10 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[Type["Node"]], Type["No
                 ][node_class.__name__]
                 candidates = list(
                     filter(
-                        lambda node_class_candidate: node_class_candidate._node_config is not None
+                        lambda node_class_candidate: node_class_candidate._node_config
+                        is not None
                         and __check_dict_equiv(
-                            node_class_candidate._node_config.inputs,
-                            node_config.inputs
+                            node_class_candidate._node_config.inputs, node_config.inputs
                         )
                         and __check_dict_equiv(
                             node_class_candidate._node_config.outputs,
@@ -482,7 +480,10 @@ class Node(object, metaclass=NodeMeta):
             report_state = self.debug_manager.report_state(self, "SETUP")
 
         with report_state:
-            if self.state != BTNodeState.UNINITIALIZED and self.state != BTNodeState.SHUTDOWN:
+            if (
+                self.state != BTNodeState.UNINITIALIZED
+                and self.state != BTNodeState.SHUTDOWN
+            ):
                 return Err(
                     NodeStateError(
                         "Calling setup() is only allowed in states "
@@ -1270,7 +1271,8 @@ class Node(object, metaclass=NodeMeta):
         if len(node_classes) > 1:
             candidates: List[Type[Node]] = list(
                 filter(
-                    lambda node_class_candidate: node_class_candidate._node_config is not None
+                    lambda node_class_candidate: node_class_candidate._node_config
+                    is not None
                     and _check_node_data_match(
                         node_class_candidate._node_config.inputs, msg.inputs
                     )
@@ -1652,9 +1654,7 @@ class Node(object, metaclass=NodeMeta):
         return Ok(None)
 
     @typechecked
-    def _unsubscribe(
-        self, wiring: Wiring
-    ) -> Result[None, BehaviorTreeException]:
+    def _unsubscribe(self, wiring: Wiring) -> Result[None, BehaviorTreeException]:
         """
         Unsubscribe from a piece of NodeData this node has.
 
@@ -1696,9 +1696,7 @@ class Node(object, metaclass=NodeMeta):
         return Ok(None)
 
     @typechecked
-    def unwire_data(
-        self, wiring: Wiring
-    ) -> Result[None, BehaviorTreeException]:
+    def unwire_data(self, wiring: Wiring) -> Result[None, BehaviorTreeException]:
         """
         Unwire the given wiring.
 

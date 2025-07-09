@@ -514,7 +514,9 @@ class TreeManager:
         """
         if self.publish_tree_structure:
             structure_list = TreeStructureList()
-            structure_list.tree_structures = self.subtree_manager.get_subtree_structures()
+            structure_list.tree_structures = (
+                self.subtree_manager.get_subtree_structures()
+            )
             structure_list.tree_structures.append(self.structure_to_msg())
             self.publish_tree_structure(structure_list)
         self.publish_state()
@@ -1072,7 +1074,9 @@ class TreeManager:
             # shutting down), keep sleepin until the thread
             # finishes
             while self._tick_thread.is_alive() and ok():
-                self._tick_thread.join((1.0 / self.tree_structure.tick_frequency_hz) * 4.0)
+                self._tick_thread.join(
+                    (1.0 / self.tree_structure.tick_frequency_hz) * 4.0
+                )
             if self._tick_thread.is_alive():
                 response.success = False
                 response.error_message = (
@@ -1679,7 +1683,10 @@ class TreeManager:
                 self.nodes[name].shutdown()
 
             # If we have a parent, remove the node from that parent
-            if self.nodes[name].parent is not None and self.nodes[name].parent.name in self.nodes:
+            if (
+                self.nodes[name].parent is not None
+                and self.nodes[name].parent.name in self.nodes
+            ):
                 self.nodes[self.nodes[name].parent.name].remove_child(name)
             del self.nodes[name]
 

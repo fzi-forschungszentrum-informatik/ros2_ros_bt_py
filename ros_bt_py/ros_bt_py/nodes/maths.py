@@ -94,10 +94,12 @@ class Convert(Leaf):
         ] in [int, float]:
             pass
         else:
-            return Err(BehaviorTreeException(
-                'Conversion between "%s" and "%s" not implemented'
-                % (self.options["input_type"], self.options["output_type"])
-            ))
+            return Err(
+                BehaviorTreeException(
+                    'Conversion between "%s" and "%s" not implemented'
+                    % (self.options["input_type"], self.options["output_type"])
+                )
+            )
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
@@ -214,9 +216,11 @@ class Operation(Leaf):
         self.operators["^"] = operator.xor
 
         if self.options["operator"].operator not in self.operators:
-            return Err(BehaviorTreeException(
-                f"Operator {self.options['operator'].operator} is not recognized."
-            ))
+            return Err(
+                BehaviorTreeException(
+                    f"Operator {self.options['operator'].operator} is not recognized."
+                )
+            )
 
         self.operand_type = None
 
@@ -351,9 +355,11 @@ class UnaryOperation(Leaf):
         self.operators["lgamma"] = math.lgamma
 
         if self.options["operator"].operator not in self.operators:
-            return Err(BehaviorTreeException(
-                f"Operator {self.options['operator'].operator} is not recognized."
-            ))
+            return Err(
+                BehaviorTreeException(
+                    f"Operator {self.options['operator'].operator} is not recognized."
+                )
+            )
 
         self.operand_type = None
 

@@ -90,9 +90,11 @@ class Subtree(Leaf):
             ros_node=ros_node,
         )
         if not self.has_ros_node:
-            return Err(BehaviorTreeException(
-                "{self.name} does not have a reference to a ROS Node!"
-            ))
+            return Err(
+                BehaviorTreeException(
+                    "{self.name} does not have a reference to a ROS Node!"
+                )
+            )
 
         self.root: Optional[BTNode] = None
         # since the subtree gets a prefix, we can just have it use the
@@ -331,12 +333,14 @@ class Subtree(Leaf):
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         find_root_result = self.manager.find_root()
         if find_root_result.is_err():
-            return Ok(UtilityBounds(
-                has_lower_bound_success=False,
-                has_upper_bound_success=False,
-                has_lower_bound_failure=False,
-                has_upper_bound_failure=False,
-            ))
+            return Ok(
+                UtilityBounds(
+                    has_lower_bound_success=False,
+                    has_upper_bound_success=False,
+                    has_lower_bound_failure=False,
+                    has_upper_bound_failure=False,
+                )
+            )
         self.root = find_root_result.unwrap()
         if self.root is None:
             return Ok(UtilityBounds(can_execute=False))
