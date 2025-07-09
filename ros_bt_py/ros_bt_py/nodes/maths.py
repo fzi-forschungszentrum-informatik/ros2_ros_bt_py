@@ -35,8 +35,9 @@ from result import Result, Ok, Err
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
 
-from ros_bt_py.node import Leaf, define_bt_node, BTNodeState
+from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
 
 from ros_bt_py.custom_types import MathUnaryOperator, MathBinaryOperator
@@ -68,7 +69,7 @@ class Convert(Leaf):
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
     ):
-        super(Convert, self).__init__(
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -98,10 +99,10 @@ class Convert(Leaf):
                 % (self.options["input_type"], self.options["output_type"])
             ))
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.options["input_type"] is self.options["output_type"]:
             # passthrough
             self.outputs["out"] = self.inputs["in"]
@@ -129,13 +130,13 @@ class Convert(Leaf):
                     self.outputs["out"] = int(self.inputs["in"])
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
 
@@ -178,7 +179,7 @@ class Operation(Leaf):
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
     ):
-        super(Operation, self).__init__(
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -244,22 +245,22 @@ class Operation(Leaf):
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["result"] = self.operators[self.options["operator"].operator](
             self.inputs["a"], self.inputs["b"]
         )
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
 
@@ -305,7 +306,7 @@ class UnaryOperation(Leaf):
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
     ):
-        super(UnaryOperation, self).__init__(
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -378,20 +379,20 @@ class UnaryOperation(Leaf):
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["result"] = self.operators[self.options["operator"].operator](
             self.inputs["in"]
         )
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)

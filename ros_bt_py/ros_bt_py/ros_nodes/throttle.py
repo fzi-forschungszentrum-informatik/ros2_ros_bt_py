@@ -51,18 +51,22 @@ class Throttle(Decorator):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a reference to a ROS node"
             self.logerr(error_msg)
             return Err(BehaviorTreeException(error_msg))
 
         self._last_tick = None
-        self._last_result = BTNodeState.FAILED
+        self._last_result = Ok(BTNodeState.FAILED)
         for child in self.children:
-            child.setup()
+            setup_result = child.setup()
+            # This seems unnecessary, since len(self.children) == 1 always
+            if setup_result.is_err():
+                return setup_result
+        return setup_result
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         current_time = self.ros_node.get_clock().now()
         if (
             self._last_tick is None
@@ -71,23 +75,24 @@ class Throttle(Decorator):
         ):
             for child in self.children:
                 result = child.tick()
-                if result == BTNodeState.RUNNING:
+                if result.ok() == BTNodeState.RUNNING:
                     return result
                 self._last_result = result
                 self._last_tick = current_time
                 child.reset()
         return self._last_result
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.shutdown()
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.reset()
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.untick()
         return Ok(BTNodeState.IDLE)
@@ -111,7 +116,7 @@ class ThrottleSuccess(Decorator):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a reference to a ROS node"
             self.logerr(error_msg)
@@ -119,9 +124,13 @@ class ThrottleSuccess(Decorator):
 
         self._last_success_tick = None
         for child in self.children:
-            child.setup()
+            setup_result = child.setup()
+            # This seems unnecessary, since len(self.children) == 1 always
+            if setup_result.is_err():
+                return setup_result
+        return setup_result
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         current_time = self.ros_node.get_clock().now()
         if (
             self._last_success_tick is None
@@ -137,17 +146,18 @@ class ThrottleSuccess(Decorator):
                     return result
         return Ok(BTNodeState.FAILED)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_success_tick = None
         for child in self.children:
             return child.shutdown()
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.reset()
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.untick()
         return Ok(BTNodeState.IDLE)

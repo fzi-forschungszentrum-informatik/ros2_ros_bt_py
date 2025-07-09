@@ -28,11 +28,12 @@
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from result import Result, Ok
+from result import Result, Ok, Err
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
@@ -65,7 +66,7 @@ class EnumFields(Leaf):
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
     ):
-        super(EnumFields, self).__init__(
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -89,19 +90,19 @@ class EnumFields(Leaf):
 
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for field in self.outputs:
             self.outputs[field] = getattr(self._message_class, field)
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)

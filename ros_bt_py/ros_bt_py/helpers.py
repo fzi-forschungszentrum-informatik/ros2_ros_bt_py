@@ -26,8 +26,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from enum import StrEnum
-from typing import Any, Optional
-import rclpy
+from typing import Any, Iterable, Optional
+import rclpy, rclpy.logging
 import jsonpickle
 import functools
 import re
@@ -38,7 +38,6 @@ import rosidl_runtime_py.utilities
 from ros_bt_py_interfaces.msg import NodeState, CapabilityInterface
 from typeguard import typechecked
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
-from typing import Optional
 
 
 @typechecked
@@ -220,6 +219,8 @@ def get_field_values_and_types(
         if optional_default is None:
             default_value = rosidl_runtime_py.utilities.get_message(field_type)()
 
+        default_value: Any
+
         # Iterate fields for recursion
         nested_value = {}
         nested_type = {}
@@ -282,7 +283,7 @@ class HashableCapabilityInterface:
         self.interface: CapabilityInterface = interface
 
     def __eq__(self, other: object) -> bool:
-        def compare_node_data_lists(list1: list, list2: list) -> bool:
+        def compare_node_data_lists(list1: Iterable, list2: Iterable) -> bool:
             l1_node_data = {(x.key, json_decode(x.serialized_type)) for x in list1}
             l2_node_data = {(x.key, json_decode(x.serialized_type)) for x in list2}
 

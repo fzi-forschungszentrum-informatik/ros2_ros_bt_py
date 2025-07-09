@@ -26,13 +26,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import random
-from result import Ok, Err, Result
+from result import Result, Ok, Err
 
 from ros_bt_py.exceptions import BehaviorTreeException
 
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.node_config import NodeConfig
 
 
 @define_bt_node(
@@ -47,25 +47,25 @@ from ros_bt_py.node_config import NodeConfig, OptionRef
 class RandomInt(Leaf):
     """Provides a pseudo-random integer in range min <= random_number <= max."""
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         validate_result = validate_range(self.options["min"], self.options["max"])
         if validate_result.is_err():
-            return Err(validate_result.err())
+            return Err(validate_result.unwrap_err())
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["random_number"] = random.randrange(
             self.options["min"], self.options["max"] + 1
         )
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
 
@@ -81,25 +81,25 @@ class RandomInt(Leaf):
 class RandomIntInputs(Leaf):
     """Provides a pseudo-random integer in range min <= random_number <= max."""
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         validate_result = validate_range(self.inputs["min"], self.inputs["max"])
         if validate_result.is_err():
-            return Err(validate_result.err())
+            return Err(validate_result.unwrap_err())
         self.outputs["random_number"] = random.randrange(
             self.inputs["min"], self.inputs["max"] + 1
         )
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
 

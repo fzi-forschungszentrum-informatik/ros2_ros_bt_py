@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import Optional, Dict
 
-from result import Result, Ok
+from result import Result, Ok, Err
 
 from ros_bt_py.custom_types import RosTopicType
 from rclpy.node import Node
@@ -35,7 +35,8 @@ from rclpy.node import Node
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.node_config import NodeConfig
+from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_helpers import get_message_field_type
 
@@ -58,7 +59,7 @@ class MessageToFields(Leaf):
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
     ):
-        super(MessageToFields, self).__init__(
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -85,10 +86,10 @@ class MessageToFields(Leaf):
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for field in self.outputs:
             value = getattr(self.inputs["in"], field)
             if isinstance(value, tuple) and self.outputs.get_type(field) == list:
@@ -97,13 +98,13 @@ class MessageToFields(Leaf):
                 self.outputs[field] = value
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
 
@@ -134,7 +135,7 @@ class FieldsToMessage(Leaf):
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
     ):
-        super(FieldsToMessage, self).__init__(
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -162,10 +163,10 @@ class FieldsToMessage(Leaf):
         self._register_node_data(source_map=node_inputs, target_map=self.inputs)
         self._register_node_data(source_map=node_outputs, target_map=self.outputs)
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         msg = self._message_type()
 
         for field in msg._fields_and_field_types:
@@ -174,11 +175,11 @@ class FieldsToMessage(Leaf):
         self.outputs["out"] = msg
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)

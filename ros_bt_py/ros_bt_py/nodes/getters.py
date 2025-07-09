@@ -29,9 +29,10 @@
 
 from result import Result, Ok, Err
 
-from ros_bt_py.node import Decorator, define_bt_node, BTNodeState
+from ros_bt_py.node import Decorator, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.helpers import rgetattr
+from ros_bt_py.helpers import BTNodeState, rgetattr
+from ros_bt_py.exceptions import BehaviorTreeException
 
 
 @define_bt_node(
@@ -53,7 +54,7 @@ class GetConstListItem(Decorator):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].setup()
             if result.is_err():
@@ -62,7 +63,7 @@ class GetConstListItem(Decorator):
         self.inputs.reset_updated()
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Tick child (if any) so it can produce its output before we process it
         if len(self.children) == 1:
             result = self.children[0].tick()
@@ -94,19 +95,19 @@ class GetConstListItem(Decorator):
                 self.loginfo("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["item"] = None
         self.outputs.reset_updated()
         return self._do_setup()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].untick()
             if result.is_err():
@@ -133,7 +134,7 @@ class GetListItem(Decorator):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].setup()
             if result.is_err():
@@ -142,7 +143,7 @@ class GetListItem(Decorator):
         self.inputs.reset_updated()
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Tick child (if any) so it can produce its output before we process it
         if len(self.children) == 1:
             result = self.children[0].tick()
@@ -174,19 +175,19 @@ class GetListItem(Decorator):
                 self.loginfo("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["item"] = None
         self.outputs.reset_updated()
         return self._do_setup()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].untick()
             if result.is_err():
@@ -206,7 +207,7 @@ class GetListItem(Decorator):
 class GetDictItem(Decorator):
     """Get a item with a specific key from a dict input."""
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].setup()
             if result.is_err():
@@ -215,7 +216,7 @@ class GetDictItem(Decorator):
         self.inputs.reset_updated()
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Tick child (if any) so it can produce its output before we process it
         if len(self.children) == 1:
             result = self.children[0].tick()
@@ -243,19 +244,19 @@ class GetDictItem(Decorator):
                 self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["value"] = None
         self.outputs.reset_updated()
         return self._do_setup()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].untick()
             if result.is_err():
@@ -275,7 +276,7 @@ class GetDictItem(Decorator):
 class GetMultipleDictItems(Decorator):
     """Get multiple dict items with a specific list of keys."""
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].setup()
             if result.is_err():
@@ -284,7 +285,7 @@ class GetMultipleDictItems(Decorator):
         self.inputs.reset_updated()
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Tick child (if any) so it can produce its output before we process it
         if len(self.children) == 1:
             result = self.children[0].tick()
@@ -315,19 +316,19 @@ class GetMultipleDictItems(Decorator):
                 self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["values"] = None
         self.outputs.reset_updated()
         return self._do_setup()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].untick()
             if result.is_err():
@@ -347,7 +348,7 @@ class GetMultipleDictItems(Decorator):
 class GetDictItemFromKey(Decorator):
     """Get a specific dict item with a key as data input."""
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].setup()
             if result.is_err():
@@ -356,7 +357,7 @@ class GetDictItemFromKey(Decorator):
         self.inputs.reset_updated()
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Tick child (if any) so it can produce its output before we process it
         if len(self.children) == 1:
             result = self.children[0].tick()
@@ -384,19 +385,19 @@ class GetDictItemFromKey(Decorator):
                 self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["value"] = None
         self.outputs.reset_updated()
         return self._do_setup()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].untick()
             if result.is_err():
@@ -423,7 +424,7 @@ class GetAttr(Decorator):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].setup()
             if result.is_err():
@@ -432,7 +433,7 @@ class GetAttr(Decorator):
         self.inputs.reset_updated()
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Tick child (if any) so it can produce its output before we process it
         if len(self.children) == 1:
             result = self.children[0].tick()
@@ -464,19 +465,19 @@ class GetAttr(Decorator):
                 self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["attr"] = None
         self.outputs.reset_updated()
         return self._do_setup()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) == 1:
             result = self.children[0].untick()
             if result.is_err():

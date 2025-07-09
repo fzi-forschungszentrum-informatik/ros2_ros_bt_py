@@ -41,7 +41,7 @@ from result import Result, Ok, Err, is_err
     )
 )
 class NameSwitch(FlowControl):
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.child_map = {child.name.split(".")[-1]: child for child in self.children}
         for child in self.children:
             result = child.setup()
@@ -49,7 +49,7 @@ class NameSwitch(FlowControl):
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         name = self.inputs["name"]
         if name not in self.child_map:
             self.logwarn("Ticking without children. Is this really what you want?")
@@ -70,28 +70,28 @@ class NameSwitch(FlowControl):
 
         return self.child_map[name].tick()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.untick()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.reset()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         return calculate_utility_fallback(self.children)
 
 
@@ -128,14 +128,14 @@ class Fallback(FlowControl):
     return FAILED.
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.setup()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
             return Ok(BTNodeState.FAILED)
@@ -167,28 +167,28 @@ class Fallback(FlowControl):
         # If all children failed, we too fail
         return Ok(BTNodeState.FAILED)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.untick()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.reset()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         return calculate_utility_fallback(self.children)
 
 
@@ -232,7 +232,7 @@ class MemoryFallback(FlowControl):
     return FAILED.
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.last_running_child = 0
         for child in self.children:
             result = child.setup()
@@ -240,7 +240,7 @@ class MemoryFallback(FlowControl):
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
             return Ok(BTNodeState.FAILED)
@@ -276,7 +276,7 @@ class MemoryFallback(FlowControl):
         # If all children failed, we too fail
         return Ok(BTNodeState.FAILED)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.untick()
             if result.is_err():
@@ -284,7 +284,7 @@ class MemoryFallback(FlowControl):
         self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.reset()
             if result.is_err():
@@ -292,7 +292,7 @@ class MemoryFallback(FlowControl):
         self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.shutdown()
             if result.is_err():
@@ -300,7 +300,7 @@ class MemoryFallback(FlowControl):
         self.last_running_child = 0
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         return calculate_utility_fallback(self.children)
 
 

@@ -135,7 +135,7 @@ class Sequence(FlowControl):
                 return shutdown_result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         return calculate_utility_sequence(self.children)
 
 
@@ -181,7 +181,7 @@ class MemorySequence(FlowControl):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.last_running_child = 0
         for child in self.children:
             child_result = child.setup()
@@ -189,7 +189,7 @@ class MemorySequence(FlowControl):
                 return child_result
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.children:
             self.logwarn("Ticking without children. Is this really what you want?")
             return Ok(BTNodeState.SUCCEEDED)
@@ -224,7 +224,7 @@ class MemorySequence(FlowControl):
         # If all children succeeded, we too succeed
         return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             untick_result = child.untick()
             if untick_result.is_err():
@@ -232,7 +232,7 @@ class MemorySequence(FlowControl):
         self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             reset_result = child.reset()
             if reset_result.is_err():
@@ -240,7 +240,7 @@ class MemorySequence(FlowControl):
         self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             shutdown_result = child.shutdown()
             if shutdown_result.is_err():
@@ -248,7 +248,7 @@ class MemorySequence(FlowControl):
         self.last_running_child = 0
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         return calculate_utility_sequence(self.children)
 
 

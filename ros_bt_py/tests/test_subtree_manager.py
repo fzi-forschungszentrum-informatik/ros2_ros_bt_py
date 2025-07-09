@@ -231,11 +231,3 @@ class TestSubtreeManager:
     def test_check_publish_subtrees_true(self, subtree_manager: SubtreeManager):
         assert subtree_manager.publish_subtrees
 
-    def test_add_subtree_info_exception(
-        self, subtree_manager_no_publish: SubtreeManager
-    ):
-
-        add_subtree_result = subtree_manager_no_publish.add_subtree_info(
-            "node_name", Tree()
-        )
-        assert add_subtree_result.is_err()

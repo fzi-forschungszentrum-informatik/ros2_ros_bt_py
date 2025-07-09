@@ -277,6 +277,7 @@ def get_available_nodes(
             for (name, type_or_ref) in data_map.items()
         ]
 
+    response.available_nodes = list()
     for module, nodes in Node.node_classes.items():
         for class_name, node_classes in nodes.items():
             for node_class in node_classes:
@@ -372,6 +373,7 @@ class TreeManager:
                 "- building our own with default parameters"
             )
             self.debug_manager = DebugManager(ros_node=self.ros_node)
+        self.debug_manager: DebugManager
 
         self.subtree_manager = subtree_manager
         if not self.subtree_manager:
@@ -380,6 +382,7 @@ class TreeManager:
                 "- building our own with default parameters"
             )
             self.subtree_manager = SubtreeManager()
+        self.subtree_manager: SubtreeManager
 
         if tick_frequency_hz == 0.0:
             tick_frequency_hz = 10.0
@@ -505,9 +508,7 @@ class TreeManager:
         """
         if self.publish_tree_structure:
             structure_list = TreeStructureList()
-            structure_list.tree_structures.extend(
-                self.subtree_manager.get_subtree_structures()
-            )
+            structure_list.tree_structures = self.subtree_manager.get_subtree_structures()
             structure_list.tree_structures.append(self.structure_to_msg())
             self.publish_tree_structure(structure_list)
         self.publish_state()
@@ -523,7 +524,7 @@ class TreeManager:
         """
         if self.publish_tree_state:
             state_list = TreeStateList()
-            state_list.tree_states.extend(self.subtree_manager.get_subtree_states())
+            state_list.tree_states = self.subtree_manager.get_subtree_states()
             state_list.tree_states.append(self.state_to_msg())
             self.publish_tree_state(state_list)
 
@@ -541,7 +542,7 @@ class TreeManager:
         """
         if self.publish_tree_data and self.enable_publish_data:
             data_list = TreeDataList()
-            data_list.tree_data.extend(self.subtree_manager.get_subtree_data())
+            data_list.tree_data = self.subtree_manager.get_subtree_data()
             data_list.tree_data.append(self.data_to_msg())
             self.publish_tree_data(data_list)
         self.publish_state()
@@ -556,6 +557,8 @@ class TreeManager:
         if nodes exist, but either no root or multiple roots are
         found.
         """
+        #TODO This case being an Ok causes a lot of extra checks down the line
+        #   Maybe reevaluate if that makes sense.
         if not self.nodes:
             return Ok(None)
         # Find root node
@@ -1649,6 +1652,11 @@ class TreeManager:
             if self.nodes[name].state != BTNodeState.SHUTDOWN:
                 # It's reasonable to expect parent to not be None here, since
                 # the node is one of a list of children
+                if self.nodes[name].parent is None:
+                    get_logger("tree_manager").get_child(self.name).error(
+                        f"Node {name} appears to be a child with no parent"
+                    )
+                    continue
                 parent_name = self.nodes[name].parent.name
                 get_logger("tree_manager").get_child(self.name).warn(
                     f"Node {name} was not shut down. Check parent node {parent_name} "

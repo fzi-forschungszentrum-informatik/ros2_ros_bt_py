@@ -27,12 +27,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import math
 
-from result import Ok, Err, is_err
+from result import Result, Ok, Err
 
 from ros_bt_py_interfaces.msg import UtilityBounds
 
 from ros_bt_py.exceptions import BehaviorTreeException
-from ros_bt_py.node import FlowControl, define_bt_node, BTNodeState
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.node import FlowControl, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
 
@@ -68,7 +69,7 @@ class Parallel(FlowControl):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) < self.options["needed_successes"]:
             return Err(
                 BehaviorTreeException(
@@ -83,7 +84,7 @@ class Parallel(FlowControl):
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Just like Sequence and Fallback, reset after having returned
         # SUCCEEDED or FAILED once
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
@@ -121,28 +122,28 @@ class Parallel(FlowControl):
             return Ok(BTNodeState.FAILED)
         return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.reset()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.untick()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if len(self.children) < self.options["needed_successes"]:
             return Err(
                 BehaviorTreeException(
@@ -181,7 +182,7 @@ class Parallel(FlowControl):
             )
 
         child_bounds = [
-            child_bound.ok()
+            child_bound.unwrap()
             for child_bound in child_bounds_results
             if child_bound.is_ok()
         ]
@@ -279,7 +280,7 @@ class ParallelFailureTolerance(FlowControl):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if len(self.children) < self.options["needed_successes"]:
             return Err(
                 BehaviorTreeException(
@@ -294,7 +295,7 @@ class ParallelFailureTolerance(FlowControl):
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Just like Sequence and Fallback, reset after having returned
         # SUCCEEDED or FAILED once
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
@@ -332,28 +333,28 @@ class ParallelFailureTolerance(FlowControl):
             return Ok(BTNodeState.FAILED)
         return Ok(BTNodeState.RUNNING)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.shutdown()
             if result.is_err():
                 return result
         return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.reset()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             result = child.untick()
             if result.is_err():
                 return result
         return Ok(BTNodeState.IDLE)
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if len(self.children) < self.options["needed_successes"]:
             return Err(
                 BehaviorTreeException(
@@ -391,7 +392,7 @@ class ParallelFailureTolerance(FlowControl):
             )
 
         child_bounds = [
-            child_bound.ok()
+            child_bound.unwrap()
             for child_bound in child_bounds_results
             if child_bound.is_ok()
         ]

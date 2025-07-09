@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from types import ModuleType
 
-from result import Err, Ok, Result, as_result
+from result import Err, Ok, Result, as_result, is_err
 
 import abc
 import importlib
@@ -41,6 +41,7 @@ from typing import (
     Any,
     Callable,
     Generator,
+    Iterable,
     List,
     Tuple,
     Type,
@@ -84,7 +85,7 @@ from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode, json_
 
 @typechecked
 def _check_node_data_match(
-    node_config: Dict[str, Type], node_data: Sequence[NodeIO | NodeOption]
+    node_config: Dict[str, Type], node_data: Iterable[NodeIO | NodeOption]
 ) -> bool:
     for data in node_data:
         try:
@@ -183,8 +184,10 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[Type["Node"]], Type["No
                 ][node_class.__name__]
                 candidates = list(
                     filter(
-                        lambda node_class_candidate: __check_dict_equiv(
-                            node_class_candidate._node_config.inputs, node_config.inputs
+                        lambda node_class_candidate: node_class_candidate._node_config is not None
+                        and __check_dict_equiv(
+                            node_class_candidate._node_config.inputs, 
+                            node_config.inputs
                         )
                         and __check_dict_equiv(
                             node_class_candidate._node_config.outputs,
@@ -1267,7 +1270,8 @@ class Node(object, metaclass=NodeMeta):
         if len(node_classes) > 1:
             candidates: List[Type[Node]] = list(
                 filter(
-                    lambda node_class_candidate: _check_node_data_match(
+                    lambda node_class_candidate: node_class_candidate._node_config is not None
+                    and _check_node_data_match(
                         node_class_candidate._node_config.inputs, msg.inputs
                     )
                     and _check_node_data_match(
@@ -1299,7 +1303,7 @@ class Node(object, metaclass=NodeMeta):
             node_class = node_classes[0]
 
         # Populate options dict
-        options_dict: Dict[str, str] = {}
+        options_dict: Dict[str, Any] = {}
         try:
             for option in msg.options:
                 options_dict[option.key] = json_decode(option.serialized_value)
@@ -1380,6 +1384,10 @@ class Node(object, metaclass=NodeMeta):
             root_name=self.name,
             nodes=[node.to_structure_msg() for node in self.get_children_recursive()],
         )
+        # These reassignments makes the typing happy, 
+        #   because they ensure that `.append` exists
+        subtree.data_wirings = list()
+        subtree.public_node_data = list()
 
         node_map: Dict[str, NodeStructure] = {node.name: node for node in subtree.nodes}
         incoming_connections: List[Wiring] = []
@@ -1799,7 +1807,10 @@ class Node(object, metaclass=NodeMeta):
         data_list: list[WiringData] = []
         for wiring, _, exp_type in self.subscribers:
             # Since we iterate subscribers, `wiring.source` should refer to self.
-            source_map = self.get_data_map(wiring.source.data_kind)
+            source_map_result = self.get_data_map(wiring.source.data_kind)
+            if source_map_result.is_err():
+                continue
+            source_map = source_map_result.unwrap()
             key = wiring.source.data_key
             if not source_map.is_updated(key):
                 continue  # Don't publish stale data

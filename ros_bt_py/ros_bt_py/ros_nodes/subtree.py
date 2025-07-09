@@ -268,11 +268,13 @@ class Subtree(Leaf):
                         ),
                     )
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         find_root_result = self.manager.find_root()
         if find_root_result.is_err():
-            return find_root_result
+            return Err(find_root_result.unwrap_err())
         self.root = find_root_result.unwrap()
+        if self.root is None:
+            return Ok(BTNodeState.IDLE)
         setup_root_result = self.root.setup()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
@@ -280,9 +282,9 @@ class Subtree(Leaf):
             )
         return setup_root_result
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            #TODO Should this be an Err() ???
+            #TODO Should this be an Err() ??? same also above in setup
             return Ok(BTNodeState.BROKEN)
         tick_root_result = self.root.tick()
         if self.subtree_manager:
@@ -295,7 +297,7 @@ class Subtree(Leaf):
                 )
         return tick_root_result
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
             #TODO Should this be an Err() ???
             return Ok(BTNodeState.BROKEN)
@@ -306,7 +308,7 @@ class Subtree(Leaf):
             )
         return untick_root_result
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
             return Ok(BTNodeState.IDLE)
         reset_root_result = self.root.reset()
@@ -316,7 +318,7 @@ class Subtree(Leaf):
             )
         return reset_root_result
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
             return Ok(BTNodeState.SHUTDOWN)
         shutdown_root_result = self.root.shutdown()
@@ -326,14 +328,16 @@ class Subtree(Leaf):
             )
         return shutdown_root_result
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         find_root_result = self.manager.find_root()
         if find_root_result.is_err():
-            return UtilityBounds(
+            return Ok(UtilityBounds(
                 has_lower_bound_success=False,
                 has_upper_bound_success=False,
                 has_lower_bound_failure=False,
                 has_upper_bound_failure=False,
-            )
+            ))
         self.root = find_root_result.unwrap()
+        if self.root is None:
+            return Ok(UtilityBounds(can_execute=False))
         return self.root.calculate_utility()

@@ -46,10 +46,7 @@ from ros_bt_py.ros_helpers import get_message_field_type
 
 import abc
 from typing import Any, Optional, Dict
-
-import array
-
-from result import Result, Ok, Err, is_err
+from result import Result, Ok, Err
 
 
 @define_bt_node(
@@ -335,7 +332,7 @@ class WaitForService(Leaf):
                 self._last_service_call_time = self.ros_node.get_clock().now()
             elapsed_time: Duration = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
-            )
+            ) # type: ignore   We know that Time - Time = Duration
 
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
@@ -353,7 +350,7 @@ class WaitForService(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.has_ros_node and self._ros_node.destroy_client(self._service_client):
+        if self.has_ros_node and self.ros_node.destroy_client(self._service_client):
             return Ok(BTNodeState.SHUTDOWN)
         else:
             return Err(
@@ -416,7 +413,7 @@ class WaitForServiceInput(Leaf):
                 self._last_service_call_time = self.ros_node.get_clock().now()
             elapsed_time: Duration = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
-            )
+            ) # type: ignore   We know that Time - Time = Duration
 
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
@@ -850,6 +847,10 @@ class Service(Leaf):
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
             self._last_request = self._request_type()
+            if self._last_request is None:
+                # This should never happen (instantiating a type never fails)
+                #   it just makes the typing happy.
+                return Err(BehaviorTreeException("Cannot instantiate request type."))
             fields: dict[str, type] = (
                 self._last_request.get_fields_and_field_types().items()
             )
@@ -890,6 +891,10 @@ class Service(Leaf):
             new_state = BTNodeState.SUCCEEDED
             if self._service_request_future.done():
                 res = self._service_request_future.result()
+                if res is None:
+                    #TODO Maybe this should be an Err(), 
+                    #   since getting a None response should never happen
+                    return Ok(BTNodeState.FAILED)
                 fields = res.get_fields_and_field_types().items()
                 for k, v in fields:
                     self.outputs[k] = getattr(res, k)

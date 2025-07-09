@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from copy import deepcopy
 from threading import Lock
-from typing import Dict
+from typing import Any, Dict, Mapping
 
 from result import Err, Ok, Result
 from typeguard import typechecked
@@ -125,7 +125,7 @@ class SubtreeManager(object):
 
     def remove_subtree(self, node_name: str):
 
-        def query_dict(node_name: str, dict: dict[str, object]):
+        def query_dict(node_name: str, dict: dict[str, Any]):
             for tree_name in list(dict.keys()):
                 if tree_name == node_name or tree_name.startswith(f"{node_name}."):
                     del dict[tree_name]
