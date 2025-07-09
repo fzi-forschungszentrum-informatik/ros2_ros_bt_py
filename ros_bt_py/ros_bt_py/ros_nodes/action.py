@@ -171,7 +171,7 @@ class ActionForSetType(Leaf):
     # and False, if it's in the FAILED state
     @abc.abstractmethod
     def set_outputs(self):
-        self.outputs["OUTPUT_KEY"] = self._result#.result
+        self.outputs["OUTPUT_KEY"] = self._result  # .result
         return "TRUTHVALUE"
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -450,7 +450,6 @@ class ActionForSetType(Leaf):
         self._action_available = False
         return Ok(BTNodeState.SHUTDOWN)
 
-
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node:
             return Ok(UtilityBounds(can_execute=False))
@@ -713,7 +712,7 @@ class Action(Leaf):
     def _do_tick_send_new_goal(self) -> Result[BTNodeState, BehaviorTreeException]:
         """Tick to request the execution of a new goal on the action server."""
         if self._ac is None:
-            #TODO Should this be an error
+            # TODO Should this be an error
             return Ok(BTNodeState.BROKEN)
         self._new_goal_request_future = self._ac.send_goal_async(
             goal=self._input_goal, feedback_callback=self._feedback_cb

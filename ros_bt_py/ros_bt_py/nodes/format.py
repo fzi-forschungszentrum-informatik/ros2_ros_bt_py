@@ -35,7 +35,6 @@ from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
 
-
 class ExtendedFormatter(Formatter):
     """
     An extended format string formatter.

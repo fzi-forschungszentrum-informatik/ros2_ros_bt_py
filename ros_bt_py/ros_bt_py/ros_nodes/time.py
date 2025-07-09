@@ -48,7 +48,7 @@ class GetTimeNow(Leaf):
     """Output current time stamp."""
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        #TODO Should we check here if we actually have a ros node?
+        # TODO Should we check here if we actually have a ros node?
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:

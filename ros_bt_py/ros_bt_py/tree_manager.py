@@ -277,7 +277,7 @@ def get_available_nodes(
             for (name, type_or_ref) in data_map.items()
         ]
 
-    response.available_nodes = list()
+    response.available_nodes = []
     for module, nodes in Node.node_classes.items():
         for class_name, node_classes in nodes.items():
             for node_class in node_classes:
@@ -375,9 +375,7 @@ class TreeManager:
             self.debug_manager = DebugManager(ros_node=self.ros_node)
         else:
             self.debug_manager = debug_manager
-        
 
-        
         self.subtree_manager: SubtreeManager
         if subtree_manager is None:
             get_logger("tree_manager").get_child(name).info(
@@ -406,10 +404,10 @@ class TreeManager:
         tree_id = name if name else ""
 
         self.tree_structure = TreeStructure(tree_id=tree_id)
-        # These reassignments makes the typing happy, 
+        # These reassignments makes the typing happy,
         #   because they ensure that `.append .extent .remove ...` exists
-        self.tree_structure.data_wirings = list()
-        self.tree_structure.public_node_data = list()
+        self.tree_structure.data_wirings = []
+        self.tree_structure.public_node_data = []
         self.tree_structure.name = self.name
         self.tree_structure.tick_frequency_hz = tick_frequency_hz
         self.rate = self.ros_node.create_rate(self.tree_structure.tick_frequency_hz)
@@ -565,7 +563,7 @@ class TreeManager:
         if nodes exist, but either no root or multiple roots are
         found.
         """
-        #TODO This case being an Ok causes a lot of extra checks down the line
+        # TODO This case being an Ok causes a lot of extra checks down the line
         #   Maybe reevaluate if that makes sense.
         if not self.nodes:
             return Ok(None)
@@ -661,7 +659,6 @@ class TreeManager:
                 get_logger(self.name).error(f"Ticking the tree failed: {tick_err}")
                 return Err(tick_err)
 
-
             self.publish_data()
 
             tick_result_state = tick_result.unwrap()
@@ -679,7 +676,7 @@ class TreeManager:
 
             tick_end_timestamp = self.ros_node.get_clock().now()
 
-            duration: Duration = tick_end_timestamp - tick_start_timestamp # type: ignore
+            duration: Duration = tick_end_timestamp - tick_start_timestamp  # type: ignore
             # We know that Time - Time = Duration
             tick_rate = self.tree_structure.tick_frequency_hz
 
@@ -771,10 +768,10 @@ class TreeManager:
                 name="",
                 tick_frequency_hz=self.tree_structure.tick_frequency_hz,
             )
-            # These reassignments makes the typing happy, 
+            # These reassignments makes the typing happy,
             #   because they ensure that `.append .extent .remove ...` exists
-            self.tree_structure.data_wirings = list()
-            self.tree_structure.public_node_data = list()
+            self.tree_structure.data_wirings = []
+            self.tree_structure.public_node_data = []
             self.tree_state = TreeState(state=TreeState.EDITABLE)
             self.tree_data = TreeData()
         self.publish_structure()
@@ -929,7 +926,7 @@ class TreeManager:
         tree.data_wirings = updated_wirings
 
         self.tree_structure = tree
-        # These reassignments makes the typing happy, 
+        # These reassignments makes the typing happy,
         #   because they ensure that `.append .extent .remove ...` exists
         self.tree_structure.data_wirings = list(tree.data_wirings)
         self.tree_structure.public_node_data = list(tree.public_node_data)
@@ -1386,7 +1383,6 @@ class TreeManager:
             if request.command == ControlTreeExecution.Request.SHUTDOWN:
                 response = self._control_execution_shutdown(request, response)
                 self.publish_state()
-
 
         elif request.command == ControlTreeExecution.Request.TICK_ONCE:
             response = self._control_execution_tick_once(request, response)

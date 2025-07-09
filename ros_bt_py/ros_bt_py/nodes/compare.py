@@ -215,7 +215,7 @@ class ALessThanB(Leaf):
         return Ok(BTNodeState.SHUTDOWN)
 
 
-#TODO Why is this here, surely there's a better way to solve this?
+# TODO Why is this here, surely there's a better way to solve this?
 #   Probably difficult to change in a backwards compatible manner.
 class LessThanConstantImp(Leaf):
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:

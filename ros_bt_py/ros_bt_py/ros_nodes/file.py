@@ -96,7 +96,7 @@ class YamlListOption(Leaf):
     """
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        #TODO Why is this checked when we do not use the ROS node here?
+        # TODO Why is this checked when we do not use the ROS node here?
         if not self.has_ros_node:
             error_msg = f"{self.name} has no reference to ROS node!"
             self.logerr(error_msg)
@@ -156,7 +156,7 @@ class YamlListInput(Leaf):
     """
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        #TODO Why is this checked when we do not use the ROS node here?
+        # TODO Why is this checked when we do not use the ROS node here?
         if not self.has_ros_node:
             error_msg = f"{self.name} has no reference to ROS node!"
             self.logerr(error_msg)
@@ -181,7 +181,7 @@ class YamlListInput(Leaf):
                 self.outputs["line_count"] = len(self.data)
             else:
                 self.outputs["load_error_msg"] = "Yaml file should be a list"
-        
+
         if self.outputs["load_success"]:
             return Ok(BTNodeState.SUCCEEDED)
         return Ok(BTNodeState.FAILED)
@@ -215,7 +215,7 @@ class YamlDictInput(Leaf):
     """
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        #TODO Why is this checked when we do not use the ROS node here?
+        # TODO Why is this checked when we do not use the ROS node here?
         if not self.has_ros_node:
             error_msg = f"{self.name} has no reference to ROS node!"
             self.logerr(error_msg)
@@ -242,7 +242,7 @@ class YamlDictInput(Leaf):
         if self.outputs["load_success"]:
             return Ok(BTNodeState.SUCCEEDED)
         return Ok(BTNodeState.FAILED)
-    
+
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 

@@ -186,7 +186,7 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[Type["Node"]], Type["No
                     filter(
                         lambda node_class_candidate: node_class_candidate._node_config is not None
                         and __check_dict_equiv(
-                            node_class_candidate._node_config.inputs, 
+                            node_class_candidate._node_config.inputs,
                             node_config.inputs
                         )
                         and __check_dict_equiv(
@@ -796,8 +796,8 @@ class Node(object, metaclass=NodeMeta):
                 self.state = BTNodeState.BROKEN
                 return shutdown_result
 
-            #if self.state is None:
-            #    self.state = BTNodeState.SHUTDOWN
+            # if self.state is None:
+            #     self.state = BTNodeState.SHUTDOWN
 
             for child in self.children:
                 child.shutdown()
@@ -1384,10 +1384,10 @@ class Node(object, metaclass=NodeMeta):
             root_name=self.name,
             nodes=[node.to_structure_msg() for node in self.get_children_recursive()],
         )
-        # These reassignments makes the typing happy, 
+        # These reassignments makes the typing happy,
         #   because they ensure that `.append` exists
-        subtree.data_wirings = list()
-        subtree.public_node_data = list()
+        subtree.data_wirings = []
+        subtree.public_node_data = []
 
         node_map: Dict[str, NodeStructure] = {node.name: node for node in subtree.nodes}
         incoming_connections: List[Wiring] = []
@@ -1821,7 +1821,6 @@ class Node(object, metaclass=NodeMeta):
             wiring_data.serialized_expected_type = json_encode(exp_type)
             data_list.append(wiring_data)
         return data_list
-
 
 
 @typechecked

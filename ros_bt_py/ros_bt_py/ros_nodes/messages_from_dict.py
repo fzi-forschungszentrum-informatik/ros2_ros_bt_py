@@ -43,7 +43,6 @@ from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 
 
-
 @define_bt_node(
     NodeConfig(
         version="0.1.0",

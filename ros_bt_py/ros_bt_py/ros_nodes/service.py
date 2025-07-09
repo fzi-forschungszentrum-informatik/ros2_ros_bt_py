@@ -332,7 +332,7 @@ class WaitForService(Leaf):
                 self._last_service_call_time = self.ros_node.get_clock().now()
             elapsed_time: Duration = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
-            ) # type: ignore   We know that Time - Time = Duration
+            )  # type: ignore   We know that Time - Time = Duration
 
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
@@ -413,7 +413,7 @@ class WaitForServiceInput(Leaf):
                 self._last_service_call_time = self.ros_node.get_clock().now()
             elapsed_time: Duration = (
                 self.ros_node.get_clock().now() - self._last_service_call_time
-            ) # type: ignore   We know that Time - Time = Duration
+            )  # type: ignore   We know that Time - Time = Duration
 
             if (elapsed_time.nanoseconds / 1e9) > self.options[
                 "wait_for_service_seconds"
@@ -767,7 +767,7 @@ class Service(Leaf):
 
         node_inputs = {}
         node_outputs = {}
-        
+
         request_msg = self._request_type()
         for field in request_msg._fields_and_field_types:
             node_inputs[field] = get_message_field_type(request_msg, field)
@@ -892,7 +892,7 @@ class Service(Leaf):
             if self._service_request_future.done():
                 res = self._service_request_future.result()
                 if res is None:
-                    #TODO Maybe this should be an Err(), 
+                    # TODO Maybe this should be an Err(),
                     #   since getting a None response should never happen
                     return Ok(BTNodeState.FAILED)
                 fields = res.get_fields_and_field_types().items()

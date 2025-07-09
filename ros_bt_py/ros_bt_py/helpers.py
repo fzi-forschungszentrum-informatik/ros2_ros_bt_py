@@ -27,7 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from enum import StrEnum
 from typing import Any, Iterable, Optional
-import rclpy, rclpy.logging
+import rclpy
+import rclpy.logging
 import jsonpickle
 import functools
 import re

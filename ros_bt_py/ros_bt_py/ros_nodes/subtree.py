@@ -284,7 +284,7 @@ class Subtree(Leaf):
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            #TODO Should this be an Err() ??? same also above in setup
+            # TODO Should this be an Err() ??? same also above in setup
             return Ok(BTNodeState.BROKEN)
         tick_root_result = self.root.tick()
         if self.subtree_manager:
@@ -299,7 +299,7 @@ class Subtree(Leaf):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            #TODO Should this be an Err() ???
+            # TODO Should this be an Err() ???
             return Ok(BTNodeState.BROKEN)
         untick_root_result = self.root.untick()
         if self.subtree_manager:

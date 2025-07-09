@@ -152,7 +152,6 @@ class FieldsToMessage(Leaf):
         for field in msg._fields_and_field_types:
             node_inputs[field] = get_message_field_type(msg, field)
 
-
         # TODO: Use result type.
         self.node_config.extend(
             NodeConfig(

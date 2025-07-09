@@ -230,4 +230,3 @@ class TestSubtreeManager:
 
     def test_check_publish_subtrees_true(self, subtree_manager: SubtreeManager):
         assert subtree_manager.publish_subtrees
-
