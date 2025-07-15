@@ -1795,7 +1795,6 @@ class Node(object, metaclass=NodeMeta):
                 if self.node_config.max_children is not None
                 else -1
             ),
-            state=self.state,
         )
 
     def to_state_msg(self):

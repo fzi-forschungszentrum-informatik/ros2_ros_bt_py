@@ -25,7 +25,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from enum import StrEnum
+
+#from enum import StrEnum Not available in Python3.10
+import abc
 from typing import Any, Iterable, Optional
 import rclpy
 import rclpy.logging
@@ -41,8 +43,9 @@ from typeguard import typechecked
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
-@typechecked
-class BTNodeState(StrEnum):
+#@typechecked
+#class BTNodeState(StrEnum):
+class BTNodeState(abc.ABC):
     UNINITIALIZED = NodeState.UNINITIALIZED
     IDLE = NodeState.IDLE
     UNASSIGNED = NodeState.UNASSIGNED
@@ -53,6 +56,7 @@ class BTNodeState(StrEnum):
     BROKEN = NodeState.BROKEN
     PAUSED = NodeState.PAUSED
     SHUTDOWN = NodeState.SHUTDOWN
+BTNodeState.register(str) # Duck tape to satisfy typing. This becomes unnecessary when StrEnum is available
 
 
 class MathUnaryOperator(object):
