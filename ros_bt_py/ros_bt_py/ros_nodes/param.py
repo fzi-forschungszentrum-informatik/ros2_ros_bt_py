@@ -135,7 +135,7 @@ class RosParamOptionDefaultInput(Leaf):
                     return Ok(BTNodeState.FAILED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
+        return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)

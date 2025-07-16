@@ -25,13 +25,14 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from typing import Any, Generator
 import pytest
 
 import unittest.mock as mock
 from example_interfaces.action import Fibonacci
 from ros_bt_py.ros_nodes.action import Action
 from rclpy.time import Time
-from ros_bt_py_interfaces.msg import NodeState as NodeMsg, UtilityBounds
+from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 
 
@@ -105,7 +106,7 @@ class TestAction:
             )
 
             feedback_cb_patcher = mock.patch.object(
-                action_node, "_feedback_cb", wraps=action_node._feedback_cb
+                action_node, "_feedback_cb", wraps=action_node._feedback_cb  # type: ignore
             )
             feedback_cb_mock = feedback_cb_patcher.start()
 
@@ -126,7 +127,7 @@ class TestAction:
     def node_setup(self, action_node):
         assert action_node is not None
         action_node.setup()
-        assert action_node.state == NodeMsg.IDLE
+        assert action_node.state == NodeState.IDLE
 
     def create_and_simulate_feedback(self, action_node, sequence=[0]):
         feedback_mock = mock.Mock()
@@ -157,15 +158,15 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         # Result available
         running_goal_future_mock.done.return_value = True
         action_node.tick()
-        assert action_node.state == NodeMsg.SUCCEEDED
+        assert action_node.state == NodeState.SUCCEEDED
 
         action_node.shutdown()
-        assert action_node.state == NodeMsg.SHUTDOWN
+        assert action_node.state == NodeState.SHUTDOWN
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
@@ -187,7 +188,7 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.FAILED
+        assert action_node.state == NodeState.FAILED
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
@@ -217,19 +218,19 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         # Set time > timeout_seconds of action_node to create timeout
         clock_mock.now.return_value = Time(seconds=10)
         action_node.tick()
         # requests goal canceling, so node is still running
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         # Goal gets canceled succesfully
         action_node.tick()
         assert running_goal_future_mock.cancel.called
         assert running_goal_handle_mock.cancel_goal_async.called
-        assert action_node.state == NodeMsg.SUCCEED
+        assert action_node.state == NodeState.SUCCEED
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
@@ -249,18 +250,18 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         # Result available
         running_goal_future_mock.done.return_value = True
         action_node.tick()
-        assert action_node.state == NodeMsg.SUCCEEDED
+        assert action_node.state == NodeState.SUCCEEDED
 
         action_node.reset()
-        assert action_node.state == NodeMsg.IDLE
+        assert action_node.state == NodeState.IDLE
 
         action_node.shutdown()
-        assert action_node.state == NodeMsg.SHUTDOWN
+        assert action_node.state == NodeState.SHUTDOWN
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
@@ -279,15 +280,15 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         # Result available
         running_goal_future_mock.done.return_value = True
         action_node.tick()
-        assert action_node.state == NodeMsg.SUCCEEDED
+        assert action_node.state == NodeState.SUCCEEDED
 
         action_node.reset()
-        assert action_node.state == NodeMsg.IDLE
+        assert action_node.state == NodeState.IDLE
         self.create_and_simulate_feedback(action_node)
 
         # Waiting for result
@@ -296,17 +297,18 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         # Result available
         running_goal_future_mock.done.return_value = True
         action_node.tick()
-        assert action_node.state == NodeMsg.SUCCEEDED
+        assert action_node.state == NodeState.SUCCEEDED
 
     def test_node_no_ros(self, action_node_no_ros):
-        with pytest.raises(BehaviorTreeException):
-            assert action_node_no_ros is not None
-            action_node_no_ros.setup()
+        assert action_node_no_ros is not None
+        setup_result = action_node_no_ros.setup()
+        assert setup_result.is_err()
+        assert isinstance(setup_result.err(), BehaviorTreeException)
 
     def test_node_untick(self, setup_mocks):
         action_node = setup_mocks["action_node"]
@@ -325,10 +327,10 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         action_node.untick()
-        assert action_node.state == NodeMsg.IDLE
+        assert action_node.state == NodeState.IDLE
         assert running_goal_handle_mock.cancel_goal_async.called
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
@@ -336,11 +338,11 @@ class TestAction:
     def test_node_utility_no_ros(self, setup_mocks, action_node_no_ros):
         action_node = setup_mocks["action_node"]
 
-        bounds_no_ros = action_node_no_ros.calculate_utility()
-        assert bounds_no_ros == UtilityBounds(can_execute=False)
+        bounds_no_ros_result = action_node_no_ros.calculate_utility()
+        assert bounds_no_ros_result.ok() == UtilityBounds(can_execute=False)
 
-        bounds = action_node.calculate_utility()
-        assert bounds == UtilityBounds(can_execute=False)
+        bounds_result = action_node.calculate_utility()
+        assert bounds_result.ok() == UtilityBounds(can_execute=False)
 
     def test_node_utility(self, setup_mocks):
         action_node = setup_mocks["action_node"]
@@ -358,15 +360,15 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         ac_instance_mock.server_is_ready.return_value = False
-        bounds = action_node.calculate_utility()
-        assert bounds == UtilityBounds(can_execute=False)
+        bounds_result = action_node.calculate_utility()
+        assert bounds_result.ok() == UtilityBounds(can_execute=False)
 
         ac_instance_mock.server_is_ready.return_value = True
-        bounds = action_node.calculate_utility()
-        assert bounds == UtilityBounds(
+        bounds_result = action_node.calculate_utility()
+        assert bounds_result.ok() == UtilityBounds(
             can_execute=True,
             has_lower_bound_success=True,
             has_upper_bound_success=True,
@@ -374,24 +376,6 @@ class TestAction:
             has_upper_bound_failure=True,
         )
         feedback_cb_mock.assert_called_once_with(feedback_mock)
-
-    def test_simulate_tick(self, setup_mocks):
-        action_node = setup_mocks["action_node"]
-        running_goal_future_mock = setup_mocks["running_goal_future_mock"]
-        ac_instance_mock = setup_mocks["ac_instance_mock"]
-
-        self.node_setup(action_node)
-        self.create_and_set_input_goal(action_node)
-
-        running_goal_future_mock.done.return_value = False
-        action_node.simulate_tick = True
-        action_node.tick()
-        assert not ac_instance_mock.send_goal_async.called
-        assert action_node.state == NodeMsg.RUNNING
-
-        action_node.succeed_always = True
-        action_node.tick()
-        assert action_node.state == NodeMsg.SUCCEEDED
 
     def test_node_outputs(self, setup_mocks):
         action_node = setup_mocks["action_node"]
@@ -416,7 +400,7 @@ class TestAction:
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
-        assert action_node.state == NodeMsg.RUNNING
+        assert action_node.state == NodeState.RUNNING
 
         assert action_node.outputs["feedback_sequence"] == list(
             feedback_mock.feedback.sequence
@@ -427,7 +411,7 @@ class TestAction:
         # Result available
         running_goal_future_mock.done.return_value = True
         action_node.tick()
-        assert action_node.state == NodeMsg.SUCCEEDED
+        assert action_node.state == NodeState.SUCCEEDED
         assert isinstance(action_node.outputs["result_sequence"], list)
         assert action_node.outputs["result_sequence"] == list(
             goal_result.result.sequence

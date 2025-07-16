@@ -286,17 +286,16 @@ def test_node_reset(ros_mock, client_mock, future_mock, clock_mock):
 
 
 def test_node_no_ros():
-    with pytest.raises(BehaviorTreeException):
-        unavailable_service = Service(
-            options={
-                "service_name": RosServiceName(name="this_service_does_not_exist"),
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-                "wait_for_service_seconds": 5.0,
-                "fail_if_not_available": True,
-            },
-            ros_node=None,
-        )
+    unavailable_service = Service(
+        options={
+            "service_name": RosServiceName(name="this_service_does_not_exist"),
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
+            "wait_for_response_seconds": 5.0,
+            "wait_for_service_seconds": 5.0,
+            "fail_if_not_available": True,
+        },
+        ros_node=None,
+    )
 
     assert unavailable_service is not None
     result = unavailable_service.setup()

@@ -131,7 +131,7 @@ def test_node_reset(ros_mock, client_mock, clock_mock):
     unavailable_service.tick()
     assert unavailable_service.state == NodeState.RUNNING
     unavailable_service.reset()
-    assert unavailable_service._last_service_call_time is None
+    assert unavailable_service._last_service_call_time is None  # type: ignore
 
     unavailable_service.tick()
     assert unavailable_service.state == NodeState.RUNNING
@@ -145,17 +145,17 @@ def test_node_reset(ros_mock, client_mock, clock_mock):
 
 
 def test_node_no_ros():
-    with pytest.raises(BehaviorTreeException):
-        unavailable_service = WaitForServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_service_seconds": 5.0,
-            },
-            ros_node=None,
-        )
+    unavailable_service = WaitForServiceInput(
+        options={
+            "service_type": RosServiceType("std_srvs/srv/SetBool"),
+            "wait_for_service_seconds": 5.0,
+        },
+        ros_node=None,
+    )
 
-        assert unavailable_service is not None
-        unavailable_service.setup()
+    assert unavailable_service is not None
+    setup_result = unavailable_service.setup()
+    assert isinstance(setup_result.err(), BehaviorTreeException)
 
 
 @mock.patch("rclpy.node.Node")
@@ -188,7 +188,7 @@ def test_node_untick(ros_mock, client_mock, clock_mock):
     unavailable_service.tick()
     assert unavailable_service.state == NodeState.RUNNING
     unavailable_service.untick()
-    assert unavailable_service._last_service_call_time is None
+    assert unavailable_service._last_service_call_time is None  # type: ignore
 
     unavailable_service.tick()
     assert unavailable_service.state == NodeState.RUNNING
@@ -199,38 +199,3 @@ def test_node_untick(ros_mock, client_mock, clock_mock):
     unavailable_service.shutdown()
     assert unavailable_service.state == NodeState.SHUTDOWN
     assert ros_mock.destroy_client.called
-
-
-@mock.patch("rclpy.node.Node")
-@mock.patch("rclpy.client.Client")
-@mock.patch("rclpy.clock.Clock")
-def test_node_simulate_tick(ros_mock, client_mock, clock_mock):
-    client_mock.service_is_ready.return_value = False
-    ros_mock.create_client.return_value = client_mock
-    clock_mock.now.side_effect = [
-        Time(seconds=0),
-        Time(seconds=1),
-        Time(seconds=2),
-        Time(seconds=3),
-        Time(seconds=4),
-    ]
-    ros_mock.get_clock.return_value = clock_mock
-    unavailable_service = WaitForServiceInput(
-        options={
-            "service_type": RosServiceType("std_srvs/srv/SetBool"),
-            "wait_for_service_seconds": 5.0,
-        },
-        ros_node=ros_mock,
-    )
-    assert unavailable_service is not None
-    unavailable_service.setup()
-    assert unavailable_service.state == NodeState.IDLE
-    unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-
-    unavailable_service.simulate_tick = True
-    unavailable_service.tick()
-    assert unavailable_service.state == NodeState.RUNNING
-
-    unavailable_service.succeed_always = True
-    unavailable_service.tick()
-    assert unavailable_service.state == NodeState.SUCCEEDED

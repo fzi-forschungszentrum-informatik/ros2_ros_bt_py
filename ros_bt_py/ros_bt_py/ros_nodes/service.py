@@ -194,7 +194,7 @@ class ServiceInput(Leaf):
                 self._last_request
             )
 
-        if (
+        if self._service_request_future is not None and not (
             self._service_request_future.done()
             or self._service_request_future.cancelled()
         ):
