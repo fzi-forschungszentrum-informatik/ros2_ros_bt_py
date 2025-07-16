@@ -2396,8 +2396,8 @@ class TreeManager:
         )
 
         if not get_success(res):
-            self.state = TreeState.ERROR
-            self.publish_structure()
+            # self.state = TreeState.ERROR
+            # self.publish_structure()
             response.success = False
             response.error_message = (
                 f'Could not remove old node: "{get_error_message(res)}"'
