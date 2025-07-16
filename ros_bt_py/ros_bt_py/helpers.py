@@ -28,7 +28,7 @@
 
 # from enum import StrEnum Not available in Python3.10
 import abc
-from typing import Any, Iterable, Optional, Self, cast
+from typing import Any, Iterable, Optional, cast
 import rclpy
 import rclpy.logging
 import jsonpickle
@@ -49,16 +49,16 @@ class BTNodeState(abc.ABC):
     # Lots of duct tape to make type checkers happy.
     #   All of this casting and registering becomes unnecessary
     #   once we can switch to StrEnum, which behaves as expected
-    UNINITIALIZED = cast(Self, NodeState.UNINITIALIZED)
-    IDLE = cast(Self, NodeState.IDLE)
-    UNASSIGNED = cast(Self, NodeState.UNASSIGNED)
-    ASSIGNED = cast(Self, NodeState.ASSIGNED)
-    RUNNING = cast(Self, NodeState.RUNNING)
-    SUCCEEDED = cast(Self, NodeState.SUCCEEDED)
-    FAILED = cast(Self, NodeState.FAILED)
-    BROKEN = cast(Self, NodeState.BROKEN)
-    PAUSED = cast(Self, NodeState.PAUSED)
-    SHUTDOWN = cast(Self, NodeState.SHUTDOWN)
+    UNINITIALIZED = cast("BTNodeState", NodeState.UNINITIALIZED)
+    IDLE = cast("BTNodeState", NodeState.IDLE)
+    UNASSIGNED = cast("BTNodeState", NodeState.UNASSIGNED)
+    ASSIGNED = cast("BTNodeState", NodeState.ASSIGNED)
+    RUNNING = cast("BTNodeState", NodeState.RUNNING)
+    SUCCEEDED = cast("BTNodeState", NodeState.SUCCEEDED)
+    FAILED = cast("BTNodeState", NodeState.FAILED)
+    BROKEN = cast("BTNodeState", NodeState.BROKEN)
+    PAUSED = cast("BTNodeState", NodeState.PAUSED)
+    SHUTDOWN = cast("BTNodeState", NodeState.SHUTDOWN)
     # These casts are for the purpose of mypy/pylance type checking,
     #   which ignore abc `register` subclasses
 
