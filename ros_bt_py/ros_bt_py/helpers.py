@@ -26,9 +26,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#from enum import StrEnum Not available in Python3.10
+# from enum import StrEnum Not available in Python3.10
 import abc
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Optional, Self, cast
 import rclpy
 import rclpy.logging
 import jsonpickle
@@ -43,20 +43,28 @@ from typeguard import typechecked
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
 
 
-#@typechecked
-#class BTNodeState(StrEnum):
+@typechecked
+# class BTNodeState(StrEnum):
 class BTNodeState(abc.ABC):
-    UNINITIALIZED = NodeState.UNINITIALIZED
-    IDLE = NodeState.IDLE
-    UNASSIGNED = NodeState.UNASSIGNED
-    ASSIGNED = NodeState.ASSIGNED
-    RUNNING = NodeState.RUNNING
-    SUCCEEDED = NodeState.SUCCEEDED
-    FAILED = NodeState.FAILED
-    BROKEN = NodeState.BROKEN
-    PAUSED = NodeState.PAUSED
-    SHUTDOWN = NodeState.SHUTDOWN
-BTNodeState.register(str) # Duck tape to satisfy typing. This becomes unnecessary when StrEnum is available
+    # Lots of duct tape to make type checkers happy.
+    #   All of this casting and registering becomes unnecessary
+    #   once we can switch to StrEnum, which behaves as expected
+    UNINITIALIZED = cast(Self, NodeState.UNINITIALIZED)
+    IDLE = cast(Self, NodeState.IDLE)
+    UNASSIGNED = cast(Self, NodeState.UNASSIGNED)
+    ASSIGNED = cast(Self, NodeState.ASSIGNED)
+    RUNNING = cast(Self, NodeState.RUNNING)
+    SUCCEEDED = cast(Self, NodeState.SUCCEEDED)
+    FAILED = cast(Self, NodeState.FAILED)
+    BROKEN = cast(Self, NodeState.BROKEN)
+    PAUSED = cast(Self, NodeState.PAUSED)
+    SHUTDOWN = cast(Self, NodeState.SHUTDOWN)
+    # These casts are for the purpose of mypy/pylance type checking,
+    #   which ignore abc `register` subclasses
+
+
+BTNodeState.register(str)
+# Register `str` as subclass to `BTNodeState` for the purpose of typeguard
 
 
 class MathUnaryOperator(object):
