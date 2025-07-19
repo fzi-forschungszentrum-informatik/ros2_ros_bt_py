@@ -86,8 +86,6 @@ class Throttle(Decorator):
         return self._last_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -151,8 +149,6 @@ class ThrottleSuccess(Decorator):
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_success_tick = None
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:

@@ -129,10 +129,6 @@ class Sequence(FlowControl):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            shutdown_result = child.shutdown()
-            if shutdown_result.is_err():
-                return shutdown_result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -245,10 +241,6 @@ class MemorySequence(FlowControl):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            shutdown_result = child.shutdown()
-            if shutdown_result.is_err():
-                return shutdown_result
         self.last_running_child = 0
         return Ok(BTNodeState.SHUTDOWN)
 

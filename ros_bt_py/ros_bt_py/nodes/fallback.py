@@ -85,10 +85,6 @@ class NameSwitch(FlowControl):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            result = child.shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -182,10 +178,6 @@ class Fallback(FlowControl):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            result = child.shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -293,10 +285,6 @@ class MemoryFallback(FlowControl):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            result = child.shutdown()
-            if result.is_err():
-                return result
         self.last_running_child = 0
         return Ok(BTNodeState.SHUTDOWN)
 

@@ -96,10 +96,6 @@ class GetConstListItem(Decorator):
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if len(self.children) == 1:
-            result = self.children[0].shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -176,10 +172,6 @@ class GetListItem(Decorator):
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if len(self.children) == 1:
-            result = self.children[0].shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -245,10 +237,6 @@ class GetDictItem(Decorator):
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if len(self.children) == 1:
-            result = self.children[0].shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -317,10 +305,6 @@ class GetMultipleDictItems(Decorator):
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if len(self.children) == 1:
-            result = self.children[0].shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -386,10 +370,6 @@ class GetDictItemFromKey(Decorator):
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if len(self.children) == 1:
-            result = self.children[0].shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -466,10 +446,6 @@ class GetAttr(Decorator):
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if len(self.children) == 1:
-            result = self.children[0].shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:

@@ -249,6 +249,4 @@ class IterateList(Decorator):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)

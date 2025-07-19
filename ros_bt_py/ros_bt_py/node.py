@@ -778,8 +778,12 @@ class Node(object, metaclass=NodeMeta):
         """
         Prepare a node for deletion.
 
-        This method just calls :meth:`_do_shutdown`, which any
+        This method calls :meth:`_do_shutdown`, which any
         subclass must override.
+
+        This method, in contrast to other similar methods,
+        also descends down the whole tree and calls shutdown on all children.
+        That means the `_do_shutdown` method is only responsible for the node itself.
 
         This gives the node a chance to clean up any resources it might
         be holding before getting deleted.
@@ -790,6 +794,7 @@ class Node(object, metaclass=NodeMeta):
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
         with report_state:
+            error_result = None
             if self.state == BTNodeState.SHUTDOWN:
                 self.loginfo(
                     "Not calling shutdown method, node has not been initialized yet"
@@ -798,20 +803,31 @@ class Node(object, metaclass=NodeMeta):
                 # Call shutdown on all children - this should only set
                 # their state to shutdown
                 for child in self.children:
-                    child.shutdown()
+                    shutdown_result = child.shutdown()
+                    if shutdown_result.is_err():
+                        self.logwarn(
+                            f"Node {child.name} raised the following error during shutdown"
+                            "Continuing to shutdown other nodes"
+                            f"{shutdown_result.unwrap_err()}"
+                        )
+                        error_result = shutdown_result
 
             shutdown_result = self._do_shutdown()
             if shutdown_result.is_ok():
                 self.state = shutdown_result.unwrap()
             else:
                 self.state = BTNodeState.BROKEN
-                return shutdown_result
-
-            # if self.state is None:
-            #     self.state = BTNodeState.SHUTDOWN
+                error_result = shutdown_result
 
             for child in self.children:
-                child.shutdown()
+                shutdown_result = child.shutdown()
+                if shutdown_result.is_err():
+                    self.logwarn(
+                        f"Node {child.name} raised the following error during shutdown"
+                        "Continuing to shutdown other nodes"
+                        f"{shutdown_result.unwrap_err()}"
+                    )
+                    error_result = shutdown_result
 
             unshutdown_children = [
                 f"{child.name} ({type(child).__name__}), state: {child.state}"
@@ -824,6 +840,10 @@ class Node(object, metaclass=NodeMeta):
                     "List of not-shutdown children and states:\n"
                     f"{unshutdown_children}"
                 )
+
+            if error_result is not None:
+                return error_result
+
             return Ok(self.state)
 
     @abc.abstractmethod

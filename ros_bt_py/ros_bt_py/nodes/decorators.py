@@ -64,8 +64,6 @@ class IgnoreFailure(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -113,8 +111,6 @@ class IgnoreRunning(Decorator):
         return Ok(BTNodeState.FAILED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -157,8 +153,6 @@ class IgnoreSuccess(Decorator):
         return Ok(BTNodeState.FAILED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -203,8 +197,6 @@ class UntilSuccess(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -252,8 +244,6 @@ class Inverter(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -313,8 +303,6 @@ class Retry(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -378,8 +366,6 @@ class Repeat(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -492,8 +478,6 @@ class RepeatAlways(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -543,8 +527,6 @@ class RepeatUntilFail(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -594,8 +576,6 @@ class RepeatIfFail(Decorator):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -644,8 +624,6 @@ class Optional(Decorator):
             return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.execute_child:
-            return self.children[0].shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -706,8 +684,6 @@ class Watch(Decorator):
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.previous_watch = float("NaN")
-        for child in self.children:
-            return child.shutdown()
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:

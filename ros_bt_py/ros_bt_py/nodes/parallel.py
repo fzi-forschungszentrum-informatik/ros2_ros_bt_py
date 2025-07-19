@@ -123,10 +123,6 @@ class Parallel(FlowControl):
         return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            result = child.shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -334,10 +330,6 @@ class ParallelFailureTolerance(FlowControl):
         return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            result = child.shutdown()
-            if result.is_err():
-                return result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
