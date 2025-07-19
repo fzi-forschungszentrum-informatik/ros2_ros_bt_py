@@ -80,7 +80,7 @@ class Subtree(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         """Create the tree manager, load the subtree."""
         super().__init__(
             options=options,
@@ -90,10 +90,8 @@ class Subtree(Leaf):
             ros_node=ros_node,
         )
         if not self.has_ros_node:
-            return Err(
-                BehaviorTreeException(
-                    "{self.name} does not have a reference to a ROS Node!"
-                )
+            raise BehaviorTreeException(
+                "{self.name} does not have a reference to a ROS Node!"
             )
 
         self.root: Optional[BTNode] = None
@@ -105,14 +103,17 @@ class Subtree(Leaf):
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
         )
-        self.load_subtree()
+
+        load_result = self.load_subtree()
+        if load_result.is_err():
+            raise load_result.unwrap_err()
+
         if self.subtree_manager:
-            # FIXME: This does not use the result!
             self.subtree_manager.add_subtree_structure(
                 self.name, self.manager.structure_to_msg()
             )
 
-    def load_subtree(self) -> None:
+    def load_subtree(self) -> Result[None, BehaviorTreeException]:
         response = LoadTree.Response()
         response = self.manager.load_tree(
             request=LoadTree.Request(
@@ -129,11 +130,13 @@ class Subtree(Leaf):
             self.logwarn(
                 f"Failed to load subtree {self.name}: {get_error_message(response)}"
             )
+            # TODO Should this be flagged as broken, since we convey load failure as an output
+            #   Suggesting that it is intended behaviour and not an error.
             self.state = BTNodeState.BROKEN
 
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = get_error_message(response)
-            return
+            return Ok(None)
         else:
             self.outputs["load_success"] = True
 
@@ -154,8 +157,7 @@ class Subtree(Leaf):
 
         # merge subtree input and option dicts, so we can receive
         # option updates between ticks
-        # TODO: Use result type.
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={},
                 inputs=subtree_inputs,
@@ -163,12 +165,19 @@ class Subtree(Leaf):
                 max_children=0,
             )
         )
-        self._register_data_forwarding(
+        if extend_result.is_err():
+            return extend_result
+
+        register_result = self._register_data_forwarding(
             io_inputs=io_inputs,
             io_outputs=io_outputs,
             subtree_inputs=subtree_inputs,
             subtree_outputs=subtree_outputs,
         )
+        if register_result.is_err():
+            return register_result
+
+        return Ok(None)
 
     def _find_inputs_and_output(
         self,
@@ -228,10 +237,18 @@ class Subtree(Leaf):
         io_outputs: List,
         subtree_inputs: Dict,
         subtree_outputs: Dict,
-    ) -> None:
+    ) -> Result[None, BehaviorTreeException]:
         # Register the input and output values from the subtree
-        self._register_node_data(source_map=subtree_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=subtree_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=subtree_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            return register_result
+        register_result = self._register_node_data(
+            source_map=subtree_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            return register_result
 
         # Handle forwarding inputs and outputs using the subscribe mechanics:
         for node_data in self.manager.structure_to_msg().public_node_data:
@@ -269,6 +286,7 @@ class Subtree(Leaf):
                             f"{node_name}.{node_data.data_key}"
                         ),
                     )
+        return Ok(None)
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         find_root_result = self.manager.find_root()

@@ -1674,7 +1674,7 @@ class TreeManager:
                         f"Node {name} appears to be a child with no parent"
                     )
                     continue
-                parent_name = self.nodes[name].parent.name
+                parent_name = self.nodes[name].parent.name  # type: ignore
                 get_logger("tree_manager").get_child(self.name).warn(
                     f"Node {name} was not shut down. Check parent node {parent_name} "
                     f"({type(self.nodes[parent_name]).__name__}) "
@@ -1685,9 +1685,9 @@ class TreeManager:
             # If we have a parent, remove the node from that parent
             if (
                 self.nodes[name].parent is not None
-                and self.nodes[name].parent.name in self.nodes
+                and self.nodes[name].parent.name in self.nodes  # type: ignore
             ):
-                self.nodes[self.nodes[name].parent.name].remove_child(name)
+                self.nodes[self.nodes[name].parent.name].remove_child(name)  # type: ignore
             del self.nodes[name]
 
         # Keep tree_structure up-to-date
@@ -2658,7 +2658,6 @@ class TreeManager:
         manager = TreeManager(
             ros_node=self.ros_node,
             name="temporary_tree_manager",
-            publish_tree_callback=lambda *args: None,
             debug_manager=DebugManager(ros_node=self.ros_node),
         )
 
@@ -2689,7 +2688,7 @@ class TreeManager:
             else:
                 manager.tree_structure.root_name = root.name
             response.success = True
-            response.tree = manager.to_msg()
+            response.tree = manager.structure_to_msg()
             return response
         else:
             response.success = False
@@ -2753,7 +2752,7 @@ class TreeManager:
                 get_subtree_msg_result = root.get_subtree_msg()
                 if get_subtree_msg_result.is_err():
                     self.tree_structure.nodes = [
-                        node.to_msg() for node in self.nodes.values()
+                        node.to_structure_msg() for node in self.nodes.values()
                     ]
                 else:
                     subtree = get_subtree_msg_result.unwrap()[0]

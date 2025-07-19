@@ -61,7 +61,7 @@ class Throttle(Decorator):
         self._last_result = Ok(BTNodeState.FAILED)
         for child in self.children:
             setup_result = child.setup()
-            # This seems unnecessary, since len(self.children) == 1 always
+            # TODO This seems unnecessary, since len(self.children) == 1 always
             if setup_result.is_err():
                 return setup_result
         return setup_result
@@ -79,7 +79,10 @@ class Throttle(Decorator):
                     return result
                 self._last_result = result
                 self._last_tick = current_time
-                child.reset()
+                # TODO Why do we reset on every result?
+                reset_result = child.reset()
+                if reset_result.is_err():
+                    return reset_result
         return self._last_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -125,7 +128,7 @@ class ThrottleSuccess(Decorator):
         self._last_success_tick = None
         for child in self.children:
             setup_result = child.setup()
-            # This seems unnecessary, since len(self.children) == 1 always
+            # TODO This seems unnecessary, since len(self.children) == 1 always
             if setup_result.is_err():
                 return setup_result
         return setup_result

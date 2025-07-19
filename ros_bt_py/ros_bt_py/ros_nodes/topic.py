@@ -83,7 +83,7 @@ class TopicSubscriber(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -97,11 +97,17 @@ class TopicSubscriber(Leaf):
 
         node_outputs = {"message": self._topic_type}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     _lock = Lock()
     _subscriber = None
@@ -150,7 +156,10 @@ class TopicSubscriber(Leaf):
             return Ok(BTNodeState.SHUTDOWN)
         # Unsubscribe from the topic so we don't receive further updates
         try:
-            self.ros_node.destroy_subscription(self._subscriber)
+            success = self.ros_node.destroy_subscription(self._subscriber)
+            if not success:
+                self.logwarn("Failed to destroy subscription")
+                return Ok(BTNodeState.BROKEN)
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
@@ -224,7 +233,7 @@ class TopicMemorySubscriber(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -238,11 +247,17 @@ class TopicMemorySubscriber(Leaf):
 
         node_outputs = {"message": self._topic_type}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     _lock = Lock()
     _subscriber = None
@@ -307,7 +322,10 @@ class TopicMemorySubscriber(Leaf):
             return Ok(BTNodeState.SHUTDOWN)
         # Unsubscribe from the topic so we don't receive further updates
         try:
-            self.ros_node.destroy_subscription(self._subscriber)
+            success = self.ros_node.destroy_subscription(self._subscriber)
+            if not success:
+                self.logwarn("Failed to destroy subscription")
+                return Ok(BTNodeState.BROKEN)
             self._subscriber = None
         except AttributeError:
             self.logwarn("Can not unregister as no subscriber is available.")
@@ -371,7 +389,7 @@ class TopicPublisher(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -385,11 +403,17 @@ class TopicPublisher(Leaf):
 
         node_inputs = {"message": self._topic_type}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs=node_inputs, outputs={}, max_children=0)
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
+        register_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
@@ -433,7 +457,10 @@ class TopicPublisher(Leaf):
         # Unregister the publisher
         try:
             if self._publisher is not None:
-                self.ros_node.destroy_publisher(self._publisher)
+                success = self.ros_node.destroy_publisher(self._publisher)
+                if not success:
+                    self.logwarn("Failed to destroy publisher")
+                    return Ok(BTNodeState.BROKEN)
         except AttributeError:
             self.logwarn("Can not unregister as no publisher is available.")
         self._publisher = None

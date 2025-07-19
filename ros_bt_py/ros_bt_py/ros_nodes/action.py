@@ -47,8 +47,6 @@ from rclpy.node import Node
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.ros_helpers import get_message_field_type
-import inspect
-from std_msgs.msg import Int64
 
 
 class ActionStates(Enum):
@@ -434,7 +432,7 @@ class ActionForSetType(Leaf):
         if self._internal_state == ActionStates.WAITING_FOR_ACTION_COMPLETE:
             cancel_result = self._do_tick_cancel_running_goal()
             if cancel_result.is_err():
-                return Err(cancel_result.unwrap_err())
+                return cancel_result
 
         self._last_goal_time = None
         self._running_goal_future = None
@@ -448,16 +446,18 @@ class ActionForSetType(Leaf):
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         # same as untick...
-        self._do_untick()
+        untick_result = self._do_untick()
         # but also clear the outputs
         self.outputs["feedback"] = None
         self.outputs["result"] = None
-        return Ok(BTNodeState.IDLE)
+        return untick_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         # nothing to do beyond what's done in reset
-        self._do_reset()
+        reset_result = self._do_reset()
         self._action_available = False
+        if reset_result.is_err():
+            return reset_result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -557,8 +557,16 @@ class Action(Leaf):
                 feedback_msg, field
             )
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
@@ -835,7 +843,7 @@ class Action(Leaf):
         if self._internal_state == ActionStates.WAITING_FOR_ACTION_COMPLETE:
             cancel_result = self._do_tick_cancel_running_goal()
             if cancel_result.is_err():
-                return Err(cancel_result.unwrap_err())
+                return cancel_result
 
         self._last_goal_time = None
         self._running_goal_future = None
@@ -849,19 +857,21 @@ class Action(Leaf):
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         # same as untick...
-        self._do_untick()
+        untick_result = self._do_untick()
         # but also clear the outputs
         for k, v in self._result_type.get_fields_and_field_types().items():
             self.outputs["result_" + k] = None
 
         for k, v in self._feedback_type.get_fields_and_field_types().items():
             self.outputs["feedback_" + k] = None
-        return Ok(BTNodeState.IDLE)
+        return untick_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         # nothing to do beyond what's done in reset
-        self._do_reset()
+        reset_result = self._do_reset()
         self._action_available = False
+        if reset_result.is_err():
+            return reset_result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:

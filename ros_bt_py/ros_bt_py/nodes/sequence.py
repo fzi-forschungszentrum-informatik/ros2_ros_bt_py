@@ -199,7 +199,9 @@ class MemorySequence(FlowControl):
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             self.last_running_child = 0
             for child in self.children:
-                child.reset()
+                child_reset_result = child.reset()
+                if child_reset_result.is_err():
+                    return child_reset_result
 
         # Tick children until one returns FAILED or RUNNING
         for index, child in enumerate(self.children):
@@ -219,7 +221,9 @@ class MemorySequence(FlowControl):
                     # For all states other than RUNNING, untick all
                     # children after the one that hasn't succeeded
                     for untick_child in self.children[index + 1 :]:
-                        untick_child.untick()
+                        child_untick_result = untick_child.untick()
+                        if child_untick_result.is_err():
+                            return child_untick_result
                 return result
         # If all children succeeded, we too succeed
         return Ok(BTNodeState.SUCCEEDED)

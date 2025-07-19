@@ -101,7 +101,7 @@ def publish_message_channels(node: Node, publisher: Publisher):
     publisher.publish(msg)
 
 
-def get_message_field_type(msg, field):
+def get_message_field_type(msg, field) -> type:
     """Return type of a field in a ros msg but check for arrays to be converted into lists."""
     if isinstance((getattr(msg, field)), array.array):
         return list

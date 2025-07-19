@@ -62,7 +62,7 @@ class MessageFromDict(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -75,11 +75,17 @@ class MessageFromDict(Leaf):
 
         node_outputs = {"message": self._message_type}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
@@ -136,7 +142,7 @@ class MessageFromConstDict(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -149,11 +155,17 @@ class MessageFromConstDict(Leaf):
 
         node_outputs = {"message": self._message_type}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)

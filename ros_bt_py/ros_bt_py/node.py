@@ -348,6 +348,10 @@ class Node(object, metaclass=NodeMeta):
         After this finishes, the Node is *not* ready to run. You still
         need to do your own initialization in :meth:`_do_setup`.
 
+        Since the `__init__` method has to return None,
+        it doesn't use `result` but raises errors as normal.
+        The `from_msg` method catches any errors and passes them on as a `result.Err`.
+
         :param dict options: Map from option names to option values. Use these for configuring
         your node, do not provide a custom `__init()__` method!
 
@@ -385,12 +389,14 @@ class Node(object, metaclass=NodeMeta):
         self.node_config = deepcopy(self._node_config)
 
         self.options = NodeDataMap(name="options")
-        self._register_node_data(
+        register_result = self._register_node_data(
             source_map=self.node_config.options,
             target_map=self.options,
             values=options,
             permissive=self.permissive,
         )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
         # Warn about unset options, ignore missing optional_options
         unset_option_keys = [
@@ -415,14 +421,18 @@ class Node(object, metaclass=NodeMeta):
                 raise ValueError(f"Extra options: {str(extra_option_keys)}")
 
         self.inputs = NodeDataMap(name="inputs")
-        self._register_node_data(
+        register_result = self._register_node_data(
             source_map=self.node_config.inputs, target_map=self.inputs
         )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
         self.outputs = NodeDataMap(name="outputs")
-        self._register_node_data(
+        register_result = self._register_node_data(
             source_map=self.node_config.outputs, target_map=self.outputs
         )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
         # Don't setup automatically - nodes should be available as pure data
         # containers before the user decides to call setup() themselves!
@@ -618,7 +628,7 @@ class Node(object, metaclass=NodeMeta):
 
     @typechecked
     def check_if_in_invalid_state(
-        self, allowed_states: list[str], action_name: str
+        self, allowed_states: list[BTNodeState], action_name: str
     ) -> Result[None, NodeStateError]:
         if self.state not in allowed_states:
             return Err(
@@ -952,7 +962,9 @@ class Node(object, metaclass=NodeMeta):
         }.items():
             if key in target_map:
                 return Err(NodeConfigError(f"Duplicate data name: {key}"))
-            target_map.add(key, NodeData(data_type=data_type))
+            add_result = target_map.add(key, NodeData(data_type=data_type))
+            if add_result.is_err():
+                return Err(NodeConfigError(add_result.unwrap_err()))
             if values is not None and key in values:
                 try:
                     target_map[key] = values[key]
@@ -1056,7 +1068,11 @@ class Node(object, metaclass=NodeMeta):
                         f'"{data_type.option_key}" that does not contain a type!'
                     )
                 )
-            target_map.add(key, NodeData(data_type=self.options[data_type.option_key]))
+            add_result = target_map.add(
+                key, NodeData(data_type=self.options[data_type.option_key])
+            )
+            if add_result.is_err():
+                return Err(NodeConfigError(add_result.unwrap_err()))
             if values is not None and key in values:
                 try:
                     target_map[key] = values[key]
@@ -1219,6 +1235,9 @@ class Node(object, metaclass=NodeMeta):
         and populate its `name`, `options`, `input` and `output` members
         from the ROS message.
 
+        This also catches exceptions raised during node construction
+        and returns wrapped in as `result.Err`.
+
         :param ros_bt_py_msgs.msg.Node msg:
 
         A ROS message describing a node class. The node class must be
@@ -1319,21 +1338,24 @@ class Node(object, metaclass=NodeMeta):
         # Instantiate node - this shouldn't do anything yet, since we don't
         # call setup()
         node_class.permissive = permissive
-        if msg.name:
-            node_instance = node_class(
-                name=msg.name,
-                options=options_dict,
-                debug_manager=debug_manager,
-                subtree_manager=subtree_manager,
-                ros_node=ros_node,
-            )
-        else:
-            node_instance = node_class(
-                options=options_dict,
-                debug_manager=debug_manager,
-                subtree_manager=subtree_manager,
-                ros_node=ros_node,
-            )
+        try:
+            if msg.name:
+                node_instance = node_class(
+                    name=msg.name,
+                    options=options_dict,
+                    debug_manager=debug_manager,
+                    subtree_manager=subtree_manager,
+                    ros_node=ros_node,
+                )
+            else:
+                node_instance = node_class(
+                    options=options_dict,
+                    debug_manager=debug_manager,
+                    subtree_manager=subtree_manager,
+                    ros_node=ros_node,
+                )
+        except BehaviorTreeException as ex:
+            return Err(ex)
 
         return Ok(node_instance)
 

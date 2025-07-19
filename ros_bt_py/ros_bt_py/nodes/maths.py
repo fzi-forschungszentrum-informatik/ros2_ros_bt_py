@@ -68,7 +68,7 @@ class Convert(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -94,11 +94,9 @@ class Convert(Leaf):
         ] in [int, float]:
             pass
         else:
-            return Err(
-                BehaviorTreeException(
-                    'Conversion between "%s" and "%s" not implemented'
-                    % (self.options["input_type"], self.options["output_type"])
-                )
+            raise BehaviorTreeException(
+                'Conversion between "%s" and "%s" not implemented'
+                % (self.options["input_type"], self.options["output_type"])
             )
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -180,7 +178,7 @@ class Operation(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -216,10 +214,8 @@ class Operation(Leaf):
         self.operators["^"] = operator.xor
 
         if self.options["operator"].operator not in self.operators:
-            return Err(
-                BehaviorTreeException(
-                    f"Operator {self.options['operator'].operator} is not recognized."
-                )
+            raise BehaviorTreeException(
+                f"Operator {self.options['operator'].operator} is not recognized."
             )
 
         self.operand_type = None
@@ -244,10 +240,18 @@ class Operation(Leaf):
             )
         )
         if extend_result.is_err():
-            return Err(BehaviorTreeException("Node config could not be extended!"))
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
@@ -309,7 +313,7 @@ class UnaryOperation(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-    ):
+    ) -> None:
         super().__init__(
             options=options,
             debug_manager=debug_manager,
@@ -355,10 +359,8 @@ class UnaryOperation(Leaf):
         self.operators["lgamma"] = math.lgamma
 
         if self.options["operator"].operator not in self.operators:
-            return Err(
-                BehaviorTreeException(
-                    f"Operator {self.options['operator'].operator} is not recognized."
-                )
+            raise BehaviorTreeException(
+                f"Operator {self.options['operator'].operator} is not recognized."
             )
 
         self.operand_type = None
@@ -380,10 +382,18 @@ class UnaryOperation(Leaf):
             )
         )
         if extend_result.is_err():
-            return Err(BehaviorTreeException("Node config could not be extended!"))
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)

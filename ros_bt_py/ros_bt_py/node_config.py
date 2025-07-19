@@ -28,6 +28,8 @@
 from typing import Any, Dict, Optional, List
 from result import Result, Err, Ok
 
+from ros_bt_py.exceptions import NodeConfigError
+
 
 class OptionRef(object):
     """
@@ -132,7 +134,7 @@ class NodeConfig(object):
     def __ne__(self, other) -> bool:
         return not self == other
 
-    def extend(self, other: "NodeConfig") -> Result[None, str]:
+    def extend(self, other: "NodeConfig") -> Result[None, NodeConfigError]:
         """
         Extend the input, output and option dicts with values from `other`.
 
@@ -143,7 +145,9 @@ class NodeConfig(object):
         """
         if self.max_children != other.max_children:
             return Err(
-                f"Mismatch in max_children: {self.max_children} vs {other.max_children}"
+                NodeConfigError(
+                    f"Mismatch in max_children: {self.max_children} vs {other.max_children}"
+                )
             )
         duplicate_inputs = []
         for key in other.inputs:
@@ -180,5 +184,5 @@ class NodeConfig(object):
             if duplicate_options:
                 keys_strings.append(f"options: {str(duplicate_options)}")
             msg += ", ".join(keys_strings)
-            return Err(msg)
+            return Err(NodeConfigError(msg))
         return Ok(None)

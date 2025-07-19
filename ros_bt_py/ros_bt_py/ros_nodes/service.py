@@ -116,24 +116,25 @@ class ServiceInput(Leaf):
         for field in response_msg._fields_and_field_types:
             node_outputs[field] = get_message_field_type(response_msg, field)
 
-        node_config_extend_result = self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
-        if node_config_extend_result.is_err():
-            self.state = BTNodeState.BROKEN
-            return
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        input_result = self._register_node_data(
+        register_result = self._register_node_data(
             source_map=node_inputs, target_map=self.inputs
         )
-        output_result = self._register_node_data(
+        if register_result.is_err():
+            raise register_result.unwrap_err()
+
+        register_result = self._register_node_data(
             source_map=node_outputs, target_map=self.outputs
         )
-        if input_result.is_err() or output_result.is_err():
-            self.state = BTNodeState.BROKEN
-            return
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_client: Optional[Client] = None
@@ -300,7 +301,7 @@ class WaitForService(Leaf):
         subtree_manager=None,
         name=None,
         ros_node=None,
-    ):
+    ) -> None:
         super().__init__(
             options,
             debug_manager,
@@ -380,7 +381,7 @@ class WaitForServiceInput(Leaf):
         subtree_manager=None,
         name=None,
         ros_node=None,
-    ):
+    ) -> None:
         super().__init__(
             options,
             debug_manager,
@@ -776,28 +777,25 @@ class Service(Leaf):
         for field in response_msg._fields_and_field_types:
             node_outputs[field] = get_message_field_type(response_msg, field)
 
-        # TODO: Use result type.
-        extend_node_config_result = self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
-        if extend_node_config_result.is_err():
-            self.state = BTNodeState.BROKEN
-            self.logfatal(
-                f"Failed to extend node config for {self.name}: "
-                f"{extend_node_config_result.unwrap_err()}"
-            )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        register_input_result = self._register_node_data(
+        register_result = self._register_node_data(
             source_map=node_inputs, target_map=self.inputs
         )
-        register_output_result = self._register_node_data(
+        if register_result.is_err():
+            raise register_result.unwrap_err()
+
+        register_result = self._register_node_data(
             source_map=node_outputs, target_map=self.outputs
         )
-        if register_input_result.is_err() or register_output_result.is_err():
-            self.state = BTNodeState.BROKEN
-            self.logfatal(f"Could not register input or output data for {self.name}")
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_client: Optional[Client] = None
