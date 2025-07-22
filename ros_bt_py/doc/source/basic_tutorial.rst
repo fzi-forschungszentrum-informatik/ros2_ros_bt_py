@@ -48,11 +48,11 @@ Bar below that.
 The Top Menu Bar contains (from left to right):
 
 * An indicator to show that the editor is connected to a behavior tree instance
-* A dropdown menu to select which ROS namespace to monitor (you can run multiple behavior trees in
+* Additional settings available by clicking the cog icon
+  * A toggle to control the transmission of data flow information
+  * A dropdown menu to select which ROS namespace to monitor (you can run multiple behavior trees in
   different namespaces)
-* A refresh button
-* A special config button to change the address of the rosbridge server
-* Options to enable publishing of subtree data making it easier to monitor complex trees.
+  * A special config button to change the address of the rosbridge server
 * Buttons to control the execution of the currently loaded BT.
 * Buttons to load a BT from, or save it to, a ROS package.
 * Buttons to upload a BT YAML to the editor or download the YAML of the currently loaded BT
@@ -60,10 +60,10 @@ The Top Menu Bar contains (from left to right):
 The Support Bar contains:
 
 * A Tree selection window to select the displayed tree, especially useful when using Subtrees.
-* Toggle Buttons for the Data Graph (more on that later) and the GUI itself if you want a
-  fullscreen view.
 * The Name field, which is not really useful???? TODO: Fix?
 * The State Field showing the state of the tree, also more on that later.
+* Toggle Buttons for the Data Graph (more on that later) and the GUI itself if you want a
+  fullscreen view.
 
 Package Loader
 ==============
@@ -133,7 +133,7 @@ To start building the BT, you will have to add nodes from the Node List on the l
 It is common to start by adding a Sequence or Fallback node as the root of the BT.
 
 #. Type "sequence" into the search box and click the Sequence node.
-#. Customize the node’s name by setting it to "HelloSequeunce".
+#. Customize the node’s name by setting it to "HelloSequence".
 #. Add it to the BT by clicking the "Add to Tree" button.
 
 .. image:: _static/first_tree_1.png
@@ -160,7 +160,7 @@ After adding the node to the tree it needs to be adjusted to to what we want it 
 #. Change the Name to "Constant_1".
 #. Change the constant_type to "str" (this will automatically be expanded to "builtin.str").
 #. Change the constant_value to "hello".
-#. Press update node to commit the changes.
+#. Press "Update Node" to commit the changes.
 #. The canvas and properties will be updated.
 
 .. image:: _static/first_tree_3.png
@@ -175,10 +175,6 @@ First we add another Constant node:
 
 #. Add another constant node by dragging it to the right of the first one.
 #. Change its type to string and set the name value to "World".
-
-.. image:: _static/first_tree_3.png
-  :alt: Modifying the Constant Node
-
 #. Search for "Concat" in the Search Box and select StringConcatenation by dragging it to the
    right of the constants.
 
@@ -200,31 +196,39 @@ Compatible Inputs or Outputs are highlighted while dragging, as shown in the pic
 7. Run the finished tree
 ========================
 
-After creating a tree we need to run it to verify our work.
-When the tree is finished we should see the "StringConcatenation" node Output being "HelloWorld".
-A successful run of the tree is indicated by the State Field displaying "IDLE".
+After creating a tree, we need to run it to verify our work.
+The tree is usable as it is right now.
+But for the purposes of this tutorial,
+we will add an additional node to make the result visible in the GUI.
 
-#. Run the Tree by pressing "Tick Until Result".
-#. Make sure the State Field is displaying "IDLE".
-#. Click the "StringConcatenation" node to verify Inputs and Output in the Node Menu.
+#. Add an IOOutputOption node right of the Concatenation and change its type to str.
+#. Connect its input with the Concatenation output.
+#. In the Menu Bar, click on the cog icon and activate the Transmission of data flow information.
+   This sends data from the tree execution to be visualized in the GUI for debugging.
+#. Now, run the Tree by pressing "Tick Until Result".
+#. Make sure the State Field is displaying "IDLE", once the execution is done.
+#. Click on the edge between "StringConcatenation" and "IOOutputOption".
+   When the tree is finished we should see the value of the transmitted string being "HelloWorld".
+#. A successful run of the tree is indicated by the State Field displaying "IDLE".
 
 .. image:: _static/first_tree_5.png
   :alt: StringConcatenation in the finished tree
+
 
 ******************
 Working with bt_py
 ******************
 
-While working with bt_py it is important to understand both the tree structure created by the
-arrangements of different nodes as well, the Data Graph used to share information between the
+While working with bt_py, it is important to understand both the tree structure created by the
+arrangements of different nodes and the Data Graph used to share information between the
 nodes as well as the control of the tree in general.
 This section will give an overview of the processing of a BT, the Node Class Types that are
-available, how to use them effectively and all you need to know about the Data Graph.
+available, how to use them effectively, and all you need to know about the Data Graph.
 
 Tree Execution
 ==============
 
-Before we talk about the building blocks of a BT in more detail a short introduction to the actual
+Before we talk about the building blocks of a BT in more detail, a short introduction to the actual
 tree execution is needed to understand the effect of e.g. different Flow Control Node Classes in the
 next sections.
 
@@ -232,7 +236,7 @@ Ticking
 -------
 
 Traversal through the tree is done by "ticking" the tree.
-On Tick the node that is currently next in line will receive a tick command and execute its internal
+On Tick, the node that is currently next in line will receive a tick command and execute its internal
 "do_tick" method.
 This can lead to a multitude of results depending on the Node Class of the ticked node.
 In a standard configuration bt_py is trying to tick at a rate of 10 Hz.
@@ -285,7 +289,7 @@ Nodes
 Nodes are the backbone of each tree, creating the control flow in the BT as well as actually doing
 something.
 Every Node belongs to a Node Class, determining what the Node will do when it gets ticked.
-Additionally each node is assigned a Node State, representing its current condition and defining the
+Additionally, each node is assigned a Node State, representing its current condition and defining the
 behavior the Node will display when ticked.
 
 Node States
@@ -293,7 +297,7 @@ Node States
 
 Node States are shown by a color coded frame which can be used to visually debug a tree during
 runtime.
-Additionally Node States can affect the flow of the tree and which nodes are ticked through Flow
+Additionally, Node States can affect the flow of the tree and which nodes are ticked through Flow
 Control Nodes.
 
 * **UNINITIALIZED:**
@@ -337,13 +341,13 @@ in the tree) which underlines their intended usage.
 Data Graph
 ==========
 
-To distribute data between nodes bt_py uses a Data Graph instead of a blackboard implementation as
+To distribute data between nodes, bt_py uses a Data Graph instead of a blackboard implementation as
 it is used in bt_cpp and other implementations.
 
 This means that data needs to be explicitly wired between Inputs and Outputs of the individual
 nodes, but you don't need to worry about which entries are in your blackboard at a certain time.
 
-To wire Data draw a graph edge from an input to an output or vice versa.
+To wire Data, draw a graph edge from an input to an output or vice versa.
 While both Inputs and Outputs can have multiple connections at the same time, allowing for complex
 information flow in the tree, Inputs need to have at least one connection for the tree to start
 execution, as ticking a node without a set Input would lead to undefined behavior.
@@ -380,7 +384,8 @@ Basic Control Flows
 The most basic Control Flow Nodes you will use the most are Sequences and Fallback nodes.
 
 **Sequences** are ticked until all their Child Nodes returns success, making them suitable for
-linear action sequences you want the tree to trigger, such as getting a goal and driving to the goalwith your robot.
+linear action sequences you want the tree to trigger, such as getting a goal and driving to the goal
+with your robot.
 They will return FAILED as soon as one child fails.
 
 **Fallbacks** are ticked until one(!) of their Child Nodes returns success, making them suitable for
@@ -426,7 +431,7 @@ To avoid those effects, such as the longer running behavior to be triggered mult
 They will remember the state of their Child Nodes when being ticked again after a node returned
 RUNNING and in turn continue ticking that node until it reaches a terminal state.
 
-In general you will want to mostly use the memory version of the basic Flow Control Node Classes
+In general, you will want to mostly use the memory version of the basic Flow Control Node Classes
 when writing BTs for robotic applications and only use the basic versions when you explicitly want
 to display reactive behaviors.
 
@@ -434,11 +439,11 @@ to display reactive behaviors.
 Writing a more complex BT
 *************************
 
-Using the knowledge we gained about more complex Control Flows we now want to modify our tree that
+Using the knowledge we gained about more complex Control Flows, we now want to modify our tree that
 we created earlier to outputs either "HelloWorld" or "HelloRobot" randomly instead of a boring
 "HelloWorld".
 
-Starting from our basic tree we need to introduce a branching path through the tree where one path
+Starting from our basic tree, we need to introduce a branching path through the tree where one path
 sets the Input "b" of the "StringConcatenation" to "Hello" and the other sets it to "World".
 
 1. Adding a branching path
@@ -451,7 +456,8 @@ Additionally we add a third Constant "Constant_3" containing the string "Robot".
 #. Drag and Drop a Fallback Node before the StringConcatenation node.
 #. Drag the Constant_2 node below that Fallback node.
 #. Drag and Drop an additional Constant node to the right of the Constant_2 and adjust the Constant
-   type and value - it will automatically be named Constant_3!
+   type and value
+#. Connect the output of Constant_3 with the second input of the Concatenation
 
 .. image:: _static/second_tree_0.png
   :alt: Fallback added to the tree
@@ -483,6 +489,7 @@ So let's introduce a Sequence that takes care of this.
    generate either 0 or 1.
 #. Check the expected type and value of the CompareConstant node to make sure it will compare an int
    to either 0 or 1 - your choice.
+#. Don't forget to connect the output of RandomInt with CompareConstant
 
 .. image:: _static/second_tree_1.png
   :alt: Added random element
@@ -498,14 +505,14 @@ Using Subtrees
 **************
 
 When creating large trees both Data Wiring as well as Tree Structure can quickly get unwieldy.
-Additionally you should try to reuse behaviors as much as possible - no need to create the same tree
+Additionally, you should try to reuse behaviors as much as possible - no need to create the same tree
 section multiple times.
 
-To solve those problems bt_py provides Subtrees as a way to reduce redundancy and make it possible
+To solve those problems, bt_py provides Subtrees as a way to reduce redundancy and make it possible
 to quickly insert complex behaviors in multiple sections of one large tree while keeping the tree
 itself well structured.
 
-Inside the top level tree the Subtree is represented as a single node of the Subtree Node Class.
+Inside the top level tree, the Subtree is represented as a single node of the Subtree Node Class.
 To load a specific tree you will need to provide the path to the tree inside the Subtree Node
 Options.
 Note that the path can either be an absolute path, in which case you should lead with `file://` as
@@ -522,7 +529,7 @@ You can define Inputs/Outputs *implicitly* or *explicitly*.
 
 *Implicit* definition is the one exception to the rule of unconnected Inputs as it requires you to
 leave the Inputs you want to set from outside the Subtree to be empty.
-When unchecking the "use_io_nodes" Option in the Subtree Node Menu unconnected In- and Outputs will
+When unchecking the "use_io_nodes" Option in the Subtree Node Menu, unconnected In- and Outputs will
 be set to the Subtree In-/Outputs respectively.
 **This might cause the BT that is used as a Subtree not to be executable as a standalone tree,
 making them hard to verify!**
@@ -544,8 +551,8 @@ of the tree. But we also want to be able to still execute our "HelloWorld/Robot"
 Using what we learned before, we should utilize the tree as a Subtree, while explicitly defining
 tree Inputs and Outputs to keep the tree executable as a standalone tree.
 
-#. Drag and Drop an IOInputOption as well as an IOOutputOption node at the start and end of the
-   main tree sequence.
+#. Drag and Drop an IOInputOption to the start of the main tree sequence.
+   There should already be an IOOutputOption node at the end of the sequence from earlier.
 #. Adjust the Data Types and default values. The default value of the Input should be "Hello",
    the one of the Output is not important as we always set an input.
 #. Connect the Data Graph and delete the Constant_1 node - it has been substituted by the
@@ -568,6 +575,7 @@ string.
 #. Adjust the Constant to output "Goodbye" and connect the In-/Outputs.
 #. Verify the Output of the Subtree, it should read "GoodbyeWorld" or "GoodbyeRobot", depending on
    what was rolled in the Subtree.
+   To see the result, you might use an IOOutputOption in a similar way as before.
 
 .. image:: _static/third_tree_1.png
    :alt: Used as Subtree
@@ -600,16 +608,16 @@ Topics
 ======
 
 Both Subscriber and Publisher Node Classes are available to use.
-They use ROS 2 msg definitions as their Inputs and Outputs.
+They use ROS 2 message definitions as their Inputs and Outputs.
 
 Services and Actions
 ====================
 
-While topic interaction is nice, the main way you should interact with your robotic system through
+While topic interaction is nice, the main ways you should interact with your robotic system through
 bt_py are Services and Actions.
-When working with Services and Actions in the past we realized that composing Action Goals/Service
-Requests and decomposing Action Results/Service Responses needed large amounts of nodes in each
-tree.
+When working with Services and Actions in the past, we realized that composing Action Goals or
+Service Requests and decomposing Action Results/Service Responses needed large amounts of nodes in
+each tree.
 This is why both the **Service** as well as the **Action** Node Classes provide the fields of their
 Goals/Requests as well as Results/Responses directly in the tree, reducing the need for
 MessageToFields or FieldsToMessage contructions.

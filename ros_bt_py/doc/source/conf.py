@@ -93,7 +93,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "ros_bt_py"
-copyright = "2024, FZI Forschungszentrum Informatik"
+copyright = "2025, FZI Forschungszentrum Informatik"
 author = "FZI Forschungszentrum Informatik"
 
 # The version info for the project you're documenting, acts as replacement for
