@@ -19,7 +19,7 @@ robots, similar to BehaviorTree.Cpp_, SMACH_, FlexBE_ or RAFCON_.
 The roy_bt_py repository is home to multiple elements enabling you to quickly get started with BT
 development without the need to write any code:
 
-* The basic framework holding ros_bt_by together.
+* The basic framework holding ros_bt_py together.
 * A "standard library" of Behavior Tree nodes (i.e. subclasses of :class:`ros_bt_py.node.Node`)
   that already allow the construction of complex robot mission Behavior Trees.
   While these will let you do basically whatever you want,
@@ -41,7 +41,7 @@ ros_bt_py was created with the following goals in mind:
 
 * Fully ROS compatible.
 * Mission control for Robots, meaning long runing processes.
-* Possiblity to distribute it among multiple robots to enable cooperation in robot Teams.
+* Possiblity to distribute it among multiple robots to enable cooperation in robot teams.
 * Extendible, understandable and typesafe implementation.
 
 It is meant as a high level control option similar to SMACH or FlexBE.
