@@ -1977,13 +1977,18 @@ class TreeManager:
         # since we're guaranteed to be in the edit state
         # (i.e. `root.setup()` will be called before anything that
         # needs the node to be set up)
-        new_node = node.__class__(
-            options=deserialized_options,
-            name=request.new_name if request.rename_node else node.name,
-            debug_manager=node.debug_manager,
-            subtree_manager=node.subtree_manager,
-            ros_node=self.ros_node,
-        )
+        try:
+            new_node = node.__class__(
+                options=deserialized_options,
+                name=request.new_name if request.rename_node else node.name,
+                debug_manager=node.debug_manager,
+                subtree_manager=node.subtree_manager,
+                ros_node=self.ros_node,
+            )
+        except BehaviorTreeException as exc:
+            response.success = False
+            response.error_message = str(exc)
+            return response
 
         # Use this request to unwire any data connections the existing
         # node has - if we didn't do this, the node wouldn't ever be
