@@ -219,8 +219,9 @@ def test_node_no_ros():
         },
         ros_node=None,
     )
-    with pytest.raises(BehaviorTreeException):
-        param_node.setup()
+
+    setup_result = param_node.setup()
+    assert isinstance(setup_result.err(), BehaviorTreeException)
 
 
 def test_node_utility():
@@ -232,5 +233,5 @@ def test_node_utility():
         },
         ros_node=None,
     )
-    utility = param_node.calculate_utility()
-    assert utility == UtilityBounds()
+    utility_result = param_node.calculate_utility()
+    assert utility_result.ok() == UtilityBounds()

@@ -25,12 +25,12 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import NodeState
 
+from result import Result, Ok, Err
 from ros_bt_py.node import IO, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
-
-from rosbridge_library.internal.message_conversion import InvalidMessageException
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.exceptions import BehaviorTreeException
 
 # FIXME: input/output are exact copies of each other, move this code to a common implementation
 
@@ -51,8 +51,8 @@ class IOInputOption(IO):
     If no input is connected to `in`, the value provided via the `default` option is used.
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -63,29 +63,30 @@ class IOInputOption(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logwarn('ignoring unset "in" input and using default value')
+                self.logdebug('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logwarn("Running tick() with stale data!")
+                    self.logdebug("Running tick() with stale data!")
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.options["default"]
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -104,8 +105,8 @@ class IOInput(IO):
     If no input is connected to `in`, the value provided via the `default` input is used.
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -121,28 +122,31 @@ class IOInput(IO):
                 if not self.inputs.is_updated(input_name):
                     self.logdebug("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
-                    raise ValueError(
-                        f"Trying to tick a node with an unset input ({input_name})!"
+                    return Err(
+                        ValueError(
+                            f"Trying to tick a node with an unset input ({input_name})!"
+                        )
                     )
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.inputs["default"]
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -161,8 +165,8 @@ class IOOutputOption(IO):
     If no input is connected to `in`, the value provided via the `default` option is used.
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -178,24 +182,25 @@ class IOOutputOption(IO):
                 if not self.inputs.is_updated(input_name):
                     self.logdebug("Running tick() with stale data!")
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.options["default"]
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -214,8 +219,8 @@ class IOOutput(IO):
     If no input is connected to `in`, the value provided via the `default` input is used.
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
     def _handle_inputs(self):
         """
@@ -231,25 +236,28 @@ class IOOutput(IO):
                 if not self.inputs.is_updated(input_name):
                     self.logdebug("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
-                    raise ValueError(
-                        f"Trying to tick a node with an unset input ({input_name})!"
+                    return Err(
+                        ValueError(
+                            f"Trying to tick a node with an unset input ({input_name})!"
+                        )
                     )
         self.inputs.handle_subscriptions()
+        return Ok(None)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs["in"] is not None:
             self.outputs["out"] = self.inputs["in"]
         else:
             self.outputs["out"] = self.inputs["default"]
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["out"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)

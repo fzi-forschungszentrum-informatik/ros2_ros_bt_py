@@ -27,11 +27,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from copy import deepcopy
 
-from ros_bt_py_interfaces.msg import NodeState
+from result import Result, Ok, Err
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.helpers import rsetattr
+from ros_bt_py.helpers import rsetattr, BTNodeState
+from ros_bt_py.exceptions import BehaviorTreeException
 
 
 @define_bt_node(
@@ -46,23 +47,23 @@ from ros_bt_py.helpers import rsetattr
 class AppendListItem(Leaf):
     """Appends `item` to the end of `list`."""
 
-    def _do_setup(self):
-        pass
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs.is_updated("list") or self.inputs.is_updated("value"):
             self.outputs["new_list"] = self.inputs["list"] + [self.inputs["value"]]
 
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -80,24 +81,24 @@ class AppendListItem(Leaf):
 class SetAttr(Leaf):
     """Set the attribute named `attr` in `object`."""
 
-    def _do_setup(self):
-        pass
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs.is_updated("object") or self.inputs.is_updated("attr_value"):
             obj = deepcopy(self.inputs["object"])
             rsetattr(obj, self.options["attr_name"], self.inputs["attr_value"])
             self.outputs["new_object"] = obj
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -112,21 +113,21 @@ class SetAttr(Leaf):
 class SetDictItem(Leaf):
     """Set the attribute named `attr` in `object`."""
 
-    def _do_setup(self):
-        pass
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs.is_updated("object") or self.inputs.is_updated("attr_value"):
             obj = deepcopy(self.inputs["object"])
             obj[self.options["attr_name"]] = self.inputs["attr_value"]
             self.outputs["new_object"] = obj
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)

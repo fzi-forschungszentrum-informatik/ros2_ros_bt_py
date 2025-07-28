@@ -25,13 +25,14 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import NodeState
-
-from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig
-
 from string import Formatter
 import os
+from result import Result, Ok, Err
+
+from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.node import Leaf, define_bt_node
+from ros_bt_py.node_config import NodeConfig
 
 
 class ExtendedFormatter(Formatter):
@@ -41,7 +42,7 @@ class ExtendedFormatter(Formatter):
     Formatter with extended conversion symbol
     """
 
-    def convert_field(self, value, conversion):
+    def convert_field(self, value: str, conversion: str | None) -> str:
         """
         Extend conversion symbol.
 
@@ -83,23 +84,23 @@ myformatter = ExtendedFormatter()
 class StringConcatenation(Leaf):
     """Concatenate strings a and b."""
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["formatted_string"] = self.inputs["a"] + self.inputs["b"]
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["formatted_string"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -126,28 +127,28 @@ class FormatOptionNode(Leaf):
     formatted_string: 'foo bar'
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         try:
             self.outputs["formatted_string"] = myformatter.format(
                 self.options["format_string"], **self.inputs["dict"]
             )
         except Exception:
-            return NodeState.FAILED
-        return NodeState.SUCCEEDED
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["formatted_string"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -174,28 +175,28 @@ class FormatInputNode(Leaf):
     formatted_string: 'foo bar'
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         try:
             self.outputs["formatted_string"] = myformatter.format(
                 self.inputs["format_string"], **self.inputs["dict"]
             )
         except Exception:
-            return NodeState.FAILED
-        return NodeState.SUCCEEDED
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["formatted_string"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -222,29 +223,29 @@ class FormatOptionListNode(Leaf):
     formatted_strings: ['foo bar', 'bar bar']
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         try:
             self.outputs["formatted_strings"] = [
                 myformatter.format(phrase, **self.inputs["dict"])
                 for phrase in self.options["format_strings"]
             ]
         except Exception:
-            return NodeState.FAILED
-        return NodeState.SUCCEEDED
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["formatted_strings"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -271,29 +272,29 @@ class FormatInputListNode(Leaf):
     formatted_strings: ['foo bar', 'bar bar']
     """
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         try:
             self.outputs["formatted_strings"] = [
                 myformatter.format(phrase, **self.inputs["dict"])
                 for phrase in self.inputs["format_strings"]
             ]
         except Exception:
-            return NodeState.FAILED
-        return NodeState.SUCCEEDED
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.outputs["formatted_strings"] = None
         self.outputs.reset_updated()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -308,21 +309,21 @@ class FormatInputListNode(Leaf):
 class GetFileExtension(Leaf):
     """Return filename and extension of the provided path."""
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs.is_updated("path"):
             filename, extension = os.path.splitext(self.inputs["path"])
             self.outputs["extension"] = extension
             self.outputs["filename"] = filename
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)

@@ -46,7 +46,7 @@ class TestWait:
         wait_node.setup()
         assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -66,7 +66,7 @@ class TestWait:
         wait_node.setup()
         assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -80,7 +80,7 @@ class TestWait:
         wait_node.setup()
         assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -100,7 +100,7 @@ class TestWait:
         wait_node.setup()
         assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -112,7 +112,7 @@ class TestWait:
         assert wait_node.state == NodeState.IDLE
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -137,7 +137,7 @@ class TestWaitInput:
         wait_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -160,7 +160,7 @@ class TestWaitInput:
         wait_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -174,7 +174,7 @@ class TestWaitInput:
         wait_node.setup()
         assert wait_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -197,7 +197,7 @@ class TestWaitInput:
         wait_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
@@ -209,7 +209,7 @@ class TestWaitInput:
         assert wait_node.state == NodeState.IDLE
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick():
+        while NodeState.RUNNING == wait_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()

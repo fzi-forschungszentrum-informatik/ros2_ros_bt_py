@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """Module containing the main node for a ros_bt_py instance running the BT."""
 
+from typeguard import typechecked
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -98,7 +99,8 @@ from functools import partial
 class TreeNode(Node):
     """ROS node running a single behavior tree."""
 
-    def init_publisher(self):
+    @typechecked
+    def init_publisher(self) -> None:
         self.publisher_callback_group = ReentrantCallbackGroup()
         self.tree_structure_pub = self.create_publisher(
             TreeStructureList,
@@ -181,7 +183,8 @@ class TreeNode(Node):
             ),
         )
 
-    def init_package_manager(self, params: tree_node_parameters.Params):
+    @typechecked
+    def init_package_manager(self, params: tree_node_parameters.Params) -> None:
         self.get_logger().info("initializing package manager...")
         self.message_list_pub = self.create_publisher(
             MessageTypes,
@@ -256,7 +259,8 @@ class TreeNode(Node):
         self.package_manager.publish_message_list()
         self.get_logger().info("initialized package manager")
 
-    def init_tree_manager(self, params: tree_node_parameters.Params):
+    @typechecked
+    def init_tree_manager(self, params: tree_node_parameters.Params) -> None:
         self.debug_manager = DebugManager(
             ros_node=self,
             node_diagnostics_publish_callback=self.node_diagnostics_pub.publish,
@@ -273,7 +277,6 @@ class TreeNode(Node):
             publish_diagnostic_callback=self.ros_diagnostics_pub.publish,
             publish_tick_frequency_callback=self.tick_frequency_pub.publish,
             diagnostics_frequency=params.diagnostics_frequency_hz,
-            show_traceback_on_exception=params.show_traceback_on_exception,
         )
         self.set_collect_node_diagnostics_service = self.create_service(
             SetBool,
@@ -428,7 +431,8 @@ class TreeNode(Node):
             ),
         )
 
-    def load_default_tree(self, params: tree_node_parameters.Params):
+    @typechecked
+    def load_default_tree(self, params: tree_node_parameters.Params) -> None:
         if params.default_tree.load_default_tree:
             self.get_logger().info(
                 f"loading default tree: {params.default_tree.tree_path}"
@@ -460,9 +464,10 @@ class TreeNode(Node):
                         f"{control_tree_execution_response.error_message}"
                     )
 
-    def shutdown(self):
+    @typechecked
+    def shutdown(self) -> None:
         """Shut down tree node in a safe way."""
-        if self.tree_manager.get_state() not in [
+        if self.tree_manager.state not in [
             TreeState.IDLE,
             TreeState.EDITABLE,
             TreeState.ERROR,

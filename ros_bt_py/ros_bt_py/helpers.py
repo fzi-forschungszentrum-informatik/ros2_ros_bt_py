@@ -25,9 +25,13 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Any, Optional
-import jsonpickle
+
+# from enum import StrEnum Not available in Python3.10
+import abc
+from typing import Any, Iterable, Optional, cast
+import rclpy
 import rclpy.logging
+import jsonpickle
 import functools
 import re
 from collections import OrderedDict
@@ -35,7 +39,32 @@ from collections import OrderedDict
 import rosidl_runtime_py.utilities
 
 from ros_bt_py_interfaces.msg import NodeState, CapabilityInterface
+from typeguard import typechecked
 from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
+
+
+@typechecked
+# class BTNodeState(StrEnum):
+class BTNodeState(abc.ABC):
+    # Lots of duct tape to make type checkers happy.
+    #   All of this casting and registering becomes unnecessary
+    #   once we can switch to StrEnum, which behaves as expected
+    UNINITIALIZED = cast("BTNodeState", NodeState.UNINITIALIZED)
+    IDLE = cast("BTNodeState", NodeState.IDLE)
+    UNASSIGNED = cast("BTNodeState", NodeState.UNASSIGNED)
+    ASSIGNED = cast("BTNodeState", NodeState.ASSIGNED)
+    RUNNING = cast("BTNodeState", NodeState.RUNNING)
+    SUCCEEDED = cast("BTNodeState", NodeState.SUCCEEDED)
+    FAILED = cast("BTNodeState", NodeState.FAILED)
+    BROKEN = cast("BTNodeState", NodeState.BROKEN)
+    PAUSED = cast("BTNodeState", NodeState.PAUSED)
+    SHUTDOWN = cast("BTNodeState", NodeState.SHUTDOWN)
+    # These casts are for the purpose of mypy/pylance type checking,
+    #   which ignore abc `register` subclasses
+
+
+BTNodeState.register(str)
+# Register `str` as subclass to `BTNodeState` for the purpose of typeguard
 
 
 class MathUnaryOperator(object):
@@ -72,7 +101,7 @@ def rsetattr(obj, attr, val):
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)
 
 
-def get_default_value(data_type, ros=False):
+def get_default_value(data_type: Any, ros: bool = False) -> Any:
     if data_type is type:
         return int
     elif data_type is int:
@@ -99,12 +128,12 @@ def get_default_value(data_type, ros=False):
         return {}
 
 
-def json_encode(data):
+def json_encode(data: Any) -> Optional[str]:
     """Wrap the call to jsonpickle.encode."""
     return jsonpickle.encode(data)
 
 
-def json_decode(data):
+def json_decode(data: str) -> Optional[Any]:
     """Wrap the call to jsonpickle.decode."""
     return jsonpickle.decode(data)
 
@@ -203,6 +232,8 @@ def get_field_values_and_types(
         if optional_default is None:
             default_value = rosidl_runtime_py.utilities.get_message(field_type)()
 
+        default_value: Any
+
         # Iterate fields for recursion
         nested_value = {}
         nested_type = {}
@@ -265,7 +296,7 @@ class HashableCapabilityInterface:
         self.interface: CapabilityInterface = interface
 
     def __eq__(self, other: object) -> bool:
-        def compare_node_data_lists(list1: list, list2: list) -> bool:
+        def compare_node_data_lists(list1: Iterable, list2: Iterable) -> bool:
             l1_node_data = {(x.key, json_decode(x.serialized_type)) for x in list1}
             l2_node_data = {(x.key, json_decode(x.serialized_type)) for x in list2}
 

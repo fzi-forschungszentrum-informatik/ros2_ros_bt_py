@@ -177,6 +177,11 @@ class PackageManager(object):
             return
 
         message_types = MessageTypes()
+        # These reassignments makes the typing happy,
+        #   because they ensure that `.append` exists
+        message_types.topics = []
+        message_types.services = []
+        message_types.actions = []
 
         packages = list(rosidl_runtime_py.get_interface_packages().keys())
         for package, package_messages in rosidl_runtime_py.get_message_interfaces(
@@ -259,6 +264,9 @@ class PackageManager(object):
             return
         self.package_paths = []
         list_of_packages = Packages()
+        # This reassignment makes the typing happy,
+        #   because it ensures that `.append` exists
+        list_of_packages.packages = []
 
         for package, prefix in ament_index_python.get_packages_with_prefixes().items():
             self.package_paths.append(prefix)

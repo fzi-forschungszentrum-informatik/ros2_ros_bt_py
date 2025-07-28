@@ -86,6 +86,11 @@ def get_message_constant_fields(message_class):
 def publish_message_channels(node: Node, publisher: Publisher):
     """Return all known topic-, service-, and action-names."""
     msg = MessageChannels()
+    # These reassignments makes the typing happy,
+    #   because they ensure that `.append` exists
+    msg.topics = []
+    msg.services = []
+    msg.actions = []
     # Types are returned as 1?-element lists, so we need to unpack them
     for name, [interface, *_] in node.get_topic_names_and_types():
         msg.topics.append(MessageChannel(name=name, type=interface))
@@ -96,7 +101,7 @@ def publish_message_channels(node: Node, publisher: Publisher):
     publisher.publish(msg)
 
 
-def get_message_field_type(msg, field):
+def get_message_field_type(msg, field) -> type:
     """Return type of a field in a ros msg but check for arrays to be converted into lists."""
     if isinstance((getattr(msg, field)), array.array):
         return list
