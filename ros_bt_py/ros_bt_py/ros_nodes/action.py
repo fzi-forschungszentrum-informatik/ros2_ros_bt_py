@@ -311,13 +311,19 @@ class ActionForSetType(Leaf):
         if self._cancel_goal_future.done():
             self.logdebug("Successfully cancelled goal exectution!")
 
+            if self._input_goal != self._active_goal:
+                state = BTNodeState.RUNNING
+            else:
+                state = BTNodeState.FAILED
+
+
             self._cancel_goal_future = None
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
 
             self._internal_state = ActionStates.FINISHED
-            return Ok(BTNodeState.SUCCEEDED)
+            return Ok(state)
         if self._cancel_goal_future.cancelled():
             self.logdebug("Goal cancellation was cancelled!")
 
@@ -718,13 +724,18 @@ class Action(Leaf):
         if self._cancel_goal_future.done():
             self.logdebug("Successfully cancelled goal exectution!")
 
+            if self._input_goal != self._active_goal:
+                state = BTNodeState.RUNNING
+            else:
+                state = BTNodeState.FAILED
+
             self._cancel_goal_future = None
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
 
             self._internal_state = ActionStates.FINISHED
-            return Ok(BTNodeState.SUCCEEDED)
+            return Ok(state)
         if self._cancel_goal_future.cancelled():
             self.logdebug("Goal cancellation was cancelled!")
 
