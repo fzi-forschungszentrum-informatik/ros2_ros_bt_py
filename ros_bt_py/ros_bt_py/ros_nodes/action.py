@@ -482,8 +482,8 @@ class ActionForSetType(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "action_type": RosActionType,
             "action_name": RosActionName,
+            "action_type": RosActionType,
             "wait_for_action_server_seconds": float,
             "timeout_seconds": float,
             "fail_if_not_available": bool,
