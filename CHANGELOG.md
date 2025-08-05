@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Updated the Getting Started and Basic Tutorial of the online documentation by @chriseichmann in [#195](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/195)
 - Explicitly cast test sequences to lists by @nspielbau
 - Update status badge. by @Oberacda
 - Use flake8 instead of ament_flake8 by @Oberacda
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove no-main commit check. by @Oberacda
 
 ## New Contributors
+* @chriseichmann made their first contribution in [#195](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/195)
 * @RobertWilbrandt made their first contribution
 
 ## [0.4.0] - 2025-05-22
