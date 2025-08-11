@@ -29,9 +29,10 @@
 from rclpy.utilities import ament_index_python
 import yaml
 
-from ros_bt_py_interfaces.msg import NodeState
+from result import Result, Ok, Err
 
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.custom_types import FilePath
@@ -94,11 +95,12 @@ class YamlListOption(Leaf):
     This uses package:// and file:// style URIs.
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        # TODO Why is this checked when we do not use the ROS node here?
         if not self.has_ros_node:
             error_msg = f"{self.name} has no reference to ROS node!"
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
         self.data = None
         self.outputs["load_success"] = False
         self.outputs["load_error_msg"] = ""
@@ -112,23 +114,24 @@ class YamlListOption(Leaf):
                 self.outputs["load_error_msg"] = "Yaml file should be a list"
         except LoadFileError as ex:
             self.outputs["load_error_msg"] = str(ex)
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.data is not None:
             self.outputs["content"] = self.data
             self.outputs["line_count"] = len(self.data)
 
-            return NodeState.SUCCEEDED
-        return NodeState.FAILED
+            return Ok(BTNodeState.SUCCEEDED)
+        return Ok(BTNodeState.FAILED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
 
 @define_bt_node(
@@ -152,14 +155,16 @@ class YamlListInput(Leaf):
     This uses package:// and file:// style URIs.
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        # TODO Why is this checked when we do not use the ROS node here?
         if not self.has_ros_node:
             error_msg = f"{self.name} has no reference to ROS node!"
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
         self.data = None
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs.is_updated("file_path"):
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = ""
@@ -167,7 +172,7 @@ class YamlListInput(Leaf):
                 data = load_file(self.inputs["file_path"])
             except LoadFileError as ex:
                 self.outputs["load_error_msg"] = str(ex)
-                return NodeState.FAILED
+                return Ok(BTNodeState.FAILED)
 
             if data and isinstance(data, list):
                 self.data = data
@@ -176,18 +181,21 @@ class YamlListInput(Leaf):
                 self.outputs["line_count"] = len(self.data)
             else:
                 self.outputs["load_error_msg"] = "Yaml file should be a list"
-        return NodeState.SUCCEEDED if self.outputs["load_success"] else NodeState.FAILED
 
-    def _do_untick(self):
-        return NodeState.IDLE
+        if self.outputs["load_success"]:
+            return Ok(BTNodeState.SUCCEEDED)
+        return Ok(BTNodeState.FAILED)
 
-    def _do_reset(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
+
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.inputs.reset_updated()
         self.data = None
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
 
 @define_bt_node(
@@ -206,14 +214,16 @@ class YamlDictInput(Leaf):
     This uses package:// and file:// style URIs.
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        # TODO Why is this checked when we do not use the ROS node here?
         if not self.has_ros_node:
             error_msg = f"{self.name} has no reference to ROS node!"
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
         self.data = None
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs.is_updated("file_path"):
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = ""
@@ -221,7 +231,7 @@ class YamlDictInput(Leaf):
                 data = load_file(self.inputs["file_path"])
             except LoadFileError as ex:
                 self.outputs["load_error_msg"] = str(ex)
-                return NodeState.FAILED
+                return Ok(BTNodeState.FAILED)
 
             if data and isinstance(data, dict):
                 self.data = data
@@ -229,15 +239,17 @@ class YamlDictInput(Leaf):
                 self.outputs["content"] = self.data
             else:
                 self.outputs["load_error_msg"] = "Yaml file should be a dict"
-        return NodeState.SUCCEEDED if self.outputs["load_success"] else NodeState.FAILED
+        if self.outputs["load_success"]:
+            return Ok(BTNodeState.SUCCEEDED)
+        return Ok(BTNodeState.FAILED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.inputs.reset_updated()
         self.data = None
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)

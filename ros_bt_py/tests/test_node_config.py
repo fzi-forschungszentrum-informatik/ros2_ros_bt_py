@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+from ros_bt_py.exceptions import NodeConfigError
 from ros_bt_py.node_config import OptionRef, NodeConfig
 
 
@@ -267,7 +268,7 @@ class TestNodeConfig:
             optional_options=["optional3", "optional4"],
             version="1.0",
         )
-        base_config.extend(extension_config)
+        assert base_config.extend(extension_config).is_ok()
         assert base_config.inputs == {
             "input1": int,
             "input2": OptionRef(1),
@@ -314,14 +315,9 @@ class TestNodeConfig:
             version="1.0",
         )
 
-        with pytest.raises(ValueError) as error:
-            base_config.extend(extension_config)
-
-        expected_error_msg = (
-            f"Mismatch in max_children: {base_config.max_children} "
-            f"vs {extension_config.max_children}"
-        )
-        assert str(error.value) == expected_error_msg
+        result = base_config.extend(extension_config)
+        assert result.is_err()
+        assert isinstance(result.unwrap_err(), NodeConfigError)
 
     def test_extend_duplicate_input(self):
         base_config = NodeConfig(
@@ -342,12 +338,9 @@ class TestNodeConfig:
             version="1.0",
         )
 
-        with pytest.raises(KeyError) as error:
-            base_config.extend(extension_config)
-
-        duplicate_inputs = ["input1"]
-        expected_error_msg = f"Duplicate keys: inputs: {str(duplicate_inputs)}"
-        assert expected_error_msg in str(error.value)
+        result = base_config.extend(extension_config)
+        assert result.is_err()
+        assert isinstance(result.unwrap_err(), NodeConfigError)
 
     def test_extend_duplicate_output(self):
         base_config = NodeConfig(
@@ -368,12 +361,9 @@ class TestNodeConfig:
             version="1.0",
         )
 
-        with pytest.raises(KeyError) as error:
-            base_config.extend(extension_config)
-
-        duplicate_outputs = ["output1"]
-        expected_error_msg = f"Duplicate keys: outputs: {str(duplicate_outputs)}"
-        assert expected_error_msg in str(error.value)
+        result = base_config.extend(extension_config)
+        assert result.is_err()
+        assert isinstance(result.unwrap_err(), NodeConfigError)
 
     def test_extend_duplicate_option(self):
         base_config = NodeConfig(
@@ -394,12 +384,9 @@ class TestNodeConfig:
             version="1.0",
         )
 
-        with pytest.raises(KeyError) as error:
-            base_config.extend(extension_config)
-
-        duplicate_options = ["option1"]
-        expected_error_msg = f"Duplicate keys: options: {str(duplicate_options)}"
-        assert expected_error_msg in str(error.value)
+        result = base_config.extend(extension_config)
+        assert result.is_err()
+        assert isinstance(result.unwrap_err(), NodeConfigError)
 
     def test_extend_duplicate_optional_option(self):
         base_config = NodeConfig(
@@ -420,6 +407,8 @@ class TestNodeConfig:
             version="1.0",
         )
 
-        base_config.extend(extension_config)
+        result = base_config.extend(extension_config)
+
+        assert result.is_ok()
 
         assert base_config.optional_options == ["optional1", "optional2", "optional4"]

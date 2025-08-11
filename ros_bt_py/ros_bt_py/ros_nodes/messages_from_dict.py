@@ -29,16 +29,18 @@
 
 from typing import Dict, Optional
 
+from result import Result, Ok, Err
+
 from rclpy.node import Node
 from rosidl_runtime_py.set_message import set_message_fields
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.custom_types import RosTopicType, TypeWrapper, DICT_ROS
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
-
-from ros_bt_py_interfaces.msg import NodeState
 
 
 @define_bt_node(
@@ -60,34 +62,36 @@ class MessageFromDict(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
-        super(MessageFromDict, self).__init__(
+    ) -> None:
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._message_type = self.options["message_type"].get_type_obj()
 
         node_outputs = {"message": self._message_type}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
-    def _do_setup(self):
-        pass
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
-        if self.inputs.is_updated("dict") or self.state == NodeState.IDLE:
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        if self.inputs.is_updated("dict") or self.state == BTNodeState.IDLE:
             message = self._message_type()
             try:
                 set_message_fields(
@@ -103,17 +107,17 @@ class MessageFromDict(Leaf):
                     f"Error populating message of type {self._message_type.__name__}: "
                     f"{str(ex)}"
                 )
-                return NodeState.FAILED
-        return NodeState.SUCCEEDED
+                return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -138,33 +142,35 @@ class MessageFromConstDict(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
-        super(MessageFromConstDict, self).__init__(
+    ) -> None:
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._message_type = self.options["message_type"].get_type_obj()
 
         node_outputs = {"message": self._message_type}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
-    def _do_setup(self):
-        pass
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         message = self._message_type()
         try:
             # TODO Maybe we should enable using 'auto' headers and 'now' timestamps and
@@ -179,14 +185,14 @@ class MessageFromConstDict(Leaf):
                 f"Error populating message of type {self._message_type.__name__}: "
                 f"{str(ex)}"
             )
-            return NodeState.FAILED
-        return NodeState.SUCCEEDED
+            return Ok(BTNodeState.FAILED)
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)

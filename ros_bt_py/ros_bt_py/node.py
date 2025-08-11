@@ -29,18 +29,33 @@
 
 from contextlib import contextmanager
 from copy import deepcopy
+from types import ModuleType
+
+from result import Err, Ok, Result, as_result, is_err
 
 import abc
 import importlib
 import inspect
 import re
-from typing import Callable, Type, List, Dict, Optional
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Iterable,
+    List,
+    Tuple,
+    Type,
+    Sequence,
+    Dict,
+    Optional,
+)
 
 import rclpy
 import rclpy.logging
 from rclpy.node import Node as ROSNode
 
 from ros_bt_py_interfaces.msg import UtilityBounds
+from typeguard import typechecked
 from ros_bt_py_interfaces.msg import (
     NodeStructure,
     NodeState,
@@ -56,15 +71,21 @@ from ros_bt_py_interfaces.msg import (
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
-from ros_bt_py.exceptions import BehaviorTreeException, NodeStateError, NodeConfigError
+from ros_bt_py.exceptions import (
+    BehaviorTreeException,
+    NodeStateError,
+    NodeConfigError,
+    TreeTopologyError,
+)
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.custom_types import TypeWrapper
-from ros_bt_py.helpers import get_default_value, json_decode, json_encode
+from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode, json_encode
 
 
+@typechecked
 def _check_node_data_match(
-    node_config: Dict[str, Type], node_data: List[NodeIO | NodeOption]
+    node_config: Dict[str, Type], node_data: Iterable[NodeIO | NodeOption]
 ) -> bool:
     for data in node_data:
         try:
@@ -76,32 +97,9 @@ def _check_node_data_match(
     return True
 
 
-def _set_data_port(
-    data_map: NodeDataMap, configuration: List[NodeIO], type: str, permissive=False
-) -> None:
-    try:
-        for msg in configuration:
-            try:
-                data_map[msg.key] = json_decode(msg.serialized_value)
-            except KeyError as exc:
-                rclpy.logging.get_logger(data_map.name).warn(
-                    f"Could not set a non existing {type} {str(exc)}"
-                )
-            except AttributeError as exc:
-                if permissive:
-                    data_map[msg.key] = None
-                else:
-                    raise AttributeError(
-                        f"AttributeError, maybe a ROS Message definition changed. {str(exc)}"
-                    ) from exc
-    except ValueError as exc:
-        raise BehaviorTreeException(
-            f"Failed to instantiate node from message: {str(exc)}"
-        ) from exc
-
-
-def _connect_wirings(data_wirings: List, type: str) -> Dict:
-    connected_wirings = {}
+@typechecked
+def _connect_wirings(data_wirings: List[Wiring], type: str) -> Dict[str, List[str]]:
+    connected_wirings: Dict[str, List[str]] = {}
     for wiring in data_wirings:
         if wiring.source.data_kind == type:
             if wiring.source.node_name in connected_wirings:
@@ -120,7 +118,8 @@ def _connect_wirings(data_wirings: List, type: str) -> Dict:
     return connected_wirings
 
 
-def define_bt_node(node_config):
+@typechecked
+def define_bt_node(node_config: NodeConfig) -> Callable[[Type["Node"]], Type["Node"]]:
     """
     Provide information about this Node's interface.
 
@@ -134,17 +133,15 @@ def define_bt_node(node_config):
     class. You should not need to register anything manually!
     """
 
-    def inner_dec(node_class):
-        if not issubclass(node_class, Node):
-            rclpy.logging.get_logger(node_class.__name__).error(
-                f"Class {node_class.__name__} is not a subclass of Node, "
-                f"cannot apply define_bt_node decorator!"
-            )
-            raise TypeError()
+    def inner_dec(node_class: Type[Node]) -> Type[Node]:
         # Merge supplied node config with those of base classes
         for base in node_class.__bases__:
             if hasattr(base, "_node_config") and base._node_config:
-                node_config.extend(base._node_config)
+                config_extend_result = node_config.extend(base._node_config)
+                if config_extend_result.is_err():
+                    rclpy.logging.get_logger(node_class.__name__).error(
+                        f"Node config could not be extended: {config_extend_result.unwrap_err()}"
+                    )
         node_class._node_config = node_config
 
         if inspect.isabstract(node_class):
@@ -185,7 +182,9 @@ def define_bt_node(node_config):
                 ][node_class.__name__]
                 candidates = list(
                     filter(
-                        lambda node_class_candidate: __check_dict_equiv(
+                        lambda node_class_candidate: node_class_candidate._node_config
+                        is not None
+                        and __check_dict_equiv(
                             node_class_candidate._node_config.inputs, node_config.inputs
                         )
                         and __check_dict_equiv(
@@ -219,13 +218,16 @@ class NodeMeta(abc.ABCMeta):
     (inputs, outputs and options) to every node class.
     """
 
+    _node_config: Optional[NodeConfig] = None
+    _doc: str = ""
+
     def __new__(cls, name, bases, attrs):
         """Add doc attribute to the new NodeMeta class."""
         attrs["_doc"] = attrs.get("__doc__", "")
         return super(NodeMeta, cls).__new__(cls, name, bases, attrs)
 
     @property
-    def __doc__(self):
+    def __doc__(self) -> Optional[str]:
         """Generate documentation depending on the node configuration."""
         if (
             hasattr(self, "_node_config")
@@ -325,9 +327,12 @@ class Node(object, metaclass=NodeMeta):
         self.logdebug("Ticking without debug manager")
         yield
 
-    node_classes = {}
-    _node_config = None
-    permissive = False
+    node_classes: Dict[str, Dict[str, List[Type["Node"]]]] = {}
+    _node_config: Optional[NodeConfig] = None
+    permissive: bool = False
+    debug_manager: Optional[DebugManager]
+    subtree_manager: Optional[SubtreeManager]
+    _state: BTNodeState
 
     def __init__(
         self,
@@ -336,19 +341,16 @@ class Node(object, metaclass=NodeMeta):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[ROSNode] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
+    ) -> None:
         """
         Prepare class members.
 
         After this finishes, the Node is *not* ready to run. You still
         need to do your own initialization in :meth:`_do_setup`.
 
-        :param succeed_always: If checked the node will return successful after every tick.
-
-        :param simulate_tick: If true, the node should not change the environment,
-        eg. by calling external services. These calls should be omitted.
+        Since the `__init__` method has to return None,
+        it doesn't use `result` but raises errors as normal.
+        The `from_msg` method catches any errors and passes them on as a `result.Err`.
 
         :param dict options: Map from option names to option values. Use these for configuring
         your node, do not provide a custom `__init()__` method!
@@ -368,19 +370,16 @@ class Node(object, metaclass=NodeMeta):
         else:
             self.name = type(self).__name__
         # Only used to make finding the root of the tree easier
-        self.parent = None
-        self._state = NodeState.UNINITIALIZED
-        self.children: list[Node] = []
+        self.parent: Optional[Node] = None
+        self._state: BTNodeState = BTNodeState.UNINITIALIZED
+        self.children: List[Node] = []
 
         self.subscriptions: list[Wiring] = []
-        self.subscribers: list[tuple[Wiring, Callable, type]] = []
+        self.subscribers: list[tuple[Wiring, Callable[[type], None], type]] = []
 
         self._ros_node: Optional[ROSNode] = ros_node
-        self.debug_manager = debug_manager
-        self.subtree_manager = subtree_manager
-
-        self.succeed_always = succeed_always
-        self.simulate_tick = simulate_tick
+        self.debug_manager: Optional[DebugManager] = debug_manager
+        self.subtree_manager: Optional[SubtreeManager] = subtree_manager
 
         if not self._node_config:
             raise NodeConfigError("Missing node_config, cannot initialize!")
@@ -390,12 +389,14 @@ class Node(object, metaclass=NodeMeta):
         self.node_config = deepcopy(self._node_config)
 
         self.options = NodeDataMap(name="options")
-        self._register_node_data(
+        register_result = self._register_node_data(
             source_map=self.node_config.options,
             target_map=self.options,
             values=options,
             permissive=self.permissive,
         )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
         # Warn about unset options, ignore missing optional_options
         unset_option_keys = [
@@ -420,31 +421,36 @@ class Node(object, metaclass=NodeMeta):
                 raise ValueError(f"Extra options: {str(extra_option_keys)}")
 
         self.inputs = NodeDataMap(name="inputs")
-        self._register_node_data(
+        register_result = self._register_node_data(
             source_map=self.node_config.inputs, target_map=self.inputs
         )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
         self.outputs = NodeDataMap(name="outputs")
-        self._register_node_data(
+        register_result = self._register_node_data(
             source_map=self.node_config.outputs, target_map=self.outputs
         )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
         # Don't setup automatically - nodes should be available as pure data
         # containers before the user decides to call setup() themselves!
 
     @property
-    def state(self) -> str:
+    def state(self) -> BTNodeState:
         """State of the node."""
         return self._state
 
     @state.setter
-    def state(self, new_state: str):
+    @typechecked
+    def state(self, new_state: BTNodeState):
+        self.logdebug(f"Setting state from  {self._state} to {new_state}")
         self._state = new_state
 
     @property
     def has_ros_node(self) -> bool:
-        available = self._ros_node is not None
-        return available
+        return self._ros_node is not None
 
     @property
     def ros_node(self) -> ROSNode:
@@ -461,10 +467,12 @@ class Node(object, metaclass=NodeMeta):
             raise RuntimeError(error_msg)
 
     @ros_node.setter
+    @typechecked
     def ros_node(self, new_ros_node: ROSNode):
+        self.logdebug(f"Setting new ROS node: {new_ros_node}")
         self._ros_node = new_ros_node
 
-    def setup(self) -> str:
+    def setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Prepare the node to be ticked for the first time.
 
@@ -473,9 +481,9 @@ class Node(object, metaclass=NodeMeta):
         you can use those values in your implementation of
         :meth:`_do_setup`
 
-        Sets the state of the node to IDLE.
+        Sets the state of the node to IDLE or BROKEN.
 
-        :raises: BehaviorTreeException if called when the node is not UNINITIALIZED or SHUTDOWN
+        :returns: Returns a result object with the new state or the error message.
         """
         report_state = self._dummy_report_state()
         if self.debug_manager:
@@ -483,70 +491,60 @@ class Node(object, metaclass=NodeMeta):
 
         with report_state:
             if (
-                self.state != NodeState.UNINITIALIZED
-                and self.state != NodeState.SHUTDOWN
+                self.state != BTNodeState.UNINITIALIZED
+                and self.state != BTNodeState.SHUTDOWN
             ):
-                raise BehaviorTreeException(
-                    "Calling setup() is only allowed in states %s and %s, "
-                    "but node %s is in state %s"
-                    % (
-                        NodeState.UNINITIALIZED,
-                        NodeState.SHUTDOWN,
-                        self.name,
-                        self.state,
+                return Err(
+                    NodeStateError(
+                        "Calling setup() is only allowed in states "
+                        f"{BTNodeState.UNINITIALIZED} and {BTNodeState.SHUTDOWN}, "
+                        f"but node {self.name} is in state {self.state}"
                     )
                 )
-            self.state = self._do_setup()
-            if self.state is None:
-                self.state = NodeState.IDLE
-            self.raise_if_in_invalid_state(
-                allowed_states=[NodeState.IDLE], action_name="setup()"
-            )
-
+            setup_result = self._do_setup()
             self._setup_called = True
-        return self.state
+
+            if setup_result.is_err():
+                self.state = BTNodeState.BROKEN
+            else:
+                self.state = setup_result.unwrap()
+
+        return setup_result
 
     @abc.abstractmethod
-    def _do_setup(self) -> str:
+    @typechecked
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Use this to do custom node setup.
 
         Note that this will be called once, when the tree is first
         started, before the first call of :meth:`tick`.
-
-        :rtype: basestring
-        :returns:
-          Nothing. If this method doesn't raise an exception, the node state will be
-          IDLE afterwards.
         """
         msg = f"Trying to setup a node of type {self.__class__.__name__}"
         "without _do_setup function!"
 
-        self.logfatal(msg)
-        return NodeState.BROKEN
+        self.logerr(msg)
+        return Err(BehaviorTreeException(msg))
 
-    def _handle_inputs(self):
+    def _handle_inputs(self) -> Result[None, str]:
         """
         Execute the callbacks registered by :meth:`_wire_input`.
 
         But only if an input has been updated since the last tick.
-
-        :raises: ValueError
-          If any input is unset
         """
         for input_name in self.inputs:
             if not self.inputs.is_updated(input_name):
-                self.logdebug("Running tick() with stale data!")
+                continue
             if self.inputs[input_name] is None:
                 # Omit the Error if we declared it to be "okay"
                 # This might still not be the best solution but enables some flexibility
                 if input_name not in self.node_config.optional_options:
-                    raise ValueError(
+                    return Err(
                         f"Trying to tick a node ({self.name}) with an unset input ({input_name})!"
                     )
-        self.inputs.handle_subscriptions()
+        return Ok(self.inputs.handle_subscriptions())
 
-    def _handle_outputs(self):
+    def _handle_outputs(self) -> None:
         """
         Execute the callbacks registered by :meth:`NodeDataMap.subscribe`: .
 
@@ -556,7 +554,7 @@ class Node(object, metaclass=NodeMeta):
         """
         self.outputs.handle_subscriptions()
 
-    def tick(self) -> str:
+    def tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Handle node on tick action everytime this is called (at ~10-20Hz, usually).
 
@@ -566,17 +564,16 @@ class Node(object, metaclass=NodeMeta):
         :returns:
           The state of the node after ticking - should be `SUCCEEDED`, `FAILED` or `RUNNING`.
 
-        :raises: BehaviorTreeException if a tick is impossible / not allowed
         """
         report_tick = self._dummy_report_tick()
         if self.debug_manager:
             report_tick = self.debug_manager.report_tick(self)
 
         with report_tick:
-            if self.state is NodeState.UNINITIALIZED:
-                raise BehaviorTreeException("Trying to tick uninitialized node!")
+            if self.state is BTNodeState.UNINITIALIZED:
+                return Err(BehaviorTreeException("Trying to tick uninitialized node!"))
 
-            unset_options = []
+            unset_options: List[str] = []
             for option_name in self.options:
                 if (
                     not self.options.is_updated(option_name)
@@ -585,17 +582,25 @@ class Node(object, metaclass=NodeMeta):
                     unset_options.append(option_name)
             if unset_options:
                 msg = f"Trying to tick node with unset options: {str(unset_options)}"
-                self.logerr(msg)
-                raise BehaviorTreeException(msg)
+                self.logwarn(msg)
+                self.state = BTNodeState.BROKEN
+                return Err(BehaviorTreeException(msg))
             self.options.handle_subscriptions()
 
             # Outputs are updated in the tick. To catch that, we need to reset here.
             self.outputs.reset_updated()
 
             # Inputs can override options!
-            self._handle_inputs()
-
-            self.state = self._do_tick()
+            handle_input_result = self._handle_inputs()
+            if handle_input_result.is_err():
+                self.state = BTNodeState.BROKEN
+                return Err(BehaviorTreeException(handle_input_result.err()))
+            tick_result = self._do_tick()
+            if tick_result.is_ok():
+                self.state = tick_result.unwrap()
+            else:
+                self.state = BTNodeState.BROKEN
+                return tick_result
 
             # Inputs are updated by other nodes' outputs, i.e. some time after
             # we use them here. In some cases, inputs might be connected to
@@ -604,31 +609,40 @@ class Node(object, metaclass=NodeMeta):
             # cycle!
             self.inputs.reset_updated()
 
-            self.raise_if_in_invalid_state(
+            valid_state_result = self.check_if_in_invalid_state(
                 allowed_states=[
-                    NodeState.RUNNING,
-                    NodeState.SUCCEEDED,
-                    NodeState.FAILED,
-                    NodeState.ASSIGNED,
-                    NodeState.UNASSIGNED,
+                    BTNodeState.RUNNING,
+                    BTNodeState.SUCCEEDED,
+                    BTNodeState.FAILED,
+                    BTNodeState.ASSIGNED,
+                    BTNodeState.UNASSIGNED,
                 ],
                 action_name="tick()",
             )
+            if valid_state_result.is_err():
+                return Err(valid_state_result.unwrap_err())
+
             self._handle_outputs()
 
-            return self.state
+            return Ok(self.state)
 
-    def raise_if_in_invalid_state(self, allowed_states: list[str], action_name: str):
-        """Raise an error if `self.state` is not in `allowed_states`."""
+    @typechecked
+    def check_if_in_invalid_state(
+        self, allowed_states: list[BTNodeState], action_name: str
+    ) -> Result[None, NodeStateError]:
         if self.state not in allowed_states:
-            raise NodeStateError(
-                f"Node {self.name} ({type(self).__name__}) was in invalid state "
-                f"'{self.state}' after action {action_name}. "
-                f"Allowed states: {str(allowed_states)}"
+            return Err(
+                NodeStateError(
+                    f"Node {self.name} ({type(self).__name__}) was in invalid state "
+                    f"'{self.state}' after action {action_name}. "
+                    f"Allowed states: {str(allowed_states)}"
+                )
             )
+        return Ok(None)
 
     @abc.abstractmethod
-    def _do_tick(self) -> str:
+    @typechecked
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Every Node class must override this.
 
@@ -639,10 +653,10 @@ class Node(object, metaclass=NodeMeta):
           One of the constants in :class:`ros_bt_py_msgs.msg.Node`
         """
         msg = f"Ticking a node of type {self.__class__.__name__} without _do_tick function!"
-        self.logfatal(msg)
-        return NodeState.BROKEN
+        self.logerr(msg)
+        return Err(BehaviorTreeException(msg))
 
-    def untick(self) -> str:
+    def untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Signal a node that it should stop any background tasks.
 
@@ -652,31 +666,36 @@ class Node(object, metaclass=NodeMeta):
         The node's outputs' `updated` flags are also reset!
 
         A class inheriting from :class:`Node` should override :meth:`_do_untick` instead of this!
-
-        :raises: BehaviorTreeException
-
-        When trying to untick a node that has not been initialized yet
-        by running `setup()`.
-
         """
         report_state = self._dummy_report_state()
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "UNTICK")
 
         with report_state:
-            if self.state is NodeState.UNINITIALIZED:
-                raise BehaviorTreeException("Trying to untick uninitialized node!")
-            self.state = self._do_untick()
-            self.raise_if_in_invalid_state(
-                allowed_states=[NodeState.IDLE, NodeState.PAUSED],
+            if self.state is BTNodeState.UNINITIALIZED:
+                return Err(
+                    BehaviorTreeException("Trying to untick uninitialized node!")
+                )
+            untick_result = self._do_untick()
+            if untick_result.is_ok():
+                self.state = untick_result.unwrap()
+            else:
+                self.state = BTNodeState.BROKEN
+                return untick_result
+
+            check_state_result = self.check_if_in_invalid_state(
+                allowed_states=[BTNodeState.IDLE, BTNodeState.PAUSED],
                 action_name="untick()",
             )
+            if check_state_result.is_err():
+                return Err(check_state_result.unwrap_err())
 
             self.outputs.reset_updated()
-            return self.state
+            return Ok(self.state)
 
     @abc.abstractmethod
-    def _do_untick(self) -> str:
+    @typechecked
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Abstract method used to implement the actual untick operations.
 
@@ -689,10 +708,10 @@ class Node(object, metaclass=NodeMeta):
         3. Be ready to resume on the next call of :meth:`tick`
         """
         msg = f"Unticking a node of type {self.__class__.__name__} without _do_untick function!"
-        self.logfatal(msg)
-        return NodeState.BROKEN
+        self.logerr(msg)
+        return Err(BehaviorTreeException(msg))
 
-    def reset(self) -> str:
+    def reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Reset a node completly.
 
@@ -700,19 +719,17 @@ class Node(object, metaclass=NodeMeta):
         execution, ready to be resumed, :meth:`reset` means returning
         to the same state the node was in right after calling :meth:`setup`
 
-        :raises: BehaviorTreeException
-          When trying to reset a node that hasn't been initialized yet
         """
         report_state = self._dummy_report_state()
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "RESET")
 
         with report_state:
-            if self.state is NodeState.UNINITIALIZED:
-                raise BehaviorTreeException("Trying to reset uninitialized node!")
+            if self.state is BTNodeState.UNINITIALIZED:
+                return Err(BehaviorTreeException("Trying to reset uninitialized node!"))
 
-            if self.state is NodeState.SHUTDOWN:
-                raise BehaviorTreeException("Trying to reset shutdown node!")
+            if self.state is BTNodeState.SHUTDOWN:
+                return Err(BehaviorTreeException("Trying to reset shutdown node!"))
 
             # Reset input/output reset state and set outputs to None
             # before calling _do_reset() - the node can overwrite the None
@@ -723,14 +740,24 @@ class Node(object, metaclass=NodeMeta):
                 self.outputs[output_key] = None
             self.outputs.reset_updated()
 
-            self.state = self._do_reset()
-            self.raise_if_in_invalid_state(
-                allowed_states=[NodeState.IDLE], action_name="reset()"
+            reset_result = self._do_reset()
+            if reset_result.is_ok():
+                self.state = reset_result.unwrap()
+            else:
+                self.state = BTNodeState.BROKEN
+                return reset_result
+            valid_state_result = self.check_if_in_invalid_state(
+                allowed_states=[BTNodeState.IDLE], action_name="reset()"
             )
-            return self.state
+
+            if valid_state_result.is_err():
+                return Err(valid_state_result.unwrap_err())
+
+            return Ok(self.state)
 
     @abc.abstractmethod
-    def _do_reset(self) -> str:
+    @typechecked
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Abstract method used to implement the reset action.
 
@@ -744,15 +771,19 @@ class Node(object, metaclass=NodeMeta):
           The new state of the node (should be IDLE unless an error happened)
         """
         msg = f"Resetting a node of type {self.__class__.__name__} without _do_reset function!"
-        self.logfatal(msg)
-        return NodeState.BROKEN
+        self.logerr(msg)
+        return Err(BehaviorTreeException(msg))
 
-    def shutdown(self) -> str:
+    def shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Prepare a node for deletion.
 
-        This method just calls :meth:`_do_shutdown`, which any
+        This method calls :meth:`_do_shutdown`, which any
         subclass must override.
+
+        This method, in contrast to other similar methods,
+        also descends down the whole tree and calls shutdown on all children.
+        That means the `_do_shutdown` method is only responsible for the node itself.
 
         This gives the node a chance to clean up any resources it might
         be holding before getting deleted.
@@ -763,27 +794,45 @@ class Node(object, metaclass=NodeMeta):
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
         with report_state:
-            if self.state == NodeState.UNINITIALIZED:
+            error_result = None
+            if self.state == BTNodeState.SHUTDOWN:
                 self.loginfo(
                     "Not calling shutdown method, node has not been initialized yet"
                 )
-                self.state = NodeState.SHUTDOWN
+                self.state = BTNodeState.SHUTDOWN
                 # Call shutdown on all children - this should only set
                 # their state to shutdown
                 for child in self.children:
-                    child.shutdown()
+                    shutdown_result = child.shutdown()
+                    if shutdown_result.is_err():
+                        self.logwarn(
+                            f"Node {child.name} raised the following error during shutdown"
+                            "Continuing to shutdown other nodes"
+                            f"{shutdown_result.unwrap_err()}"
+                        )
+                        error_result = shutdown_result
 
-            self.state = self._do_shutdown()
-            if self.state is None:
-                self.state = NodeState.SHUTDOWN
+            shutdown_result = self._do_shutdown()
+            if shutdown_result.is_ok():
+                self.state = shutdown_result.unwrap()
+            else:
+                self.state = BTNodeState.BROKEN
+                error_result = shutdown_result
 
             for child in self.children:
-                child.shutdown()
+                shutdown_result = child.shutdown()
+                if shutdown_result.is_err():
+                    self.logwarn(
+                        f"Node {child.name} raised the following error during shutdown"
+                        "Continuing to shutdown other nodes"
+                        f"{shutdown_result.unwrap_err()}"
+                    )
+                    error_result = shutdown_result
 
             unshutdown_children = [
                 f"{child.name} ({type(child).__name__}), state: {child.state}"
                 for child in self.children
-                if child.state != NodeState.SHUTDOWN
+                if child.state != BTNodeState.SHUTDOWN
             ]
             if len(unshutdown_children) > 0:
                 self.logwarn(
@@ -791,10 +840,15 @@ class Node(object, metaclass=NodeMeta):
                     "List of not-shutdown children and states:\n"
                     f"{unshutdown_children}"
                 )
-            return self.state
+
+            if error_result is not None:
+                return error_result
+
+            return Ok(self.state)
 
     @abc.abstractmethod
-    def _do_shutdown(self) -> str:
+    @typechecked
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Abstract method implementing the shutdown action.
 
@@ -804,10 +858,10 @@ class Node(object, metaclass=NodeMeta):
         msg = f"Shutting down a node of type {self.__class__.__name__}"
         "without _do_shutdown function!"
 
-        self.logfatal(msg)
-        return NodeState.BROKEN
+        self.logerr(msg)
+        return Err(BehaviorTreeException(msg))
 
-    def calculate_utility(self) -> UtilityBounds:
+    def calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         """
         Calculate the utility bounds for this node.
 
@@ -824,7 +878,7 @@ class Node(object, metaclass=NodeMeta):
         return self._do_calculate_utility()
 
     # TODO Should this be flagged as abstract?
-    def _do_calculate_utility(self) -> UtilityBounds:
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         """
         Calculate utility values. This is a default implementation.
 
@@ -838,14 +892,17 @@ class Node(object, metaclass=NodeMeta):
         considered to execute at no cost at all.
 
         """
-        return UtilityBounds(
-            can_execute=True,
-            has_lower_bound_success=True,
-            has_upper_bound_success=True,
-            has_lower_bound_failure=True,
-            has_upper_bound_failure=True,
+        return Ok(
+            UtilityBounds(
+                can_execute=True,
+                has_lower_bound_success=True,
+                has_upper_bound_success=True,
+                has_lower_bound_failure=True,
+                has_upper_bound_failure=True,
+            )
         )
 
+    @typechecked
     def get_child_index(self, child_name: str) -> Optional[int]:
         """
         Get the index in the `children` array of the child with the given name.
@@ -863,16 +920,11 @@ class Node(object, metaclass=NodeMeta):
         except ValueError:
             return None
 
-    def add_child(self, child: "Node", at_index=None) -> "Node":
-        """
-        Add a child to this node at the given index.
-
-        :raises: BehaviorTreeException, KeyError
-
-        `BehaviorTreeException` if the number of children after the add operation
-        would exceed the maximum number of children, `KeyError` if a
-        child of the same name already exists
-        """
+    @typechecked
+    def add_child(
+        self, child: "Node", at_index: Optional[int] = None
+    ) -> Result["Node", BehaviorTreeException | TreeTopologyError]:
+        """Add a child to this node at the given index."""
         if (
             self.node_config.max_children is not None
             and len(self.children) == self.node_config.max_children
@@ -882,10 +934,12 @@ class Node(object, metaclass=NodeMeta):
                 "children (%d) is already present" % self.node_config.max_children
             )
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
 
         if child.name in (child1.name for child1 in self.children):
-            raise KeyError(f'Already have a child with name "{child.name}"')
+            return Err(
+                TreeTopologyError(f"Already have a child with name '{child.name}'")
+            )
         if at_index is None:
             at_index = len(self.children)
 
@@ -897,44 +951,44 @@ class Node(object, metaclass=NodeMeta):
         child.parent = self
 
         # return self to allow chaining of addChild calls
-        return self
+        return Ok(self)
 
-    def remove_child(self, child_name: str) -> "Node":
+    @typechecked
+    def remove_child(self, child_name: str) -> Result["Node", KeyError]:
         """
         Remove the child with the given name and return it.
 
         :param basestring child_name: The name of the child to remove
-
-        :rtype: Node
-        :returns: The child that was just removed
-        :raises: KeyError if no child with that name exists
         """
         child_index = self.get_child_index(child_name)
         if child_index is None:
-            raise KeyError(f'Node {self.name} has no child named "{child_name}"')
+            return Err(KeyError(f'Node {self.name} has no child named "{child_name}"'))
 
         tmp = self.children[child_index]
         del self.children[child_index]
         tmp.parent = None
-        return tmp
+        return Ok(tmp)
 
     @staticmethod
+    @typechecked
     def _find_option_refs(
-        source_map: Dict[str, type],
+        source_map: Dict[str, Any],
         target_map: NodeDataMap,
-        values=None,
-        permissive=False,
-    ) -> None:
+        values: Optional[Dict[str, Any]] = None,
+        permissive: bool = False,
+    ) -> Result[None, NodeConfigError]:
         for key, data_type in {
             k: v for (k, v) in source_map.items() if not isinstance(v, OptionRef)
         }.items():
             if key in target_map:
-                raise NodeConfigError(f"Duplicate data name: {key}")
-            target_map.add(key, NodeData(data_type=data_type))
+                return Err(NodeConfigError(f"Duplicate data name: {key}"))
+            add_result = target_map.add(key, NodeData(data_type=data_type))
+            if add_result.is_err():
+                return Err(NodeConfigError(add_result.unwrap_err()))
             if values is not None and key in values:
                 try:
                     target_map[key] = values[key]
-                except TypeError as e:
+                except TypeError:
                     if permissive:
                         if data_type == type:
                             target_map[key] = int
@@ -947,17 +1001,29 @@ class Node(object, metaclass=NodeMeta):
                                             # overwrite already set target_map
                                             target_map[key_opt] = 0
                         else:
-                            raise e
+                            return Err(
+                                NodeConfigError(
+                                    f"Value does not match destination type for: {key} "
+                                    "and is not a type!"
+                                )
+                            )
                     else:
-                        raise e
+                        return Err(
+                            NodeConfigError(
+                                f"Value does not match destination type for: {key} "
+                                "and not in permissive mode!"
+                            )
+                        )
+        return Ok(None)
 
+    @typechecked
     def _register_node_data(
         self,
-        source_map: Dict[str, type],
+        source_map: Dict[str, Any],
         target_map: NodeDataMap,
-        values=None,
-        permissive=False,
-    ) -> None:
+        values: Optional[Dict[str, Any]] = None,
+        permissive: bool = False,
+    ) -> Result[None, NodeConfigError]:
         """
         Register a number of typed :class:`NodeData` in the given map.
 
@@ -974,7 +1040,7 @@ class Node(object, metaclass=NodeMeta):
         :param dict(str, value) values:
         An optional dictionary containing the values for the NodeData
 
-        :raises: NodeConfigError in any of the following cases:
+        :returns: NodeConfigError in any of the following cases:
           * If any of the keys in `source_map` already exist in `target_map`
           * If an OptionRef value is passed, but `allow_ref` is `False`
           * If an OptionRef references an option value that has not been set or
@@ -983,37 +1049,50 @@ class Node(object, metaclass=NodeMeta):
 
         """
         # Find the values that are not OptionRefs first
-        self._find_option_refs(
+        find_option_refs_result = self._find_option_refs(
             source_map=source_map,
             target_map=target_map,
             permissive=permissive,
             values=values,
         )
+        if find_option_refs_result.is_err():
+            return find_option_refs_result
 
         # Now process OptionRefs
         for key, data_type in {
             k: v for (k, v) in source_map.items() if isinstance(v, OptionRef)
         }.items():
             if key in target_map:
-                raise NodeConfigError(f"Duplicate {target_map.name} data name: {key}")
+                return Err(
+                    NodeConfigError(f"Duplicate {target_map.name} data name: {key}")
+                )
 
             if data_type.option_key not in self.options:
-                raise NodeConfigError(
-                    'OptionRef for %s key "%s" references invalid '
-                    'option key "%s"' % (target_map.name, key, data_type.option_key)
+                return Err(
+                    NodeConfigError(
+                        f'OptionRef for {target_map.name} key "{key}" references invalid '
+                        f'option key "{data_type.option_key}"'
+                    )
                 )
             if not self.options.is_updated(data_type.option_key):
-                raise NodeConfigError(
-                    'OptionRef for %s key "%s" references unwritten '
-                    'option key "%s"' % (target_map.name, key, data_type.option_key)
+                return Err(
+                    NodeConfigError(
+                        f'OptionRef for {target_map.name} key "{key}" references unwritten '
+                        f'option key "{data_type.option_key}"'
+                    )
                 )
             if not isinstance(self.options[data_type.option_key], type):
-                raise NodeConfigError(
-                    'OptionRef for %s key "%s" references option key '
-                    '"%s" that does not contain a type!'
-                    % (target_map.name, key, data_type.option_key)
+                return Err(
+                    NodeConfigError(
+                        f'OptionRef for {target_map.name} key "{key}" references option key '
+                        f'"{data_type.option_key}" that does not contain a type!'
+                    )
                 )
-            target_map.add(key, NodeData(data_type=self.options[data_type.option_key]))
+            add_result = target_map.add(
+                key, NodeData(data_type=self.options[data_type.option_key])
+            )
+            if add_result.is_err():
+                return Err(NodeConfigError(add_result.unwrap_err()))
             if values is not None and key in values:
                 try:
                     target_map[key] = values[key]
@@ -1025,7 +1104,7 @@ class Node(object, metaclass=NodeMeta):
                         ):
                             fixed_new_value = type(values[key])()
 
-                            for i, slot in enumerate(type(values[key]).__slots__):
+                            for _, slot in enumerate(type(values[key]).__slots__):
                                 setattr(
                                     fixed_new_value,
                                     slot,
@@ -1040,32 +1119,36 @@ class Node(object, metaclass=NodeMeta):
                                 )
                             target_map[key] = fixed_new_value
                         else:
-                            raise AttributeError(
-                                f"AttributeError, maybe a ROS Message definition changed. {str(e)}"
+                            return Err(
+                                NodeConfigError(
+                                    "Types do not match, "
+                                    f"did ROS Message definitons change: {str(e)}"
+                                )
                             )
                     else:
-                        raise AttributeError(
-                            f"AttributeError, maybe a ROS Message definition changed. {str(e)}"
+                        return Err(
+                            NodeConfigError(
+                                "Types do not match, "
+                                f"did ROS Message definitons change: {str(e)}"
+                            )
                         )
+        return Ok(None)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Create a string representation of the node class."""
         return (
-            "%s(options=%r, name=%r), parent_name:%r, state:%r, inputs:%r, outputs:%r,"
-            " children:%r"
-            % (
-                type(self).__name__,
-                {key: self.options[key] for key in self.options},
-                self.name,
-                self.parent.name if self.parent else "",
-                self.state,
-                self.inputs,
-                self.outputs,
-                self.children,
-            )
+            f"{type(self).__name__}("
+            f"options={({key: self.options[key] for key in self.options})}, "
+            f"name={self.name}), "
+            f"parent_name:{self.parent.name if self.parent else ''}, "
+            f"state: {self.state}, "
+            f"inputs: {self.inputs}, "
+            f"outputs: {self.outputs}, "
+            f"children: {self.children}"
         )
 
-    def __eq__(self, other):
+    @typechecked
+    def __eq__(self, other: Any) -> bool:
         """Check if all attributes of a node are equal."""
         return (
             self.name == other.name
@@ -1079,11 +1162,13 @@ class Node(object, metaclass=NodeMeta):
             and self.children == other.children
         )
 
-    def __ne__(self, other):
+    @typechecked
+    def __ne__(self, other: Any) -> bool:
         """Check if two nodes have a single differing attribute."""
         return not self == other
 
-    def get_data_map(self, data_kind):
+    @typechecked
+    def get_data_map(self, data_kind: str) -> Result[NodeDataMap, KeyError]:
         """
         Return one of our NodeDataMaps by string name.
 
@@ -1093,20 +1178,23 @@ class Node(object, metaclass=NodeMeta):
         :rtype: NodeDataMap
         """
         if data_kind == NodeDataLocation.INPUT_DATA:
-            return self.inputs
+            return Ok(self.inputs)
         if data_kind == NodeDataLocation.OUTPUT_DATA:
-            return self.outputs
+            return Ok(self.outputs)
         if data_kind == NodeDataLocation.OPTION_DATA:
-            return self.options
+            return Ok(self.options)
 
-        raise KeyError(
-            f"{data_kind} is not a valid value to pass to Node.get_data_map()!"
+        return Err(
+            KeyError(
+                f"{data_kind} is not a valid value to pass to Node.get_data_map()!"
+            )
         )
 
     # Logging methods - these just use the ROS logging framework, but add the
     # name and type of the node so it's easier to trace errors.
 
-    def logdebug(self, message) -> None:
+    @typechecked
+    def logdebug(self, message: str) -> None:
         """
         Wrap call to :func:rclpy.logger.get_logger(...).debug.
 
@@ -1114,7 +1202,8 @@ class Node(object, metaclass=NodeMeta):
         """
         rclpy.logging.get_logger(self.name).debug(f"{message}")
 
-    def loginfo(self, message) -> None:
+    @typechecked
+    def loginfo(self, message: str) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).info.
 
@@ -1122,7 +1211,8 @@ class Node(object, metaclass=NodeMeta):
         """
         rclpy.logging.get_logger(self.name).info(f"{message}")
 
-    def logwarn(self, message) -> None:
+    @typechecked
+    def logwarn(self, message: str) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).warn.
 
@@ -1130,7 +1220,8 @@ class Node(object, metaclass=NodeMeta):
         """
         rclpy.logging.get_logger(self.name).warn(f"{message}")
 
-    def logerr(self, message) -> None:
+    @typechecked
+    def logerr(self, message: str) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).error.
 
@@ -1138,7 +1229,8 @@ class Node(object, metaclass=NodeMeta):
         """
         rclpy.logging.get_logger(self.name).error(f"{message}")
 
-    def logfatal(self, message) -> None:
+    @typechecked
+    def logfatal(self, message: str) -> None:
         """
         Wrap call to :func:rclpy.logging.get_logger(...).fatal.
 
@@ -1147,20 +1239,24 @@ class Node(object, metaclass=NodeMeta):
         rclpy.logging.get_logger(self.name).fatal(f"{message}")
 
     @classmethod
+    @typechecked
     def from_msg(
-        cls,
+        cls: Type["Node"],
         msg: NodeStructure,
         ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
         permissive: bool = False,
-    ) -> "Node":
+    ) -> Result["Node", BehaviorTreeException]:
         """
         Construct a Node from the given ROS message.
 
         This will try to import the requested node class, instantiate it
         and populate its `name`, `options`, `input` and `output` members
         from the ROS message.
+
+        This also catches exceptions raised during node construction
+        and returns wrapped in as `result.Err`.
 
         :param ros_bt_py_msgs.msg.Node msg:
 
@@ -1184,7 +1280,7 @@ class Node(object, metaclass=NodeMeta):
         Note that this does *not* include the node's state. Any node
         created by this will be in state UNININITIALIZED.
 
-        :raises:
+        :return:
 
         BehaviorTreeException if
         node cannot be instantiated.
@@ -1201,18 +1297,22 @@ class Node(object, metaclass=NodeMeta):
             msg.module not in cls.node_classes
             or msg.node_class not in cls.node_classes[msg.module]
         ):
-            raise BehaviorTreeException(
-                "Failed to instantiate node from message - node class not available. "
-                f"Original message:\n{str(msg)}"
+            return Err(
+                BehaviorTreeException(
+                    "Failed to instantiate node from message - node class not available. "
+                    f"Original message:\n{str(msg)}"
+                )
             )
 
         node_classes: List[Type[Node]] = cls.node_classes[msg.module][msg.node_class]
 
-        node_class: Optional[type] = None
+        node_class: Optional[Type[Node]] = None
         if len(node_classes) > 1:
-            candidates = list(
+            candidates: List[Type[Node]] = list(
                 filter(
-                    lambda node_class_candidate: _check_node_data_match(
+                    lambda node_class_candidate: node_class_candidate._node_config
+                    is not None
+                    and _check_node_data_match(
                         node_class_candidate._node_config.inputs, msg.inputs
                     )
                     and _check_node_data_match(
@@ -1225,64 +1325,74 @@ class Node(object, metaclass=NodeMeta):
                 )
             )
             if len(candidates) < 1:
-                raise BehaviorTreeException(
-                    "Failed to instantiate node from message - node class not available."
-                    f"Original message:\n{str(msg)}"
+                return Err(
+                    BehaviorTreeException(
+                        "Failed to instantiate node from message - node class not available."
+                        f"Original message:\n{str(msg)}"
+                    )
                 )
             if len(candidates) > 1:
-                raise BehaviorTreeException(
-                    "Failed to instantiate node from message - multiple versions of node class "
-                    f"available. Original message:\n {str(msg)}"
+                return Err(
+                    BehaviorTreeException(
+                        "Failed to instantiate node from message - "
+                        "multiple versions of node class "
+                        f"available. Original message:\n {str(msg)}"
+                    )
                 )
             node_class = candidates[0]
         else:
             node_class = node_classes[0]
 
         # Populate options dict
-        options_dict = {}
+        options_dict: Dict[str, Any] = {}
         try:
             for option in msg.options:
                 options_dict[option.key] = json_decode(option.serialized_value)
         except ValueError as exc:
-            raise BehaviorTreeException(
-                f"Failed to instantiate node from message: {str(exc)}"
-            ) from exc
+            return Err(
+                BehaviorTreeException(
+                    f"Failed to instantiate node from message: {str(exc)}"
+                )
+            )
 
         # Instantiate node - this shouldn't do anything yet, since we don't
         # call setup()
         node_class.permissive = permissive
-        if msg.name:
-            node_instance = node_class(
-                name=msg.name,
-                options=options_dict,
-                debug_manager=debug_manager,
-                subtree_manager=subtree_manager,
-                ros_node=ros_node,
-            )
-        else:
-            node_instance = node_class(
-                options=options_dict,
-                debug_manager=debug_manager,
-                subtree_manager=subtree_manager,
-                ros_node=ros_node,
-            )
+        try:
+            if msg.name:
+                node_instance = node_class(
+                    name=msg.name,
+                    options=options_dict,
+                    debug_manager=debug_manager,
+                    subtree_manager=subtree_manager,
+                    ros_node=ros_node,
+                )
+            else:
+                node_instance = node_class(
+                    options=options_dict,
+                    debug_manager=debug_manager,
+                    subtree_manager=subtree_manager,
+                    ros_node=ros_node,
+                )
+        except BehaviorTreeException as ex:
+            return Err(ex)
 
-        # TODO Nodes are currently instantiated without supplying values of inputs and outputs
-        # which seems reasonable, given those values aren't known at that time.
-        # That renders these function calls effectively a no-op.
-        # _set_data_port(node_instance.inputs, msg.inputs, "input", permissive)
-        # _set_data_port(node_instance.outputs, msg.outputs, "output", permissive)
+        return Ok(node_instance)
 
-        return node_instance
-
-    def get_children_recursive(self):
+    @typechecked
+    def get_children_recursive(self) -> Generator["Node", None, None]:
         """Return all nodes that are below this node in the parent-child hirachy recursively."""
         yield self
         for child in self.children:
             for child_rec in child.get_children_recursive():
                 yield child_rec
 
-    def get_subtree_msg(self):
+    @typechecked
+    def get_subtree_msg(
+        self,
+    ) -> Result[
+        Tuple[TreeStructure, List[Wiring], List[Wiring]], BehaviorTreeException
+    ]:
         """
         Populate a TreeMsg with the subtree rooted at this node.
 
@@ -1318,10 +1428,14 @@ class Node(object, metaclass=NodeMeta):
             root_name=self.name,
             nodes=[node.to_structure_msg() for node in self.get_children_recursive()],
         )
+        # These reassignments makes the typing happy,
+        #   because they ensure that `.append` exists
+        subtree.data_wirings = []
+        subtree.public_node_data = []
 
-        node_map = {node.name: node for node in subtree.nodes}
-        incoming_connections = []
-        outgoing_connections = []
+        node_map: Dict[str, NodeStructure] = {node.name: node for node in subtree.nodes}
+        incoming_connections: List[Wiring] = []
+        outgoing_connections: List[Wiring] = []
         for node in self.get_children_recursive():
             for sub in node.subscriptions:
                 source_node = node_map.get(sub.source.node_name)
@@ -1341,9 +1455,11 @@ class Node(object, metaclass=NodeMeta):
                     subtree.public_node_data.append(sub.target)
                     incoming_connections.append(sub)
                 else:
-                    raise BehaviorTreeException(
-                        "Subscription in subtree has source *AND* target "
-                        "outside of subtree!"
+                    return Err(
+                        BehaviorTreeException(
+                            "Subscription in subtree has source *AND* target "
+                            "outside of subtree!"
+                        )
                     )
 
             for wiring, _, _ in node.subscribers:
@@ -1385,9 +1501,10 @@ class Node(object, metaclass=NodeMeta):
                             data_key=node_output.key,
                         )
                     )
-        return subtree, incoming_connections, outgoing_connections
+        return Ok((subtree, incoming_connections, outgoing_connections))
 
-    def find_node(self, other_name):
+    @typechecked
+    def find_node(self, other_name: str) -> Optional["Node"]:
         """
         Try to find the node with the given name in the tree.
 
@@ -1408,7 +1525,13 @@ class Node(object, metaclass=NodeMeta):
 
         return None
 
-    def _subscribe(self, wiring, new_cb, expected_type):
+    @typechecked
+    def _subscribe(
+        self,
+        wiring: Wiring,
+        new_cb: Callable[[Type], None],
+        expected_type: Type,
+    ) -> Result[None, BehaviorTreeException]:
         """
         Subscribe to a piece of Nodedata this node has.
 
@@ -1434,43 +1557,52 @@ class Node(object, metaclass=NodeMeta):
         have. If it doesn't match the type of the data at the requested
         key, raise a `BehaviorTreeException`.
 
-        :raises:
-
-        KeyError if the requested data location is not in this node, or
-        the requested key does not exist in this node.
+        :returns:
 
         BehaviorTreeException if `expected_type` and the actual type of
         the data are incompatible.
         """
         if wiring.source.node_name != self.name:
-            raise KeyError(
-                f"{self.name}: Trying to subscribe to another node ({wiring.source.node_name})"
+            return Err(
+                BehaviorTreeException(
+                    f"{self.name}: Trying to subscribe to another node ({wiring.source.node_name})"
+                )
             )
 
         for sub, _, _ in self.subscribers:
             if sub.target == wiring.target:
                 if sub.source == wiring.source:
-                    raise BehaviorTreeException("Duplicate subscription!")
+                    return Err(BehaviorTreeException("Duplicate subscription!"))
                 self.logwarn(
                     f"Subscriber {wiring.target.node_name} is subscribing to multiple sources "
                     f"with the same target {wiring.target.data_kind}[{wiring.target.data_key}]"
                 )
 
-        source_map = self.get_data_map(wiring.source.data_kind)
+        source_map_result = self.get_data_map(wiring.source.data_kind)
+        if source_map_result.is_err():
+            return Err(BehaviorTreeException(str(source_map_result.unwrap_err())))
+
+        source_map = source_map_result.unwrap()
 
         if wiring.source.data_key not in source_map:
-            raise KeyError(
-                f"Source key {self.name}.{wiring.source.data_kind}[{wiring.source.data_key}] "
-                "does not exist!"
+            return Err(
+                BehaviorTreeException(
+                    f"Source key {self.name}.{wiring.source.data_kind}[{wiring.source.data_key}] "
+                    "does not exist!"
+                )
             )
 
         if not issubclass(source_map.get_type(wiring.source.data_key), expected_type):
-            raise BehaviorTreeException(
-                f"Type of {self.name}.{wiring.source.data_kind}[{wiring.source.data_key}] "
-                f"({source_map.get_type(wiring.source.data_key).__name__}) is not compatible with "
-                "Type of "
-                f"{wiring.target.node_name}.{wiring.target.data_kind}[{wiring.target.data_key}] "
-                f"({expected_type})!"
+            return Err(
+                BehaviorTreeException(
+                    f"Type of {self.name}.{wiring.source.data_kind}[{wiring.source.data_key}] "
+                    f"({source_map.get_type(wiring.source.data_key).__name__}) "
+                    "is not compatible with Type of "
+                    f"{wiring.target.node_name}."
+                    f"{wiring.target.data_kind}"
+                    f"[{wiring.target.data_key}] "
+                    f"({expected_type})!"
+                )
             )
 
         source_map.subscribe(
@@ -1479,8 +1611,10 @@ class Node(object, metaclass=NodeMeta):
             f"{wiring.target.node_name}.{wiring.target.data_kind}[{wiring.target.data_key}]",
         )
         self.subscribers.append((deepcopy(wiring), new_cb, expected_type))
+        return Ok(None)
 
-    def wire_data(self, wiring):
+    @typechecked
+    def wire_data(self, wiring: Wiring) -> Result[None, BehaviorTreeException]:
         """
         Wire a piece of Nodedata from another node to this node.
 
@@ -1493,87 +1627,105 @@ class Node(object, metaclass=NodeMeta):
         (`wiring.source`) and the data key inside this node we want to
         connect it to (`wiring.target`).
 
-        If we cannot find a node named `wiring.source.node_name`, or the location is
-        otherwise invalid, this will raise a KeyError.
 
         :param `ros_bt_py_msgs.msg.NodeDataLocation` target:
            The position *inside this node* we want to wire *to*.
 
-        :raises:
-
-        KeyError if either the source or target location is invalid.
+        :returns:
 
         BehaviorTreeException if a subscription with the same source and
         target exists already, or if the types of source and target data
         are incompatible.
         """
         if wiring.target.node_name != self.name:
-            raise BehaviorTreeException(
-                f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+            return Err(
+                BehaviorTreeException(
+                    f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+                )
             )
 
         for sub in self.subscriptions:
             if sub.target == wiring.target:
                 if sub.source == wiring.source:
-                    raise BehaviorTreeException("Duplicate subscription!")
+                    return Err(BehaviorTreeException("Duplicate subscription!"))
+
         source_node = self.find_node(wiring.source.node_name)
         if not source_node:
-            raise BehaviorTreeException(
-                f"Source node {wiring.source.node_name} does not exist or is not connected "
-                f"to target node {self.name}"
+            return Err(
+                BehaviorTreeException(
+                    f"Source node {wiring.source.node_name} does not exist or is not connected "
+                    f"to target node {self.name}"
+                )
             )
-        try:
-            source_map = source_node.get_data_map(wiring.source.data_kind)
-        except KeyError as exception:
-            raise BehaviorTreeException(str(exception)) from exception
 
+        source_map_result = source_node.get_data_map(wiring.source.data_kind)
+        if source_map_result.is_err():
+            return Err(BehaviorTreeException(str(source_map_result.unwrap_err())))
+
+        source_map = source_map_result.unwrap()
         if wiring.source.data_key not in source_map:
-            raise KeyError(
-                f"Source key {source_node.name}."
-                f"{wiring.source.data_kind}[{wiring.source.data_key}] does not exist!"
+            return Err(
+                BehaviorTreeException(
+                    f"Source key {source_node.name}."
+                    f"{wiring.source.data_kind}[{wiring.source.data_key}] does not exist!"
+                )
             )
 
-        try:
-            target_map = self.get_data_map(wiring.target.data_kind)
-        except KeyError as exception:
-            raise BehaviorTreeException(str(exception)) from exception
+        target_map_result = self.get_data_map(wiring.target.data_kind)
+        if target_map_result.is_err():
+            return Err(BehaviorTreeException(str(target_map_result.unwrap_err())))
+        target_map = target_map_result.unwrap()
 
         if wiring.target.data_key not in target_map:
-            raise KeyError(
-                f"Target key {self.name}."
-                f"{wiring.target.data_kind}[{wiring.target.data_key}] does not exist!"
+            return Err(
+                BehaviorTreeException(
+                    f"Target key {self.name}."
+                    f"{wiring.target.data_kind}[{wiring.target.data_key}] does not exist!"
+                )
             )
 
-        source_node._subscribe(
+        subscribe_result = source_node._subscribe(
             wiring,
             target_map.get_callback(wiring.target.data_key),
             target_map.get_type(wiring.target.data_key),
         )
+        if subscribe_result.is_err():
+            return subscribe_result
 
         self.subscriptions.append(deepcopy(wiring))
+        return Ok(None)
 
-    def _unsubscribe(self, wiring):
+    @typechecked
+    def _unsubscribe(self, wiring: Wiring) -> Result[None, BehaviorTreeException]:
         """
         Unsubscribe from a piece of NodeData this node has.
 
         Call this to undo a call to `Node._subscribe()'
 
-        :raises:
+        :return:
 
-        KeyError if the requested data location is not in this node, or
+        BehaviorTreeException if the requested data location is not in this node, or
         the requested key does not exist in this node.
 
         """
         if wiring.source.node_name != self.name:
-            raise KeyError(
-                f"{self.name}: Trying to unsubscribe from another node ({wiring.source.node_name})"
+            return Err(
+                BehaviorTreeException(
+                    f"{self.name}: Trying to unsubscribe from another node "
+                    f"({wiring.source.node_name})"
+                )
             )
-        source_map = self.get_data_map(wiring.source.data_kind)
+        source_map_result = self.get_data_map(wiring.source.data_kind)
+        if source_map_result.is_err():
+            return Err(BehaviorTreeException(str(source_map_result.unwrap_err())))
+        source_map = source_map_result.unwrap()
 
         if wiring.source.data_key not in source_map:
-            raise KeyError(
-                f"Source key {self.name}."
-                f"{wiring.source.data_kind}[{wiring.source.data_key}] does not exist!"
+            return Err(
+                BehaviorTreeException(
+                    f"Source key {self.name}."
+                    f"{wiring.source.data_kind}[{wiring.source.data_key}] does not exist!"
+                )
             )
 
         for sub_wiring, callback, _ in self.subscribers:
@@ -1583,8 +1735,10 @@ class Node(object, metaclass=NodeMeta):
         self.subscribers = [
             sub for sub in self.subscribers if sub[0].target != wiring.target
         ]
+        return Ok(None)
 
-    def unwire_data(self, wiring):
+    @typechecked
+    def unwire_data(self, wiring: Wiring) -> Result[None, BehaviorTreeException]:
         """
         Unwire the given wiring.
 
@@ -1592,23 +1746,28 @@ class Node(object, metaclass=NodeMeta):
         :meth:`Node._unsubscribe` method and removing the wiring from
         this node's list of subscriptions.
 
-        :raises: BehaviorTreeException
+        :return: BehaviorTreeException
 
         If the given wiring's source node cannot be found from this
         node.
         """
         if wiring.target.node_name != self.name:
-            raise KeyError(
-                f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+            return Err(
+                BehaviorTreeException(
+                    f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+                )
             )
         source_node = self.find_node(wiring.source.node_name)
 
         if wiring not in self.subscriptions:
             # Nothing to do
-            return
+            return Ok(None)
 
         if source_node:
-            source_node._unsubscribe(wiring)
+            unsubscribe_result = source_node._unsubscribe(wiring)
+            if unsubscribe_result.is_err():
+                return unsubscribe_result
+
         self.subscriptions.remove(wiring)
 
         # If the removed wiring was the last subscription for this
@@ -1627,8 +1786,10 @@ class Node(object, metaclass=NodeMeta):
                 self.outputs[wiring.target.data_key] = None
             elif wiring.target.data_kind == NodeDataLocation.OPTION_DATA:
                 self.options[wiring.target.data_key] = None
+        return Ok(None)
 
-    def to_structure_msg(self):
+    @typechecked
+    def to_structure_msg(self) -> NodeStructure:
         """
         Populate a ROS message with the information from this Node.
 
@@ -1685,7 +1846,10 @@ class Node(object, metaclass=NodeMeta):
         data_list: list[WiringData] = []
         for wiring, _, exp_type in self.subscribers:
             # Since we iterate subscribers, `wiring.source` should refer to self.
-            source_map = self.get_data_map(wiring.source.data_kind)
+            source_map_result = self.get_data_map(wiring.source.data_kind)
+            if source_map_result.is_err():
+                continue
+            source_map = source_map_result.unwrap()
             key = wiring.source.data_key
             if not source_map.is_updated(key):
                 continue  # Don't publish stale data
@@ -1698,7 +1862,8 @@ class Node(object, metaclass=NodeMeta):
         return data_list
 
 
-def load_node_module(package_name):
+@typechecked
+def load_node_module(package_name: str) -> Optional[ModuleType]:
     """
     Import the named module at run-time.
 
@@ -1716,7 +1881,8 @@ def load_node_module(package_name):
         return None
 
 
-def increment_name(name):
+@typechecked
+def increment_name(name: str) -> str:
     """
     If `name` does not already end in a number, add "_2" to it.
 
@@ -1743,16 +1909,18 @@ class Decorator(Node):
     change `max_children`.
     """
 
-    def _do_calculate_utility(self):
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         """Pass on the utility value of the (only allowed) child."""
         if self.children:
             return self.children[0].calculate_utility()
-        return UtilityBounds(
-            can_execute=True,
-            has_lower_bound_success=True,
-            has_upper_bound_success=True,
-            has_lower_bound_failure=True,
-            has_upper_bound_failure=True,
+        return Ok(
+            UtilityBounds(
+                can_execute=True,
+                has_lower_bound_success=True,
+                has_upper_bound_success=True,
+                has_lower_bound_failure=True,
+                has_upper_bound_failure=True,
+            )
         )
 
 

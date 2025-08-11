@@ -25,9 +25,10 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py_interfaces.msg import NodeState
+from result import Result, Ok, Err
 
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Decorator, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
@@ -50,18 +51,22 @@ class Throttle(Decorator):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a reference to a ROS node"
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
 
         self._last_tick = None
-        self._last_result = NodeState.FAILED
+        self._last_result = Ok(BTNodeState.FAILED)
         for child in self.children:
-            child.setup()
+            setup_result = child.setup()
+            # TODO This seems unnecessary, since len(self.children) == 1 always
+            if setup_result.is_err():
+                return setup_result
+        return setup_result
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         current_time = self.ros_node.get_clock().now()
         if (
             self._last_tick is None
@@ -70,26 +75,28 @@ class Throttle(Decorator):
         ):
             for child in self.children:
                 result = child.tick()
-                if result == NodeState.RUNNING:
+                if result.ok() == BTNodeState.RUNNING:
                     return result
                 self._last_result = result
                 self._last_tick = current_time
-                child.reset()
+                # TODO Why do we reset on every result?
+                reset_result = child.reset()
+                if reset_result.is_err():
+                    return reset_result
         return self._last_result
 
-    def _do_shutdown(self):
-        for child in self.children:
-            return child.shutdown()
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.reset()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.untick()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -110,17 +117,21 @@ class ThrottleSuccess(Decorator):
 
     """
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a reference to a ROS node"
             self.logerr(error_msg)
-            raise BehaviorTreeException(error_msg)
+            return Err(BehaviorTreeException(error_msg))
 
         self._last_success_tick = None
         for child in self.children:
-            child.setup()
+            setup_result = child.setup()
+            # TODO This seems unnecessary, since len(self.children) == 1 always
+            if setup_result.is_err():
+                return setup_result
+        return setup_result
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         current_time = self.ros_node.get_clock().now()
         if (
             self._last_success_tick is None
@@ -129,24 +140,23 @@ class ThrottleSuccess(Decorator):
         ):
             for child in self.children:
                 result = child.tick()
-                if result == NodeState.RUNNING:
+                if result == BTNodeState.RUNNING:
                     return result
-                if result == NodeState.SUCCEEDED:
+                if result == BTNodeState.SUCCEEDED:
                     self._last_success_tick = current_time
                     return result
-        return NodeState.FAILED
+        return Ok(BTNodeState.FAILED)
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_success_tick = None
-        for child in self.children:
-            return child.shutdown()
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.reset()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
             return child.untick()
-        return NodeState.IDLE
+        return Ok(BTNodeState.IDLE)

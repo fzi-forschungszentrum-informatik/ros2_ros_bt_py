@@ -53,7 +53,8 @@ jobs:
           ROS_DISTRO: ${{ matrix.distro }}
           BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
-          AFTER_INSTALL_TARGET_DEPENDENCIES: 'if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "rolling" ]; then pip3 install --break-system-packages coverage[toml]; else pip3 install coverage[toml]; fi;'
+          ROSDEP_SKIP_KEYS: result-pip
+          AFTER_INSTALL_TARGET_DEPENDENCIES: 'if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "rolling" ]; then pip3 install --break-system-packages coverage[toml] result; else pip3 install coverage[toml] result; fi;'
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
 

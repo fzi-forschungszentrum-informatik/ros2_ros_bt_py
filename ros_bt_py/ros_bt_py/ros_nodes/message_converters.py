@@ -25,18 +25,19 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import inspect
 from typing import Optional, Dict
 
+from result import Result, Ok, Err
 
 from ros_bt_py.custom_types import RosTopicType
-from ros_bt_py_interfaces.msg import NodeState
 from rclpy.node import Node
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.node_config import NodeConfig
+from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_helpers import get_message_field_type
 
 
@@ -57,17 +58,13 @@ class MessageToFields(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
-        super(MessageToFields, self).__init__(
+    ) -> None:
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._message_type = self.options["input_type"].get_type_obj()
@@ -79,35 +76,45 @@ class MessageToFields(Leaf):
         for field in msg._fields_and_field_types:
             node_outputs[field] = get_message_field_type(msg, field)
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
-    def _do_setup(self):
-        return NodeState.IDLE
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for field in self.outputs:
             value = getattr(self.inputs["in"], field)
             if isinstance(value, tuple) and self.outputs.get_type(field) == list:
                 self.outputs[field] = list(value)
             else:
                 self.outputs[field] = value
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
 
 @define_bt_node(
@@ -136,17 +143,13 @@ class FieldsToMessage(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
-        super(FieldsToMessage, self).__init__(
+    ) -> None:
+        super().__init__(
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
 
         self._message_type = self.options["output_type"].get_type_obj()
@@ -158,32 +161,44 @@ class FieldsToMessage(Leaf):
         for field in msg._fields_and_field_types:
             node_inputs[field] = get_message_field_type(msg, field)
 
-        self.node_config.extend(
+        # TODO: Use result type.
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
             )
         )
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
 
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=node_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
-    def _do_setup(self):
-        return NodeState.IDLE
+        register_result = self._register_node_data(
+            source_map=node_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
-    def _do_tick(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
+
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         msg = self._message_type()
 
         for field in msg._fields_and_field_types:
             setattr(msg, field, self.inputs[field])
 
         self.outputs["out"] = msg
-        return NodeState.SUCCEEDED
+        return Ok(BTNodeState.SUCCEEDED)
 
-    def _do_untick(self):
-        return NodeState.IDLE
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        pass
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
 
-    def _do_reset(self):
-        return NodeState.IDLE
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.IDLE)

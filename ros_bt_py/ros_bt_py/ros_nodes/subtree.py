@@ -27,9 +27,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """BT node to encapsulate a part of a tree in a reusable subtree."""
 from typing import List, Optional, Dict
+
+from result import Result, Ok, Err
+
 from rclpy.node import Node
 
-from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
 from ros_bt_py_interfaces.srv import LoadTree
 
@@ -42,6 +44,7 @@ from ros_bt_py.node import Node as BTNode
 from ros_bt_py.node_config import NodeConfig
 
 from ros_bt_py.custom_types import FilePath
+from ros_bt_py.helpers import BTNodeState
 
 
 @define_bt_node(
@@ -77,9 +80,7 @@ class Subtree(Leaf):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[Node] = None,
-        succeed_always: bool = False,
-        simulate_tick: bool = False,
-    ):
+    ) -> None:
         """Create the tree manager, load the subtree."""
         super().__init__(
             options=options,
@@ -87,8 +88,6 @@ class Subtree(Leaf):
             subtree_manager=subtree_manager,
             name=name,
             ros_node=ros_node,
-            succeed_always=succeed_always,
-            simulate_tick=simulate_tick,
         )
         if not self.has_ros_node:
             raise BehaviorTreeException(
@@ -104,13 +103,17 @@ class Subtree(Leaf):
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
         )
-        self.load_subtree()
+
+        load_result = self.load_subtree()
+        if load_result.is_err():
+            raise load_result.unwrap_err()
+
         if self.subtree_manager:
             self.subtree_manager.add_subtree_structure(
                 self.name, self.manager.structure_to_msg()
             )
 
-    def load_subtree(self) -> None:
+    def load_subtree(self) -> Result[None, BehaviorTreeException]:
         response = LoadTree.Response()
         response = self.manager.load_tree(
             request=LoadTree.Request(
@@ -127,11 +130,13 @@ class Subtree(Leaf):
             self.logwarn(
                 f"Failed to load subtree {self.name}: {get_error_message(response)}"
             )
-            self.state = NodeState.BROKEN
+            # TODO Should this be flagged as broken, since we convey load failure as an output
+            #   Suggesting that it is intended behaviour and not an error.
+            self.state = BTNodeState.BROKEN
 
             self.outputs["load_success"] = False
             self.outputs["load_error_msg"] = get_error_message(response)
-            return
+            return Ok(None)
         else:
             self.outputs["load_success"] = True
 
@@ -152,7 +157,7 @@ class Subtree(Leaf):
 
         # merge subtree input and option dicts, so we can receive
         # option updates between ticks
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(
                 options={},
                 inputs=subtree_inputs,
@@ -160,12 +165,19 @@ class Subtree(Leaf):
                 max_children=0,
             )
         )
-        self._register_data_forwarding(
+        if extend_result.is_err():
+            return extend_result
+
+        register_result = self._register_data_forwarding(
             io_inputs=io_inputs,
             io_outputs=io_outputs,
             subtree_inputs=subtree_inputs,
             subtree_outputs=subtree_outputs,
         )
+        if register_result.is_err():
+            return register_result
+
+        return Ok(None)
 
     def _find_inputs_and_output(
         self,
@@ -225,10 +237,18 @@ class Subtree(Leaf):
         io_outputs: List,
         subtree_inputs: Dict,
         subtree_outputs: Dict,
-    ) -> None:
+    ) -> Result[None, BehaviorTreeException]:
         # Register the input and output values from the subtree
-        self._register_node_data(source_map=subtree_inputs, target_map=self.inputs)
-        self._register_node_data(source_map=subtree_outputs, target_map=self.outputs)
+        register_result = self._register_node_data(
+            source_map=subtree_inputs, target_map=self.inputs
+        )
+        if register_result.is_err():
+            return register_result
+        register_result = self._register_node_data(
+            source_map=subtree_outputs, target_map=self.outputs
+        )
+        if register_result.is_err():
+            return register_result
 
         # Handle forwarding inputs and outputs using the subscribe mechanics:
         for node_data in self.manager.structure_to_msg().public_node_data:
@@ -266,24 +286,27 @@ class Subtree(Leaf):
                             f"{node_name}.{node_data.data_key}"
                         ),
                     )
+        return Ok(None)
 
-    def _do_setup(self):
-        self.root = self.manager.find_root()
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        find_root_result = self.manager.find_root()
+        if find_root_result.is_err():
+            return Err(find_root_result.unwrap_err())
+        self.root = find_root_result.unwrap()
         if self.root is None:
-            raise BehaviorTreeException(
-                "Cannot find root in subtree, does the subtree "
-                f"{self.options['subtree_path']} exist?"
-            )
-        self.root.setup()
+            return Ok(BTNodeState.IDLE)
+        setup_root_result = self.root.setup()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
+        return setup_root_result
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            return NodeState.BROKEN
-        new_state = self.root.tick()
+            # TODO Should this be an Err() ??? same also above in setup
+            return Ok(BTNodeState.BROKEN)
+        tick_root_result = self.root.tick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
@@ -292,45 +315,51 @@ class Subtree(Leaf):
                 self.subtree_manager.add_subtree_data(
                     self.name, self.manager.data_to_msg()
                 )
-        return new_state
+        return tick_root_result
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            return NodeState.BROKEN
-        new_state = self.root.untick()
+            # TODO Should this be an Err() ???
+            return Ok(BTNodeState.BROKEN)
+        untick_root_result = self.root.untick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
-        return new_state
+        return untick_root_result
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            return NodeState.IDLE
-        new_state = self.root.reset()
+            return Ok(BTNodeState.IDLE)
+        reset_root_result = self.root.reset()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
-        return new_state
+        return reset_root_result
 
-    def _do_shutdown(self):
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            return NodeState.SHUTDOWN
-        self.root.shutdown()
+            return Ok(BTNodeState.SHUTDOWN)
+        shutdown_root_result = self.root.shutdown()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.name, self.manager.state_to_msg()
             )
+        return shutdown_root_result
 
-    def _do_calculate_utility(self):
-        self.root = self.manager.find_root()
-        if self.root is not None:
-            return self.root.calculate_utility()
-        else:
-            return UtilityBounds(
-                has_lower_bound_success=False,
-                has_upper_bound_success=False,
-                has_lower_bound_failure=False,
-                has_upper_bound_failure=False,
+    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
+        find_root_result = self.manager.find_root()
+        if find_root_result.is_err():
+            return Ok(
+                UtilityBounds(
+                    has_lower_bound_success=False,
+                    has_upper_bound_success=False,
+                    has_lower_bound_failure=False,
+                    has_upper_bound_failure=False,
+                )
             )
+        self.root = find_root_result.unwrap()
+        if self.root is None:
+            return Ok(UtilityBounds(can_execute=False))
+        return self.root.calculate_utility()

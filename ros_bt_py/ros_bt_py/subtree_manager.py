@@ -27,8 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from copy import deepcopy
 from threading import Lock
-from typing import Dict
+from typing import Any, Dict, Mapping
 
+from result import Err, Ok, Result
 from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import TreeStructure, TreeState, TreeData
@@ -57,7 +58,12 @@ class SubtreeManager(object):
         with self._lock:
             return self._publish_subtrees
 
-    def set_publish_subtrees(self, publish_subtrees: bool):
+    @property
+    def publish_subtrees(self) -> bool:
+        return self._publish_subtrees
+
+    @publish_subtrees.setter
+    def publish_subtrees(self, publish_subtrees: bool) -> None:
         with self._lock:
             self._publish_subtrees = publish_subtrees
 
@@ -87,7 +93,7 @@ class SubtreeManager(object):
                 return []
             return [deepcopy(tree) for tree in self.subtree_data.values()]
 
-    def add_subtree_structure(self, node_name: str, subtree_msg: TreeStructure):
+    def add_subtree_structure(self, node_name: str, subtree_msg: TreeStructure) -> None:
         """
         Publish subtree information.
 
@@ -117,7 +123,7 @@ class SubtreeManager(object):
 
     def remove_subtree(self, node_name: str):
 
-        def query_dict(node_name: str, dict: dict[str, object]):
+        def query_dict(node_name: str, dict: dict[str, Any]):
             for tree_name in list(dict.keys()):
                 if tree_name == node_name or tree_name.startswith(f"{node_name}."):
                     del dict[tree_name]

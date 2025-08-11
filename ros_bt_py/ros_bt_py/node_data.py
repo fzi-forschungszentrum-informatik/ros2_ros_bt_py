@@ -25,8 +25,10 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from typing import Any
 import rclpy
 import rclpy.logging
+from result import Err, Ok, Result
 
 from ros_bt_py.custom_types import (
     FilePath,
@@ -278,7 +280,7 @@ class NodeDataMap(object):
             )
             self.callbacks[key] = []
 
-    def handle_subscriptions(self):
+    def handle_subscriptions(self) -> None:
         """
         Execute the callbacks registered by :meth:`subscribe`: .
 
@@ -289,10 +291,10 @@ class NodeDataMap(object):
         for key in self._map:
             if self.is_updated(key):
                 if key in self.callbacks:
-                    for callback, subscriber_name in self.callbacks[key]:
+                    for callback, _ in self.callbacks[key]:
                         callback(self[key])
 
-    def add(self, key, value):
+    def add(self, key: str, value: Any) -> Result[None, TypeError | KeyError]:
         """
         Add a new key value pair to the node data.
 
@@ -302,14 +304,15 @@ class NodeDataMap(object):
         :raises: TypeError, KeyError
         """
         if not isinstance(key, str):
-            raise TypeError("Key must be a string!")
+            return Err(TypeError("Key must be a string!"))
         if not isinstance(value, NodeData):
-            raise TypeError("Value must be a NodeData object!")
+            return Err(TypeError("Value must be a NodeData object!"))
         if key in self._map:
-            raise KeyError(f"Key {key} is already taken!")
+            return Err(KeyError(f"Key {key} is already taken!"))
         self._map[key] = value
+        return Ok(None)
 
-    def is_updated(self, key):
+    def is_updated(self, key: str) -> bool:
         """
         Check whether the data at the given key has been updated since the last reset of `updated`.
 
@@ -319,14 +322,15 @@ class NodeDataMap(object):
         """
         return self._map[key].updated
 
-    def set_updated(self, key):
+    def set_updated(self, key: str) -> Result[None, KeyError]:
         """Set the `updated` property for the given datum."""
         if key in self._map:
             self._map[key].set_updated()
+            return Ok(None)
         else:
-            raise KeyError(f"No member named {key}")
+            return Err(KeyError(f"No member named {key}"))
 
-    def reset_updated(self):
+    def reset_updated(self) -> None:
         """Reset the `updated` property of all data in this map."""
         for key in self._map:
             self._map[key].reset_updated()
