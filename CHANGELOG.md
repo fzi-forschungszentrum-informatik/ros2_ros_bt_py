@@ -56,9 +56,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Jazzy / Ubuntu 24.04 to Git issue template by @sea-bass
 
 ### Changed
+- Updated the Getting Started and Basic Tutorial of the online documentation by @chriseichmann in [#195](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/195)
 - Explicitly cast test sequences to lists by @nspielbau
 - Update status badge. by @Oberacda
 - Use flake8 instead of ament_flake8 by @Oberacda
+
+### Fixed
+- Fix elif statement by @nspielbau
+- Fixed data type in/outputs by @nspielbau
+- Fix TopicSubscriber durability policy by @RobertWilbrandt
+- Fix formatting. by @Oberacda
+- Put merges in seperate changelog section by @Oberacda
+- Exclude changelog changes from changelog. by @Oberacda
+- Fix launch file sets invalid parameter values. by @Oberacda
+
+### Merged
+- Merge pull request #106 from fzi-forschungszentrum-informatik/fb_check_list_from_srv_res by @Oberacda in [#106](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/106)
+- Merge pull request #184 from RobertWilbrandt/topic_durability_policy by @Oberacda in [#184](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/184)
+- Merge pull request #180 from fzi-forschungszentrum-informatik/add_pre-commit_ci by @Oberacda in [#180](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/180)
+- Merge pull request #179 from fzi-forschungszentrum-informatik/fix_exclude_changelog_changes by @Oberacda in [#179](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/179)
+- Merge branch 'main' into fix_exclude_changelog_changes by @Oberacda
+- Merge pull request #178 from fzi-forschungszentrum-informatik/fix_launch_file by @Oberacda in [#178](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/178)
+
+### Removed
+- Remove no-main commit check. by @Oberacda
+
+## New Contributors
+* @chriseichmann made their first contribution in [#195](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/195)
+* @RobertWilbrandt made their first contribution
+
+## [0.4.0] - 2025-05-22
+
+### Added
+- Added tests for action node by @mdeitersen
+- Add git cliff for changelog management by @Oberacda
+
+### Changed
 - Release 0.4.0 by @Oberacda
 - Changed theme to be inline with ros2 documentation
 - Updated package.xml and CMakeLists.txt by @mdeitersen

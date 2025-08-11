@@ -29,7 +29,7 @@ To install ``ros_bt_py`` from source you need to follow these steps:
   3. Source your ROS2 installation ``source /opt/ros/*ros2 version*/setup.[bash|zsh|sh]``
   4. Run ``colcon build``
 
-2. Clone the ``ros_bt_py` repo_ from the `src`` folder.
+2. Clone the ``ros2_ros_bt_py`` repo_ into the ``src`` folder.
 3. Install all dependencies via ``rosdep install --from-paths . --ignore-src -y``.
 4. From the ``test_ws`` folder call ``colcon build``.
 5. Run ``source install/setup.[bash|zsh|sh]`` to load the build packages.
@@ -40,7 +40,7 @@ Now ``ros_bt_py`` is build and installed in your workspace and can be used.
 If this is your first time using ``ros_bt_py`` you should start by checking out the
 :ref:`basic-tutorial`.
 
-.. _repo: https://ids-git.fzi.de/ros2/ros_bt_py
+.. _repo: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py
 
 *****************
 Running ros_bt_py
@@ -55,7 +55,7 @@ The command
 
 will start a BT server and the rosbridge and webserver needed for the GUI.
 Afterwards, you can open ``http://localhost:8085/index.html`` to use the editor.
-Alternatively, or if you run bt_py remotely or inside a container, you can also use the address
+Alternatively, or if you run ros_bt_py remotely or inside a container, you can also use the address
 shown in your shell.
 
 Launch Options
