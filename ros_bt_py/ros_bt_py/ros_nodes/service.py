@@ -810,17 +810,40 @@ class Service(Leaf):
                     "ROS service node does not have ROS node reference!"
                 )
             )
+        
+        if self.has_ros_node:
+            self._service_client = self.ros_node.create_client(
+                self._service_type,
+                self._service_name,
+                callback_group=ReentrantCallbackGroup(),
+            )
+        else:
+            msg = f"No ROS node available for node: {self.name}!"
+            self.logerr(msg)
+            return Err(BehaviorTreeException(msg))
+        
+        self._service_available = True
+        if not self._service_client.wait_for_service(
+            timeout_sec=self.options["wait_for_service_seconds"]
+        ):
+            self._service_available = False
+            if (
+                "fail_if_not_available" not in self.options
+                or self.options["fail_if_not_available"]
+            ):
+                return Err(
+                    BehaviorTreeException(
+                        f"Service {self._service_name} not available after waiting "
+                        f"{self.options['wait_for_service_seconds']} seconds!"
+                    )
+                )
 
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self._service_client is not None:
-            if not self.ros_node.destroy_client(self._service_client):
-                return Err(BehaviorTreeException("Could not destroy client!"))
-            self._service_client = None
-
         self._last_service_call_time: Optional[Time] = None
         self._last_request = None
+        self._service_request_future = None
         self._reported_result = False
         for k, v in self._response_type.get_fields_and_field_types().items():
             self.outputs[k] = None
@@ -828,19 +851,12 @@ class Service(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-
-        # TODO Can't this be in `_do_setup`?
-        if self._service_client is None:
-            if self.has_ros_node:
-                self._service_client = self.ros_node.create_client(
-                    self._service_type,
-                    self._service_name,
-                    callback_group=ReentrantCallbackGroup(),
-                )
-            else:
-                msg = f"No ROS node available for node: {self.name}!"
-                self.logerr(msg)
-                return Err(BehaviorTreeException(msg))
+        if not self._service_available:
+            if (
+                "fail_if_not_available" in self.options
+                and self.options["fail_if_not_available"]
+            ):
+                return Ok(BTNodeState.FAILED)
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
