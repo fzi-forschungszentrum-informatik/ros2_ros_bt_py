@@ -316,7 +316,6 @@ class ActionForSetType(Leaf):
             else:
                 state = BTNodeState.FAILED
 
-
             self._cancel_goal_future = None
             self._running_goal_handle = None
             self._running_goal_future = None
