@@ -180,7 +180,6 @@ def load_tree_from_file(
 ) -> MigrateTree.Response:
     """Load a tree file from disk."""
     tree = request.tree
-    file_name = ""
     while not tree.nodes:
         file_path = ""
         if not tree.path:
@@ -220,7 +219,6 @@ def load_tree_from_file(
             return response
 
         with tree_file:
-            file_name = os.path.basename(tree_file.name)
             tree_yaml = tree_file.read()
             try:
                 response = parse_tree_yaml(tree_yaml=tree_yaml)

@@ -149,6 +149,9 @@ class PackageManager(object):
                         response.file_path = split_save_filepath
                         return response
 
+            # Set path to blank, this value not be persisted
+            request.tree.path = ""
+
             with open(split_save_filepath, "w") as save_file:
                 msg = rosidl_runtime_py.message_to_yaml(request.tree)
                 save_file.write(msg)
