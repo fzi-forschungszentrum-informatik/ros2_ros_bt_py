@@ -281,8 +281,8 @@ class ServiceInput(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "service_type": RosServiceType,
             "service_name": RosServiceName,
+            "service_type": RosServiceType,
             "wait_for_service_seconds": float,
         },
         inputs={},
