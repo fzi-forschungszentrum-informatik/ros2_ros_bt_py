@@ -118,9 +118,6 @@ class PackageManager(object):
             split_save_filepath = save_filepath.rstrip(os.sep)  # split trailing /
             path, filename = os.path.split(split_save_filepath)
 
-            # set tree name to filename
-            request.tree.name = filename
-
             try:
                 os.makedirs(path)
             except OSError:
@@ -144,12 +141,16 @@ class PackageManager(object):
                         response.error_message = "Rename failed"
                         response.file_path = unique_save_filepath
                         return response
+                    split_save_filepath = unique_save_filepath
                 else:
                     if not request.allow_overwrite:
                         response.success = False
                         response.error_message = "Overwrite not allowed"
                         response.file_path = split_save_filepath
                         return response
+
+            # Set path to blank, this value not be persisted
+            request.tree.path = ""
 
             with open(split_save_filepath, "w") as save_file:
                 msg = rosidl_runtime_py.message_to_yaml(request.tree)
