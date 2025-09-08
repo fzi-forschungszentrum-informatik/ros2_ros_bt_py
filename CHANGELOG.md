@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Do not store tree.path when saving to file, this is set on load by @Doomse
+- Don't overwrite name on save, set path on load by @Doomse
 - Py-black formatting by @Doomse
 - Also update test case accordingly by @Doomse
 - Action cancellation returns RUNNING if there is a new goal available and FAILED otherwise by @Doomse
@@ -40,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use flake8 instead of ament_flake8 by @Oberacda
 
 ### Fixed
+- Fix rename on save by @Doomse
 - Fix issues that came up due to merging by @Doomse
 - Fix elif statement by @nspielbau
 - Fixed data type in/outputs by @nspielbau
@@ -50,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix launch file sets invalid parameter values. by @Oberacda
 
 ### Merged
+- Merge pull request #199 from Doomse/tree-name-handling by @Oberacda in [#199](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/199)
 - Merge pull request #201 from Doomse/action-cancel-return by @Oberacda in [#201](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/201)
 - Merge pull request #200 from Doomse/reorder-options by @Oberacda in [#200](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/200)
 - Merge pull request #198 from fzi-forschungszentrum-informatik/update-web-gui-to-4.1.0 by @Oberacda in [#198](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/198)
