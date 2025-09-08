@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Py-black formatting by @Doomse
+- Also update test case accordingly by @Doomse
+- Action cancellation returns RUNNING if there is a new goal available and FAILED otherwise by @Doomse
 - Also reorder WaitForService by @Doomse
 - Reorder ROS node options to always be name first, then type by @Doomse
 - Update Web-GUI to 4.1.0 by @Oberacda
@@ -47,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix launch file sets invalid parameter values. by @Oberacda
 
 ### Merged
+- Merge pull request #201 from Doomse/action-cancel-return by @Oberacda in [#201](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/201)
 - Merge pull request #200 from Doomse/reorder-options by @Oberacda in [#200](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/200)
 - Merge pull request #198 from fzi-forschungszentrum-informatik/update-web-gui-to-4.1.0 by @Oberacda in [#198](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/198)
 - Merge pull request #197 from Doomse/fb_rework_error_handling by @Oberacda in [#197](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/197)
