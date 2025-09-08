@@ -54,8 +54,8 @@ from ros_bt_py.subtree_manager import SubtreeManager
     NodeConfig(
         version="0.1.0",
         options={
-            "topic_type": RosTopicType,
             "topic_name": RosTopicName,
+            "topic_type": RosTopicType,
             "reliable": bool,
             "transient_local": bool,
             "depth": int,
@@ -202,8 +202,8 @@ class TopicSubscriber(Leaf):
     NodeConfig(
         version="0.1.0",
         options={
-            "topic_type": RosTopicType,
             "topic_name": RosTopicName,
+            "topic_type": RosTopicType,
             "memory_delay": float,
             "reliable": bool,
             "transient_local": bool,
@@ -369,8 +369,8 @@ class TopicMemorySubscriber(Leaf):
     NodeConfig(
         version="1.0.0",
         options={
-            "topic_type": RosTopicType,
             "topic_name": RosTopicName,
+            "topic_type": RosTopicType,
             "reliable": bool,
             "transient_local": bool,
             "depth": int,
