@@ -230,7 +230,7 @@ class TestAction:
         action_node.tick()
         assert running_goal_future_mock.cancel.called
         assert running_goal_handle_mock.cancel_goal_async.called
-        assert action_node.state == NodeState.SUCCEED
+        assert action_node.state == NodeState.FAILED
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
