@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Also reorder WaitForService by @Doomse
+- Reorder ROS node options to always be name first, then type by @Doomse
 - Update Web-GUI to 4.1.0 by @Oberacda
 - Updated the Getting Started and Basic Tutorial of the online documentation by @chriseichmann in [#195](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/195)
 - Update node config tests by @Doomse
@@ -45,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix launch file sets invalid parameter values. by @Oberacda
 
 ### Merged
+- Merge pull request #200 from Doomse/reorder-options by @Oberacda in [#200](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/200)
 - Merge pull request #198 from fzi-forschungszentrum-informatik/update-web-gui-to-4.1.0 by @Oberacda in [#198](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/198)
 - Merge pull request #197 from Doomse/fb_rework_error_handling by @Oberacda in [#197](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/197)
 - Merge branch 'main' into fb_rework_error_handling by @Oberacda
