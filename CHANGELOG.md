@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Formatting by @Doomse
+- Update subscriber nodes to handle latched topics by @Doomse
 - Update Web-GUI to 5.0.0 by @Oberacda
 - Do not store tree.path when saving to file, this is set on load by @Doomse
 - Don't overwrite name on save, set path on load by @Doomse
@@ -54,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix launch file sets invalid parameter values. by @Oberacda
 
 ### Merged
+- Merge pull request #204 from Doomse/topic-node-updates by @Oberacda in [#204](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/204)
 - Merge pull request #202 from fzi-forschungszentrum-informatik/update-web-gui-to-5.0.0 by @Oberacda in [#202](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/202)
 - Merge pull request #199 from Doomse/tree-name-handling by @Oberacda in [#199](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/199)
 - Merge pull request #201 from Doomse/action-cancel-return by @Oberacda in [#201](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/201)
