@@ -895,8 +895,7 @@ class TreeManager:
                     add_child_result = instance.add_child(self.nodes[child_name])
                     if add_child_result.is_err():
                         response.success = False
-                        response.error_message = str(add_child_result.is_err())
-                        self.state = TreeState.ERROR
+                        response.error_message = str(add_child_result.unwrap_err())
                         return response
 
                 self.nodes[node.name] = instance
