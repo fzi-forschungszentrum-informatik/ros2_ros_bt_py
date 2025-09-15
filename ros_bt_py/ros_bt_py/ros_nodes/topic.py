@@ -130,12 +130,7 @@ class TopicSubscriber(Leaf):
         self._qos_profile = QoSProfile(
             reliability=reliability_policy, durability=durability_policy, depth=depth
         )
-        self._subscriber = self.ros_node.create_subscription(
-            msg_type=self._topic_type,
-            topic=self._topic_name,
-            callback=self._callback,
-            qos_profile=self._qos_profile,
-        )
+        # Subscriber is constructed in tick to properly handle latched topics
         return Ok(BTNodeState.IDLE)
 
     def _callback(self, msg):
@@ -143,6 +138,14 @@ class TopicSubscriber(Leaf):
             self._msg = msg
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        if self._subscriber is None:
+            self._subscriber = self.ros_node.create_subscription(
+                msg_type=self._topic_type,
+                topic=self._topic_name,
+                callback=self._callback,
+                qos_profile=self._qos_profile,
+            )
+
         with self._lock:
             if self._msg is None:
                 return Ok(BTNodeState.RUNNING)
@@ -151,23 +154,21 @@ class TopicSubscriber(Leaf):
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self._msg = None
-        if self._subscriber is None:
-            return Ok(BTNodeState.SHUTDOWN)
-        # Unsubscribe from the topic so we don't receive further updates
-        try:
-            success = self.ros_node.destroy_subscription(self._subscriber)
-            if not success:
-                self.logwarn("Failed to destroy subscription")
-                return Ok(BTNodeState.BROKEN)
-            self._subscriber = None
-        except AttributeError:
-            self.logwarn("Can not unregister as no subscriber is available.")
+        reset_result = self._do_reset()
+        if reset_result.is_err():
+            return reset_result
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        # discard the last received message
         self._msg = None
+        if self._subscriber is None:
+            return Ok(BTNodeState.IDLE)
+        # Unsubscribe from the topic so we don't receive further updates
+        success = self.ros_node.destroy_subscription(self._subscriber)
+        if not success:
+            self.logwarn("Failed to destroy subscription")
+            return Ok(BTNodeState.BROKEN)
+        self._subscriber = None
         return Ok(BTNodeState.IDLE)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -218,12 +219,11 @@ class TopicMemorySubscriber(Leaf):
     """
     Subscribe to the specified topic and returns FAILED if no message was recently received.
 
+    This node returns RUNNING until it receives its first message.
+    When a message is received, it outputs the message and returns SUCCEEDED.
+    The message is not cleared until reset is called.
     This node will return FAILED if no message has been received since
     the last memory_delay seconds.
-    When a message is received, it outputs the message and returns SUCCEEDED.
-    The message is not cleared for the next runs.
-
-    This node never returns RUNNING.
     """
 
     def __init__(
@@ -286,12 +286,7 @@ class TopicMemorySubscriber(Leaf):
         self._qos_profile = QoSProfile(
             reliability=reliability_policy, durability=durability_policy, depth=depth
         )
-        self._subscriber = self.ros_node.create_subscription(
-            msg_type=self._topic_type,
-            topic=self._topic_name,
-            callback=self._callback,
-            qos_profile=self._qos_profile,
-        )
+        # Subscriber is created during tick to properly handle latched topics
         return Ok(BTNodeState.IDLE)
 
     def _callback(self, msg):
@@ -300,41 +295,42 @@ class TopicMemorySubscriber(Leaf):
             self._msg_timestamp = self.ros_node.get_clock().now()
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        if self._subscriber is None:
+            self._subscriber = self.ros_node.create_subscription(
+                msg_type=self._topic_type,
+                topic=self._topic_name,
+                callback=self._callback,
+                qos_profile=self._qos_profile,
+            )
         with self._lock:
             if self._msg is None:
-                if self._msg_timestamp is not None:
-                    if (
-                        (
-                            self.ros_node.get_clock().now() - self._msg_timestamp
-                        ).nanoseconds
-                        / 1e9
-                    ) > self.options["memory_delay"]:
-                        return Ok(BTNodeState.FAILED)
-
                 return Ok(BTNodeState.RUNNING)
+            if self._msg_timestamp is not None:
+                if (
+                    (self.ros_node.get_clock().now() - self._msg_timestamp).nanoseconds
+                    / 1e9
+                ) > self.options["memory_delay"]:
+                    return Ok(BTNodeState.FAILED)
             self.outputs["message"] = self._msg
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        reset_result = self._do_reset()
+        if reset_result.is_err():
+            return reset_result
+        return Ok(BTNodeState.SHUTDOWN)
+
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._msg = None
         self._msg_timestamp = None
         if self._subscriber is None:
-            return Ok(BTNodeState.SHUTDOWN)
+            return Ok(BTNodeState.IDLE)
         # Unsubscribe from the topic so we don't receive further updates
-        try:
-            success = self.ros_node.destroy_subscription(self._subscriber)
-            if not success:
-                self.logwarn("Failed to destroy subscription")
-                return Ok(BTNodeState.BROKEN)
-            self._subscriber = None
-        except AttributeError:
-            self.logwarn("Can not unregister as no subscriber is available.")
-        return Ok(BTNodeState.IDLE)
-
-    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        # discard the last received message
-        self._msg = None
-        self._msg_timestamp = None
+        success = self.ros_node.destroy_subscription(self._subscriber)
+        if not success:
+            self.logwarn("Failed to destroy subscription")
+            return Ok(BTNodeState.BROKEN)
+        self._subscriber = None
         return Ok(BTNodeState.IDLE)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
