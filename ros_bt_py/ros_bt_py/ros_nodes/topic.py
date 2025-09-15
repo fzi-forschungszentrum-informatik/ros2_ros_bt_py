@@ -307,9 +307,7 @@ class TopicMemorySubscriber(Leaf):
                 return Ok(BTNodeState.RUNNING)
             if self._msg_timestamp is not None:
                 if (
-                    (
-                        self.ros_node.get_clock().now() - self._msg_timestamp
-                    ).nanoseconds
+                    (self.ros_node.get_clock().now() - self._msg_timestamp).nanoseconds
                     / 1e9
                 ) > self.options["memory_delay"]:
                     return Ok(BTNodeState.FAILED)
@@ -321,7 +319,6 @@ class TopicMemorySubscriber(Leaf):
         if reset_result.is_err():
             return reset_result
         return Ok(BTNodeState.SHUTDOWN)
-
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._msg = None
