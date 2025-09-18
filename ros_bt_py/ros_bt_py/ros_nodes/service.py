@@ -851,12 +851,6 @@ class Service(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if not self._service_available:
-            if (
-                "fail_if_not_available" in self.options
-                and self.options["fail_if_not_available"]
-            ):
-                return Ok(BTNodeState.FAILED)
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
