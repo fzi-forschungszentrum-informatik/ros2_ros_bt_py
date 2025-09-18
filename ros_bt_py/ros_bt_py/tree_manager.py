@@ -864,106 +864,111 @@ class TreeManager:
 
                 return response
 
-        # Clear existing tree, then replace it with the message's contents
-        self.clear(None, ClearTree.Response())
-        # add nodes whose children exist already, until all nodes are there
-        while len(self.nodes) != len(tree.nodes):
-            added = 0
-            # find nodes whose children are all in the tree already, then add them
-            for node in (
-                node
-                for node in tree.nodes
-                if (
-                    node.name not in self.nodes
-                    and all((name in self.nodes for name in node.child_names))
-                )
-            ):
-                node_instance_result = self.instantiate_node_from_msg(
-                    node_msg=node,
-                    ros_node=self.ros_node,
-                    allow_rename=False,
-                    permissive=request.permissive,
-                )
+        # Ensure the new (potentially incomplete/broken) structure is always published
+        # even if something goes wrong further down the line.
+        try:
+            # Clear existing tree, then replace it with the message's contents
+            self.clear(None, ClearTree.Response())
+            # add nodes whose children exist already, until all nodes are there
+            while len(self.nodes) != len(tree.nodes):
+                added = 0
+                # find nodes whose children are all in the tree already, then add them
+                for node in (
+                    node
+                    for node in tree.nodes
+                    if (
+                        node.name not in self.nodes
+                        and all((name in self.nodes for name in node.child_names))
+                    )
+                ):
+                    node_instance_result = self.instantiate_node_from_msg(
+                        node_msg=node,
+                        ros_node=self.ros_node,
+                        allow_rename=False,
+                        permissive=request.permissive,
+                    )
 
-                if node_instance_result.is_err():
-                    response.success = False
-                    response.error_message = str(node_instance_result.unwrap_err())
-                    return response
-
-                instance = node_instance_result.unwrap()
-                for child_name in node.child_names:
-                    add_child_result = instance.add_child(self.nodes[child_name])
-                    if add_child_result.is_err():
+                    if node_instance_result.is_err():
                         response.success = False
-                        response.error_message = str(add_child_result.unwrap_err())
+                        response.error_message = str(node_instance_result.unwrap_err())
                         return response
 
-                self.nodes[node.name] = instance
-                added += 1
+                    instance = node_instance_result.unwrap()
+                    for child_name in node.child_names:
+                        add_child_result = instance.add_child(self.nodes[child_name])
+                        if add_child_result.is_err():
+                            response.success = False
+                            response.error_message = str(add_child_result.unwrap_err())
+                            return response
 
-            if added == 0:
+                    self.nodes[node.name] = instance
+                    added += 1
+
+                if added == 0:
+                    response.success = False
+                    response.error_message = "Unable to add all nodes to tree."
+                    return response
+
+            # All nodes are added, now do the wiring
+            wire_response = WireNodeData.Response()
+            wire_response = self.wire_data(
+                WireNodeData.Request(wirings=tree.data_wirings, ignore_failure=True),
+                response=wire_response,
+            )
+            if not get_success(wire_response):
                 response.success = False
-                response.error_message = "Unable to add all nodes to tree."
+                response.error_message = get_error_message(wire_response)
                 return response
 
-        # All nodes are added, now do the wiring
-        wire_response = WireNodeData.Response()
-        wire_response = self.wire_data(
-            WireNodeData.Request(wirings=tree.data_wirings, ignore_failure=True),
-            response=wire_response,
-        )
-        if not get_success(wire_response):
-            response.success = False
-            response.error_message = get_error_message(wire_response)
-            return response
+            updated_wirings = []
+            for wiring in tree.data_wirings:
+                if wiring in self.tree_structure.data_wirings:
+                    updated_wirings.append(wiring)
 
-        updated_wirings = []
-        for wiring in tree.data_wirings:
-            if wiring in self.tree_structure.data_wirings:
-                updated_wirings.append(wiring)
+            tree.data_wirings = updated_wirings
 
-        tree.data_wirings = updated_wirings
+            self.tree_structure = tree
+            # These reassignments makes the typing happy,
+            #   because they ensure that `.append .extent .remove ...` exists
+            self.tree_structure.data_wirings = list(tree.data_wirings)
+            self.tree_structure.public_node_data = list(tree.public_node_data)
+            if self.tree_structure.tick_frequency_hz == 0.0:
+                get_logger("tree_manager").get_child(self.name).warn(
+                    "Tick frequency of loaded tree is 0, defaulting to 10Hz"
+                )
+                self.tree_structure.tick_frequency_hz = 10.0
 
-        self.tree_structure = tree
-        # These reassignments makes the typing happy,
-        #   because they ensure that `.append .extent .remove ...` exists
-        self.tree_structure.data_wirings = list(tree.data_wirings)
-        self.tree_structure.public_node_data = list(tree.public_node_data)
-        if self.tree_structure.tick_frequency_hz == 0.0:
-            get_logger("tree_manager").get_child(self.name).warn(
-                "Tick frequency of loaded tree is 0, defaulting to 10Hz"
+            self.rate = self.ros_node.create_rate(
+                frequency=self.tree_structure.tick_frequency_hz
             )
-            self.tree_structure.tick_frequency_hz = 10.0
 
-        self.rate = self.ros_node.create_rate(
-            frequency=self.tree_structure.tick_frequency_hz
-        )
+            # Ensure Tree is editable after loading
+            self.tree_state = TreeState(tree_id=tree.tree_id)
+            self.state = TreeState.EDITABLE
 
-        # Ensure Tree is editable after loading
-        self.tree_state = TreeState(tree_id=tree.tree_id)
-        self.state = TreeState.EDITABLE
+            self.tree_data = TreeData(tree_id=tree.tree_id)
 
-        self.tree_data = TreeData(tree_id=tree.tree_id)
+            # find and set root name
+            find_root_result = self.find_root()
+            if find_root_result.is_err():
+                response.success = False
+                response.error_message = (
+                    f"Could not find root of new tree: {find_root_result.unwrap_err()}"
+                )
+                return response
+            root = find_root_result.unwrap()
+            if root:
+                with self._tree_lock:
+                    self.tree_structure.root_name = root.name
 
-        # find and set root name
-        find_root_result = self.find_root()
-        if find_root_result.is_err():
-            response.success = False
-            response.error_message = (
-                f"Could not find root of new tree: {find_root_result.unwrap_err()}"
-            )
+            response.success = True
+            get_logger("tree_manager").get_child(self.name).info("Successfully loaded tree")
+            if self.publish_diagnostic is None:
+                self.set_diagnostics_name()
             return response
-        root = find_root_result.unwrap()
-        if root:
-            with self._tree_lock:
-                self.tree_structure.root_name = root.name
+        finally:
+            self.publish_structure()
 
-        response.success = True
-        self.publish_structure()
-        get_logger("tree_manager").get_child(self.name).info("Successfully loaded tree")
-        if self.publish_diagnostic is None:
-            self.set_diagnostics_name()
-        return response
 
     @typechecked
     def set_publish_subtrees(
