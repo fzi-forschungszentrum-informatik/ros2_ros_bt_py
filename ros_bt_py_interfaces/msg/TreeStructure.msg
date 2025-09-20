@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # The empty string for the main tree, the tree prefix for subtrees
-string tree_id
+unique_identifier_msgs/UUID tree_id
 
 # A descriptive name for this tree. At runtime, this is chosen by the
 # tree manager node.
