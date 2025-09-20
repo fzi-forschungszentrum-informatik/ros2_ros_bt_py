@@ -124,6 +124,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   # "srv/capabilities/ReserveRemoteCapabilitySlot.srv"
   # "srv/capabilities/RunRemoteCapabilitySlot.srv"
   # "srv/capabilities/SaveCapabilities.srv"
+
+DEPENDENCIES
+  unique_identifier_msgs
 )
 
 
