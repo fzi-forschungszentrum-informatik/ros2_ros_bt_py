@@ -157,6 +157,7 @@ class DebugManager(object):
         if self._collect_node_diagnostics:
             diagnostics = {
                 "name": node_instance.name,
+                "node_id": node_instance.node_id,
                 "stamp": self._ros_node.get_clock().now(),
                 "module": type(node_instance).__module__,
                 "node_class": type(node_instance).__name__,
