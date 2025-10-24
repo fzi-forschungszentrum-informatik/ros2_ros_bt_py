@@ -962,13 +962,14 @@ class TreeManager:
                     self.tree_structure.root_name = root.name
 
             response.success = True
-            get_logger("tree_manager").get_child(self.name).info("Successfully loaded tree")
+            get_logger("tree_manager").get_child(self.name).info(
+                "Successfully loaded tree"
+            )
             if self.publish_diagnostic is None:
                 self.set_diagnostics_name()
             return response
         finally:
             self.publish_structure()
-
 
     @typechecked
     def set_publish_subtrees(
@@ -1793,7 +1794,6 @@ class TreeManager:
                 )
                 if add_old_node_result.is_err():
                     response.error_message += "\n Also failed to restore old node."
-                    self.state = TreeState.ERROR
 
                 rewire_resp = WireNodeData.Response()
                 rewire_resp = self.wire_data(request=wire_request, response=rewire_resp)
@@ -1802,7 +1802,6 @@ class TreeManager:
                         f"\nAlso failed to restore data wirings: "
                         f"{get_error_message(rewire_resp)}"
                     )
-                    self.state = TreeState.ERROR
                 response.success = False
                 return response
 
@@ -2046,7 +2045,6 @@ class TreeManager:
                         "\nAlso failed to restore data wirings: "
                         f"{get_error_message(rewire_resp)}"
                     )
-                    self.state = TreeState.ERROR
 
                 response.success = False
                 response.error_message = error_message
@@ -2061,7 +2059,6 @@ class TreeManager:
                 add_child_result = parent.add_child(node, at_index=old_child_index)
                 if add_child_result.is_err():
                     error_message += "\n Also failed to restore old node."
-                    self.state = TreeState.ERROR
                 else:
 
                     rewire_resp = WireNodeData.Response()
@@ -2073,7 +2070,6 @@ class TreeManager:
                             f"\nAlso failed to restore data wirings: "
                             f"{get_error_message(rewire_resp)}"
                         )
-                        self.state = TreeState.ERROR
                 response.success = False
                 response.error_message = error_message
                 return response
@@ -2128,7 +2124,6 @@ class TreeManager:
                     f"\nFailed to re-wire data to restored node {node.name}: "
                     f"{get_error_message(recovery_wire_response)}"
                 )
-                self.state = TreeState.ERROR
             response.success = False
             response.error_message = error_message
             return response
@@ -2142,7 +2137,6 @@ class TreeManager:
             )
             remove_child_result = node.remove_child(child_name)
             if remove_child_result.is_err():
-                self.state = TreeState.ERROR
                 response.success = False
                 response.error_message = (
                     "Failed to transfer children to new node: "
@@ -2152,7 +2146,6 @@ class TreeManager:
             child = remove_child_result.unwrap()
             add_child_result = new_node.add_child(child)
             if add_child_result.is_err():
-                self.state = TreeState.ERROR
                 response.success = False
                 response.error_message = (
                     "Failed to transfer children to new node: "
@@ -2403,7 +2396,6 @@ class TreeManager:
         )
 
         if not get_success(res):
-            # self.state = TreeState.ERROR
             # self.publish_structure()
             response.success = False
             response.error_message = (
@@ -2502,7 +2494,6 @@ class TreeManager:
                         "Failed to undo successful wiring after error. "
                         "Tree is in undefined state!"
                     )
-                    self.state = TreeState.ERROR
                     return response
             return response
         else:
@@ -2584,7 +2575,6 @@ class TreeManager:
                         "Failed to rewire successful unwiring after error. "
                         "Tree is in undefined state!"
                     )
-                    self.state = TreeState.ERROR
                     return response
             return response
         else:
