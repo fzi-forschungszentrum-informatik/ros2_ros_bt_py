@@ -810,7 +810,7 @@ class Service(Leaf):
                     "ROS service node does not have ROS node reference!"
                 )
             )
-        
+
         if self.has_ros_node:
             self._service_client = self.ros_node.create_client(
                 self._service_type,
@@ -821,7 +821,7 @@ class Service(Leaf):
             msg = f"No ROS node available for node: {self.name}!"
             self.logerr(msg)
             return Err(BehaviorTreeException(msg))
-        
+
         self._service_available = True
         if not self._service_client.wait_for_service(
             timeout_sec=self.options["wait_for_service_seconds"]
@@ -924,7 +924,9 @@ class Service(Leaf):
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is not None:
-            if not self.ros_node.destroy_client(self._service_client):
+            if self.ros_node.destroy_client(self._service_client):
+                self._service_client = None
+            else:
                 return Err(BehaviorTreeException("Failed to destroy client!"))
         return Ok(BTNodeState.SHUTDOWN)
 
