@@ -32,6 +32,9 @@ from result import Result, Ok, Err
 
 from rclpy.node import Node
 
+from ros_bt_py_interfaces.msg._node_structure import NodeStructure
+from unique_identifier_msgs.msg import UUID as ROS_UUID
+
 from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
 from ros_bt_py_interfaces.srv import LoadTree
 
@@ -45,6 +48,7 @@ from ros_bt_py.node_config import NodeConfig
 
 from ros_bt_py.custom_types import FilePath
 from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 
 
 @define_bt_node(
@@ -97,11 +101,12 @@ class Subtree(Leaf):
         self.root: Optional[BTNode] = None
         # since the subtree gets a prefix, we can just have it use the
         # parent debug manager
+        self.nested_subtree_manager = SubtreeManager()
         self.manager: TreeManager = TreeManager(
             ros_node=self.ros_node,
             name=name,
             debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
+            subtree_manager=self.nested_subtree_manager,
         )
 
         load_result = self.load_subtree()
@@ -110,7 +115,10 @@ class Subtree(Leaf):
 
         if self.subtree_manager:
             self.subtree_manager.add_subtree_structure(
-                self.name, self.manager.structure_to_msg()
+                self.node_id, self.manager.structure_to_msg()
+            )
+            self.subtree_manager.add_nested_manager(
+                self.node_id, self.nested_subtree_manager
             )
 
     def load_subtree(self) -> Result[None, BehaviorTreeException]:
@@ -123,7 +131,6 @@ class Subtree(Leaf):
                 )
             ),
             response=response,
-            prefix=self.name,
         )
 
         if not get_success(response):
@@ -142,12 +149,12 @@ class Subtree(Leaf):
 
         # If we loaded the tree successfully, change node_config to
         # include the public inputs and outputs
-        subtree_inputs: Dict[str, type] = {}
-        subtree_outputs: Dict[str, type] = {}
+        subtree_inputs: dict[str, type] = {}
+        subtree_outputs: dict[str, type] = {}
 
         # If io nodes are used restrict the subtrees inputs and outputs to io nodes
-        io_inputs: List[str] = []
-        io_outputs: List[str] = []
+        io_inputs: list[ROS_UUID] = []
+        io_outputs: list[ROS_UUID] = []
         self._find_inputs_and_output(
             io_inputs=io_inputs,
             io_outputs=io_outputs,
@@ -181,32 +188,37 @@ class Subtree(Leaf):
 
     def _find_inputs_and_output(
         self,
-        io_inputs: List,
-        io_outputs: List,
-        subtree_inputs: Dict,
-        subtree_outputs: Dict,
+        io_inputs: list[ROS_UUID],
+        io_outputs: list[ROS_UUID],
+        subtree_inputs: dict[str, type],
+        subtree_outputs: dict[str, type],
     ) -> None:
+        node_data: NodeDataLocation
         subtree_msg = self.manager.structure_to_msg()
         if self.options["use_io_nodes"]:
-            for node in subtree_msg.nodes:
-                if node.module == "ros_bt_py.nodes.io":
+            node_msg: NodeStructure
+            for node_msg in subtree_msg.nodes:
+                if node_msg.module == "ros_bt_py.nodes.io":
                     if (
-                        node.node_class == "IOInput"
-                        or node.node_class == "IOInputOption"
+                        node_msg.node_class == "IOInput"
+                        or node_msg.node_class == "IOInputOption"
                     ):
-                        io_inputs.append(node.name)
+                        io_inputs.append(node_msg.node_id)
                     elif (
-                        node.node_class == "IOOutput"
-                        or node.node_class == "IOOutputOption"
+                        node_msg.node_class == "IOOutput"
+                        or node_msg.node_class == "IOOutputOption"
                     ):
-                        io_outputs.append(node.name)
+                        io_outputs.append(node_msg.node_id)
             modified_public_node_data = []
             for node_data in subtree_msg.public_node_data:
-                if node_data.data_kind == "inputs" and node_data.node_name in io_inputs:
+                if (
+                    node_data.data_kind == NodeDataLocation.INPUT_DATA
+                    and node_data.node_id in io_inputs
+                ):
                     modified_public_node_data.append(node_data)
                 elif (
-                    node_data.data_kind == "outputs"
-                    and node_data.node_name in io_outputs
+                    node_data.data_kind == NodeDataLocation.OUTPUT_DATA
+                    and node_data.node_id in io_outputs
                 ):
                     modified_public_node_data.append(node_data)
             subtree_msg.public_node_data = modified_public_node_data
@@ -214,29 +226,21 @@ class Subtree(Leaf):
         for node_data in subtree_msg.public_node_data:
             # Remove the prefix from the node name to make for nicer
             # input/output names (and also not break wirings)
-            node_name = node_data.node_name
-            if node_name.startswith(self.name):
-                node_name = node_name[len(self.name) + 1 :]
+            node = self.manager.nodes[ros_to_uuid(node_data.node_id)]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
-                subtree_inputs[f"{node_name}.{node_data.data_key}"] = (
-                    self.manager.nodes[node_data.node_name].inputs.get_type(
-                        node_data.data_key
-                    )
-                )
+                subtree_inputs[f"{node.name}.{node_data.data_key}"] = \
+                    node.inputs.get_type(node_data.data_key)
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
-                subtree_outputs[f"{node_name}.{node_data.data_key}"] = (
-                    self.manager.nodes[node_data.node_name].outputs.get_type(
-                        node_data.data_key
-                    )
-                )
+                subtree_outputs[f"{node.name}.{node_data.data_key}"] = \
+                    node.outputs.get_type(node_data.data_key)
 
     def _register_data_forwarding(
         self,
-        io_inputs: List,
-        io_outputs: List,
-        subtree_inputs: Dict,
-        subtree_outputs: Dict,
+        io_inputs: list[ROS_UUID],
+        io_outputs: list[ROS_UUID],
+        subtree_inputs: dict[str, type],
+        subtree_outputs: dict[str, type],
     ) -> Result[None, BehaviorTreeException]:
         # Register the input and output values from the subtree
         register_result = self._register_node_data(
@@ -251,39 +255,36 @@ class Subtree(Leaf):
             return register_result
 
         # Handle forwarding inputs and outputs using the subscribe mechanics:
+        node_data: NodeDataLocation
         for node_data in self.manager.structure_to_msg().public_node_data:
             # get the node name without prefix to match our renamed
             # inputs and outputs
-            node_name = node_data.node_name
-            if node_name.startswith(self.name):
-                node_name = node_name[len(self.name) + 1 :]
+            node = self.manager.nodes[ros_to_uuid(node_data.node_id)]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
                 if (
                     self.options["use_io_nodes"]
-                    and node_data.node_name not in io_inputs
+                    and node_data.node_id not in io_inputs
                 ):
                     self.logdebug(
-                        f"removed an unconnected input ({node_name}) from the subtree"
+                        f"removed an unconnected input ({node.name}) from the subtree"
                     )
                 else:
                     self.inputs.subscribe(
-                        key=f"{node_name}.{node_data.data_key}",
-                        callback=self.manager.nodes[
-                            node_data.node_name
-                        ].inputs.get_callback(node_data.data_key),
+                        key=f"{node.name}.{node_data.data_key}",
+                        callback=node.inputs.get_callback(node_data.data_key),
                     )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
                 if (
                     self.options["use_io_nodes"]
-                    and node_data.node_name not in io_outputs
+                    and node_data.node_id not in io_outputs
                 ):
                     pass
                 else:
-                    self.manager.nodes[node_data.node_name].outputs.subscribe(
+                    node.outputs.subscribe(
                         key=node_data.data_key,
                         callback=self.outputs.get_callback(
-                            f"{node_name}.{node_data.data_key}"
+                            f"{node.name}.{node_data.data_key}"
                         ),
                     )
         return Ok(None)
@@ -298,7 +299,7 @@ class Subtree(Leaf):
         setup_root_result = self.root.setup()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, self.manager.state_to_msg()
+                self.node_id, self.manager.state_to_msg()
             )
         return setup_root_result
 
@@ -309,11 +310,11 @@ class Subtree(Leaf):
         tick_root_result = self.root.tick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, self.manager.state_to_msg()
+                self.node_id, self.manager.state_to_msg()
             )
             if self.subtree_manager.get_publish_data():
                 self.subtree_manager.add_subtree_data(
-                    self.name, self.manager.data_to_msg()
+                    self.node_id, self.manager.data_to_msg()
                 )
         return tick_root_result
 
@@ -324,7 +325,7 @@ class Subtree(Leaf):
         untick_root_result = self.root.untick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, self.manager.state_to_msg()
+                self.node_id, self.manager.state_to_msg()
             )
         return untick_root_result
 
@@ -334,7 +335,7 @@ class Subtree(Leaf):
         reset_root_result = self.root.reset()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, self.manager.state_to_msg()
+                self.node_id, self.manager.state_to_msg()
             )
         return reset_root_result
 
@@ -344,7 +345,7 @@ class Subtree(Leaf):
         shutdown_root_result = self.root.shutdown()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
-                self.name, self.manager.state_to_msg()
+                self.node_id, self.manager.state_to_msg()
             )
         return shutdown_root_result
 
