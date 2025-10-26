@@ -55,11 +55,11 @@ class EnumValue(object):
         self.enum_value = enum_value
 
 
-def ros_to_uuid(ros_uuid_msg):
+def ros_to_uuid(ros_uuid_msg: ROS_UUID) -> uuid.UUID:
     return uuid.UUID(bytes=bytes(ros_uuid_msg.uuid))
 
 
-def uuid_to_ros(uuid):
+def uuid_to_ros(uuid: uuid.UUID) -> ROS_UUID:
     ros_uuid = ROS_UUID()
     ros_uuid.uuid = list(uuid.bytes)  # Convert UUID bytes back to list
     return ros_uuid
