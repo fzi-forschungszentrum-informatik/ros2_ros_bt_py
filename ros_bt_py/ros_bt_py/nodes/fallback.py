@@ -42,7 +42,7 @@ from result import Result, Ok, Err, is_err
 )
 class NameSwitch(FlowControl):
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self.child_map = {child.name.split(".")[-1]: child for child in self.children}
+        self.child_map = {child.name: child for child in self.children}
         for child in self.children:
             result = child.setup()
             if result.is_err():
