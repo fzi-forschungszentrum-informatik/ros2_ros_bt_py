@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
+- Don't set tree state to ERROR on edit operations by @Doomse
+- Always publish structure after calling load by @Doomse
+- Load tree error shouldn't set the tree state by @Doomse
 - Formatting by @Doomse
 - Update subscriber nodes to handle latched topics by @Doomse
 - Update Web-GUI to 5.0.0 by @Oberacda
@@ -56,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix launch file sets invalid parameter values. by @Oberacda
 
 ### Merged
+- Merge pull request #209 from Doomse/load-tree-errors by @Oberacda in [#209](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/209)
 - Merge pull request #204 from Doomse/topic-node-updates by @Oberacda in [#204](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/204)
 - Merge pull request #202 from fzi-forschungszentrum-informatik/update-web-gui-to-5.0.0 by @Oberacda in [#202](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/202)
 - Merge pull request #199 from Doomse/tree-name-handling by @Oberacda in [#199](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/199)
@@ -410,7 +414,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add tests for Service node by @Oberacda
 - Add tests for ServiceInput by @Oberacda
 - Add ros_node reference to Node instances by @Oberacda
-- Add note about generate_param_lib and symlink_install by @fmauch
+- Add note about generate_param_lib and symlink_install
 - Add getting started section by @Oberacda
 - Add sphinx based documentation. by @Oberacda
 - Add README.md by @Oberacda
@@ -421,7 +425,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add upstream workspace for generate_parameter_library by @Oberacda
 - Add .coverage to gitignore by @Oberacda
 - Add tests for package_manager.py by @Oberacda
-- Add internal Gitlab CI to packages by @fmauch
+- Add internal Gitlab CI to packages
 - Add ament_lint linters to pre-commit. by @Oberacda
 
 ### Changed
@@ -440,7 +444,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement proper type completion for the JSON Editor. by @Oberacda
 - Update webgui JSON input. by @Oberacda
 - Implement save_to_path fuction by @Oberacda
-- Use double backticks for referencing code snipptets in RST by @fmauch
+- Use double backticks for referencing code snipptets in RST
 - Port file.py nodes by @Oberacda
 - Port throttle.py nodes. by @Oberacda
 - Port subtree.py by @Oberacda
@@ -470,16 +474,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make tree node executable. by @Oberacda
 - Port tree_node.py by @Oberacda
 - Port tree_manager.py by @Oberacda
-- Port package_manager.py by @fmauch
+- Port package_manager.py
 - Port package_manager.py by @Oberacda
 - Try importing each submodule from ros_bt_py by @Oberacda
-- Try importing each submodule from ros_bt_py by @fmauch
-- Port node class and related code by @fmauch
+- Try importing each submodule from ros_bt_py
+- Port node class and related code
 - Port debug_manager.py by @Oberacda
 - Port node.py by @Oberacda
 - Port node_config.py by @Oberacda
 - Port node_data.py by @Oberacda
-- Port helper functions by @fmauch
+- Port helper functions
 - Run linters as part of pre-commit not colcon test. by @Oberacda
 - Ignore invalid warning from flake8. by @Oberacda
 - Port ros_helpers class. by @Oberacda
@@ -515,7 +519,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix type errors. by @Oberacda
 - Fix pyproject.toml by @Oberacda
 - Fix toml error in CI. by @Oberacda
-- Fix node import by @fmauch
+- Fix node import
 - Fix code style issues. by @Oberacda
 - Fix code style issues. by @Oberacda
 - Fix missing import in interfaces CMakeLists.txt by @Oberacda
@@ -531,10 +535,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge branch 'main' into fb_web_gui_json_editor_type_completion by @Oberacda
 - Merge branch 'main' into fix_subtree_constructor by @Oberacda
 - Merge branch 'fix_ci_rolling_allow_to_fail' into 'main'
-- Merge branch 'fb_load_save' into 'main' by @fmauch
+- Merge branch 'fb_load_save' into 'main'
 - Merge branch 'fix_installation_code_snippets' into 'main'
-- Merge branch 'fix_destruction_error' into 'main' by @fmauch
-- Merge branch 'port_ros_nodes' into 'main' by @fmauch
+- Merge branch 'fix_destruction_error' into 'main'
+- Merge branch 'port_ros_nodes' into 'main'
 - Merge branch 'main' into 'port_ros_nodes' by @Oberacda
 - Merge branch 'update_readme' into 'main' by @Oberacda
 - Merge branch 'fb_add_basic_nodes' into 'main' by @Oberacda
@@ -546,7 +550,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove dependencies that are not covered by rosdep by @Oberacda in [#49](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/49)
 - Removed fix_yaml by @mdeitersen
 - Remove usage of an invalid constructor for the subtree class. by @Oberacda
-- Remove old warning from README by @fmauch
+- Remove old warning from README
 - Remove unused imports by @Oberacda
 - Remove test parameter that is ros2 version dependent. by @Oberacda
 
@@ -554,7 +558,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * @Oberacda made their first contribution in [#59](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/59)
 * @nspielbau made their first contribution in [#54](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/54)
 * @ made their first contribution in [#57](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/57)
-* @fmauch made their first contribution
 * @t-schnell made their first contribution
 
 [unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.4.0..HEAD
