@@ -315,6 +315,7 @@ class TreeManager:
     def __init__(
         self,
         ros_node: rclpy.node.Node,
+        tree_id: Optional[uuid.UUID] = None,
         name: Optional[str] = None,
         module_list: Optional[List[str]] = None,
         debug_manager: Optional[DebugManager] = None,
@@ -334,6 +335,11 @@ class TreeManager:
             self.name = "UNKNOWN TREE"
         else:
             self.name = name
+
+        if tree_id is None:
+            self.tree_id = uuid.UUID(int=0)
+        else:
+            self.tree_id = tree_id
 
         self.publish_tree_structure = publish_tree_structure_callback
         if self.publish_tree_structure is None:
@@ -398,9 +404,7 @@ class TreeManager:
         # RUNNING for the first time
         self._stop_after_result: bool = False
 
-        tree_id = name if name else ""
-
-        self.tree_structure = TreeStructure(tree_id=tree_id)
+        self.tree_structure = TreeStructure(tree_id=uuid_to_ros(self.tree_id))
         # These reassignments makes the typing happy,
         #   because they ensure that `.append .extent .remove ...` exists
         self.tree_structure.data_wirings = []
@@ -409,9 +413,9 @@ class TreeManager:
         self.tree_structure.tick_frequency_hz = tick_frequency_hz
         self.rate = self.ros_node.create_rate(self.tree_structure.tick_frequency_hz)
 
-        self.tree_state = TreeState(tree_id=tree_id)
+        self.tree_state = TreeState(tree_id=uuid_to_ros(self.tree_id))
 
-        self.tree_data = TreeData(tree_id=tree_id)
+        self.tree_data = TreeData(tree_id=uuid_to_ros(self.tree_id))
         self.enable_publish_data = False
 
         self.diagnostic_array = DiagnosticArray()
@@ -766,6 +770,7 @@ class TreeManager:
         self.nodes = {}
         with self._tree_lock:
             self.tree_structure = TreeStructure(
+                tree_id=uuid_to_ros(self.tree_id),
                 name="",
                 tick_frequency_hz=self.tree_structure.tick_frequency_hz,
             )
@@ -773,8 +778,8 @@ class TreeManager:
             #   because they ensure that `.append .extent .remove ...` exists
             self.tree_structure.data_wirings = []
             self.tree_structure.public_node_data = []
-            self.tree_state = TreeState(state=TreeState.EDITABLE)
-            self.tree_data = TreeData()
+            self.tree_state = TreeState(tree_id=uuid_to_ros(self.tree_id), state=TreeState.EDITABLE)
+            self.tree_data = TreeData(tree_id=uuid_to_ros(self.tree_id))
         self.publish_structure()
         self.subtree_manager.clear_subtrees()
         self.clear_diagnostics_name()
@@ -831,7 +836,7 @@ class TreeManager:
 
         tree = load_response.tree
 
-        tree.tree_id = uuid.uuid4()
+        tree.tree_id = uuid_to_ros(self.tree_id)
 
         for public_datum in tree.public_node_data:
             if public_datum.data_kind == NodeDataLocation.OPTION_DATA:

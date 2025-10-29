@@ -33,7 +33,6 @@ import uuid
 from result import Err, Ok, Result
 from typeguard import typechecked
 
-from ros2_ros_bt_py.ros_bt_py.ros_bt_py.ros_nodes.subtree import Subtree
 from ros_bt_py_interfaces.msg import TreeStructure, TreeState, TreeData
 from ros_bt_py.exceptions import BehaviorTreeException
 
@@ -130,6 +129,7 @@ class SubtreeManager(object):
             self.subtree_structures.clear()
             self.subtree_states.clear()
             self.subtree_data.clear()
+            self.nested_subtree_managers.clear()
 
     def remove_subtree(self, node_id: uuid.UUID):
 
@@ -142,3 +142,4 @@ class SubtreeManager(object):
             query_dict(node_id, self.subtree_structures)
             query_dict(node_id, self.subtree_states)
             query_dict(node_id, self.subtree_data)
+            query_dict(node_id, self.nested_subtree_managers)

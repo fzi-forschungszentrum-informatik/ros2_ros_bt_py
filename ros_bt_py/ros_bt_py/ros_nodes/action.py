@@ -30,6 +30,7 @@ import abc
 from typing import Optional, Any, Dict
 from enum import Enum
 from result import Result, Ok, Err
+import uuid
 
 import rclpy
 from rclpy.action.client import ActionClient, ClientGoalHandle
@@ -524,6 +525,7 @@ class Action(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -531,6 +533,7 @@ class Action(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,

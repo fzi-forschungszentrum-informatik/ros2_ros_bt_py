@@ -29,6 +29,7 @@
 from typing import List, Optional, Dict
 
 from result import Result, Ok, Err
+import uuid
 
 from rclpy.node import Node
 
@@ -79,6 +80,7 @@ class Subtree(Leaf):
 
     def __init__(  # noqa: C901
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -87,6 +89,7 @@ class Subtree(Leaf):
     ) -> None:
         """Create the tree manager, load the subtree."""
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -105,6 +108,7 @@ class Subtree(Leaf):
         self.manager: TreeManager = TreeManager(
             ros_node=self.ros_node,
             name=name,
+            tree_id=self.node_id,
             debug_manager=debug_manager,
             subtree_manager=self.nested_subtree_manager,
         )

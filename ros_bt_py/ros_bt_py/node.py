@@ -1858,7 +1858,7 @@ class Node(object, metaclass=NodeMeta):
         )
 
     def to_state_msg(self):
-        return NodeState(name=self.name, state=self.state)
+        return NodeState(node_id=uuid_to_ros(self.node_id), state=self.state)
 
     def wire_data_msg_list(self):
         data_list: list[WiringData] = []
