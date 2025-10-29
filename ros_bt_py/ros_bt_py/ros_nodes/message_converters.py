@@ -28,6 +28,7 @@
 from typing import Optional, Dict
 
 from result import Result, Ok, Err
+import uuid
 
 from ros_bt_py.custom_types import RosTopicType
 from rclpy.node import Node
@@ -53,6 +54,7 @@ from ros_bt_py.ros_helpers import get_message_field_type
 class MessageToFields(Leaf):
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -60,6 +62,7 @@ class MessageToFields(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -138,6 +141,7 @@ class FieldsToMessage(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -145,6 +149,7 @@ class FieldsToMessage(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
