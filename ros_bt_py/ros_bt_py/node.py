@@ -102,23 +102,21 @@ def _check_node_data_match(
 
 
 @typechecked
-def _connect_wirings(data_wirings: List[Wiring], type: str) -> Dict[ROS_UUID, List[str]]:
-    connected_wirings: Dict[ROS_UUID, List[str]] = {}
+def _connect_wirings(data_wirings: List[Wiring], type: str) -> Dict[uuid.UUID, List[str]]:
+    connected_wirings: Dict[uuid.UUID, List[str]] = {}
     for wiring in data_wirings:
+        source_id = ros_to_uuid(wiring.source.node_id)
+        target_id = ros_to_uuid(wiring.target.node_id)
         if wiring.source.data_kind == type:
-            if wiring.source.node_id in connected_wirings:
-                connected_wirings[wiring.source.node_id].append(
-                    wiring.source.data_key
-                )
+            if source_id in connected_wirings:
+                connected_wirings[source_id].append(wiring.source.data_key)
             else:
-                connected_wirings[wiring.source.node_id] = [wiring.source.data_key]
+                connected_wirings[source_id] = [wiring.source.data_key]
         elif wiring.target.data_kind == type:
-            if wiring.target.node_id in connected_wirings:
-                connected_wirings[wiring.target.node_id].append(
-                    wiring.target.data_key
-                )
+            if target_id in connected_wirings:
+                connected_wirings[target_id].append(wiring.target.data_key)
             else:
-                connected_wirings[wiring.target.node_id] = [wiring.target.data_key]
+                connected_wirings[target_id] = [wiring.target.data_key]
     return connected_wirings
 
 
@@ -1437,7 +1435,10 @@ class Node(object, metaclass=NodeMeta):
         subtree.data_wirings = []
         subtree.public_node_data = []
 
-        node_map: Dict[uuid.UUID, NodeStructure] = {node.node_id: node for node in subtree.nodes}
+        node_map: Dict[uuid.UUID, NodeStructure] = {
+            ros_to_uuid(node.node_id): node
+            for node in subtree.nodes
+        }
         incoming_connections: List[Wiring] = []
         outgoing_connections: List[Wiring] = []
         for node in self.get_children_recursive():
@@ -1483,29 +1484,29 @@ class Node(object, metaclass=NodeMeta):
         )
 
         for node in subtree.nodes:
-            node_id_ros = uuid_to_ros(node.node_id)
+            node_id = ros_to_uuid(node.node_id)
             for node_input in node.inputs:
                 if (
-                    node_id_ros not in connected_inputs
-                    or node_input.key not in connected_inputs[node_id_ros]
+                    node_id not in connected_inputs
+                    or node_input.key not in connected_inputs[node_id]
                 ):
                     # Input is unconnected, list it as public
                     subtree.public_node_data.append(
                         NodeDataLocation(
-                            node_id=node_id_ros,
+                            node_id=node.node_id,
                             data_kind=NodeDataLocation.INPUT_DATA,
                             data_key=node_input.key,
                         )
                     )
             for node_output in node.outputs:
                 if (
-                    node_id_ros not in connected_outputs
-                    or node_output.key not in connected_outputs[node_id_ros]
+                    node_id not in connected_outputs
+                    or node_output.key not in connected_outputs[node_id]
                 ):
                     # Input is unconnected, list it as public
                     subtree.public_node_data.append(
                         NodeDataLocation(
-                            node_id=node_id_ros,
+                            node_id=node.node_id,
                             data_kind=NodeDataLocation.OUTPUT_DATA,
                             data_key=node_output.key,
                         )
@@ -1768,7 +1769,7 @@ class Node(object, metaclass=NodeMeta):
         """
         wiring_source_id = ros_to_uuid(wiring.source.node_id)
         wiring_target_id = ros_to_uuid(wiring.target.node_id)
-        if wiring_target_id != self.name:
+        if wiring_target_id != self.node_id:
             return Err(
                 BehaviorTreeException(
                     f"Target of wiring ({wiring_target_id}) is not this node ({self.name})"
