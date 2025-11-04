@@ -84,6 +84,7 @@ from ros_bt_py_interfaces.srv import (
     WireNodeData,
 )
 
+import rosidl_runtime_py
 from std_srvs.srv import SetBool
 
 import ament_index_python
@@ -151,12 +152,10 @@ def parse_tree_yaml(tree_yaml: str) -> MigrateTree.Response:
         if datum is None:
             continue
         if not read_data:
-            # remove option wirings
-            if "nodes" in datum:
-                for node in datum["nodes"]:
-                    node.pop("option_wirings", None)
-            response.tree = message_converter.convert_dictionary_to_ros_message(
-                TreeStructure, datum, strict_mode=False
+            version_str = datum.pop('version')
+            # TODO Use version string to determine necessary migrations
+            rosidl_runtime_py.set_message_fields(
+                response.tree, datum
             )
             read_data = True
         else:
