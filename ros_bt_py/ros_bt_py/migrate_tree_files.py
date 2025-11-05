@@ -28,9 +28,14 @@
 import importlib
 import itertools
 import uuid
+import os
+import sys
+import yaml
+from importlib import metadata
+from packaging.version import Version
 from typing import Literal
 from result import Result, Ok, Err
-from node import Node
+from ros_bt_py.node import Node
 from ros_bt_py.custom_types import FilePath, RosActionName, RosActionType, RosServiceName, RosServiceType, RosTopicName, RosTopicType, TypeWrapper
 from ros_bt_py.helpers import json_decode, json_encode
 from ros_bt_py.ros_helpers import get_interface_name, ros_to_uuid, uuid_to_ros
@@ -90,19 +95,16 @@ def find_node_class(
     return Err(f"Could not find class `{module}.{class_name}`.")
 
 
-def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str]:
-    if option_dict['serialized_type'] == json_encode(option_type):
-        return Ok(option_dict)
+def update_node_option(option_dict: dict, option_type: type) -> dict:
     if option_type == TypeWrapper:
-        match update_node_option(
+        opt_dict = update_node_option(
             option_dict,
             option_type.actual_type
-        ):
-            case Err(e):
-                return Err(e)
-            case Ok(opt_dict):
-                opt_dict['serialized_type'] = option_type
-                return Ok(opt_dict)
+        )
+
+        opt_dict['serialized_type'] = option_type
+        return opt_dict
+
     if option_type in [
         RosServiceName,
         RosTopicName,
@@ -113,7 +115,8 @@ def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str
         option_dict['serialized_value'] = json_encode(
             option_type(json_decode(option_dict['serialized_value']))
         )
-        return Ok(option_dict)
+        return option_dict
+
     if option_type in [
         RosServiceType,
         RosActionType,
@@ -125,18 +128,23 @@ def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str
                 json_decode(option_dict['serialized_value'])  # type: ignore
             ))
         )
-        return Ok(option_dict)
-    return Err(f"Node option config {option_dict} cannot be applied to option type {option_type}")
+        return option_dict
+
+    # We do not do any further checks regarding type matches at this time,
+    #   as this would require parsing and matching OptionRefs.
+    # Just assume that the type&value is good.
+    return option_dict
 
 
 def update_node_configs(node_dict: dict) -> Result[dict, str]:
     node_dict.pop('option_wirings', None)
+    node_dict.pop('state', None)
     match find_node_class(
         node_dict['module'],
         node_dict['node_class'],
-        node_dict['options'].keys(),
-        node_dict['inputs'].keys(),
-        node_dict['outputs'].keys(),
+        { opt['key'] for opt in node_dict['options'] },
+        { inp['key'] for inp in node_dict['inputs'] },
+        { outp['key'] for outp in node_dict['outputs'] },
     ):
         case Err(e):
             return Err(e)
@@ -144,20 +152,19 @@ def update_node_configs(node_dict: dict) -> Result[dict, str]:
             node_class = c
     if node_class._node_config is None:
         return Err(f"Node class `{node_class}` cannot be initialized.")
-    new_node_options = []
-    for node_option in node_dict['options']:
-        match update_node_option(
+    node_dict['options'] = [
+        update_node_option(
             node_option,
             node_class._node_config.options[node_option['key']]
-        ):
-            case Err(e):
-                return Err(e)
-            case Ok(opt_dict):
-                new_node_options.append(opt_dict)
-    node_dict['options'] = new_node_options
-    for node_io in itertools.chain(node_dict['inputs'], node_dict['options']):
-        node_io.pop('serialized_value')
+        ) for node_option in node_dict['options']
+    ]
+    for node_io in itertools.chain(node_dict['inputs'], node_dict['outputs']):
+        _ = node_io.pop('serialized_value', None)
     return Ok(node_dict)
+
+
+def uuid_to_dict(uuid: uuid.UUID) -> dict[str, list[int]]:
+    return {'uuid': list(uuid.bytes) }
 
 
 def assign_uuids(tree_dict: dict) -> dict:
@@ -166,40 +173,80 @@ def assign_uuids(tree_dict: dict) -> dict:
     for node_dict in tree_dict['nodes']:
         node_id = uuid.uuid4()
         mapping[node_dict['name']] = node_id
-        node_dict['node_id'] = json_encode(uuid_to_ros(node_id))
+        node_dict['node_id'] = uuid_to_dict(node_id)
 
     for node_dict in tree_dict['nodes']:
         node_dict['child_ids'] = [
-            json_encode(uuid_to_ros(mapping[name]))
+            uuid_to_dict(mapping[name])
             for name in node_dict.pop('child_names')
         ]
     for wiring in tree_dict['data_wirings']:
         for point in ['source', 'target']:
-            wiring[point]['node_id'] = json_encode(
-                uuid_to_ros(mapping[
+            wiring[point]['node_id'] = uuid_to_dict(
+                mapping[
                     wiring[point].pop('node_name')
-                ])
+                ]
             )
     for public_data in tree_dict['public_node_data']:
-        public_data['node_id'] = json_encode(
-            uuid_to_ros(mapping[
+        public_data['node_id'] = uuid_to_dict(
+            mapping[
                 public_data.pop('node_name')
-            ])
+            ]
         )
 
-    tree_dict['tree_id'] = json_encode(uuid_to_ros(uuid.UUID(int=0)))
-    tree_dict['root_id'] = json_encode(uuid_to_ros(mapping[tree_dict.pop('root_name')]))
+    tree_dict['tree_id'] = uuid_to_dict(uuid.UUID(int=0))
+    tree_dict['root_id'] = uuid_to_dict(mapping[tree_dict.pop('root_name')])
     return tree_dict
 
 
 def migrate_legacy_tree_structure(tree_dict: dict) -> Result[dict, str]:
-    new_nodes = []
-    for node_dict in tree_dict['nodes']:
-        match update_node_configs(node_dict):
-            case Err(e):
-                return Err(e)
-            case Ok(new_dict):
-                new_nodes.append(new_dict)
-    tree_dict['nodes'] = new_nodes
-    tree_dict = assign_uuids(tree_dict)
+    # Since the option migrations are safe (and could be extended later),
+    #   we always run them if the version is not up-to-date.
+    tree_version = Version(tree_dict.get('version', '0.0.0'))
+    if tree_version < Version(metadata.version('ros_bt_py')):
+        tree_dict.pop('state', None)
+        new_nodes = []
+        for node_dict in tree_dict['nodes']:
+            match update_node_configs(node_dict):
+                case Err(e):
+                    return Err(e)
+                case Ok(new_dict):
+                    new_nodes.append(new_dict)
+        tree_dict['nodes'] = new_nodes
+
+    # If the version is older than 0.2.0, we have to introduce uuids.
+    if tree_version < Version('0.2.0'):
+        tree_dict = assign_uuids(tree_dict)
+
+    # Once all migrations are successful, update the version number
+    tree_dict['version'] = metadata.version('ros_bt_py')
     return Ok(tree_dict)
+
+
+def main():
+    for file in sys.argv[1:]:
+        print(f"Migrating file {file}")
+
+        name, ext = os.path.splitext(file)
+        new_file = f"{name}_new{ext}"
+        counter = 1
+        while os.path.exists(new_file):
+            new_file = f"{name}_new_{counter}{ext}"
+            counter += 1
+
+        with open(file, 'r') as f:
+            tree_dict = yaml.safe_load(f.read())
+
+        match migrate_legacy_tree_structure(tree_dict):
+            case Err(e):
+                print(f"Failed to migrate: {e}")
+                continue
+            case Ok(d):
+                new_tree_dict = d
+
+        with open(new_file, 'w+') as f:
+            f.write(yaml.safe_dump(new_tree_dict, sort_keys=False))
+        print(f"Saved migration to {new_file}")
+
+
+

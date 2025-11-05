@@ -32,6 +32,7 @@
   <depend>python3-jsonpickle</depend>
   <depend>python3-requests</depend>
   <depend>python3-simplejson</depend>
+  <depend>python3-packaging</depend>
   <depend>result-pip</depend>
 
   <!-- Documentation dependencies -->

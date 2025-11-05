@@ -25,11 +25,13 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from importlib import metadata
 import inspect
 import os
 import uuid
 from copy import deepcopy
 from functools import wraps
+from packaging.version import Version
 from threading import Thread, Lock, RLock
 from typing import Any, Callable, Dict, Optional, List, cast
 
@@ -47,6 +49,7 @@ import yaml.scanner
 from typeguard import typechecked
 
 
+from ros_bt_py.migrate_tree_files import migrate_legacy_tree_structure
 from ros_bt_py_interfaces.msg import (
     DocumentedNode,
     NodeStructure,
@@ -152,8 +155,16 @@ def parse_tree_yaml(tree_yaml: str) -> MigrateTree.Response:
         if datum is None:
             continue
         if not read_data:
-            version_str = datum.pop('version')
-            # TODO Use version string to determine necessary migrations
+            if Version(datum.get('version', '0.0.0')) < Version(metadata.version('ros_bt_py')):
+                match migrate_legacy_tree_structure(datum):
+                    case Err(e):
+                        response.success = False
+                        response.error_message = \
+                            f"Failed to migrate legacy tree file: {e}"
+                        return response
+                    case Ok(d):
+                        datum = d
+            datum.pop('version')
             rosidl_runtime_py.set_message_fields(
                 response.tree, datum
             )
@@ -856,8 +867,8 @@ class TreeManager:
                 node
                 for node in tree.nodes
                 if (
-                    node.node_id not in self.nodes
-                    and all((n_id in self.nodes for n_id in node.child_ids))
+                    ros_to_uuid(node.node_id) not in self.nodes
+                    and all((ros_to_uuid(n_id) in self.nodes for n_id in node.child_ids))
                 )
             ):
                 node_instance_result = self.instantiate_node_from_msg(
@@ -873,14 +884,14 @@ class TreeManager:
 
                 instance = node_instance_result.unwrap()
                 for child_id in node.child_ids:
-                    add_child_result = instance.add_child(self.nodes[child_id])
+                    add_child_result = instance.add_child(self.nodes[ros_to_uuid(child_id)])
                     if add_child_result.is_err():
                         response.success = False
                         response.error_message = str(add_child_result.is_err())
                         self.state = TreeState.ERROR
                         return response
 
-                self.nodes[node.node_id] = instance
+                self.nodes[ros_to_uuid(node.node_id)] = instance
                 added += 1
 
                 if added == 0:

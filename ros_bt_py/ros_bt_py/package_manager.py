@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import json
 import os
+import yaml
 from importlib import metadata
 import ament_index_python
 from ament_index_python import PackageNotFoundError

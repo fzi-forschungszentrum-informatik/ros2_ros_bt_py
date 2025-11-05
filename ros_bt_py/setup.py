@@ -75,6 +75,9 @@ setup(
     license=license_str,
     tests_require=["pytest", "pytest-cov"],
     entry_points={
-        "console_scripts": ["tree_node = ros_bt_py.tree_node:main"],
+        "console_scripts": [
+            "tree_node = ros_bt_py.tree_node:main",
+            "migrate_trees = ros_bt_py.migrate_tree_files:main",
+        ],
     },
 )
