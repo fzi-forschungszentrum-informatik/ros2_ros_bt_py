@@ -38,6 +38,7 @@ from result import Result, Ok, Err
 from ros_bt_py.node import Node
 from ros_bt_py.custom_types import FilePath, RosActionName, RosActionType, RosServiceName, RosServiceType, RosTopicName, RosTopicType, TypeWrapper
 from ros_bt_py.helpers import json_decode, json_encode
+from ros_bt_py.node_config import OptionRef
 from ros_bt_py.ros_helpers import get_interface_name, ros_to_uuid, uuid_to_ros
 
 def filter_node_candidates(
@@ -95,15 +96,25 @@ def find_node_class(
     return Err(f"Could not find class `{module}.{class_name}`.")
 
 
-def update_node_option(option_dict: dict, option_type: type) -> dict:
-    if option_type == TypeWrapper:
-        opt_dict = update_node_option(
+def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str]:
+    # Early out if types are matching
+    if json_encode(option_type) == option_dict['serialized_type']:
+        return Ok(option_dict)
+
+    # Leave optionrefs untouched
+    if isinstance(option_type, OptionRef):
+        return Ok(option_dict)
+
+    if isinstance(option_type, TypeWrapper):
+        match update_node_option(
             option_dict,
             option_type.actual_type
-        )
-
-        opt_dict['serialized_type'] = option_type
-        return opt_dict
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok(opt_dict):
+                opt_dict['serialized_type'] = json_encode(option_type)
+                return Ok(opt_dict)
 
     if option_type in [
         RosServiceName,
@@ -115,7 +126,7 @@ def update_node_option(option_dict: dict, option_type: type) -> dict:
         option_dict['serialized_value'] = json_encode(
             option_type(json_decode(option_dict['serialized_value']))
         )
-        return option_dict
+        return Ok(option_dict)
 
     if option_type in [
         RosServiceType,
@@ -128,12 +139,9 @@ def update_node_option(option_dict: dict, option_type: type) -> dict:
                 json_decode(option_dict['serialized_value'])  # type: ignore
             ))
         )
-        return option_dict
+        return Ok(option_dict)
 
-    # We do not do any further checks regarding type matches at this time,
-    #   as this would require parsing and matching OptionRefs.
-    # Just assume that the type&value is good.
-    return option_dict
+    return Err(f"Cannot convert option config {option_dict} to type {option_type}")
 
 
 def update_node_configs(node_dict: dict) -> Result[dict, str]:
@@ -152,12 +160,17 @@ def update_node_configs(node_dict: dict) -> Result[dict, str]:
             node_class = c
     if node_class._node_config is None:
         return Err(f"Node class `{node_class}` cannot be initialized.")
-    node_dict['options'] = [
-        update_node_option(
+    new_node_options = []
+    for node_option in node_dict['options']:
+        match update_node_option(
             node_option,
             node_class._node_config.options[node_option['key']]
-        ) for node_option in node_dict['options']
-    ]
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok(opt):
+                new_node_options.append(opt)
+    node_dict['options'] = new_node_options
     for node_io in itertools.chain(node_dict['inputs'], node_dict['outputs']):
         _ = node_io.pop('serialized_value', None)
     return Ok(node_dict)
