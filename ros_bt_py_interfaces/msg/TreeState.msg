@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # The empty string for the main tree, the tree prefix for subtrees
-unique_identifier_msgs/UUID tree_id
+string tree_id
 
 string state
 NodeState[] node_states

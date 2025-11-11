@@ -475,7 +475,7 @@ class TreeManager:
             self.diagnostic_status.name = os.path.splitext(self.tree_structure.name)[0]
         elif self.tree_structure.root_id:
             self.diagnostic_status.name = self.nodes[
-                ros_to_uuid(self.tree_structure.root_id)
+                ros_to_uuid(self.tree_structure.root_id).unwrap()
             ].name
             get_logger("tree_manager").get_child(self.name).warn(
                 "No tree name was found. Diagnostics data from the behavior tree will be"
@@ -859,45 +859,38 @@ class TreeManager:
 
         # Clear existing tree, then replace it with the message's contents
         self.clear(None, ClearTree.Response())
-        # add nodes whose children exist already, until all nodes are there
-        while len(self.nodes) != len(tree.nodes):
-            added = 0
-            # find nodes whose children are all in the tree already, then add them
-            for node in (
-                node
-                for node in tree.nodes
-                if (
-                    ros_to_uuid(node.node_id) not in self.nodes
-                    and all((ros_to_uuid(n_id) in self.nodes for n_id in node.child_ids))
-                )
+        # First just add all nodes to the tree, then restore tree structure
+        for node in tree.nodes:
+            match self.instantiate_node_from_msg(
+                node_msg=node,
+                ros_node=self.ros_node,
+                permissive=request.permissive,
             ):
-                node_instance_result = self.instantiate_node_from_msg(
-                    node_msg=node,
-                    ros_node=self.ros_node,
-                    permissive=request.permissive,
-                )
-
-                    if node_instance_result.is_err():
-                        response.success = False
-                        response.error_message = str(node_instance_result.unwrap_err())
-                        return response
-
-                instance = node_instance_result.unwrap()
-                for child_id in node.child_ids:
-                    add_child_result = instance.add_child(self.nodes[ros_to_uuid(child_id)])
-                    if add_child_result.is_err():
-                        response.success = False
-                        response.error_message = str(add_child_result.is_err())
-                        self.state = TreeState.ERROR
-                        return response
-
-                self.nodes[ros_to_uuid(node.node_id)] = instance
-                added += 1
-
-                if added == 0:
+                case Err(e):
                     response.success = False
-                    response.error_message = "Unable to add all nodes to tree."
+                    response.error_message = str(e)
                     return response
+                case Ok(node):
+                    self.nodes[node.node_id] = node
+
+        for node in tree.nodes:
+            # We just parsed all ids before, so we know them to be safe
+            node_id = ros_to_uuid(node.node_id).unwrap()
+            for c_id in node.child_ids:
+                match ros_to_uuid(c_id):
+                    case Err(e):
+                        response.success = False
+                        response.error_message = e
+                        return response
+                    case Ok(u):
+                        child_id = u
+                match self.nodes[node_id].add_child(self.nodes[child_id]):
+                    case Err(e):
+                        response.success = False
+                        response.error_message = str(e)
+                        return response
+                    case Ok(_):
+                        pass
 
             # All nodes are added, now do the wiring
             wire_response = WireNodeData.Response()
@@ -1462,7 +1455,13 @@ class TreeManager:
         response.success = True
         response.node_id = node_msg.node_id
 
-        parent_node_id = ros_to_uuid(request.parent_node_id)
+        match ros_to_uuid(request.parent_node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(p_id):
+                parent_node_id = p_id
 
         # Add node as child of the named parent, if any
         if parent_node_id != uuid.UUID(int=0):
@@ -1583,7 +1582,14 @@ class TreeManager:
         take on all of the removed node's children, it will. Otherwise,
         children will be orphaned.
         """
-        node_id = ros_to_uuid(request.node_id)
+        match ros_to_uuid(request.node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(n_id):
+                node_id = n_id
+
 
         if node_id not in self.nodes:
             response.success = False
@@ -1630,9 +1636,10 @@ class TreeManager:
                 wirings=[
                     wiring
                     for wiring in self.tree_structure.data_wirings
+                    # Wirings coming from the internal state will have valid node ids
                     if (
-                        ros_to_uuid(wiring.source.node_id) in node_ids_to_remove
-                        or ros_to_uuid(wiring.target.node_id) in node_ids_to_remove
+                        ros_to_uuid(wiring.source.node_id).unwrap() in node_ids_to_remove
+                        or ros_to_uuid(wiring.target.node_id).unwrap() in node_ids_to_remove
                     )
                 ]
             ),
@@ -1697,16 +1704,18 @@ class TreeManager:
         self.tree_structure.data_wirings = [
             wiring
             for wiring in self.tree_structure.data_wirings
+            # Wirings coming from the internal state will have valid node ids
             if (
-                ros_to_uuid(wiring.source.node_id) not in removed_node_ids
-                and ros_to_uuid(wiring.target.node_id) not in removed_node_ids
+                ros_to_uuid(wiring.source.node_id).unwrap() not in removed_node_ids
+                and ros_to_uuid(wiring.target.node_id).unwrap() not in removed_node_ids
             )
         ]
 
         self.tree_structure.public_node_data = [
             data
             for data in self.tree_structure.public_node_data
-            if ros_to_uuid(data.node_id) not in removed_node_ids
+            # Data coming from the internal state will have valid node ids
+            if ros_to_uuid(data.node_id).unwrap() not in removed_node_ids
         ]
 
         for n_id in removed_node_ids:
@@ -1722,7 +1731,14 @@ class TreeManager:
         self, request: MorphNode.Request, response: MorphNode.Response
     ) -> MorphNode.Response:
         """Morphs the flow control node into the new node provided in `request.new_node`."""
-        node_id = ros_to_uuid(request.node_id)
+        match ros_to_uuid(request.node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(n_id):
+                node_id = n_id
+
         if node_id not in self.nodes:
             response.success = False
             response.error_message = (
@@ -1863,7 +1879,14 @@ class TreeManager:
         This is an "edit service", i.e. it can only be used when the
         tree has not yet been initialized or has been shut down.
         """
-        node_id = ros_to_uuid(request.node_id)
+        match ros_to_uuid(request.node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(n_id):
+                node_id = n_id
+
         if node_id not in self.nodes:
             response.success = False
             response.error_message = (
@@ -2158,7 +2181,22 @@ class TreeManager:
         self, request: MoveNode.Request, response: MoveNode.Response
     ) -> MoveNode.Response:
         """Move the named node to a different parent and insert it at the given index."""
-        node_id = ros_to_uuid(request.node_id)
+        match ros_to_uuid(request.node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(n_id):
+                node_id = n_id
+
+        match ros_to_uuid(request.parent_node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(p_id):
+                parent_node_id = p_id
+
         if node_id not in self.nodes:
             response.success = False
             response.error_message = (
@@ -2169,7 +2207,7 @@ class TreeManager:
         node = self.nodes[node_id]
 
         # Empty parent name -> just remove node from parent
-        if request.parent_node_id == "":
+        if parent_node_id == uuid.UUID(int=0):
             if node.parent is not None:
                 remove_child_result = node.parent.remove_child(node.node_id)
                 if remove_child_result.is_err():
@@ -2184,7 +2222,6 @@ class TreeManager:
             response.success = True
             return response
 
-        parent_node_id = ros_to_uuid(request.parent_node_id)
         if parent_node_id not in self.nodes:
             response.success = False
             response.error_message = (
@@ -2270,8 +2307,22 @@ class TreeManager:
         only if `new_node` supports that number of children. Otherwise,
         this will return an error and leave the tree unchanged.
         """
-        old_node_id = ros_to_uuid(request.old_node_id)
-        new_node_id = ros_to_uuid(request.new_node_id)
+        match ros_to_uuid(request.old_node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(n_id):
+                old_node_id = n_id
+
+        match ros_to_uuid(request.new_node_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(n_id):
+                new_node_id = n_id
+
         if old_node_id not in self.nodes:
             response.success = False
             response.error_message = (
@@ -2435,18 +2486,25 @@ class TreeManager:
             return response
         root = find_root_result.unwrap()
         if not root:
-
             response.success = False
             response.error_message = "Tree is empty cannot wire!"
             return response
 
         successful_wirings = []
         for wiring in request.wirings:
-            target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
+            match ros_to_uuid(wiring.target.node_id):
+                case Err(e):
+                    response.success = False
+                    response.error_message = e
+                    break
+                case Ok(n_id):
+                    target_node_id = n_id
+
+            target_node = root.find_node(target_node_id)
             if not target_node:
                 response.success = False
                 response.error_message = (
-                    f"Target node {wiring.target.node_id} does not exist"
+                    f"Target node {target_node_id} does not exist"
                 )
                 break
             wire_data_result = target_node.wire_data(wiring)
@@ -2464,11 +2522,19 @@ class TreeManager:
         if not response.success:
             # Undo the successful wirings
             for wiring in successful_wirings:
-                target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
+                match ros_to_uuid(wiring.target.node_id):
+                    case Err(e):
+                        response.success = False
+                        response.error_message = e
+                        return response
+                    case Ok(n_id):
+                        target_node_id = n_id
+
+                target_node = root.find_node(target_node_id)
                 if not target_node:
                     response.success = False
                     response.error_message = (
-                        "Failed to find node target: " f"{wiring.target.node_id}"
+                        "Failed to find node target: " f"{target_node_id}"
                     )
                     return response
                 unwire_result = target_node.unwire_data(wiring)
@@ -2524,11 +2590,19 @@ class TreeManager:
         response.success = True
         successful_unwirings = []
         for wiring in request.wirings:
-            target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
+            match ros_to_uuid(wiring.target.node_id):
+                case Err(e):
+                    response.success = False
+                    response.error_message = e
+                    break
+                case Ok(n_id):
+                    target_node_id = n_id
+
+            target_node = root.find_node(target_node_id)
             if not target_node:
                 response.success = False
                 response.error_message = (
-                    f"Target node {wiring.target.node_id} does not exist"
+                    f"Target node {target_node_id} does not exist"
                 )
                 break
             unwire_result = target_node.unwire_data(wiring)
@@ -2544,7 +2618,15 @@ class TreeManager:
         if not response.success:
             # Re-Wire the successful unwirings
             for wiring in successful_unwirings:
-                target_node = root.find_node(ros_to_uuid(wiring.target.node_id))
+                match ros_to_uuid(wiring.target.node_id):
+                    case Err(e):
+                        response.success = False
+                        response.error_message = e
+                        return response
+                    case Ok(n_id):
+                        target_node_id = n_id
+
+                target_node = root.find_node(target_node_id)
                 if not target_node:
                     response.success = False
                     response.error_message = (
@@ -2585,9 +2667,15 @@ class TreeManager:
             )
             return response
 
-        get_subtree_msg_result = self.nodes[
-            ros_to_uuid(request.root_id)
-        ].get_subtree_msg()
+        match ros_to_uuid(request.root_id):
+            case Err(e):
+                response.success = False
+                response.error_message = e
+                return response
+            case Ok(n_id):
+                root_id = n_id
+
+        get_subtree_msg_result = self.nodes[root_id].get_subtree_msg()
 
         if get_subtree_msg_result.is_err():
             response.subtree = False

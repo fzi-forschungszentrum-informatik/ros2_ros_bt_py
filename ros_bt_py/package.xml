@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>ros_bt_py</name>
-  <version>0.5.0</version>
+  <version>0.6.0</version>
   <description>A type-safe Behavior Tree library (until the wheels fall off)</description>
   <maintainer email="oberacker@fzi.de">David Oberacker</maintainer>
   <license>BSD-3-Clause</license>

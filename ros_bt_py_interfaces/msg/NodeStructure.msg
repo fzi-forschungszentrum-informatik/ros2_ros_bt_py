@@ -39,10 +39,10 @@ int32 max_children
 ## These are run-time parameters
 # Each node id must be unique in its tree. This does not count for
 # subtrees, as they're handled separately.
-unique_identifier_msgs/UUID node_id
+string node_id
 string name
 # Order is important for child_names!
-unique_identifier_msgs/UUID[] child_ids
+string[] child_ids
 NodeOption[] options
 NodeIO[] inputs
 NodeIO[] outputs

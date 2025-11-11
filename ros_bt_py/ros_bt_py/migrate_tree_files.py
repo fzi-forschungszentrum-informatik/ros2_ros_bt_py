@@ -39,7 +39,7 @@ from ros_bt_py.node import Node
 from ros_bt_py.custom_types import FilePath, RosActionName, RosActionType, RosServiceName, RosServiceType, RosTopicName, RosTopicType, TypeWrapper
 from ros_bt_py.helpers import json_decode, json_encode
 from ros_bt_py.node_config import OptionRef
-from ros_bt_py.ros_helpers import get_interface_name, ros_to_uuid, uuid_to_ros
+from ros_bt_py.ros_helpers import get_interface_name
 
 def filter_node_candidates(
     nodes: list[type[Node]],
@@ -162,6 +162,8 @@ def update_node_configs(node_dict: dict) -> Result[dict, str]:
         return Err(f"Node class `{node_class}` cannot be initialized.")
     new_node_options = []
     for node_option in node_dict['options']:
+        if node_option['key'] not in node_class._node_config.options:
+            continue
         match update_node_option(
             node_option,
             node_class._node_config.options[node_option['key']]
@@ -176,39 +178,35 @@ def update_node_configs(node_dict: dict) -> Result[dict, str]:
     return Ok(node_dict)
 
 
-def uuid_to_dict(uuid: uuid.UUID) -> dict[str, list[int]]:
-    return {'uuid': list(uuid.bytes) }
-
-
 def assign_uuids(tree_dict: dict) -> dict:
     """This assumes a legacy structure that uses names to identify nodes"""
     mapping: dict[str, uuid.UUID] = {}
     for node_dict in tree_dict['nodes']:
         node_id = uuid.uuid4()
         mapping[node_dict['name']] = node_id
-        node_dict['node_id'] = uuid_to_dict(node_id)
+        node_dict['node_id'] = str(node_id)
 
     for node_dict in tree_dict['nodes']:
         node_dict['child_ids'] = [
-            uuid_to_dict(mapping[name])
+            str(mapping[name])
             for name in node_dict.pop('child_names')
         ]
     for wiring in tree_dict['data_wirings']:
         for point in ['source', 'target']:
-            wiring[point]['node_id'] = uuid_to_dict(
+            wiring[point]['node_id'] = str(
                 mapping[
                     wiring[point].pop('node_name')
                 ]
             )
     for public_data in tree_dict['public_node_data']:
-        public_data['node_id'] = uuid_to_dict(
+        public_data['node_id'] = str(
             mapping[
                 public_data.pop('node_name')
             ]
         )
 
-    tree_dict['tree_id'] = uuid_to_dict(uuid.UUID(int=0))
-    tree_dict['root_id'] = uuid_to_dict(mapping[tree_dict.pop('root_name')])
+    tree_dict['tree_id'] = str(uuid.UUID(int=0))
+    tree_dict['root_id'] = str(mapping[tree_dict.pop('root_name')])
     return tree_dict
 
 
@@ -227,8 +225,8 @@ def migrate_legacy_tree_structure(tree_dict: dict) -> Result[dict, str]:
                     new_nodes.append(new_dict)
         tree_dict['nodes'] = new_nodes
 
-    # If the version is older than 0.2.0, we have to introduce uuids.
-    if tree_version < Version('0.2.0'):
+    # If the version is older than 0.6.0, we have to introduce uuids.
+    if tree_version < Version('0.6.0'):
         tree_dict = assign_uuids(tree_dict)
 
     # Once all migrations are successful, update the version number

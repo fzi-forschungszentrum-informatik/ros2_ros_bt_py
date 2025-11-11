@@ -34,7 +34,6 @@ import uuid
 from rclpy.node import Node
 
 from ros_bt_py_interfaces.msg._node_structure import NodeStructure
-from unique_identifier_msgs.msg import UUID as ROS_UUID
 
 from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
 from ros_bt_py_interfaces.srv import LoadTree
@@ -50,6 +49,10 @@ from ros_bt_py.node_config import NodeConfig
 from ros_bt_py.custom_types import FilePath
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
+
+
+# Type alias for ros uuids
+ROS_UUID = str
 
 
 @define_bt_node(
@@ -228,9 +231,8 @@ class Subtree(Leaf):
             subtree_msg.public_node_data = modified_public_node_data
 
         for node_data in subtree_msg.public_node_data:
-            # Remove the prefix from the node name to make for nicer
-            # input/output names (and also not break wirings)
-            node = self.manager.nodes[ros_to_uuid(node_data.node_id)]
+            # Since those are internal ids, we assume them to be safe
+            node = self.manager.nodes[ros_to_uuid(node_data.node_id).unwrap()]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
                 subtree_inputs[f"{node.name}.{node_data.data_key}"] = \
@@ -261,9 +263,8 @@ class Subtree(Leaf):
         # Handle forwarding inputs and outputs using the subscribe mechanics:
         node_data: NodeDataLocation
         for node_data in self.manager.structure_to_msg().public_node_data:
-            # get the node name without prefix to match our renamed
-            # inputs and outputs
-            node = self.manager.nodes[ros_to_uuid(node_data.node_id)]
+            # Since those are internal ids, we assume them to be safe
+            node = self.manager.nodes[ros_to_uuid(node_data.node_id).unwrap()]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
                 if (
