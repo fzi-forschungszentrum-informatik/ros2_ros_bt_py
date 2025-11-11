@@ -28,8 +28,8 @@
 ## Move a Node from its current position to be a child of the node at
 ## new_parent_name. new_child_index determines the Node's index in
 ## the new parent's children array.
-unique_identifier_msgs/UUID node_id
-unique_identifier_msgs/UUID parent_node_id
+string node_id
+string parent_node_id
 # Follows Python convention, i.e. can be negative to count from the
 # end of the children list.
 int32 new_child_index

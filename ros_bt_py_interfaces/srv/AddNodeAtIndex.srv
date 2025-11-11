@@ -25,7 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-unique_identifier_msgs/UUID parent_node_id
+string parent_node_id
 NodeStructure node
 
 # Follows Python convention, i.e. can be negative to count from the
@@ -33,5 +33,5 @@ NodeStructure node
 int32 new_child_index
 ---
 bool success
-unique_identifier_msgs/UUID node_id
+string node_id
 string error_message

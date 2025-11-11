@@ -55,8 +55,6 @@ import rclpy
 import rclpy.logging
 from rclpy.node import Node as ROSNode
 
-from unique_identifier_msgs.msg import UUID as ROS_UUID
-
 from ros_bt_py_interfaces.msg import UtilityBounds, _node_data_location
 from typeguard import typechecked
 from ros_bt_py_interfaces.msg import (
@@ -105,8 +103,9 @@ def _check_node_data_match(
 def _connect_wirings(data_wirings: List[Wiring], type: str) -> Dict[uuid.UUID, List[str]]:
     connected_wirings: Dict[uuid.UUID, List[str]] = {}
     for wiring in data_wirings:
-        source_id = ros_to_uuid(wiring.source.node_id)
-        target_id = ros_to_uuid(wiring.target.node_id)
+        # Since this function is for internal use, we assume ids to be valid
+        source_id = ros_to_uuid(wiring.source.node_id).unwrap()
+        target_id = ros_to_uuid(wiring.target.node_id).unwrap()
         if wiring.source.data_kind == type:
             if source_id in connected_wirings:
                 connected_wirings[source_id].append(wiring.source.data_key)
@@ -1364,13 +1363,19 @@ class Node(object, metaclass=NodeMeta):
                 )
             )
 
+        match ros_to_uuid(msg.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                node_id = n_id
+
         # Instantiate node - this shouldn't do anything yet, since we don't
         # call setup()
         node_class.permissive = permissive
         try:
             node_instance = node_class(
                 name=msg.name if msg.name else None,
-                node_id=ros_to_uuid(msg.node_id),
+                node_id=node_id,
                 options=options_dict,
                 debug_manager=debug_manager,
                 subtree_manager=subtree_manager,
@@ -1436,18 +1441,20 @@ class Node(object, metaclass=NodeMeta):
         subtree.public_node_data = []
 
         node_map: Dict[uuid.UUID, NodeStructure] = {
-            ros_to_uuid(node.node_id): node
+            # Since this is internal data, we assume ids to be safe
+            ros_to_uuid(node.node_id).unwrap(): node
             for node in subtree.nodes
         }
         incoming_connections: List[Wiring] = []
         outgoing_connections: List[Wiring] = []
         for node in self.get_children_recursive():
             for sub in node.subscriptions:
+                # Since this is internal data, we assume ids to be safe
                 source_node = node_map.get(
-                    ros_to_uuid(sub.source.node_id)
+                    ros_to_uuid(sub.source.node_id).unwrap()
                 )
                 target_node = node_map.get(
-                    ros_to_uuid(sub.target.node_id)
+                    ros_to_uuid(sub.target.node_id).unwrap()
                 )
 
                 # For subscriptions where source and target are in the subtree,
@@ -1472,7 +1479,8 @@ class Node(object, metaclass=NodeMeta):
                     )
 
             for wiring, _, _ in node.subscribers:
-                if ros_to_uuid(wiring.target.node_id) not in node_map:
+                # Since this is internal data, we assume ids to be safe
+                if ros_to_uuid(wiring.target.node_id).unwrap() not in node_map:
                     subtree.public_node_data.append(wiring.source)
                     outgoing_connections.append(wiring)
 
@@ -1484,7 +1492,8 @@ class Node(object, metaclass=NodeMeta):
         )
 
         for node in subtree.nodes:
-            node_id = ros_to_uuid(node.node_id)
+            # Since this is internal data, we assume ids to be safe
+            node_id = ros_to_uuid(node.node_id).unwrap()
             for node_input in node.inputs:
                 if (
                     node_id not in connected_inputs
@@ -1572,8 +1581,9 @@ class Node(object, metaclass=NodeMeta):
         BehaviorTreeException if `expected_type` and the actual type of
         the data are incompatible.
         """
-        wiring_source_id = ros_to_uuid(wiring.source.node_id)
-        wiring_target_id = ros_to_uuid(wiring.target.node_id)
+        # Since this function works on internal data, we assume ids to be safe
+        wiring_source_id = ros_to_uuid(wiring.source.node_id).unwrap()
+        wiring_target_id = ros_to_uuid(wiring.target.node_id).unwrap()
         if wiring_source_id != self.node_id:
             return Err(
                 BehaviorTreeException(
@@ -1650,8 +1660,16 @@ class Node(object, metaclass=NodeMeta):
         target exists already, or if the types of source and target data
         are incompatible.
         """
-        wiring_source_id = ros_to_uuid(wiring.source.node_id)
-        wiring_target_id = ros_to_uuid(wiring.target.node_id)
+        match ros_to_uuid(wiring.source.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_source_id = n_id
+        match ros_to_uuid(wiring.target.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_target_id = n_id
         if wiring_target_id != self.node_id:
             return Err(
                 BehaviorTreeException(
@@ -1723,7 +1741,8 @@ class Node(object, metaclass=NodeMeta):
         the requested key does not exist in this node.
 
         """
-        wiring_source_id = ros_to_uuid(wiring.source.node_id)
+        # Since this works on internal data, we assume ids to be safe
+        wiring_source_id = ros_to_uuid(wiring.source.node_id).unwrap()
         if wiring_source_id != self.node_id:
             return Err(
                 BehaviorTreeException(
@@ -1767,8 +1786,16 @@ class Node(object, metaclass=NodeMeta):
         If the given wiring's source node cannot be found from this
         node.
         """
-        wiring_source_id = ros_to_uuid(wiring.source.node_id)
-        wiring_target_id = ros_to_uuid(wiring.target.node_id)
+        match ros_to_uuid(wiring.source.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_source_id = n_id
+        match ros_to_uuid(wiring.target.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_target_id = n_id
         if wiring_target_id != self.node_id:
             return Err(
                 BehaviorTreeException(

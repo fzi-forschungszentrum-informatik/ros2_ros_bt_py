@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # The empty string for the main tree, the tree prefix for subtrees
-unique_identifier_msgs/UUID tree_id
+string tree_id
 
 # A descriptive name for this tree. At runtime, this is chosen by the
 # tree manager node.
@@ -36,7 +36,7 @@ string name
 # any. Can be a file:// or a package:// string. Please don't build
 # infinite loops using this.
 string path
-unique_identifier_msgs/UUID root_id
+string root_id
 NodeStructure[] nodes
 Wiring[] data_wirings
 float64 tick_frequency_hz
