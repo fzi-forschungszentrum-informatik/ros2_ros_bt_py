@@ -822,14 +822,12 @@ class Service(Leaf):
             self.logerr(msg)
             return Err(BehaviorTreeException(msg))
 
-        self._service_available = True
-        if not self._service_client.wait_for_service(
-            timeout_sec=self.options["wait_for_service_seconds"]
+        if (
+            "fail_if_not_available" not in self.options
+            or self.options["fail_if_not_available"]
         ):
-            self._service_available = False
-            if (
-                "fail_if_not_available" not in self.options
-                or self.options["fail_if_not_available"]
+            if not self._service_client.wait_for_service(
+                timeout_sec=self.options["wait_for_service_seconds"]
             ):
                 return Err(
                     BehaviorTreeException(
