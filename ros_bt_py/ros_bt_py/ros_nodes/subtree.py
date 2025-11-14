@@ -235,11 +235,13 @@ class Subtree(Leaf):
             node = self.manager.nodes[ros_to_uuid(node_data.node_id).unwrap()]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
-                subtree_inputs[f"{node.name}.{node_data.data_key}"] = \
+                subtree_inputs[f"{node.name}.{node_data.data_key}"] = (
                     node.inputs.get_type(node_data.data_key)
+                )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
-                subtree_outputs[f"{node.name}.{node_data.data_key}"] = \
+                subtree_outputs[f"{node.name}.{node_data.data_key}"] = (
                     node.outputs.get_type(node_data.data_key)
+                )
 
     def _register_data_forwarding(
         self,
@@ -267,10 +269,7 @@ class Subtree(Leaf):
             node = self.manager.nodes[ros_to_uuid(node_data.node_id).unwrap()]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
-                if (
-                    self.options["use_io_nodes"]
-                    and node_data.node_id not in io_inputs
-                ):
+                if self.options["use_io_nodes"] and node_data.node_id not in io_inputs:
                     self.logdebug(
                         f"removed an unconnected input ({node.name}) from the subtree"
                     )
@@ -280,10 +279,7 @@ class Subtree(Leaf):
                         callback=node.inputs.get_callback(node_data.data_key),
                     )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
-                if (
-                    self.options["use_io_nodes"]
-                    and node_data.node_id not in io_outputs
-                ):
+                if self.options["use_io_nodes"] and node_data.node_id not in io_outputs:
                     pass
                 else:
                     node.outputs.subscribe(

@@ -108,7 +108,9 @@ class SubtreeManager(object):
                 full_list.extend(manager.get_subtree_data())
             return full_list
 
-    def add_subtree_structure(self, node_id: uuid.UUID, subtree_msg: TreeStructure) -> None:
+    def add_subtree_structure(
+        self, node_id: uuid.UUID, subtree_msg: TreeStructure
+    ) -> None:
         with self._lock:
             self.subtree_structures[node_id] = subtree_msg
 
@@ -120,7 +122,9 @@ class SubtreeManager(object):
         with self._lock:
             self.subtree_data[node_id] = subtree_msg
 
-    def add_nested_manager(self, node_id: uuid.UUID, subtree_manager: 'SubtreeManager'):
+    def add_nested_manager(self, node_id: uuid.UUID, subtree_manager: "SubtreeManager"):
+        subtree_manager.publish_subtrees = self.publish_subtrees
+        subtree_manager.set_publish_data(self.get_publish_data())
         with self._lock:
             self.nested_subtree_managers[node_id] = subtree_manager
 
