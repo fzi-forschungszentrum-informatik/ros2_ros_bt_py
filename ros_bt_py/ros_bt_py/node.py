@@ -100,7 +100,9 @@ def _check_node_data_match(
 
 
 @typechecked
-def _connect_wirings(data_wirings: List[Wiring], type: str) -> Dict[uuid.UUID, List[str]]:
+def _connect_wirings(
+    data_wirings: List[Wiring], type: str
+) -> Dict[uuid.UUID, List[str]]:
     connected_wirings: Dict[uuid.UUID, List[str]] = {}
     for wiring in data_wirings:
         # Since this function is for internal use, we assume ids to be valid
@@ -1450,12 +1452,8 @@ class Node(object, metaclass=NodeMeta):
         for node in self.get_children_recursive():
             for sub in node.subscriptions:
                 # Since this is internal data, we assume ids to be safe
-                source_node = node_map.get(
-                    ros_to_uuid(sub.source.node_id).unwrap()
-                )
-                target_node = node_map.get(
-                    ros_to_uuid(sub.target.node_id).unwrap()
-                )
+                source_node = node_map.get(ros_to_uuid(sub.source.node_id).unwrap())
+                target_node = node_map.get(ros_to_uuid(sub.target.node_id).unwrap())
 
                 # For subscriptions where source and target are in the subtree,
                 # add a wiring.

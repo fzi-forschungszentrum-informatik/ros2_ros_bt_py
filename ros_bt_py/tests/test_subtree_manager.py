@@ -26,6 +26,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
+import uuid
+from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py_interfaces.msg import (
     TreeStructure,
@@ -54,22 +56,28 @@ class TestSubtreeManager:
     def test_add_subtree_structure(self, subtree_manager: SubtreeManager):
         subtree_fields = [
             {
-                "name": "subtree_0",
+                "tree_id": uuid_to_ros(uuid.UUID(int=10)),
                 "tick_frequency_hz": 42.5,
                 "nodes": [
                     NodeStructure(
-                        name="node_0.0",
-                        child_names=["node_0.0.0", "node_0.0.1"],
+                        node_id=uuid_to_ros(uuid.UUID(int=100)),
+                        child_ids=[
+                            uuid_to_ros(uuid.UUID(int=1000)),
+                            uuid_to_ros(uuid.UUID(int=1001)),
+                        ],
                     )
                 ],
             },
             {
-                "name": "subtree_1",
+                "tree_id": uuid_to_ros(uuid.UUID(int=11)),
                 "tick_frequency_hz": 42.0,
                 "nodes": [
                     NodeStructure(
-                        name="node_1.0",
-                        child_names=["node_1.0.0", "node_1.0.1"],
+                        node_id=uuid_to_ros(uuid.UUID(int=110)),
+                        child_ids=[
+                            uuid_to_ros(uuid.UUID(int=1100)),
+                            uuid_to_ros(uuid.UUID(int=1101)),
+                        ],
                     )
                 ],
             },
@@ -79,8 +87,10 @@ class TestSubtreeManager:
         subtree_manager_subtree_structures = subtree_manager.get_subtree_structures()
         assert subtree_manager_subtree_structures == []
 
-        for i, tree in enumerate(subtrees):
-            subtree_manager.add_subtree_structure("node_" + str(i), tree)
+        for tree in subtrees:
+            subtree_manager.add_subtree_structure(
+                ros_to_uuid(tree.tree_id).unwrap(), tree
+            )
 
         subtree_manager_subtree_structures = subtree_manager.get_subtree_structures()
         assert len(subtree_manager_subtree_structures) == len(subtrees)
@@ -93,12 +103,24 @@ class TestSubtreeManager:
     def test_add_subtree_state(self, subtree_manager: SubtreeManager):
         subtree_fields = [
             {
+                "tree_id": uuid_to_ros(uuid.UUID(int=10)),
                 "state": TreeState.EDITABLE,
-                "node_states": [NodeState(name="node_0.0", state=NodeState.SHUTDOWN)],
+                "node_states": [
+                    NodeState(
+                        node_id=uuid_to_ros(uuid.UUID(int=100)),
+                        state=NodeState.SHUTDOWN,
+                    )
+                ],
             },
             {
+                "tree_id": uuid_to_ros(uuid.UUID(int=11)),
                 "state": TreeState.EDITABLE,
-                "node_states": [NodeState(name="node_1.0", state=NodeState.SHUTDOWN)],
+                "node_states": [
+                    NodeState(
+                        node_id=uuid_to_ros(uuid.UUID(int=110)),
+                        state=NodeState.SHUTDOWN,
+                    )
+                ],
             },
         ]
         subtrees = [TreeState(**fields) for fields in subtree_fields]
@@ -106,8 +128,8 @@ class TestSubtreeManager:
         subtree_manager_subtree_states = subtree_manager.get_subtree_states()
         assert subtree_manager_subtree_states == []
 
-        for i, tree in enumerate(subtrees):
-            subtree_manager.add_subtree_state("node_" + str(i), tree)
+        for tree in subtrees:
+            subtree_manager.add_subtree_state(ros_to_uuid(tree.tree_id).unwrap(), tree)
 
         subtree_manager_subtree_states = subtree_manager.get_subtree_states()
         assert len(subtree_manager_subtree_states) == len(subtrees)
@@ -120,16 +142,17 @@ class TestSubtreeManager:
     def test_add_subtree_data(self, subtree_manager: SubtreeManager):
         subtree_fields = [
             {
+                "tree_id": uuid_to_ros(uuid.UUID(int=10)),
                 "wiring_data": [
                     WiringData(
                         wiring=Wiring(
                             source=NodeDataLocation(
-                                node_name="node_0.0",
+                                node_id=uuid_to_ros(uuid.UUID(int=100)),
                                 data_kind=NodeDataLocation.OUTPUT_DATA,
                                 data_key="output1",
                             ),
                             target=NodeDataLocation(
-                                node_name="node_0.1",
+                                node_id=uuid_to_ros(uuid.UUID(int=101)),
                                 data_kind=NodeDataLocation.INPUT_DATA,
                                 data_key="input1",
                             ),
@@ -138,19 +161,20 @@ class TestSubtreeManager:
                         serialized_type="int",
                         serialized_expected_type="int",
                     )
-                ]
+                ],
             },
             {
+                "tree_id": uuid_to_ros(uuid.UUID(int=11)),
                 "wiring_data": [
                     WiringData(
                         wiring=Wiring(
                             source=NodeDataLocation(
-                                node_name="node_1.0",
+                                node_id=uuid_to_ros(uuid.UUID(int=110)),
                                 data_kind=NodeDataLocation.OUTPUT_DATA,
                                 data_key="output1",
                             ),
                             target=NodeDataLocation(
-                                node_name="node_1.1",
+                                node_id=uuid_to_ros(uuid.UUID(int=111)),
                                 data_kind=NodeDataLocation.INPUT_DATA,
                                 data_key="input1",
                             ),
@@ -159,7 +183,7 @@ class TestSubtreeManager:
                         serialized_type="int",
                         serialized_expected_type="int",
                     )
-                ]
+                ],
             },
         ]
         subtrees = [TreeData(**fields) for fields in subtree_fields]
@@ -167,8 +191,8 @@ class TestSubtreeManager:
         subtree_manager_subtree_data = subtree_manager.get_subtree_data()
         assert subtree_manager_subtree_data == []
 
-        for i, tree in enumerate(subtrees):
-            subtree_manager.add_subtree_data("node_" + str(i), tree)
+        for tree in subtrees:
+            subtree_manager.add_subtree_data(ros_to_uuid(tree.tree_id).unwrap(), tree)
 
         subtree_manager_subtree_data = subtree_manager.get_subtree_data()
         assert len(subtree_manager_subtree_data) == len(subtrees)
@@ -179,12 +203,12 @@ class TestSubtreeManager:
                 assert getattr(subtree_manager_tree, field) == getattr(tree, field)
 
     def test_clear_subtrees(self, subtree_manager: SubtreeManager):
-        subtree_manager.add_subtree_structure("node_name", TreeStructure())
-        subtree_manager.add_subtree_state("node_name", TreeState())
-        subtree_manager.add_subtree_data("node_name", TreeData())
-        subtree_manager.add_subtree_structure("node_name_2", TreeStructure())
-        subtree_manager.add_subtree_state("node_name_2", TreeState())
-        subtree_manager.add_subtree_data("node_name_2", TreeData())
+        subtree_manager.add_subtree_structure(uuid.UUID(int=10), TreeStructure())
+        subtree_manager.add_subtree_state(uuid.UUID(int=10), TreeState())
+        subtree_manager.add_subtree_data(uuid.UUID(int=10), TreeData())
+        subtree_manager.add_subtree_structure(uuid.UUID(int=11), TreeStructure())
+        subtree_manager.add_subtree_state(uuid.UUID(int=11), TreeState())
+        subtree_manager.add_subtree_data(uuid.UUID(int=11), TreeData())
         subtree_manager_subtree_structures = subtree_manager.get_subtree_structures()
         subtree_manager_subtree_states = subtree_manager.get_subtree_states()
         subtree_manager_subtree_data = subtree_manager.get_subtree_data()
@@ -200,22 +224,19 @@ class TestSubtreeManager:
         assert subtree_manager_subtree_data == []
 
     def test_remove_subtree(self, subtree_manager: SubtreeManager):
-        subtree_manager.add_subtree_structure("node_name", TreeStructure())
-        subtree_manager.add_subtree_state("node_name", TreeState())
-        subtree_manager.add_subtree_data("node_name", TreeData())
-        subtree_manager.add_subtree_structure("node_name.nested", TreeStructure())
-        subtree_manager.add_subtree_state("node_name.nested", TreeState())
-        subtree_manager.add_subtree_data("node_name.nested", TreeData())
-        subtree_manager.add_subtree_structure("node_name_2", TreeStructure())
-        subtree_manager.add_subtree_state("node_name_2", TreeState())
-        subtree_manager.add_subtree_data("node_name_2", TreeData())
+        subtree_manager.add_subtree_structure(uuid.UUID(int=10), TreeStructure())
+        subtree_manager.add_subtree_state(uuid.UUID(int=10), TreeState())
+        subtree_manager.add_subtree_data(uuid.UUID(int=10), TreeData())
+        subtree_manager.add_subtree_structure(uuid.UUID(int=11), TreeStructure())
+        subtree_manager.add_subtree_state(uuid.UUID(int=11), TreeState())
+        subtree_manager.add_subtree_data(uuid.UUID(int=11), TreeData())
         subtree_manager_subtree_structures = subtree_manager.get_subtree_structures()
         subtree_manager_subtree_states = subtree_manager.get_subtree_states()
         subtree_manager_subtree_data = subtree_manager.get_subtree_data()
-        assert len(subtree_manager_subtree_structures) == 3
-        assert len(subtree_manager_subtree_states) == 3
-        assert len(subtree_manager_subtree_data) == 3
-        subtree_manager.remove_subtree("node_name")
+        assert len(subtree_manager_subtree_structures) == 2
+        assert len(subtree_manager_subtree_states) == 2
+        assert len(subtree_manager_subtree_data) == 2
+        subtree_manager.remove_subtree(uuid.UUID(int=10))
         subtree_manager_subtree_structures = subtree_manager.get_subtree_structures()
         subtree_manager_subtree_states = subtree_manager.get_subtree_states()
         subtree_manager_subtree_data = subtree_manager.get_subtree_data()
