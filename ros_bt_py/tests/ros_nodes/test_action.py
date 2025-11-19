@@ -34,6 +34,7 @@ from ros_bt_py.ros_nodes.action import Action
 from rclpy.time import Time
 from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.custom_types import RosActionName, RosActionType
 
 
 class TestAction:
@@ -41,8 +42,8 @@ class TestAction:
     def action_node_no_ros(self):
         action_node = Action(
             options={
-                "action_name": "this_service_does_not_exist",
-                "action_type": Fibonacci,
+                "action_name": RosActionName("this_service_does_not_exist"),
+                "action_type": RosActionType("example_interfaces/action/Fibonacci"),
                 "wait_for_action_server_seconds": 5.0,
                 "timeout_seconds": 5.0,
                 "fail_if_not_available": True,
@@ -96,8 +97,8 @@ class TestAction:
 
             action_node = Action(
                 options={
-                    "action_name": "this_service_does_not_exist",
-                    "action_type": Fibonacci,
+                    "action_name": RosActionName("this_service_does_not_exist"),
+                    "action_type": RosActionType("example_interfaces/action/Fibonacci"),
                     "wait_for_action_server_seconds": 5.0,
                     "timeout_seconds": 5.0,
                     "fail_if_not_available": True,

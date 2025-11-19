@@ -117,9 +117,9 @@ def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str
         return Ok(option_dict)
 
     if isinstance(option_type, TypeWrapper):
-        option_dict["serialized_type"] = json_encode(
-            json_decode(option_dict["serialized_type"]).actual_type  # type: ignore
-        )
+        opt_dict_type = json_decode(option_dict["serialized_type"])
+        if isinstance(opt_dict_type, TypeWrapper):
+            option_dict["serialized_type"] = json_encode(opt_dict_type.actual_type)
         match update_node_option(option_dict, option_type.actual_type):
             case Err(e):
                 return Err(e)
