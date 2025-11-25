@@ -31,20 +31,20 @@ repos:
       - id: ament_copyright
         name: ament_copyright
         description: Check if copyright notice is available in all files.
-        stages: [commit]
+        stages: [pre-commit]
         entry: ament_copyright
         language: system
       - id: ament_xmllint
         name: ament_xmllint
         description: Static code analysis of xml files.
-        stages: [commit]
+        stages: [pre-commit]
         entry: ament_xmllint
         language: system
         files: \.(xml)$
       - id: ament_lint_cmake
         name: ament_lint_cmake
         description: Check format of CMakeLists.txt files.
-        stages: [commit]
+        stages: [pre-commit]
         entry: ament_lint_cmake
         language: system
         files: CMakeLists\.txt$
