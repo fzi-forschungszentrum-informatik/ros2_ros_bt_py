@@ -801,15 +801,9 @@ class Service(Leaf):
         self._service_client: Optional[Client] = None
         self._service_request_future: Optional[Future] = None
         self._reported_result: bool = False
+
         for k, v in self._response_type.get_fields_and_field_types().items():
             self.outputs[k] = None
-
-        if not self.has_ros_node:
-            return Err(
-                BehaviorTreeException(
-                    "ROS service node does not have ROS node reference!"
-                )
-            )
 
         if self.has_ros_node:
             self._service_client = self.ros_node.create_client(
@@ -823,8 +817,8 @@ class Service(Leaf):
             return Err(BehaviorTreeException(msg))
 
         if (
-            "fail_if_not_available" not in self.options
-            or self.options["fail_if_not_available"]
+            "fail_if_not_available" in self.options
+            and self.options["fail_if_not_available"]
         ):
             if not self._service_client.wait_for_service(
                 timeout_sec=self.options["wait_for_service_seconds"]
