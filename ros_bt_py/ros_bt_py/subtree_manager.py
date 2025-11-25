@@ -28,6 +28,7 @@
 from copy import deepcopy
 from threading import Lock
 from typing import Any, Dict, Mapping
+import uuid
 
 from result import Err, Ok, Result
 from typeguard import typechecked
@@ -46,9 +47,10 @@ class SubtreeManager(object):
 
     def __init__(self):
 
-        self.subtree_structures: Dict[str, TreeStructure] = {}
-        self.subtree_states: Dict[str, TreeState] = {}
-        self.subtree_data: Dict[str, TreeData] = {}
+        self.subtree_structures: Dict[uuid.UUID, TreeStructure] = {}
+        self.subtree_states: Dict[uuid.UUID, TreeState] = {}
+        self.subtree_data: Dict[uuid.UUID, TreeData] = {}
+        self.nested_subtree_managers: Dict[uuid.UUID, SubtreeManager] = {}
         self._publish_subtrees: bool = False
         self._publish_data: bool = False
 
@@ -66,6 +68,8 @@ class SubtreeManager(object):
     def publish_subtrees(self, publish_subtrees: bool) -> None:
         with self._lock:
             self._publish_subtrees = publish_subtrees
+            for manager in self.nested_subtree_managers.values():
+                manager.publish_subtrees = publish_subtrees
 
     def get_publish_data(self) -> bool:
         with self._lock:
@@ -74,61 +78,72 @@ class SubtreeManager(object):
     def set_publish_data(self, value: bool):
         with self._lock:
             self._publish_data = value
+            for manager in self.nested_subtree_managers.values():
+                manager.set_publish_data(value)
 
     def get_subtree_structures(self) -> list[TreeStructure]:
         with self._lock:
             if not self._publish_subtrees:
                 return []
-            return [deepcopy(tree) for tree in self.subtree_structures.values()]
+            full_list = [deepcopy(tree) for tree in self.subtree_structures.values()]
+            for manager in self.nested_subtree_managers.values():
+                full_list.extend(manager.get_subtree_structures())
+            return full_list
 
     def get_subtree_states(self) -> list[TreeState]:
         with self._lock:
             if not self._publish_subtrees:
                 return []
-            return [deepcopy(tree) for tree in self.subtree_states.values()]
+            full_list = [deepcopy(tree) for tree in self.subtree_states.values()]
+            for manager in self.nested_subtree_managers.values():
+                full_list.extend(manager.get_subtree_states())
+            return full_list
 
     def get_subtree_data(self) -> list[TreeData]:
         with self._lock:
             if not self._publish_subtrees:
                 return []
-            return [deepcopy(tree) for tree in self.subtree_data.values()]
+            full_list = [deepcopy(tree) for tree in self.subtree_data.values()]
+            for manager in self.nested_subtree_managers.values():
+                full_list.extend(manager.get_subtree_data())
+            return full_list
 
-    def add_subtree_structure(self, node_name: str, subtree_msg: TreeStructure) -> None:
-        """
-        Publish subtree information.
-
-        Used by the :class:`ros_bt_py.nodes.Subtree`.
-
-        :param str node_name:
-
-        The name of the subtree node. This will be prefixed to the
-        subtree name to ensure it is unique.
-        """
+    def add_subtree_structure(
+        self, node_id: uuid.UUID, subtree_msg: TreeStructure
+    ) -> None:
         with self._lock:
-            self.subtree_structures[node_name] = subtree_msg
+            self.subtree_structures[node_id] = subtree_msg
 
-    def add_subtree_state(self, node_name: str, subtree_msg: TreeState):
+    def add_subtree_state(self, node_id: uuid.UUID, subtree_msg: TreeState):
         with self._lock:
-            self.subtree_states[node_name] = subtree_msg
+            self.subtree_states[node_id] = subtree_msg
 
-    def add_subtree_data(self, node_name: str, subtree_msg: TreeData):
+    def add_subtree_data(self, node_id: uuid.UUID, subtree_msg: TreeData):
         with self._lock:
-            self.subtree_data[node_name] = subtree_msg
+            self.subtree_data[node_id] = subtree_msg
+
+    def add_nested_manager(self, node_id: uuid.UUID, subtree_manager: "SubtreeManager"):
+        subtree_manager.publish_subtrees = self.publish_subtrees
+        subtree_manager.set_publish_data(self.get_publish_data())
+        with self._lock:
+            self.nested_subtree_managers[node_id] = subtree_manager
 
     def clear_subtrees(self) -> None:
         with self._lock:
             self.subtree_structures.clear()
             self.subtree_states.clear()
             self.subtree_data.clear()
+            self.nested_subtree_managers.clear()
 
-    def remove_subtree(self, node_name: str):
+    def remove_subtree(self, node_id: uuid.UUID):
 
-        def query_dict(node_name: str, dict: dict[str, Any]):
-            for tree_name in list(dict.keys()):
-                if tree_name == node_name or tree_name.startswith(f"{node_name}."):
-                    del dict[tree_name]
+        def query_dict(node_id: uuid.UUID, dict: dict[uuid.UUID, Any]):
+            for tree_id in list(dict.keys()):
+                if tree_id == node_id:
+                    del dict[tree_id]
 
         with self._lock:
-            query_dict(node_name, self.subtree_structures)
-            query_dict(node_name, self.subtree_states)
-            query_dict(node_name, self.subtree_data)
+            query_dict(node_id, self.subtree_structures)
+            query_dict(node_id, self.subtree_states)
+            query_dict(node_id, self.subtree_data)
+            query_dict(node_id, self.nested_subtree_managers)

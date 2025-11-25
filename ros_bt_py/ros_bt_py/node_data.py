@@ -130,24 +130,8 @@ class NodeData(object):
             real_data_type = self.data_type
 
         if not isinstance(new_value, real_data_type) and new_value is not None:
-            # Convert str based params to the FilePath or Ros...Name format.
-            if real_data_type in [
-                RosServiceName,
-                RosTopicName,
-                RosActionName,
-                FilePath,
-            ] and isinstance(new_value, str):
-                new_value = real_data_type(new_value)
-            # Convert Ros...Type from type variables!
-            elif real_data_type in [
-                RosServiceType,
-                RosActionType,
-                RosTopicType,
-            ] and isinstance(new_value, type):
-                new_value_type = get_interface_name(new_value)
-                new_value = real_data_type(new_value_type)
             # Silently convert ints to float
-            elif real_data_type == float and isinstance(new_value, int):
+            if real_data_type == float and isinstance(new_value, int):
                 new_value = float(new_value)
             elif real_data_type == list and isinstance(new_value, array.array):
                 new_value = list(new_value)
