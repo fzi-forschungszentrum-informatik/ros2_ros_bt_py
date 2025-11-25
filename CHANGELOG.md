@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add remote repo info in cliff.toml by @Oberacda
 
 ### Changed
-- Bump ros_bt_py_web_ui version.
-- Update pre-commit config.
+- Bump ros_bt_py_web_ui version. by @Oberacda
+- Update pre-commit config. by @Oberacda
 - Update behavior for omitting options by @Doomse
 - Only wait for service if fail_if_not_available is set by @Doomse
 - Don't set tree state to ERROR on edit operations by @Doomse
