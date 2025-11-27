@@ -33,45 +33,31 @@ from result import Result, Ok, Err
 
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Node
-from ros_bt_py.nodes.sequence import MemorySequence, Sequence
+from ros_bt_py.nodes.fallback import Fallback, MemoryFallback
 
 
 @pytest.fixture
 def mock_node() -> mock.NonCallableMagicMock:
     mock_node = mock.NonCallableMagicMock(spec_set=Node)
     mock_node.setup.return_value = Ok(BTNodeState.IDLE)
-    mock_node.tick.return_value = Ok(BTNodeState.SUCCEEDED)
+    mock_node.tick.return_value = Ok(BTNodeState.FAILED)
     mock_node.untick.return_value = Ok(BTNodeState.IDLE)
     mock_node.reset.return_value = Ok(BTNodeState.IDLE)
     mock_node.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
     return mock_node
 
 
-class TestSequence:
+class TestFallback:
 
     @pytest.fixture
-    def target_node(self) -> Sequence:
-        node = Sequence()
+    def target_node(self) -> Fallback:
+        node = Fallback()
         node.state = BTNodeState.IDLE
         return node
 
-    @pytest.fixture
-    def mock_node(self) -> mock.NonCallableMagicMock:
-        mock_node = mock.NonCallableMagicMock(spec_set=Node)
-        mock_node.setup.return_value = Ok(BTNodeState.IDLE)
-        mock_node.tick.return_value = Ok(BTNodeState.SUCCEEDED)
-        mock_node.untick.return_value = Ok(BTNodeState.IDLE)
-        mock_node.reset.return_value = Ok(BTNodeState.IDLE)
-        mock_node.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
-        return mock_node
-
-    def test_setup(
-        self,
-        target_node: Sequence,
-        mock_node: mock.NonCallableMagicMock,
-    ):
+    def test_setup(self, target_node: Fallback, mock_node: mock.NonCallableMagicMock):
         mock_children = [deepcopy(mock_node) for _ in range(3)]
-        # We add node children directly to avoid node additional checks
+        # We add node children directly to avoid additional checks
         target_node.children = mock_children  # type: ignore
         # Node has to be shutdown to call setup
         target_node.state = BTNodeState.SHUTDOWN
@@ -85,24 +71,27 @@ class TestSequence:
             assert m_c.mock_calls == [mock.call.setup()]
 
     def test_tick_success(
-        self,
-        target_node: Sequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: Fallback, mock_node: mock.NonCallableMagicMock
     ):
-        mock_children = [deepcopy(mock_node) for _ in range(3)]
-        # We add node children directly to avoid node additional checks
-        target_node.children = mock_children  # type: ignore
+        mock_child_1 = deepcopy(mock_node)
+        mock_child_2 = deepcopy(mock_node)
+        mock_child_2.tick.return_value = Ok(BTNodeState.SUCCEEDED)
+        mock_child_3 = deepcopy(mock_node)
+        # We add node children directly to avoid additional checks
+        target_node.children = [mock_child_1, mock_child_2, mock_child_3]
 
         result = target_node.tick()
         assert result.is_ok()
         assert result.unwrap() == BTNodeState.SUCCEEDED
         assert target_node.state == BTNodeState.SUCCEEDED
 
-        for m_c in mock_children:
-            assert m_c.mock_calls == [mock.call.tick()]
+        assert mock_child_1.mock_calls == [mock.call.tick()]
+        assert mock_child_2.mock_calls == [mock.call.tick()]
+        assert mock_child_3.mock_calls == [mock.call.untick()]
 
-        for m_c in mock_children:
-            m_c.reset_mock()
+        mock_child_1.reset_mock()
+        mock_child_2.reset_mock()
+        mock_child_3.reset_mock()
 
         # The second tick should also involve a reset on all child nodes
         result = target_node.tick()
@@ -110,13 +99,12 @@ class TestSequence:
         assert result.unwrap() == BTNodeState.SUCCEEDED
         assert target_node.state == BTNodeState.SUCCEEDED
 
-        for m_c in mock_children:
-            assert m_c.mock_calls == [mock.call.reset(), mock.call.tick()]
+        assert mock_child_1.mock_calls == [mock.call.reset(), mock.call.tick()]
+        assert mock_child_2.mock_calls == [mock.call.reset(), mock.call.tick()]
+        assert mock_child_3.mock_calls == [mock.call.reset(), mock.call.untick()]
 
     def test_tick_running(
-        self,
-        target_node: Sequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: Fallback, mock_node: mock.NonCallableMagicMock
     ):
         mock_child_1 = deepcopy(mock_node)
         mock_child_2 = deepcopy(mock_node)
@@ -150,30 +138,22 @@ class TestSequence:
         assert mock_child_3.mock_calls == []
 
     def test_tick_failure(
-        self,
-        target_node: Sequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: Fallback, mock_node: mock.NonCallableMagicMock
     ):
-        mock_child_1 = deepcopy(mock_node)
-        mock_child_2 = deepcopy(mock_node)
-        mock_child_2.tick.return_value = Ok(BTNodeState.FAILED)
-        mock_child_3 = deepcopy(mock_node)
-
+        mock_children = [deepcopy(mock_node) for _ in range(3)]
         # We add node children directly to avoid node additional checks
-        target_node.children = [mock_child_1, mock_child_2, mock_child_3]
+        target_node.children = mock_children  # type: ignore
 
         result = target_node.tick()
         assert result.is_ok()
         assert result.unwrap() == BTNodeState.FAILED
         assert target_node.state == BTNodeState.FAILED
 
-        assert mock_child_1.mock_calls == [mock.call.tick()]
-        assert mock_child_2.mock_calls == [mock.call.tick()]
-        assert mock_child_3.mock_calls == [mock.call.untick()]
+        for m_c in mock_children:
+            assert m_c.mock_calls == [mock.call.tick()]
 
-        mock_child_1.reset_mock()
-        mock_child_2.reset_mock()
-        mock_child_3.reset_mock()
+        for m_c in mock_children:
+            m_c.reset_mock()
 
         # The second tick should also involve a reset on all child nodes
         result = target_node.tick()
@@ -181,15 +161,10 @@ class TestSequence:
         assert result.unwrap() == BTNodeState.FAILED
         assert target_node.state == BTNodeState.FAILED
 
-        assert mock_child_1.mock_calls == [mock.call.reset(), mock.call.tick()]
-        assert mock_child_2.mock_calls == [mock.call.reset(), mock.call.tick()]
-        assert mock_child_3.mock_calls == [mock.call.reset(), mock.call.untick()]
+        for m_c in mock_children:
+            assert m_c.mock_calls == [mock.call.reset(), mock.call.tick()]
 
-    def test_untick(
-        self,
-        target_node: Sequence,
-        mock_node: mock.NonCallableMagicMock,
-    ):
+    def test_untick(self, target_node: Fallback, mock_node: mock.NonCallableMagicMock):
         mock_children = [deepcopy(mock_node) for _ in range(3)]
         # We add node children directly to avoid node additional checks
         target_node.children = mock_children  # type: ignore
@@ -202,11 +177,7 @@ class TestSequence:
         for m_c in mock_children:
             assert m_c.mock_calls == [mock.call.untick()]
 
-    def test_reset(
-        self,
-        target_node: Sequence,
-        mock_node: mock.NonCallableMagicMock,
-    ):
+    def test_reset(self, target_node: Fallback, mock_node: mock.NonCallableMagicMock):
         mock_children = [deepcopy(mock_node) for _ in range(3)]
         # We add node children directly to avoid node additional checks
         target_node.children = mock_children  # type: ignore
@@ -220,32 +191,20 @@ class TestSequence:
             assert m_c.mock_calls == [mock.call.reset()]
 
 
-class TestMemorySequence:
+class TestMemoryFallback:
 
     @pytest.fixture
-    def target_node(self) -> MemorySequence:
-        node = MemorySequence()
+    def target_node(self) -> MemoryFallback:
+        node = MemoryFallback()
         node.state = BTNodeState.IDLE
         node.last_running_child = -1
         return node
 
-    @pytest.fixture
-    def mock_node(self) -> mock.NonCallableMagicMock:
-        mock_node = mock.NonCallableMagicMock(spec_set=Node)
-        mock_node.setup.return_value = Ok(BTNodeState.IDLE)
-        mock_node.tick.return_value = Ok(BTNodeState.SUCCEEDED)
-        mock_node.untick.return_value = Ok(BTNodeState.IDLE)
-        mock_node.reset.return_value = Ok(BTNodeState.IDLE)
-        mock_node.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
-        return mock_node
-
     def test_setup(
-        self,
-        target_node: MemorySequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: MemoryFallback, mock_node: mock.NonCallableMagicMock
     ):
         mock_children = [deepcopy(mock_node) for _ in range(3)]
-        # We add node children directly to avoid node additional checks
+        # We add node children directly to avoid additional checks
         target_node.children = mock_children  # type: ignore
         # Node has to be shutdown to call setup
         target_node.state = BTNodeState.SHUTDOWN
@@ -260,13 +219,14 @@ class TestMemorySequence:
             assert m_c.mock_calls == [mock.call.setup()]
 
     def test_tick_success(
-        self,
-        target_node: MemorySequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: MemoryFallback, mock_node: mock.NonCallableMagicMock
     ):
-        mock_children = [deepcopy(mock_node) for _ in range(3)]
-        # We add node children directly to avoid node additional checks
-        target_node.children = mock_children  # type: ignore
+        mock_child_1 = deepcopy(mock_node)
+        mock_child_2 = deepcopy(mock_node)
+        mock_child_2.tick.return_value = Ok(BTNodeState.SUCCEEDED)
+        mock_child_3 = deepcopy(mock_node)
+        # We add node children directly to avoid additional checks
+        target_node.children = [mock_child_1, mock_child_2, mock_child_3]
 
         result = target_node.tick()
         assert result.is_ok()
@@ -274,11 +234,13 @@ class TestMemorySequence:
         assert target_node.state == BTNodeState.SUCCEEDED
         assert target_node.last_running_child == -1
 
-        for m_c in mock_children:
-            assert m_c.mock_calls == [mock.call.tick()]
+        assert mock_child_1.mock_calls == [mock.call.tick()]
+        assert mock_child_2.mock_calls == [mock.call.tick()]
+        assert mock_child_3.mock_calls == [mock.call.untick()]
 
-        for m_c in mock_children:
-            m_c.reset_mock()
+        mock_child_1.reset_mock()
+        mock_child_2.reset_mock()
+        mock_child_3.reset_mock()
 
         # The second tick should also involve a reset on all child nodes
         result = target_node.tick()
@@ -287,13 +249,12 @@ class TestMemorySequence:
         assert target_node.state == BTNodeState.SUCCEEDED
         assert target_node.last_running_child == 0
 
-        for m_c in mock_children:
-            assert m_c.mock_calls == [mock.call.reset(), mock.call.tick()]
+        assert mock_child_1.mock_calls == [mock.call.reset(), mock.call.tick()]
+        assert mock_child_2.mock_calls == [mock.call.reset(), mock.call.tick()]
+        assert mock_child_3.mock_calls == [mock.call.reset(), mock.call.untick()]
 
     def test_tick_running(
-        self,
-        target_node: MemorySequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: MemoryFallback, mock_node: mock.NonCallableMagicMock
     ):
         mock_child_1 = deepcopy(mock_node)
         mock_child_2 = deepcopy(mock_node)
@@ -301,7 +262,7 @@ class TestMemorySequence:
         mock_child_3 = deepcopy(mock_node)
 
         # We add node children directly to avoid node additional checks
-        target_node.children = [mock_child_1, mock_child_2, mock_child_3]  # type: ignore
+        target_node.children = [mock_child_1, mock_child_2, mock_child_3]
 
         result = target_node.tick()
         assert result.is_ok()
@@ -329,17 +290,11 @@ class TestMemorySequence:
         assert mock_child_3.mock_calls == []
 
     def test_tick_failure(
-        self,
-        target_node: MemorySequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: MemoryFallback, mock_node: mock.NonCallableMagicMock
     ):
-        mock_child_1 = deepcopy(mock_node)
-        mock_child_2 = deepcopy(mock_node)
-        mock_child_2.tick.return_value = Ok(BTNodeState.FAILED)
-        mock_child_3 = deepcopy(mock_node)
-
+        mock_children = [deepcopy(mock_node) for _ in range(3)]
         # We add node children directly to avoid node additional checks
-        target_node.children = [mock_child_1, mock_child_2, mock_child_3]  # type: ignore
+        target_node.children = mock_children  # type: ignore
 
         result = target_node.tick()
         assert result.is_ok()
@@ -347,13 +302,11 @@ class TestMemorySequence:
         assert target_node.state == BTNodeState.FAILED
         assert target_node.last_running_child == -1
 
-        assert mock_child_1.mock_calls == [mock.call.tick()]
-        assert mock_child_2.mock_calls == [mock.call.tick()]
-        assert mock_child_3.mock_calls == [mock.call.untick()]
+        for m_c in mock_children:
+            assert m_c.mock_calls == [mock.call.tick()]
 
-        mock_child_1.reset_mock()
-        mock_child_2.reset_mock()
-        mock_child_3.reset_mock()
+        for m_c in mock_children:
+            m_c.reset_mock()
 
         # The second tick should also involve a reset on all child nodes
         result = target_node.tick()
@@ -362,14 +315,11 @@ class TestMemorySequence:
         assert target_node.state == BTNodeState.FAILED
         assert target_node.last_running_child == 0
 
-        assert mock_child_1.mock_calls == [mock.call.reset(), mock.call.tick()]
-        assert mock_child_2.mock_calls == [mock.call.reset(), mock.call.tick()]
-        assert mock_child_3.mock_calls == [mock.call.reset(), mock.call.untick()]
+        for m_c in mock_children:
+            assert m_c.mock_calls == [mock.call.reset(), mock.call.tick()]
 
     def test_untick(
-        self,
-        target_node: MemorySequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: MemoryFallback, mock_node: mock.NonCallableMagicMock
     ):
         mock_children = [deepcopy(mock_node) for _ in range(3)]
         # We add node children directly to avoid node additional checks
@@ -385,9 +335,7 @@ class TestMemorySequence:
             assert m_c.mock_calls == [mock.call.untick()]
 
     def test_reset(
-        self,
-        target_node: MemorySequence,
-        mock_node: mock.NonCallableMagicMock,
+        self, target_node: MemoryFallback, mock_node: mock.NonCallableMagicMock
     ):
         mock_children = [deepcopy(mock_node) for _ in range(3)]
         # We add node children directly to avoid node additional checks
