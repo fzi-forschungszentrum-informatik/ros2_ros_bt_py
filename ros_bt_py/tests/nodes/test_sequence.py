@@ -38,7 +38,7 @@ from ros_bt_py.nodes.sequence import MemorySequence, Sequence
 
 @pytest.fixture
 def mock_node() -> mock.NonCallableMagicMock:
-    mock_node = mock.NonCallableMagicMock(spec_set=Node)
+    mock_node = mock.NonCallableMagicMock(set=Node)
     mock_node.setup.return_value = Ok(BTNodeState.IDLE)
     mock_node.tick.return_value = Ok(BTNodeState.SUCCEEDED)
     mock_node.untick.return_value = Ok(BTNodeState.IDLE)
