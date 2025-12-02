@@ -79,9 +79,11 @@ class Parallel(FlowControl):
                 )
             )
         for child in self.children:
-            result = child.setup()
-            if result.is_err():
-                return result
+            match child.setup():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -89,17 +91,21 @@ class Parallel(FlowControl):
         # SUCCEEDED or FAILED once
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
-                result = child.reset()
-                if result.is_err():
-                    return result
+                match child.reset():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         successes = 0
         failures = 0
         for child in self.children:
             if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
-                result = child.tick()
-                if result.is_err():
-                    return result
+                match child.tick():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
             if child.state == BTNodeState.SUCCEEDED:
                 successes += 1
             if child.state == BTNodeState.FAILED:
@@ -108,17 +114,21 @@ class Parallel(FlowControl):
             # untick all running children
             for child in self.children:
                 if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
-                    result = child.untick()
-                    if result.is_err():
-                        return result
+                    match child.untick():
+                        case Err(e):
+                            return Err(e)
+                        case Ok(_):
+                            pass
             return Ok(BTNodeState.SUCCEEDED)
         elif failures > len(self.children) - self.options["needed_successes"]:
             # untick all running children
             for child in self.children:
                 if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
-                    result = child.untick()
-                    if result.is_err():
-                        return result
+                    match child.untick():
+                        case Err(e):
+                            return Err(e)
+                        case Ok(_):
+                            pass
             return Ok(BTNodeState.FAILED)
         return Ok(BTNodeState.RUNNING)
 
@@ -127,16 +137,20 @@ class Parallel(FlowControl):
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.reset()
-            if result.is_err():
-                return result
+            match child.reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.untick()
-            if result.is_err():
-                return result
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -286,9 +300,11 @@ class ParallelFailureTolerance(FlowControl):
                 )
             )
         for child in self.children:
-            result = child.setup()
-            if result.is_err():
-                return result
+            match child.setup():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -296,17 +312,21 @@ class ParallelFailureTolerance(FlowControl):
         # SUCCEEDED or FAILED once
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
-                result = child.reset()
-                if result.is_err():
-                    return result
+                match child.reset():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         successes = 0
         failures = 0
         for child in self.children:
             if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
-                result = child.tick()
-                if result.is_err():
-                    return result
+                match child.tick():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
             if child.state == BTNodeState.SUCCEEDED:
                 successes += 1
             if child.state == BTNodeState.FAILED:
@@ -315,17 +335,21 @@ class ParallelFailureTolerance(FlowControl):
             # untick all running children
             for child in self.children:
                 if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
-                    result = child.untick()
-                    if result.is_err():
-                        return result
+                    match child.untick():
+                        case Err(e):
+                            return Err(e)
+                        case Ok(_):
+                            pass
             return Ok(BTNodeState.SUCCEEDED)
         elif failures > self.options["tolerate_failures"]:
             # untick all running children
             for child in self.children:
                 if child.state not in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
-                    result = child.untick()
-                    if result.is_err():
-                        return result
+                    match child.untick():
+                        case Err(e):
+                            return Err(e)
+                        case Ok(_):
+                            pass
             return Ok(BTNodeState.FAILED)
         return Ok(BTNodeState.RUNNING)
 
@@ -334,16 +358,20 @@ class ParallelFailureTolerance(FlowControl):
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.reset()
-            if result.is_err():
-                return result
+            match child.reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.untick()
-            if result.is_err():
-                return result
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
