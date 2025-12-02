@@ -796,9 +796,6 @@ class Node(object, metaclass=NodeMeta):
         with report_state:
             error_result = None
             if self.state == BTNodeState.SHUTDOWN:
-                self.loginfo(
-                    "Not calling shutdown method, node has not been initialized yet"
-                )
                 self.state = BTNodeState.SHUTDOWN
                 # Call shutdown on all children - this should only set
                 # their state to shutdown
