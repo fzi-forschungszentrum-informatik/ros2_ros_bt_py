@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add tests for sequence nodes by @Doomse
 
 ### Changed
+- Copy dictionary when setting msg fields by @Doomse
 - Rewrite tests with global call order by @Doomse
 - Bugfix and add tests for fallback nodes by @Doomse
 
 ### Merged
+- Merge pull request #216 from Doomse/fix-msg-from-dict by @Oberacda in [#216](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/216)
 - Merge pull request #215 from Doomse/flow-control-tests by @Oberacda in [#215](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/215)
 
 
