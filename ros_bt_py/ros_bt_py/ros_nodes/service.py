@@ -405,7 +405,7 @@ class WaitForServiceInput(Leaf):
         if self._service_client is None:
             self._service_client = self.ros_node.create_client(
                 self._service_types,
-                elf.inputs["service_name"],
+                self.inputs["service_name"],
             )
 
         if self._service_client.service_is_ready():
