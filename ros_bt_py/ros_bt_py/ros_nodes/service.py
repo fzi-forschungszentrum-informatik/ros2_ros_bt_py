@@ -246,8 +246,15 @@ class ServiceInput(Leaf):
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_request_future = None
-        if self._service_client is not None:
-            self.ros_node.destroy_client(self._service_client)
+        if self.has_ros_node and self._service_client is not None:
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(
+                    BehaviorTreeException(
+                        f"Failed to destroy service client in {self.name}"
+                    )
+                )
+            self._service_client = None
+
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -351,14 +358,16 @@ class WaitForService(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.has_ros_node and self.ros_node.destroy_client(self._service_client):
-            return Ok(BTNodeState.SHUTDOWN)
-        else:
-            return Err(
-                BehaviorTreeException(
-                    f"Failed to destory service handle in {self.name}"
+        if self.has_ros_node and self._service_client is not None:
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(
+                    BehaviorTreeException(
+                        f"Failed to destroy service client in {self.name}"
+                    )
                 )
-            )
+            self._service_client = None
+
+        return Ok(BTNodeState.SHUTDOWN)
 
 
 @define_bt_node(
@@ -437,10 +446,15 @@ class WaitForServiceInput(Leaf):
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._last_service_call_time = None
-        if self._service_client is not None:
+        if self.has_ros_node and self._service_client is not None:
             if not self.ros_node.destroy_client(self._service_client):
-                return Err(BehaviorTreeException("Could not destroy service client!"))
+                return Err(
+                    BehaviorTreeException(
+                        f"Failed to destroy service client in {self.name}"
+                    )
+                )
             self._service_client = None
+
         return Ok(BTNodeState.SHUTDOWN)
 
 
@@ -672,9 +686,15 @@ class ServiceForSetType(Leaf):
         if reset_result.is_err():
             return reset_result
 
-        if self._service_client is not None:
-            self.ros_node.destroy_client(self._service_client)
-        self._service_client = None
+        if self.has_ros_node and self._service_client is not None:
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(
+                    BehaviorTreeException(
+                        f"Failed to destroy service client in {self.name}"
+                    )
+                )
+            self._service_client = None
+
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -915,11 +935,15 @@ class Service(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self._service_client is not None:
-            if self.ros_node.destroy_client(self._service_client):
-                self._service_client = None
-            else:
-                return Err(BehaviorTreeException("Failed to destroy client!"))
+        if self.has_ros_node and self._service_client is not None:
+            if not self.ros_node.destroy_client(self._service_client):
+                return Err(
+                    BehaviorTreeException(
+                        f"Failed to destroy service client in {self.name}"
+                    )
+                )
+            self._service_client = None
+
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
