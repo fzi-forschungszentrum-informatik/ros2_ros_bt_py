@@ -404,7 +404,7 @@ class WaitForServiceInput(Leaf):
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is None:
             self._service_client = self.ros_node.create_client(
-                self._service_types,
+                self._service_type,
                 self.inputs["service_name"],
             )
 
