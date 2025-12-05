@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """BT nodes to convert Dicts to ROS messages of a specific type."""
 
+from copy import deepcopy
 from typing import Dict, Optional
 
 from result import Result, Ok, Err
@@ -96,7 +97,7 @@ class MessageFromDict(Leaf):
             try:
                 set_message_fields(
                     message,
-                    self.inputs["dict"],
+                    deepcopy(self.inputs["dict"]),
                 )
                 self.outputs["message"] = message
             except (
@@ -177,7 +178,7 @@ class MessageFromConstDict(Leaf):
             # immediately call their respective callbacks?
             set_message_fields(
                 message,
-                self.options["dict"],
+                deepcopy(self.options["dict"]),
             )
             self.outputs["message"] = message
         except (TypeError, AttributeError) as ex:
