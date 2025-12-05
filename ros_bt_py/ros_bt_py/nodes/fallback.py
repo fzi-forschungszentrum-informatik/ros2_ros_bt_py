@@ -44,9 +44,11 @@ class NameSwitch(FlowControl):
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.child_map = {child.name.split(".")[-1]: child for child in self.children}
         for child in self.children:
-            result = child.setup()
-            if result.is_err():
-                return result
+            match child.setup():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -55,33 +57,41 @@ class NameSwitch(FlowControl):
             self.logwarn("Ticking without children. Is this really what you want?")
             return Ok(BTNodeState.FAILED)
 
-        # If we've previously succeeded or failed, untick all children
+        # If we've previously succeeded or failed, reset all children
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
-                result = child.reset()
-                if result.is_err():
-                    return result
+                match child.reset():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         for child_name, child in self.child_map.items():
             if not child_name == name:
-                result = child.untick()
-                if result.is_err():
-                    return result
+                match child.untick():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         return self.child_map[name].tick()
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.untick()
-            if result.is_err():
-                return result
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.reset()
-            if result.is_err():
-                return result
+            match child.reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -126,9 +136,11 @@ class Fallback(FlowControl):
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.setup()
-            if result.is_err():
-                return result
+            match child.setup():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -139,42 +151,49 @@ class Fallback(FlowControl):
         # If we've previously succeeded or failed, untick all children
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
-                result = child.reset()
-                if result.is_err():
-                    return result
+                match child.reset():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         # Tick children until one returns SUCCEEDED or RUNNING
         for index, child in enumerate(self.children):
-            result = child.tick()
-            if result.is_err():
-                return result
-            if (
-                result.ok() == BTNodeState.SUCCEEDED
-                or result.ok() == BTNodeState.RUNNING
-            ):
-                if result.ok() == BTNodeState.SUCCEEDED:
+            match child.tick():
+                case Err(e):
+                    return Err(e)
+                case Ok(s):
+                    state = s
+            if state in [BTNodeState.SUCCEEDED, BTNodeState.RUNNING]:
+                if state == BTNodeState.SUCCEEDED:
                     # untick all children after the one that triggered this
                     # condition
                     for untick_child in self.children[index + 1 :]:
-                        result = untick_child.untick()
-                        if result.is_err():
-                            return result
-                return result
+                        match untick_child.untick():
+                            case Err(e):
+                                return Err(e)
+                            case Ok(_):
+                                pass
+                return Ok(state)
         # If all children failed, we too fail
         return Ok(BTNodeState.FAILED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.untick()
-            if result.is_err():
-                return result
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.reset()
-            if result.is_err():
-                return result
+            match child.reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -224,12 +243,16 @@ class MemoryFallback(FlowControl):
     return FAILED.
     """
 
+    last_running_child: int
+
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.last_running_child = 0
         for child in self.children:
-            result = child.setup()
-            if result.is_err():
-                return result
+            match child.setup():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -242,45 +265,54 @@ class MemoryFallback(FlowControl):
         if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             self.last_running_child = 0
             for child in self.children:
-                result = child.reset()
-                if result.is_err():
-                    return result
+                match child.reset():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         # Tick children until one returns SUCCEEDED or RUNNING
         for index, child in enumerate(self.children):
             if index < self.last_running_child:
                 continue
-            result = child.tick()
-            if (
-                result.ok() == BTNodeState.SUCCEEDED
-                or result.ok() == BTNodeState.RUNNING
-            ):
-                if result.ok() == BTNodeState.RUNNING:
+            match child.tick():
+                case Err(e):
+                    return Err(e)
+                case Ok(s):
+                    state = s
+            if state in [BTNodeState.SUCCEEDED, BTNodeState.RUNNING]:
+                if state == BTNodeState.RUNNING:
                     self.last_running_child = index
-                elif result.ok() == BTNodeState.SUCCEEDED:
+                elif state == BTNodeState.SUCCEEDED:
                     # untick all children after the one that triggered this
                     # condition
                     for untick_child in self.children[index + 1 :]:
-                        result = untick_child.untick()
-                        if result.is_err():
-                            return result
-                return result
+                        match untick_child.untick():
+                            case Err(e):
+                                return Err(e)
+                            case Ok(_):
+                                pass
+                return Ok(state)
         # If all children failed, we too fail
         return Ok(BTNodeState.FAILED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.untick()
-            if result.is_err():
-                return result
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            result = child.reset()
-            if result.is_err():
-                return result
+            match child.reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
