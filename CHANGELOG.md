@@ -18,8 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bugfix and add tests for fallback nodes by @Doomse
 
 ### Merged
+- Merge pull request #217 from Doomse/remove-repetetive-logs by @Oberacda in [#217](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/217)
 - Merge pull request #216 from Doomse/fix-msg-from-dict by @Oberacda in [#216](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/216)
 - Merge pull request #215 from Doomse/flow-control-tests by @Oberacda in [#215](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/215)
+
+### Removed
+- Remove log message that is triggered frequently by @Doomse
 
 
 ## [0.5.0] - 2025-11-25
