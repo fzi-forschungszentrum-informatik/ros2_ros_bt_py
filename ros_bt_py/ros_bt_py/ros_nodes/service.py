@@ -319,7 +319,7 @@ class WaitForService(Leaf):
             return Err(BehaviorTreeException("No ROS node reference available!"))
 
         self._service_client = self.ros_node.create_client(
-            self._service_name, self._service_type
+            self._service_type, self._service_name
         )
         self._last_service_call_time: Optional[Time] = None
         return Ok(BTNodeState.IDLE)
@@ -404,7 +404,8 @@ class WaitForServiceInput(Leaf):
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self._service_client is None:
             self._service_client = self.ros_node.create_client(
-                self.inputs["service_name"], self._service_type
+                self._service_type,
+                self.inputs["service_name"],
             )
 
         if self._service_client.service_is_ready():
