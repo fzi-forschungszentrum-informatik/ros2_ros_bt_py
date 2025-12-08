@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add tests for sequence nodes by @Doomse
 
 ### Changed
+- Release v0.5.1 by @Oberacda
 - Improve service client shutdown robustness by @henningkayser
 - Update ros_bt_py/ros_bt_py/ros_nodes/service.py by @Oberacda
 - Copy dictionary when setting msg fields by @Doomse
