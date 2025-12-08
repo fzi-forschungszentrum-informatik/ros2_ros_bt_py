@@ -37,6 +37,7 @@ import abc
 import importlib
 import inspect
 import re
+import uuid
 from typing import (
     TypeVar,
     Any,
@@ -55,7 +56,7 @@ import rclpy
 import rclpy.logging
 from rclpy.node import Node as ROSNode
 
-from ros_bt_py_interfaces.msg import UtilityBounds
+from ros_bt_py_interfaces.msg import UtilityBounds, _node_data_location
 from typeguard import typechecked
 from ros_bt_py_interfaces.msg import (
     NodeStructure,
@@ -82,6 +83,7 @@ from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.custom_types import TypeWrapper
 from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode, json_encode
+from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 
 
 @typechecked
@@ -99,23 +101,24 @@ def _check_node_data_match(
 
 
 @typechecked
-def _connect_wirings(data_wirings: List[Wiring], type: str) -> Dict[str, List[str]]:
-    connected_wirings: Dict[str, List[str]] = {}
+def _connect_wirings(
+    data_wirings: List[Wiring], type: str
+) -> Dict[uuid.UUID, List[str]]:
+    connected_wirings: Dict[uuid.UUID, List[str]] = {}
     for wiring in data_wirings:
+        # Since this function is for internal use, we assume ids to be valid
+        source_id = ros_to_uuid(wiring.source.node_id).unwrap()
+        target_id = ros_to_uuid(wiring.target.node_id).unwrap()
         if wiring.source.data_kind == type:
-            if wiring.source.node_name in connected_wirings:
-                connected_wirings[wiring.source.node_name].append(
-                    wiring.source.data_key
-                )
+            if source_id in connected_wirings:
+                connected_wirings[source_id].append(wiring.source.data_key)
             else:
-                connected_wirings[wiring.source.node_name] = [wiring.source.data_key]
+                connected_wirings[source_id] = [wiring.source.data_key]
         elif wiring.target.data_kind == type:
-            if wiring.target.node_name in connected_wirings:
-                connected_wirings[wiring.target.node_name].append(
-                    wiring.target.data_key
-                )
+            if target_id in connected_wirings:
+                connected_wirings[target_id].append(wiring.target.data_key)
             else:
-                connected_wirings[wiring.target.node_name] = [wiring.target.data_key]
+                connected_wirings[target_id] = [wiring.target.data_key]
     return connected_wirings
 
 
@@ -340,6 +343,7 @@ class Node(object, metaclass=NodeMeta):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -373,6 +377,10 @@ class Node(object, metaclass=NodeMeta):
             self.name = name
         else:
             self.name = type(self).__name__
+        if node_id is not None:
+            self.node_id = node_id
+        else:
+            self.node_id = uuid.uuid4()
         # Only used to make finding the root of the tree easier
         self.parent: Optional[Node] = None
         self._state: BTNodeState = BTNodeState.UNINITIALIZED
@@ -466,7 +474,7 @@ class Node(object, metaclass=NodeMeta):
         if self._ros_node is not None:
             return self._ros_node
         else:
-            error_msg = f"{self.name} nodes not have ROS node reference!"
+            error_msg = f"{self.name} does not have ROS node reference!"
             self.logerr(error_msg)
             raise RuntimeError(error_msg)
 
@@ -904,7 +912,7 @@ class Node(object, metaclass=NodeMeta):
         )
 
     @typechecked
-    def get_child_index(self, child_name: str) -> Optional[int]:
+    def get_child_index(self, child_id: uuid.UUID) -> Optional[int]:
         """
         Get the index in the `children` array of the child with the given name.
 
@@ -917,7 +925,7 @@ class Node(object, metaclass=NodeMeta):
 
         """
         try:
-            return [child.name for child in self.children].index(child_name)
+            return [child.node_id for child in self.children].index(child_id)
         except ValueError:
             return None
 
@@ -937,9 +945,9 @@ class Node(object, metaclass=NodeMeta):
             self.logerr(error_msg)
             return Err(BehaviorTreeException(error_msg))
 
-        if child.name in (child1.name for child1 in self.children):
+        if child.node_id in (child1.node_id for child1 in self.children):
             return Err(
-                TreeTopologyError(f"Already have a child with name '{child.name}'")
+                TreeTopologyError(f"Already have a child with id '{child.node_id}'")
             )
         if at_index is None:
             at_index = len(self.children)
@@ -955,15 +963,15 @@ class Node(object, metaclass=NodeMeta):
         return Ok(self)
 
     @typechecked
-    def remove_child(self, child_name: str) -> Result["Node", KeyError]:
+    def remove_child(self, child_id: uuid.UUID) -> Result["Node", KeyError]:
         """
         Remove the child with the given name and return it.
 
-        :param basestring child_name: The name of the child to remove
+        :param basestring child_id: The uuid of the child to remove
         """
-        child_index = self.get_child_index(child_name)
+        child_index = self.get_child_index(child_id)
         if child_index is None:
-            return Err(KeyError(f'Node {self.name} has no child named "{child_name}"'))
+            return Err(KeyError(f'Node {self.name} has no child with id "{child_id}"'))
 
         tmp = self.children[child_index]
         del self.children[child_index]
@@ -1140,7 +1148,8 @@ class Node(object, metaclass=NodeMeta):
         return (
             f"{type(self).__name__}("
             f"options={({key: self.options[key] for key in self.options})}, "
-            f"name={self.name}), "
+            f"name={self.name}, "
+            f"id={self.node_id}), "
             f"parent_name:{self.parent.name if self.parent else ''}, "
             f"state: {self.state}, "
             f"inputs: {self.inputs}, "
@@ -1152,7 +1161,8 @@ class Node(object, metaclass=NodeMeta):
     def __eq__(self, other: Any) -> bool:
         """Check if all attributes of a node are equal."""
         return (
-            self.name == other.name
+            self.node_id == other.node_id
+            and self.name == other.name
             and self.parent == other.parent
             and self.state == other.state
             and type(self).__module__ == type(other).__module__
@@ -1356,25 +1366,24 @@ class Node(object, metaclass=NodeMeta):
                 )
             )
 
+        match ros_to_uuid(msg.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                node_id = n_id
+
         # Instantiate node - this shouldn't do anything yet, since we don't
         # call setup()
         node_class.permissive = permissive
         try:
-            if msg.name:
-                node_instance = node_class(
-                    name=msg.name,
-                    options=options_dict,
-                    debug_manager=debug_manager,
-                    subtree_manager=subtree_manager,
-                    ros_node=ros_node,
-                )
-            else:
-                node_instance = node_class(
-                    options=options_dict,
-                    debug_manager=debug_manager,
-                    subtree_manager=subtree_manager,
-                    ros_node=ros_node,
-                )
+            node_instance = node_class(
+                name=msg.name if msg.name else None,
+                node_id=node_id,
+                options=options_dict,
+                debug_manager=debug_manager,
+                subtree_manager=subtree_manager,
+                ros_node=ros_node,
+            )
         except BehaviorTreeException as ex:
             return Err(ex)
 
@@ -1426,7 +1435,7 @@ class Node(object, metaclass=NodeMeta):
         subtree_name = f"{self.name}_subtree"
         subtree = TreeStructure(
             name=subtree_name,
-            root_name=self.name,
+            root_id=uuid_to_ros(self.node_id),
             nodes=[node.to_structure_msg() for node in self.get_children_recursive()],
         )
         # These reassignments makes the typing happy,
@@ -1434,13 +1443,18 @@ class Node(object, metaclass=NodeMeta):
         subtree.data_wirings = []
         subtree.public_node_data = []
 
-        node_map: Dict[str, NodeStructure] = {node.name: node for node in subtree.nodes}
+        node_map: Dict[uuid.UUID, NodeStructure] = {
+            # Since this is internal data, we assume ids to be safe
+            ros_to_uuid(node.node_id).unwrap(): node
+            for node in subtree.nodes
+        }
         incoming_connections: List[Wiring] = []
         outgoing_connections: List[Wiring] = []
         for node in self.get_children_recursive():
             for sub in node.subscriptions:
-                source_node = node_map.get(sub.source.node_name)
-                target_node = node_map.get(sub.target.node_name)
+                # Since this is internal data, we assume ids to be safe
+                source_node = node_map.get(ros_to_uuid(sub.source.node_id).unwrap())
+                target_node = node_map.get(ros_to_uuid(sub.target.node_id).unwrap())
 
                 # For subscriptions where source and target are in the subtree,
                 # add a wiring.
@@ -1464,7 +1478,8 @@ class Node(object, metaclass=NodeMeta):
                     )
 
             for wiring, _, _ in node.subscribers:
-                if wiring.target.node_name not in node_map:
+                # Since this is internal data, we assume ids to be safe
+                if ros_to_uuid(wiring.target.node_id).unwrap() not in node_map:
                     subtree.public_node_data.append(wiring.source)
                     outgoing_connections.append(wiring)
 
@@ -1476,28 +1491,30 @@ class Node(object, metaclass=NodeMeta):
         )
 
         for node in subtree.nodes:
+            # Since this is internal data, we assume ids to be safe
+            node_id = ros_to_uuid(node.node_id).unwrap()
             for node_input in node.inputs:
                 if (
-                    node.name not in connected_inputs
-                    or node_input.key not in connected_inputs[node.name]
+                    node_id not in connected_inputs
+                    or node_input.key not in connected_inputs[node_id]
                 ):
                     # Input is unconnected, list it as public
                     subtree.public_node_data.append(
                         NodeDataLocation(
-                            node_name=node.name,
+                            node_id=node.node_id,
                             data_kind=NodeDataLocation.INPUT_DATA,
                             data_key=node_input.key,
                         )
                     )
             for node_output in node.outputs:
                 if (
-                    node.name not in connected_outputs
-                    or node_output.key not in connected_outputs[node.name]
+                    node_id not in connected_outputs
+                    or node_output.key not in connected_outputs[node_id]
                 ):
                     # Input is unconnected, list it as public
                     subtree.public_node_data.append(
                         NodeDataLocation(
-                            node_name=node.name,
+                            node_id=node.node_id,
                             data_kind=NodeDataLocation.OUTPUT_DATA,
                             data_key=node_output.key,
                         )
@@ -1505,7 +1522,7 @@ class Node(object, metaclass=NodeMeta):
         return Ok((subtree, incoming_connections, outgoing_connections))
 
     @typechecked
-    def find_node(self, other_name: str) -> Optional["Node"]:
+    def find_node(self, other_id: uuid.UUID) -> Optional["Node"]:
         """
         Try to find the node with the given name in the tree.
 
@@ -1521,7 +1538,7 @@ class Node(object, metaclass=NodeMeta):
             root = root.parent
 
         for node in root.get_children_recursive():
-            if node.name == other_name:
+            if node.node_id == other_id:
                 return node
 
         return None
@@ -1563,10 +1580,14 @@ class Node(object, metaclass=NodeMeta):
         BehaviorTreeException if `expected_type` and the actual type of
         the data are incompatible.
         """
-        if wiring.source.node_name != self.name:
+        # Since this function works on internal data, we assume ids to be safe
+        wiring_source_id = ros_to_uuid(wiring.source.node_id).unwrap()
+        wiring_target_id = ros_to_uuid(wiring.target.node_id).unwrap()
+        if wiring_source_id != self.node_id:
             return Err(
                 BehaviorTreeException(
-                    f"{self.name}: Trying to subscribe to another node ({wiring.source.node_name})"
+                    f"{self.name} ({self.node_id}): "
+                    f"Trying to subscribe on behalf of another node ({wiring_source_id})"
                 )
             )
 
@@ -1575,7 +1596,7 @@ class Node(object, metaclass=NodeMeta):
                 if sub.source == wiring.source:
                     return Err(BehaviorTreeException("Duplicate subscription!"))
                 self.logwarn(
-                    f"Subscriber {wiring.target.node_name} is subscribing to multiple sources "
+                    f"Subscriber {wiring_target_id} is subscribing to multiple sources "
                     f"with the same target {wiring.target.data_kind}[{wiring.target.data_key}]"
                 )
 
@@ -1599,7 +1620,7 @@ class Node(object, metaclass=NodeMeta):
                     f"Type of {self.name}.{wiring.source.data_kind}[{wiring.source.data_key}] "
                     f"({source_map.get_type(wiring.source.data_key).__name__}) "
                     "is not compatible with Type of "
-                    f"{wiring.target.node_name}."
+                    f"{wiring_target_id}."
                     f"{wiring.target.data_kind}"
                     f"[{wiring.target.data_key}] "
                     f"({expected_type})!"
@@ -1609,7 +1630,7 @@ class Node(object, metaclass=NodeMeta):
         source_map.subscribe(
             wiring.source.data_key,
             new_cb,
-            f"{wiring.target.node_name}.{wiring.target.data_kind}[{wiring.target.data_key}]",
+            f"{wiring_target_id}.{wiring.target.data_kind}[{wiring.target.data_key}]",
         )
         self.subscribers.append((deepcopy(wiring), new_cb, expected_type))
         return Ok(None)
@@ -1638,10 +1659,20 @@ class Node(object, metaclass=NodeMeta):
         target exists already, or if the types of source and target data
         are incompatible.
         """
-        if wiring.target.node_name != self.name:
+        match ros_to_uuid(wiring.source.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_source_id = n_id
+        match ros_to_uuid(wiring.target.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_target_id = n_id
+        if wiring_target_id != self.node_id:
             return Err(
                 BehaviorTreeException(
-                    f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+                    f"Target of wiring ({wiring_target_id}) is not this node ({self.name})"
                 )
             )
 
@@ -1650,11 +1681,11 @@ class Node(object, metaclass=NodeMeta):
                 if sub.source == wiring.source:
                     return Err(BehaviorTreeException("Duplicate subscription!"))
 
-        source_node = self.find_node(wiring.source.node_name)
+        source_node = self.find_node(wiring_source_id)
         if not source_node:
             return Err(
                 BehaviorTreeException(
-                    f"Source node {wiring.source.node_name} does not exist or is not connected "
+                    f"Source node {wiring_source_id} does not exist or is not connected "
                     f"to target node {self.name}"
                 )
             )
@@ -1709,11 +1740,13 @@ class Node(object, metaclass=NodeMeta):
         the requested key does not exist in this node.
 
         """
-        if wiring.source.node_name != self.name:
+        # Since this works on internal data, we assume ids to be safe
+        wiring_source_id = ros_to_uuid(wiring.source.node_id).unwrap()
+        if wiring_source_id != self.node_id:
             return Err(
                 BehaviorTreeException(
-                    f"{self.name}: Trying to unsubscribe from another node "
-                    f"({wiring.source.node_name})"
+                    f"{self.name}: Trying to unsubscribe on behalf of another node "
+                    f"({wiring_source_id})"
                 )
             )
         source_map_result = self.get_data_map(wiring.source.data_kind)
@@ -1752,13 +1785,23 @@ class Node(object, metaclass=NodeMeta):
         If the given wiring's source node cannot be found from this
         node.
         """
-        if wiring.target.node_name != self.name:
+        match ros_to_uuid(wiring.source.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_source_id = n_id
+        match ros_to_uuid(wiring.target.node_id):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(n_id):
+                wiring_target_id = n_id
+        if wiring_target_id != self.node_id:
             return Err(
                 BehaviorTreeException(
-                    f"Target of wiring ({wiring.target.node_name}) is not this node ({self.name})"
+                    f"Target of wiring ({wiring_target_id}) is not this node ({self.name})"
                 )
             )
-        source_node = self.find_node(wiring.source.node_name)
+        source_node = self.find_node(wiring_source_id)
 
         if wiring not in self.subscriptions:
             # Nothing to do
@@ -1810,7 +1853,8 @@ class Node(object, metaclass=NodeMeta):
             node_class=node_type.__name__,
             version=self.node_config.version,
             name=self.name,
-            child_names=[child.name for child in self.children],
+            node_id=uuid_to_ros(self.node_id),
+            child_ids=[uuid_to_ros(child.node_id) for child in self.children],
             options=[
                 NodeOption(
                     key=key,
@@ -1841,7 +1885,7 @@ class Node(object, metaclass=NodeMeta):
         )
 
     def to_state_msg(self):
-        return NodeState(name=self.name, state=self.state)
+        return NodeState(node_id=uuid_to_ros(self.node_id), state=self.state)
 
     def wire_data_msg_list(self):
         data_list: list[WiringData] = []

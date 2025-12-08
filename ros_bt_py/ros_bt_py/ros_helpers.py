@@ -27,6 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import inspect
 import array
+import uuid
+
+from result import Result, Ok, Err
 
 import rclpy.logging
 from rclpy import action
@@ -34,6 +37,9 @@ from rclpy.node import Node, Publisher
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py_interfaces.msg import MessageChannel, MessageChannels
+
+# Type alias for ros uuids
+ROS_UUID = str
 
 
 class LoggerLevel(object):
@@ -50,6 +56,17 @@ class EnumValue(object):
     def __init__(self, enum_value=""):
         """Initialize a new EnumValue class."""
         self.enum_value = enum_value
+
+
+def ros_to_uuid(ros_uuid_msg: ROS_UUID) -> Result[uuid.UUID, str]:
+    try:
+        return Ok(uuid.UUID(ros_uuid_msg))
+    except ValueError:
+        return Err(f"String {ros_uuid_msg} doesn't represent a valid uuid")
+
+
+def uuid_to_ros(uuid: uuid.UUID) -> ROS_UUID:
+    return str(uuid)
 
 
 def get_interface_name(msg_metaclass: type) -> str:

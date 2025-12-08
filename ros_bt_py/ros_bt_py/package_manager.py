@@ -27,6 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import json
 import os
+import yaml
+from importlib import metadata
 import ament_index_python
 from ament_index_python import PackageNotFoundError
 
@@ -149,10 +151,11 @@ class PackageManager(object):
                         response.file_path = split_save_filepath
                         return response
 
-            # Set path to blank, this value not be persisted
+            # Set path to blank, this value should not be persisted
             request.tree.path = ""
 
             with open(split_save_filepath, "w") as save_file:
+                save_file.write(f"version: {metadata.version('ros_bt_py')}\n")
                 msg = rosidl_runtime_py.message_to_yaml(request.tree)
                 save_file.write(msg)
             response.file_path = split_save_filepath

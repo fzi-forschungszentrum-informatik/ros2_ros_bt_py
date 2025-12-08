@@ -47,6 +47,7 @@ from ros_bt_py.ros_helpers import get_message_field_type
 import abc
 from typing import Any, Optional, Dict
 from result import Result, Ok, Err
+import uuid
 
 
 @define_bt_node(
@@ -86,6 +87,7 @@ class ServiceInput(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -93,6 +95,7 @@ class ServiceInput(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -303,18 +306,20 @@ class WaitForService(Leaf):
 
     def __init__(
         self,
-        options=None,
-        debug_manager=None,
-        subtree_manager=None,
-        name=None,
-        ros_node=None,
+        node_id: Optional[uuid.UUID] = None,
+        options: Optional[Dict] = None,
+        debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
-            options,
-            debug_manager,
-            subtree_manager,
-            name,
-            ros_node,
+            node_id=node_id,
+            options=options,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            name=name,
+            ros_node=ros_node,
         )
 
         self._service_type = self.options["service_type"].get_type_obj()
@@ -385,18 +390,20 @@ class WaitForServiceInput(Leaf):
 
     def __init__(
         self,
-        options=None,
-        debug_manager=None,
-        subtree_manager=None,
-        name=None,
-        ros_node=None,
+        node_id: Optional[uuid.UUID] = None,
+        options: Optional[Dict] = None,
+        debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
-            options,
-            debug_manager,
-            subtree_manager,
-            name,
-            ros_node,
+            node_id=node_id,
+            options=options,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            name=name,
+            ros_node=ros_node,
         )
 
         self._service_type = self.options["service_type"].get_type_obj()
@@ -529,6 +536,7 @@ class ServiceForSetType(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -536,6 +544,7 @@ class ServiceForSetType(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -767,6 +776,7 @@ class Service(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -774,6 +784,7 @@ class Service(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,

@@ -28,6 +28,7 @@
 from typing import Dict, Optional
 
 from result import Result, Ok, Err
+import uuid
 
 from rclpy.node import Node
 from rclpy.publisher import Publisher
@@ -78,6 +79,7 @@ class TopicSubscriber(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -85,6 +87,7 @@ class TopicSubscriber(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -228,6 +231,7 @@ class TopicMemorySubscriber(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -235,6 +239,7 @@ class TopicMemorySubscriber(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -380,6 +385,7 @@ class TopicPublisher(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -387,6 +393,7 @@ class TopicPublisher(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
