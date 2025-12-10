@@ -57,6 +57,11 @@ ament_package()
 # test #
 ########
 
+install(DIRECTORY
+  tests/test_trees
+  DESTINATION share/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   # Integration tests
   find_package(ament_cmake_ros REQUIRED)

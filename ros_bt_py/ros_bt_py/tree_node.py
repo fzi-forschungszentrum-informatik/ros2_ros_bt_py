@@ -500,7 +500,7 @@ def main(argv=None):
     # NOTE This print statement is used by integration tests
     #   to determine when testing can begin
     # DO NOT MODIFY THIS
-    print("Finished starting tree node", flush=True)
+    print("Finished starting tree node")
 
     executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(tree_node)
