@@ -66,6 +66,10 @@ setup(
             os.path.join("share", package_name, "launch"),
             glob(os.path.join("launch", "*launch.[pxy][yma]*")),
         ),
+        (
+            os.path.join("share", package_name, "trees"),
+            glob(os.path.join("trees", "*")),
+        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
