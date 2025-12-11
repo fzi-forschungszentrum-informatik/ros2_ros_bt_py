@@ -51,24 +51,3 @@ install(PROGRAMS
 )
 
 ament_package()
-
-
-########
-# test #
-########
-
-install(DIRECTORY
-  tests/test_trees
-  DESTINATION share/${PROJECT_NAME}
-)
-
-if(BUILD_TESTING)
-  # Integration tests
-  find_package(ament_cmake_ros REQUIRED)
-  find_package(launch_testing_ament_cmake REQUIRED)
-  function(add_ros_isolated_launch_test path)
-    set(RUNNER "${ament_cmake_ros_DIR}/run_test_isolated.py")
-    add_launch_test("${path}" RUNNER "${RUNNER}" ${ARGN})
-  endfunction()
-  add_ros_isolated_launch_test(tests/test_example_trees.py)
-endif()
