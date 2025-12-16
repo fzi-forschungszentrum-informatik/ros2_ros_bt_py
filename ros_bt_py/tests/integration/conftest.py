@@ -27,12 +27,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
+import contextlib
+
 import launch
 import launch_pytest
 import launch_ros
 import launch_testing.actions
 import launch_testing.event_handlers
 import rclpy
+
+# ROS2 versions starting from Kilted have a EnableRmwIsolation launch Action
+#   Use that instead of this custom implementation once available
+import os
+import domain_coordinator
 
 from rclpy.node import Node
 
@@ -48,26 +55,31 @@ from ros_bt_py_interfaces.srv import (
 # This function specifies the processes to be run for our test.
 @launch_pytest.fixture
 def launch_description():
-    tree_node = launch_ros.actions.Node(
-        package="ros_bt_py",
-        executable="tree_node",
-        additional_env={"PYTHONUNBUFFERED": "1"},
-    )
-    return launch.LaunchDescription(
-        [
-            tree_node,
-            # This should not be necessary,
-            #   but apparently the nodes can't communicate otherwise ???
-            launch.actions.ExecuteProcess(cmd=["ros2", "daemon", "start"]),
-            launch.actions.RegisterEventHandler(
-                launch_testing.event_handlers.StdoutReadyListener(
-                    target_action=tree_node,
-                    ready_txt="Finished starting tree node",
-                    actions=[launch_testing.actions.ReadyToTest()],
-                )
-            ),
-        ]
-    )
+    with contextlib.ExitStack() as stack:
+        if (
+            "ROS_DOMAIN_ID" not in os.environ
+            and "DISABLE_ROS_ISOLATION" not in os.environ
+        ):
+            domain_id = stack.enter_context(domain_coordinator.domain_id())
+            print("Running with ROS_DOMAIN_ID {}".format(domain_id))
+            os.environ["ROS_DOMAIN_ID"] = str(domain_id)
+        tree_node = launch_ros.actions.Node(
+            package="ros_bt_py",
+            executable="tree_node",
+            additional_env={"PYTHONUNBUFFERED": "1"},
+        )
+        yield launch.LaunchDescription(
+            [
+                tree_node,
+                launch.actions.RegisterEventHandler(
+                    launch_testing.event_handlers.StdoutReadyListener(
+                        target_action=tree_node,
+                        ready_txt="Finished starting tree node",
+                        actions=[launch_testing.actions.ReadyToTest()],
+                    )
+                ),
+            ]
+        )
 
 
 @pytest.fixture

@@ -57,8 +57,8 @@ def test_pub_sub(
     state_list: list[TreeStateList],
 ):
     tree_path = os.path.join(
-        ament_index_python.get_package_share_directory("ros_bt_py_web_gui"),
-        "test_trees",
+        ament_index_python.get_package_share_directory("ros_bt_py"),
+        "trees",
         "pub_sub_test.yaml",
     )
     load_req = LoadTreeFromPath.Request(
