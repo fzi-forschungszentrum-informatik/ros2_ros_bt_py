@@ -65,6 +65,7 @@ def test_pub_sub(
         path=f"file://{tree_path}",
         permissive=False,
     )
+    assert load_client.wait_for_service(timeout_sec=30)
     load_future = load_client.call_async(load_req)
     rclpy.spin_until_future_complete(node, load_future, timeout_sec=30)
     assert load_future.done()
