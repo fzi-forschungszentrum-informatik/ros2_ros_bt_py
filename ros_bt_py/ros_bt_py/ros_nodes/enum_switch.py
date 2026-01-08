@@ -26,15 +26,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from ros_bt_py_interfaces.msg import NodeState
-from ros_bt_py_interfaces.msg import UtilityBounds
+from rclpy.node import Node
+
+from result import Result, Ok, Err, is_err
+
+from ros_bt_py.debug_manager import DebugManager
+from ros_bt_py.subtree_manager import SubtreeManager
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.exceptions import BehaviorTreeException
 
 from ros_bt_py.node import FlowControl, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
 from ros_bt_py.custom_types import TypeWrapper, RosTopicType, ROS_TYPE_FULL
 from ros_bt_py.ros_helpers import EnumValue, get_message_constant_fields
-from ros_bt_py.exceptions import BehaviorTreeException
 
 
 @define_bt_node(
@@ -49,22 +54,18 @@ from ros_bt_py.exceptions import BehaviorTreeException
 class EnumSwitch(FlowControl):
     def __init__(
         self,
-        options=None,
-        debug_manager=None,
-        subtree_manager=None,
-        name=None,
-        ros_node=None,
-        succeed_always=False,
-        simulate_tick=False,
+        options: dict | None = None,
+        debug_manager: DebugManager | None = None,
+        subtree_manager: SubtreeManager | None = None,
+        name: str | None = None,
+        ros_node: Node | None = None,
     ):
         super(EnumSwitch, self).__init__(
-            options,
-            debug_manager,
-            subtree_manager,
-            name,
-            ros_node,
-            succeed_always,
-            simulate_tick,
+            options=options,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            name=name,
+            ros_node=ros_node,
         )
 
         self._message_class = self.options["ros_message_type"].get_type_obj()
@@ -88,10 +89,18 @@ class EnumSwitch(FlowControl):
 
         node_inputs = {"case": pchild_types[0]}
 
-        self.node_config.extend(
+        extend_result = self.node_config.extend(
             NodeConfig(options={}, inputs=node_inputs, outputs={}, max_children=None)
         )
-        self._register_node_data(source_map=node_inputs, target_map=self.inputs)
+        if extend_result.is_err():
+            raise extend_result.unwrap_err()
+
+        register_result = self._register_node_data(
+            source_map=node_inputs, target_map=self.inputs
+        )
+
+        if register_result.is_err():
+            raise register_result.unwrap_err()
 
         # Create possible child dict
 
@@ -104,49 +113,69 @@ class EnumSwitch(FlowControl):
             )
         )
 
-    def _do_setup(self):
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.child_map = {child.name.split(".")[-1]: child for child in self.children}
         for child in self.children:
             if child.name.split(".")[-1] not in self.possible_children:
                 self.logerr("Unwanted child detected please fix name")
-            child.setup()
+            match child.setup():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self):
+    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         name = self.inputs["case"]
 
         if name in self.pchild_dict.keys():
             e_name = self.pchild_dict[name]
         else:
             self.logwarn("Input did not match possible children.")
-            return NodeState.FAILED
+            return Ok(BTNodeState.FAILED)
 
         if e_name not in self.child_map:
             self.logwarn(
                 "Ticking without matching child. Is this really what you want?"
             )
-            return NodeState.FAILED
+            return Ok(BTNodeState.FAILED)
 
         # If we've previously succeeded or failed, untick all children
-        if self.state in [NodeState.SUCCEEDED, NodeState.FAILED]:
+        if self.state in [BTNodeState.SUCCEEDED, BTNodeState.FAILED]:
             for child in self.children:
-                child.reset()
+                match child.reset():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         for child_name, child in self.child_map.items():
             if not child_name == e_name:
-                child.untick()
+                match child.untick():
+                    case Err(e):
+                        return Err(e)
+                    case Ok(_):
+                        pass
 
         return self.child_map[e_name].tick()
 
-    def _do_untick(self):
+    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            child.untick()
-        return NodeState.IDLE
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.IDLE)
 
-    def _do_reset(self):
+    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            child.reset()
-        return NodeState.IDLE
+            match child.reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.IDLE)
 
-    def _do_shutdown(self):
-        for child in self.children:
-            child.shutdown()
+    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        return Ok(BTNodeState.SHUTDOWN)
