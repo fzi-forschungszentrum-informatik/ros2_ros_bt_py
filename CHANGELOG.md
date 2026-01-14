@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add uuid to message definitions by @Doomse
 - Add integration test scafolding by @Oberacda in [#220](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/220)
 - Add rmw isolation to integration tests by @Doomse
 - Add pytest integration tests by @Doomse
@@ -15,9 +16,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add base test framework by @Doomse
 
 ### Changed
+- Use UUIDs  instead of Names for BTNodes by @Oberacda in [#211](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/211)
+- Update subtree tests and bugfixes by @Doomse
+- Switch to string based ros uuids by @Doomse
+- Finish tree file migration utility by @Doomse
+- Update load save and migrate process. by @Doomse
+- Start bugfixing by @Doomse
+- More node uuid handling by @Doomse
+- Update subtree handling by @Doomse
+- Update tree manager to use uuids by @Doomse
+- Start uuid handling by @Doomse
 - Wait for service before calling by @Doomse
 
+### Fixed
+- Fix node option migrations by @Doomse
+
 ### Removed
+- Remove custom type conversions from NodeData by @Doomse
 - Remove integration tests from web-gui package by @Doomse
 
 
