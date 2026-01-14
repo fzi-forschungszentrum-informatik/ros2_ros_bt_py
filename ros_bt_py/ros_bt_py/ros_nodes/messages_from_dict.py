@@ -31,6 +31,7 @@ from copy import deepcopy
 from typing import Dict, Optional
 
 from result import Result, Ok, Err
+import uuid
 
 from rclpy.node import Node
 from rosidl_runtime_py.set_message import set_message_fields
@@ -58,6 +59,7 @@ class MessageFromDict(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -65,6 +67,7 @@ class MessageFromDict(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,
@@ -138,6 +141,7 @@ class MessageFromConstDict(Leaf):
 
     def __init__(
         self,
+        node_id: Optional[uuid.UUID] = None,
         options: Optional[Dict] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
@@ -145,6 +149,7 @@ class MessageFromConstDict(Leaf):
         ros_node: Optional[Node] = None,
     ) -> None:
         super().__init__(
+            node_id=node_id,
             options=options,
             debug_manager=debug_manager,
             subtree_manager=subtree_manager,

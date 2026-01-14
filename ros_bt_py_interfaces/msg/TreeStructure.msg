@@ -36,7 +36,7 @@ string name
 # any. Can be a file:// or a package:// string. Please don't build
 # infinite loops using this.
 string path
-string root_name
+string root_id
 NodeStructure[] nodes
 Wiring[] data_wirings
 float64 tick_frequency_hz

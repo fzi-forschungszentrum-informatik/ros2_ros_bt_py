@@ -37,11 +37,12 @@ string version
 int32 max_children
 
 ## These are run-time parameters
-# Each node name must be unique in its tree. This does not count for
+# Each node id must be unique in its tree. This does not count for
 # subtrees, as they're handled separately.
+string node_id
 string name
 # Order is important for child_names!
-string[] child_names
+string[] child_ids
 NodeOption[] options
 NodeIO[] inputs
 NodeIO[] outputs

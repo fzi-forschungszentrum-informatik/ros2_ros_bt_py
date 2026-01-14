@@ -48,10 +48,13 @@ class TypeWrapper(object):
 
     def __init__(self, actual_type: type, info=""):
         self.actual_type = actual_type
-        # TODO Is this overwrite okay,
-        #   otherwise remove code accessing __name__ on TypeWrapper | type
-        self.__name__ = f"Wrapping({actual_type.__name__})"
         self.info = info
+
+    # TODO Is this overwrite okay,
+    #   otherwise remove code accessing __name__ on TypeWrapper | type
+    @property
+    def __name__(self):
+        return f"Wrapping({self.actual_type.__name__})"
 
 
 class FilePath(object):

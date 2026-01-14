@@ -25,12 +25,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-string parent_name
+string parent_node_id
 NodeStructure node
-# If this is true, rename the node to name_N if one or more
-# nodes with the same name / prefix exist already.
-bool allow_rename
 ---
 bool success
-string actual_node_name
+string node_id
 string error_message
