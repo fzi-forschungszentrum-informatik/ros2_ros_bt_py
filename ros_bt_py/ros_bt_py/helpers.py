@@ -112,6 +112,8 @@ def get_default_value(data_type: Any, ros: bool = False) -> Any:
         return 1.2
     elif data_type is bool:
         return False
+    elif data_type is bytes:
+        return b"\x00"
     elif data_type is list:
         return []
     elif data_type is dict:

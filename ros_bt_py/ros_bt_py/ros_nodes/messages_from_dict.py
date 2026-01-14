@@ -186,7 +186,7 @@ class MessageFromConstDict(Leaf):
                 deepcopy(self.options["dict"]),
             )
             self.outputs["message"] = message
-        except (TypeError, AttributeError) as ex:
+        except (TypeError, AttributeError, ValueError) as ex:
             self.logerr(
                 f"Error populating message of type {self._message_type.__name__}: "
                 f"{str(ex)}"
