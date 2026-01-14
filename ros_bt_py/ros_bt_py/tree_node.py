@@ -497,6 +497,11 @@ def main(argv=None):
     tree_node.load_default_tree(params=params)
     tree_node.init_channels_publisher()
 
+    # NOTE This print statement is used by integration tests
+    #   to determine when testing can begin
+    # DO NOT MODIFY THIS
+    print("Finished starting tree node")
+
     executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(tree_node)
     try:
