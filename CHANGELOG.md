@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add base test framework by @Doomse
 
 ### Changed
-- Bump interfaces version.
+- Release 0.6.0. by @Oberacda
+- Bump interfaces version. by @Oberacda
 - Update Web-GUI to 6.0.1 by @Oberacda in [#222](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/222)
 - Use UUIDs  instead of Names for BTNodes by @Oberacda in [#211](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/211)
 - Update subtree tests and bugfixes by @Doomse
