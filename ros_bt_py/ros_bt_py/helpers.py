@@ -34,6 +34,7 @@ import rclpy.logging
 import jsonpickle
 import functools
 import re
+import uuid
 from collections import OrderedDict
 
 import rosidl_runtime_py.utilities
@@ -138,8 +139,8 @@ def json_decode(data: str) -> Optional[Any]:
     return jsonpickle.decode(data)
 
 
-def normalize_name(name: str) -> str:
-    return re.sub(r"\W+", "_", name)
+def get_logger_name(name: str, uuid: uuid.UUID) -> str:
+    return f"{re.sub(r"\W+", "_", name)}({uuid})"
 
 
 def build_message_field_dicts(message_object: Any) -> tuple[dict, dict]:

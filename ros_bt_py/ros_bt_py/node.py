@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from types import ModuleType
 
-from result import Err, Ok, Result, as_result, is_err
+from result import Err, Ok, Result
 
 import abc
 import importlib
@@ -48,7 +48,6 @@ from typing import (
     List,
     Tuple,
     Type,
-    Sequence,
     Dict,
     Optional,
 )
@@ -57,7 +56,7 @@ import rclpy
 import rclpy.logging
 from rclpy.node import Node as ROSNode
 
-from ros_bt_py_interfaces.msg import UtilityBounds, _node_data_location
+from ros_bt_py_interfaces.msg import UtilityBounds
 from typeguard import typechecked
 from ros_bt_py_interfaces.msg import (
     NodeStructure,
@@ -68,8 +67,6 @@ from ros_bt_py_interfaces.msg import (
     Wiring,
     WiringData,
     TreeStructure,
-    TreeState,
-    TreeData,
 )
 
 from ros_bt_py.debug_manager import DebugManager
@@ -83,7 +80,13 @@ from ros_bt_py.exceptions import (
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.custom_types import TypeWrapper
-from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode, json_encode
+from ros_bt_py.helpers import (
+    BTNodeState,
+    get_default_value,
+    json_decode,
+    json_encode,
+    get_logger_name,
+)
 from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 
 
@@ -327,12 +330,12 @@ class Node(object, metaclass=NodeMeta):
 
     @contextmanager
     def _dummy_report_state(self):
-        self.logger.debug("Reporting state up without debug manager")
+        self.get_logger().debug("Reporting state up without debug manager")
         yield
 
     @contextmanager
     def _dummy_report_tick(self):
-        self.logger.debug("Ticking without debug manager")
+        self.get_logger().debug("Ticking without debug manager")
         yield
 
     node_classes: Dict[str, Dict[str, List[Type["Node"]]]] = {}
@@ -350,6 +353,7 @@ class Node(object, metaclass=NodeMeta):
         subtree_manager: Optional[SubtreeManager] = None,
         name: Optional[str] = None,
         ros_node: Optional[ROSNode] = None,
+        tree_logger: Optional[rclpy.logging.RcutilsLogger] = None,
     ) -> None:
         """
         Prepare class members.
@@ -397,9 +401,14 @@ class Node(object, metaclass=NodeMeta):
         if not self._node_config:
             raise NodeConfigError("Missing node_config, cannot initialize!")
 
-        self.logger = self.ros_node.get_logger().get_child(
-            f"{self.name} ({self.node_id})"
-        )
+        if tree_logger is None:
+            self._logger = rclpy.logging.get_logger(
+                get_logger_name(self.name, self.node_id)
+            )
+        else:
+            self._logger = tree_logger.get_child(
+                get_logger_name(self.name, self.node_id)
+            )
 
         # Copy the class NodeConfig so we can mess with it (but we
         # only should in very rare cases!)
@@ -425,9 +434,7 @@ class Node(object, metaclass=NodeMeta):
                 if key in self.node_config.optional_options:
                     optional_keys.append(key)
             if unset_option_keys == optional_keys:
-                rclpy.logging.get_logger(self.name).warn(
-                    f"missing optional keys: {optional_keys}"
-                )
+                self.get_logger().warn(f"missing optional keys: {optional_keys}")
             else:
                 raise ValueError(f"Missing options: {str(unset_option_keys)}")
 
@@ -462,7 +469,7 @@ class Node(object, metaclass=NodeMeta):
     @state.setter
     @typechecked
     def state(self, new_state: BTNodeState):
-        self.logger.debug(f"Setting state from  {self._state} to {new_state}")
+        self.get_logger().debug(f"Setting state from  {self._state} to {new_state}")
         self._state = new_state
 
     @property
@@ -480,14 +487,17 @@ class Node(object, metaclass=NodeMeta):
             return self._ros_node
         else:
             error_msg = f"{self.name} does not have ROS node reference!"
-            self.logger.error(error_msg)
+            self.get_logger().error(error_msg)
             raise RuntimeError(error_msg)
 
     @ros_node.setter
     @typechecked
     def ros_node(self, new_ros_node: ROSNode):
-        self.logger.debug(f"Setting new ROS node: {new_ros_node}")
+        self.get_logger().debug(f"Setting new ROS node: {new_ros_node}")
         self._ros_node = new_ros_node
+
+    def get_logger(self) -> rclpy.logging.RcutilsLogger:
+        return self._logger
 
     def setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
@@ -540,7 +550,7 @@ class Node(object, metaclass=NodeMeta):
         msg = f"Trying to setup a node of type {self.__class__.__name__}"
         "without _do_setup function!"
 
-        self.logger.error(msg)
+        self.get_logger().error(msg)
         return Err(BehaviorTreeException(msg))
 
     def _handle_inputs(self) -> Result[None, str]:
@@ -599,7 +609,7 @@ class Node(object, metaclass=NodeMeta):
                     unset_options.append(option_name)
             if unset_options:
                 msg = f"Trying to tick node with unset options: {str(unset_options)}"
-                self.logger.warn(msg)
+                self.get_logger().warn(msg)
                 self.state = BTNodeState.BROKEN
                 return Err(BehaviorTreeException(msg))
             self.options.handle_subscriptions()
@@ -670,7 +680,7 @@ class Node(object, metaclass=NodeMeta):
           One of the constants in :class:`ros_bt_py_msgs.msg.Node`
         """
         msg = f"Ticking a node of type {self.__class__.__name__} without _do_tick function!"
-        self.logger.error(msg)
+        self.get_logger().error(msg)
         return Err(BehaviorTreeException(msg))
 
     def untick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -725,7 +735,7 @@ class Node(object, metaclass=NodeMeta):
         3. Be ready to resume on the next call of :meth:`tick`
         """
         msg = f"Unticking a node of type {self.__class__.__name__} without _do_untick function!"
-        self.logger.error(msg)
+        self.get_logger().error(msg)
         return Err(BehaviorTreeException(msg))
 
     def reset(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -788,7 +798,7 @@ class Node(object, metaclass=NodeMeta):
           The new state of the node (should be IDLE unless an error happened)
         """
         msg = f"Resetting a node of type {self.__class__.__name__} without _do_reset function!"
-        self.logger.error(msg)
+        self.get_logger().error(msg)
         return Err(BehaviorTreeException(msg))
 
     def shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -819,7 +829,7 @@ class Node(object, metaclass=NodeMeta):
                 for child in self.children:
                     shutdown_result = child.shutdown()
                     if shutdown_result.is_err():
-                        self.logger.warn(
+                        self.get_logger().warn(
                             f"Node {child.name} raised the following error during shutdown"
                             "Continuing to shutdown other nodes"
                             f"{shutdown_result.unwrap_err()}"
@@ -836,7 +846,7 @@ class Node(object, metaclass=NodeMeta):
             for child in self.children:
                 shutdown_result = child.shutdown()
                 if shutdown_result.is_err():
-                    self.logger.warn(
+                    self.get_logger().warn(
                         f"Node {child.name} raised the following error during shutdown"
                         "Continuing to shutdown other nodes"
                         f"{shutdown_result.unwrap_err()}"
@@ -849,7 +859,7 @@ class Node(object, metaclass=NodeMeta):
                 if child.state != BTNodeState.SHUTDOWN
             ]
             if len(unshutdown_children) > 0:
-                self.logger.warn(
+                self.get_logger().warn(
                     "Not all children are shut down after calling shutdown(). "
                     "List of not-shutdown children and states:\n"
                     f"{unshutdown_children}"
@@ -872,7 +882,7 @@ class Node(object, metaclass=NodeMeta):
         msg = f"Shutting down a node of type {self.__class__.__name__}"
         "without _do_shutdown function!"
 
-        self.logger.error(msg)
+        self.get_logger().error(msg)
         return Err(BehaviorTreeException(msg))
 
     def calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -947,7 +957,7 @@ class Node(object, metaclass=NodeMeta):
                 "Trying to add child when maximum number of "
                 "children (%d) is already present" % self.node_config.max_children
             )
-            self.logger.error(error_msg)
+            self.get_logger().error(error_msg)
             return Err(BehaviorTreeException(error_msg))
 
         if child.node_id in (child1.node_id for child1 in self.children):
@@ -1218,11 +1228,11 @@ class Node(object, metaclass=NodeMeta):
         Adds this node's name and type to the given message
         """
         warnings.warn(
-            "This function is deprecated in favor of calling `node.logger.debug` directly",
+            "This function is deprecated in favor of calling `node.get_logger().debug` directly",
             DeprecationWarning,
             stacklevel=2,
         )
-        self.logger.debug(f"{message}")
+        self.get_logger().debug(f"{message}")
 
     @typechecked
     def loginfo(self, message: str) -> None:
@@ -1232,11 +1242,11 @@ class Node(object, metaclass=NodeMeta):
         Adds this node's name and type to the given message
         """
         warnings.warn(
-            "This function is deprecated in favor of calling `node.logger.info` directly",
+            "This function is deprecated in favor of calling `node.get_logger().info` directly",
             DeprecationWarning,
             stacklevel=2,
         )
-        self.logger.info(f"{message}")
+        self.get_logger().info(f"{message}")
 
     @typechecked
     def logwarn(self, message: str) -> None:
@@ -1246,11 +1256,11 @@ class Node(object, metaclass=NodeMeta):
         Adds this node's name and type to the given message
         """
         warnings.warn(
-            "This function is deprecated in favor of calling `node.logger.warn` directly",
+            "This function is deprecated in favor of calling `node.get_logger().warn` directly",
             DeprecationWarning,
             stacklevel=2,
         )
-        self.logger.warn(f"{message}")
+        self.get_logger().warn(f"{message}")
 
     @typechecked
     def logerr(self, message: str) -> None:
@@ -1260,11 +1270,11 @@ class Node(object, metaclass=NodeMeta):
         Adds this node's name and type to the given message
         """
         warnings.warn(
-            "This function is deprecated in favor of calling `node.logger.error` directly",
+            "This function is deprecated in favor of calling `node.get_logger().error` directly",
             DeprecationWarning,
             stacklevel=2,
         )
-        self.logger.error(f"{message}")
+        self.get_logger().error(f"{message}")
 
     @typechecked
     def logfatal(self, message: str) -> None:
@@ -1274,11 +1284,11 @@ class Node(object, metaclass=NodeMeta):
         Adds this node's name and type to the given message
         """
         warnings.warn(
-            "This function is deprecated in favor of calling `node.logger.fatal` directly",
+            "This function is deprecated in favor of calling `node.get_logger().fatal` directly",
             DeprecationWarning,
             stacklevel=2,
         )
-        self.logger.fatal(f"{message}")
+        self.get_logger().fatal(f"{message}")
 
     @classmethod
     @typechecked
@@ -1286,6 +1296,7 @@ class Node(object, metaclass=NodeMeta):
         cls: Type["Node"],
         msg: NodeStructure,
         ros_node: ROSNode,
+        tree_logger: rclpy.logging.RcutilsLogger,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
         permissive: bool = False,
@@ -1414,6 +1425,7 @@ class Node(object, metaclass=NodeMeta):
                 debug_manager=debug_manager,
                 subtree_manager=subtree_manager,
                 ros_node=ros_node,
+                tree_logger=tree_logger,
             )
         except BehaviorTreeException as ex:
             return Err(ex)
@@ -1626,7 +1638,7 @@ class Node(object, metaclass=NodeMeta):
             if sub.target == wiring.target:
                 if sub.source == wiring.source:
                     return Err(BehaviorTreeException("Duplicate subscription!"))
-                self.logger.warn(
+                self.get_logger().warn(
                     f"Subscriber {wiring_target_id} is subscribing to multiple sources "
                     f"with the same target {wiring.target.data_kind}[{wiring.target.data_key}]"
                 )

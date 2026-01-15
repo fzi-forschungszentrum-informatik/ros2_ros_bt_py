@@ -52,7 +52,6 @@ from ros_bt_py.migrate_tree_files import migrate_legacy_tree_structure
 from ros_bt_py_interfaces.msg import (
     DocumentedNode,
     NodeStructure,
-    NodeState,
     NodeIO,
     NodeOption,
     NodeDataLocation,
@@ -102,7 +101,7 @@ from ros_bt_py.helpers import (
     BTNodeState,
     json_encode,
     json_decode,
-    normalize_name,
+    get_logger_name,
 )
 from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 from ros_bt_py.node import Node, load_node_module, increment_name
@@ -353,33 +352,39 @@ class TreeManager:
             self.tree_id = tree_id
 
         if self.tree_id == uuid.UUID(int=0):
-            self.logger = ros_node.get_logger().get_child(f"Main_Tree ({self.tree_id})")
+            self._logger = ros_node.get_logger().get_child(
+                get_logger_name("Main Tree", self.tree_id)
+            )
         else:
-            self.logger = ros_node.get_logger().get_child(
-                f"{normalize_name(self.name)} ({self.tree_id})"
+            self._logger = ros_node.get_logger().get_child(
+                get_logger_name(self.name, self.tree_id)
             )
 
         self.publish_tree_structure = publish_tree_structure_callback
         if self.publish_tree_structure is None:
-            self.logger.info("No callback for publishing tree structure provided.")
+            self.get_logger().info(
+                "No callback for publishing tree structure provided."
+            )
         self.publish_tree_state = publish_tree_state_callback
         if self.publish_tree_state is None:
-            self.logger.info("No callback for publishing tree state provided.")
+            self.get_logger().info("No callback for publishing tree state provided.")
         self.publish_tree_data = publish_tree_data_callback
         if self.publish_tree_data is None:
-            self.logger.info("No callback for publishing tree data provided.")
+            self.get_logger().info("No callback for publishing tree data provided.")
 
         self.publish_diagnostic = publish_diagnostic_callback
         if self.publish_diagnostic is None:
-            self.logger.info("No callback for publishing node diagnostics provided")
+            self.get_logger().info(
+                "No callback for publishing node diagnostics provided"
+            )
 
         self.publish_tick_frequency = publish_tick_frequency_callback
         if self.publish_tick_frequency is None:
-            self.logger.info("No callback for publishing tree frequency provided")
+            self.get_logger().info("No callback for publishing tree frequency provided")
 
         self.debug_manager: DebugManager
         if debug_manager is None:
-            self.logger.info(
+            self.get_logger().info(
                 "Tree manager instantiated without explicit debug manager "
                 "- building our own with default parameters"
             )
@@ -389,7 +394,7 @@ class TreeManager:
 
         self.subtree_manager: SubtreeManager
         if subtree_manager is None:
-            self.logger.info(
+            self.get_logger().info(
                 "Tree manager instantiated without explicit subtree manager "
                 "- building our own with default parameters"
             )
@@ -462,6 +467,9 @@ class TreeManager:
                 f"Updating tree state to {self.tree_state.state}"
             )
 
+    def get_logger(self) -> rclpy.logging.RcutilsLogger:
+        return self._logger
+
     def set_diagnostics_name(self) -> None:
         """
         Set the tree name for ROS diagnostics.
@@ -475,13 +483,13 @@ class TreeManager:
             self.diagnostic_status.name = self.nodes[
                 ros_to_uuid(self.tree_structure.root_id).unwrap()
             ].name
-            self.logger.warn(
+            self.get_logger().warn(
                 "No tree name was found. Diagnostics data from the behavior tree will be"
                 f"published under the name of the root_node: {self.diagnostic_status.name}"
             )
         else:
             self.diagnostic_status.name = ""
-            self.logger.warn(
+            self.get_logger().warn(
                 "Neither a tree name nor the name from the root_node was found."
                 "Diagnostics data from the behavior tree will be "
                 "published without further name specifications"
@@ -603,7 +611,7 @@ class TreeManager:
         tick_result = self.tick()
 
         if tick_result.is_err():
-            self.logger.error(
+            self.get_logger().error(
                 f"Encountered error while ticking tree: {tick_result.unwrap_err()}"
             )
             self._last_error = f"{tick_result.unwrap_err()}"
@@ -639,12 +647,12 @@ class TreeManager:
 
         root_result = self.find_root()
         if root_result.is_err():
-            self.logger.error("Could not find tree root!")
+            self.get_logger().error("Could not find tree root!")
             return Err(root_result.unwrap_err())
 
         root = root_result.unwrap()
         if not root:
-            self.logger.info("No nodes in tree, tick will not do anything")
+            self.get_logger().info("No nodes in tree, tick will not do anything")
             return Err(
                 TreeTopologyError("No nodes in  the tree, tick will do nothing!")
             )
@@ -667,7 +675,7 @@ class TreeManager:
 
             if tick_result.is_err():
                 tick_err = tick_result.unwrap_err()
-                self.logger.error(f"Ticking the tree failed: {tick_err}")
+                self.get_logger().error(f"Ticking the tree failed: {tick_err}")
                 return Err(tick_err)
 
             self.publish_data()
@@ -692,7 +700,7 @@ class TreeManager:
             tick_rate = self.tree_structure.tick_frequency_hz
 
             if (1 / tick_rate) > (duration.nanoseconds * 1e9):
-                self.logger.warn(
+                self.get_logger().warn(
                     "Tick took longer than set period, cannot tick at "
                     f"{self.tree_structure.tick_frequency_hz:.2f} Hz"
                 )
@@ -754,7 +762,7 @@ class TreeManager:
         response.success = False
         root_result = self.find_root()
         if root_result.is_err():
-            self.logger.warn(f"Could not find root {root_result.unwrap_err()}")
+            self.get_logger().warn(f"Could not find root {root_result.unwrap_err()}")
             response.error_message = str(root_result.unwrap_err())
             response.success = False
             return response
@@ -764,7 +772,7 @@ class TreeManager:
             response.success = True
             return response
         if not (root.state in [BTNodeState.UNINITIALIZED, BTNodeState.SHUTDOWN]):
-            self.logger.error("Please shut down the tree before clearing it")
+            self.get_logger().error("Please shut down the tree before clearing it")
             response.success = False
             response.error_message = "Please shut down the tree before clearing it"
             return response
@@ -909,7 +917,7 @@ class TreeManager:
             self.tree_structure.data_wirings = list(tree.data_wirings)
             self.tree_structure.public_node_data = list(tree.public_node_data)
             if self.tree_structure.tick_frequency_hz == 0.0:
-                self.logger.warn(
+                self.get_logger().warn(
                     "Tick frequency of loaded tree is 0, defaulting to 10Hz"
                 )
                 self.tree_structure.tick_frequency_hz = 10.0
@@ -938,7 +946,7 @@ class TreeManager:
                     self.tree_structure.root_id = uuid_to_ros(root.node_id)
 
             response.success = True
-            self.logger.info("Successfully loaded tree")
+            self.get_logger().info("Successfully loaded tree")
             if self.publish_diagnostic is None:
                 self.set_diagnostics_name()
             return response
@@ -1000,7 +1008,7 @@ class TreeManager:
                 )
                 return response
         else:
-            self.logger.info("Shutting down a tree with no nodes.")
+            self.get_logger().info("Shutting down a tree with no nodes.")
         self.state = TreeState.EDITABLE
         response.tree_state = self.state
         response.success = True
@@ -1017,7 +1025,7 @@ class TreeManager:
             response.error_message = (
                 "Tried to tick when tree is already running, aborting"
             )
-            self.logger.warn(response.error_message)
+            self.get_logger().warn(response.error_message)
             return response
 
         else:
@@ -1069,14 +1077,14 @@ class TreeManager:
                     f"Error during single tick: {str(self._last_error)}"
                 )
                 response.success = False
-                self.logger.error(response.error_message)
+                self.get_logger().error(response.error_message)
             else:
                 response.error_message = (
                     f"Successfully stopped ticking, but tree state "
                     f"is {state_after_joining}, not IDLE"
                 )
                 response.success = False
-                self.logger.error(response.error_message)
+                self.get_logger().error(response.error_message)
             return response
 
     @typechecked
@@ -1092,7 +1100,7 @@ class TreeManager:
                 "already running, aborting"
             )
             response.tree_state = self.state
-            self.logger.warn(response.error_message)
+            self.get_logger().warn(response.error_message)
             return response
 
         else:
@@ -1125,7 +1133,9 @@ class TreeManager:
                     frequency=self.tree_structure.tick_frequency_hz
                 )
             if self.tree_structure.tick_frequency_hz == 0:
-                self.logger.warn("Loaded tree had frequency 0Hz. Defaulting to 10Hz")
+                self.get_logger().warn(
+                    "Loaded tree had frequency 0Hz. Defaulting to 10Hz"
+                )
                 self.tree_structure.tick_frequency_hz = 10.0
                 self.rate = self.ros_node.create_rate(
                     frequency=self.tree_structure.tick_frequency_hz
@@ -1146,7 +1156,7 @@ class TreeManager:
             response.success = False
             response.error_message = "Tried to reset tree while it is running, aborting"
             response.tree_state = self.state
-            self.logger.warn(response.error_message)
+            self.get_logger().warn(response.error_message)
             return response
         else:
             find_root_result = self.find_root()
@@ -1160,7 +1170,7 @@ class TreeManager:
                 return response
             root = find_root_result.unwrap()
             if not root:
-                self.logger.info("Resetting a tree with no root.")
+                self.get_logger().info("Resetting a tree with no root.")
                 self.state = TreeState.IDLE
                 response.success = True
                 response.tree_state = self.state
@@ -1234,7 +1244,7 @@ class TreeManager:
                     "Tried to setup tree while it is running, aborting"
                 )
                 response.tree_state = tree_state
-                self.logger.warn(response.error_message)
+                self.get_logger().warn(response.error_message)
                 return response
 
             if self.subtree_manager:
@@ -1293,7 +1303,7 @@ class TreeManager:
                         f"Error stopping tick: {str(self._last_error)}"
                     )
                     response.success = False
-                    self.logger.error(response.error_message)
+                    self.get_logger().error(response.error_message)
                     return response
                 else:
                     response.error_message = (
@@ -1301,7 +1311,7 @@ class TreeManager:
                         f"{state_after_joining}, not IDLE"
                     )
                     response.success = False
-                    self.logger.error(response.error_message)
+                    self.get_logger().error(response.error_message)
                     return response
 
             elif tree_state == TreeState.WAITING_FOR_TICK:
@@ -1324,19 +1334,21 @@ class TreeManager:
                     else:
                         response.tree_state = TreeState.ERROR
                         response.success = False
-                        self.logger.error(
+                        self.get_logger().error(
                             f"Root node ({str(root)}) state after unticking is neither "
                             f"IDLE nor PAUSED, but {state}"
                         )
                         response.error_message = "Failed to untick root node."
                         return response
                 else:
-                    self.logger.info("Unticking a tree with no nodes.")
+                    self.get_logger().info("Unticking a tree with no nodes.")
                     response.tree_state = TreeState.IDLE
                     response.success = True
 
             else:
-                self.logger.info("Received stop command, but tree was not running")
+                self.get_logger().info(
+                    "Received stop command, but tree was not running"
+                )
 
             self.publish_state()
 
@@ -1359,11 +1371,11 @@ class TreeManager:
             self.publish_state()
 
         elif request.command == ControlTreeExecution.Request.DO_NOTHING:
-            self.logger.info("Doing nothing in this request")
+            self.get_logger().info("Doing nothing in this request")
             response.success = True
         else:
             response.error_message = f"Received unknown command {request.command}"
-            self.logger.error(response.error_message)
+            self.get_logger().error(response.error_message)
             response.success = False
 
         return response
@@ -1461,7 +1473,7 @@ class TreeManager:
             if child_id in self.nodes:
                 add_child_result = instance.add_child(self.nodes[child_id])
                 if add_child_result.is_err():
-                    self.logger.warn(
+                    self.get_logger().warn(
                         f"Could not add child: {str(add_child_result.unwrap_err())}"
                     )
                     missing_children.append(child_id)
@@ -1639,11 +1651,11 @@ class TreeManager:
                 # It's reasonable to expect parent to not be None here, since
                 # the node is one of a list of children
                 if r_node.parent is None:
-                    self.logger.error(
+                    self.get_logger().error(
                         f"Node {r_node.name} appears to be a child with no parent"
                     )
                     continue
-                self.logger.warn(
+                self.get_logger().warn(
                     f"Node {r_node.name} was not shut down. "
                     "Shutdown of child nodes should be handled in the base `Node` class."
                 )
@@ -1713,7 +1725,9 @@ class TreeManager:
 
         old_node = self.nodes[node_id]
 
-        new_node_result = Node.from_msg(request.new_node, ros_node=self.ros_node)
+        new_node_result = self.instantiate_node_from_msg(
+            request.new_node, self.ros_node
+        )
         if new_node_result.is_err():
             response.success = False
             response.error_message = (
@@ -2113,7 +2127,7 @@ class TreeManager:
         # new list that won't be affected by calling
         # remove_child()!
         for child_id in [child.node_id for child in node.children]:
-            self.logger.info(f"Moving child {child_id}")
+            self.get_logger().info(f"Moving child {child_id}")
             remove_child_result = node.remove_child(child_id)
             if remove_child_result.is_err():
                 response.success = False
@@ -2497,7 +2511,7 @@ class TreeManager:
                         f'Failed to undo wiring "{wiring}": {str(unwire_result.unwrap_err())}\n'
                         f"Previous error: {response.error_message}"
                     )
-                    self.logger.error(
+                    self.get_logger().error(
                         "Failed to undo successful wiring after error. "
                         "Tree is in undefined state!"
                     )
@@ -2592,7 +2606,7 @@ class TreeManager:
                         f'Failed to redo wiring "{wiring}": {str(wire_data_result.unwrap_err())}\n'
                         f"Previous error: {response.error_message}"
                     )
-                    self.logger.error(
+                    self.get_logger().error(
                         "Failed to rewire successful unwiring after error. "
                         "Tree is in undefined state!"
                     )
@@ -2707,7 +2721,7 @@ class TreeManager:
                 return response
             root = root_result.unwrap()
             if not root:
-                self.logger.info("No nodes in tree")
+                self.get_logger().info("No nodes in tree")
             else:
                 manager.tree_structure.root_id = uuid_to_ros(root.node_id)
             response.success = True
@@ -2735,12 +2749,13 @@ class TreeManager:
         node_result = Node.from_msg(
             node_msg,
             ros_node,
+            self.get_logger(),
             debug_manager=self.debug_manager,
             subtree_manager=self.subtree_manager,
             permissive=permissive,
         )
         if node_result.is_err():
-            self.logger.error(
+            self.get_logger().error(
                 f"Failed to instanciate node: {node_msg}: {node_result.unwrap_err()}"
             )
             return node_result
@@ -2767,7 +2782,7 @@ class TreeManager:
             else:
                 self.tree_structure.nodes = []
         else:
-            self.logger.warn(f"Strange topology {str(root_result.unwrap_err())}")
+            self.get_logger().warn(f"Strange topology {str(root_result.unwrap_err())}")
             # build a tree_structure out of this strange topology,
             # so the user can fix it in the editor
             self.tree_structure.nodes = [
