@@ -30,6 +30,7 @@ import pytest
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.custom_types import RosTopicType
 from ros_bt_py_interfaces.msg import NodeState
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_nodes.enum_switch import EnumSwitch
 
 
@@ -40,12 +41,13 @@ from ros_bt_py.ros_nodes.enum_switch import EnumSwitch
     ],
 )
 def test_node_creation_failure(message):
-    with pytest.raises(ValueError):
-        EnumSwitch(
-            options={
-                "ros_message_type": message,
-            }
-        )
+    enum_node = EnumSwitch(
+        options={
+            "ros_message_type": message,
+        }
+    )
+    enum_node.setup()
+    assert enum_node.state == BTNodeState.BROKEN
 
 
 @pytest.mark.parametrize(
@@ -61,4 +63,4 @@ def test_node_creation_success(message):
         }
     )
     enum_node.setup()
-    assert enum_node.state == NodeState.IDLE
+    assert enum_node.state == BTNodeState.IDLE
