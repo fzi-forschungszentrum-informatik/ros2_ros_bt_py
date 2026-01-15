@@ -52,22 +52,8 @@ from ros_bt_py.ros_helpers import EnumValue, get_message_constant_fields
     )
 )
 class EnumSwitch(FlowControl):
-    def __init__(
-        self,
-        options: dict | None = None,
-        debug_manager: DebugManager | None = None,
-        subtree_manager: SubtreeManager | None = None,
-        name: str | None = None,
-        ros_node: Node | None = None,
-    ):
-        super(EnumSwitch, self).__init__(
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
-
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        # Setup Child Dict
         self._message_class = self.options["ros_message_type"].get_type_obj()
 
         self.possible_children = get_message_constant_fields(self._message_class)
@@ -115,7 +101,6 @@ class EnumSwitch(FlowControl):
             )
         )
 
-    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.child_map = {child.name.split(".")[-1]: child for child in self.children}
         for child in self.children:
             if child.name.split(".")[-1] not in self.possible_children:
