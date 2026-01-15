@@ -138,6 +138,10 @@ def json_decode(data: str) -> Optional[Any]:
     return jsonpickle.decode(data)
 
 
+def normalize_name(name: str) -> str:
+    return re.sub(r"\W+", "_", name)
+
+
 def build_message_field_dicts(message_object: Any) -> tuple[dict, dict]:
     """
     Thin wrapper over `get_field_values_and_types`.
