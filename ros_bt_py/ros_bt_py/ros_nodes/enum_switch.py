@@ -74,7 +74,8 @@ class EnumSwitch(FlowControl):
 
         # Raise Error if no possible children
         if not self.possible_children:
-            raise ValueError(f"{self._message_class} has no constant fields")
+            self.logerr(f"{self._message_class} has no constant fields")
+            return Ok(BTNodeState.BROKEN)
 
         # Check if all constants have equal type and raise error if not. Otherwise set input to
         # constant type
@@ -83,9 +84,10 @@ class EnumSwitch(FlowControl):
             for field in self.possible_children
         ]
         if len(set(pchild_types)) > 1:
-            raise ValueError(
+            self.logerr(
                 f"{self._message_class} contains constant fields of multiple types"
             )
+            return Ok(BTNodeState.BROKEN)
 
         node_inputs = {"case": pchild_types[0]}
 
