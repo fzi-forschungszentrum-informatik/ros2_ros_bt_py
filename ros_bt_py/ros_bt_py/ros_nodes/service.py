@@ -85,23 +85,8 @@ class ServiceInput(Leaf):
     _response_type: type
     _service_client: Optional[Client] = None
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
 
@@ -304,23 +289,8 @@ class ServiceInput(Leaf):
 class WaitForService(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
         self._service_name = self.options["service_name"].name
@@ -388,23 +358,8 @@ class WaitForService(Leaf):
 class WaitForServiceInput(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
 
@@ -534,23 +489,8 @@ class ServiceForSetType(Leaf):
     _reported_result: bool = False
     _service_name: str
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._service_client: Optional[Client] = None
         self._service_name = self.options["service_name"].name
         self.set_service_type()
@@ -774,23 +714,8 @@ class Service(Leaf):
     _request_type: type
     _response_type: type
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
         self._service_name = self.options["service_name"].name
