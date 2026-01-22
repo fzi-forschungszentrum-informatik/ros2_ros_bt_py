@@ -139,10 +139,6 @@ def json_decode(data: str) -> Optional[Any]:
     return jsonpickle.decode(data)
 
 
-def get_logger_name(name: str, uuid: uuid.UUID) -> str:
-    return f"{re.sub(r"\W+", "_", name)}({uuid})"
-
-
 def build_message_field_dicts(message_object: Any) -> tuple[dict, dict]:
     """
     Thin wrapper over `get_field_values_and_types`.
