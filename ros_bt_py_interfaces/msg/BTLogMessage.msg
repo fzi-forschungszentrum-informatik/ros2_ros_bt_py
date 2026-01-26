@@ -37,10 +37,10 @@ builtin_interfaces/Time stamp
 uint8 level
 string msg
 
-string tree_name
 string tree_id
-string node_name
+string tree_name
 string node_id
+string node_name
 
 string file
 string function

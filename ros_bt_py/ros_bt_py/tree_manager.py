@@ -49,6 +49,7 @@ from typeguard import typechecked
 
 
 from ros_bt_py.migrate_tree_files import migrate_legacy_tree_structure
+from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py_interfaces.msg import (
     DocumentedNode,
     NodeStructure,
@@ -101,7 +102,6 @@ from ros_bt_py.helpers import (
     BTNodeState,
     json_encode,
     json_decode,
-    get_logger_name,
 )
 from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 from ros_bt_py.node import Node, load_node_module, increment_name
@@ -330,6 +330,7 @@ class TreeManager:
         module_list: Optional[List[str]] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
+        logging_manager: Optional[LoggingManager] = None,
         tick_frequency_hz: float = 10.0,
         publish_tree_structure_callback: Optional[
             Callable[[TreeStructureList], None]
@@ -351,14 +352,12 @@ class TreeManager:
         else:
             self.tree_id = tree_id
 
-        if self.tree_id == uuid.UUID(int=0):
-            self._logger = ros_node.get_logger().get_child(
-                get_logger_name("Main Tree", self.tree_id)
-            )
+        self.logging_manager: LoggingManager
+        if logging_manager is None:
+            self.logging_manager = LoggingManager(ros_node=self.ros_node)
         else:
-            self._logger = ros_node.get_logger().get_child(
-                get_logger_name(self.name, self.tree_id)
-            )
+            self.logging_manager = logging_manager
+        self.logging_manager.set_tree_info(self.tree_id, self.name)
 
         self.publish_tree_structure = publish_tree_structure_callback
         if self.publish_tree_structure is None:
@@ -467,8 +466,8 @@ class TreeManager:
                 f"Updating tree state to {self.tree_state.state}"
             )
 
-    def get_logger(self) -> rclpy.logging.RcutilsLogger:
-        return self._logger
+    def get_logger(self) -> LoggingManager:
+        return self.logging_manager
 
     def set_diagnostics_name(self) -> None:
         """
@@ -2749,9 +2748,9 @@ class TreeManager:
         node_result = Node.from_msg(
             node_msg,
             ros_node,
-            self.get_logger(),
             debug_manager=self.debug_manager,
             subtree_manager=self.subtree_manager,
+            logging_manager=self.get_logger(),
             permissive=permissive,
         )
         if node_result.is_err():

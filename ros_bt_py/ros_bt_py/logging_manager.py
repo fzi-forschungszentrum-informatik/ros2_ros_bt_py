@@ -25,9 +25,13 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Callable, Optional
+import inspect
+import os
 import re
 import uuid
+
+from typing import Callable, Optional
+from typeguard import typechecked
 
 from rclpy.impl import rcutils_logger
 import rclpy.node
@@ -38,13 +42,14 @@ from ros_bt_py_interfaces.msg import BTLogMessage
 
 
 # Extend the rcutils file filter, so this file isn't picked up by logging
-rcutils_logger._internal_callers.extend(__file__)
+rcutils_logger._internal_callers.append(__file__)
 
 
+@typechecked
 class LoggingManager:
 
     def __init__(
-        self, 
+        self,
         ros_node: rclpy.node.Node,
         publish_log_callback: Optional[Callable[[BTLogMessage], None]] = None,
     ):
@@ -64,7 +69,7 @@ class LoggingManager:
     ) -> str:
         cleaned_name = re.sub(r"\W+", "_", name)
         return f"{cleaned_name}({uuid})"
-    
+
     def get_ros_logger(
         self,
         node_id: Optional[uuid.UUID] = None,
@@ -82,31 +87,46 @@ class LoggingManager:
         return ros_logger
 
     def log(
-        self, 
+        self,
         level: int,
-        msg: str, 
+        msg: str,
         node_id: Optional[uuid.UUID] = None,
         node_name: str = "",
-        stacklevel=0,
+        stacklevel=1,
     ):
         log_message = BTLogMessage(
             stamp=self.ros_node.get_clock().now().to_msg(),
             level=level,
             msg=msg,
             tree_name=self.tree_name,
-            tree_id=uuid_to_ros(self.tree_id),
+            node_name=node_name,
         )
+        if self.tree_id is not None:
+            log_message.tree_id = uuid_to_ros(self.tree_id)
         if node_id is not None:
             log_message.node_id = uuid_to_ros(node_id)
-        log_message.node_name = node_name
-        # TODO Get stack frame information based on stacklevel param
+
+        stack = inspect.stack()
+        print(stack)
+        if stacklevel < 0 or stacklevel >= len(stack):
+            frame = stack[-1]
+        else:
+            frame = stack[stacklevel]
+
+        log_message.file = os.path.abspath(frame.filename)
+        log_message.function = frame.function
+        log_message.line = frame.lineno
+        print(log_message)
+
+        if self.publish_log_callback is not None:
+            self.publish_log_callback(log_message)
 
     def debug(
         self,
-        msg: str, 
+        msg: str,
         node_id: Optional[uuid.UUID] = None,
         node_name: str = "",
-        stacklevel=1,
+        stacklevel=2,
         internal=False,
     ):
         self.get_ros_logger(node_id, node_name).debug(msg)
@@ -116,15 +136,15 @@ class LoggingManager:
                 msg=msg,
                 node_id=node_id,
                 node_name=node_name,
-                stacklevel=stacklevel
+                stacklevel=stacklevel,
             )
 
     def info(
         self,
-        msg: str, 
+        msg: str,
         node_id: Optional[uuid.UUID] = None,
         node_name: str = "",
-        stacklevel=1,
+        stacklevel=2,
         internal=False,
     ):
         self.get_ros_logger(node_id, node_name).info(msg)
@@ -134,15 +154,15 @@ class LoggingManager:
                 msg=msg,
                 node_id=node_id,
                 node_name=node_name,
-                stacklevel=stacklevel
+                stacklevel=stacklevel,
             )
 
     def warn(
         self,
-        msg: str, 
+        msg: str,
         node_id: Optional[uuid.UUID] = None,
         node_name: str = "",
-        stacklevel=1,
+        stacklevel=2,
         internal=False,
     ):
         self.get_ros_logger(node_id, node_name).warn(msg)
@@ -152,15 +172,15 @@ class LoggingManager:
                 msg=msg,
                 node_id=node_id,
                 node_name=node_name,
-                stacklevel=stacklevel
+                stacklevel=stacklevel,
             )
 
     def error(
         self,
-        msg: str, 
+        msg: str,
         node_id: Optional[uuid.UUID] = None,
         node_name: str = "",
-        stacklevel=1,
+        stacklevel=2,
         internal=False,
     ):
         self.get_ros_logger(node_id, node_name).error(msg)
@@ -170,15 +190,15 @@ class LoggingManager:
                 msg=msg,
                 node_id=node_id,
                 node_name=node_name,
-                stacklevel=stacklevel
+                stacklevel=stacklevel,
             )
 
     def fatal(
         self,
-        msg: str, 
+        msg: str,
         node_id: Optional[uuid.UUID] = None,
         node_name: str = "",
-        stacklevel=1,
+        stacklevel=2,
         internal=False,
     ):
         self.get_ros_logger(node_id, node_name).fatal(msg)
@@ -188,5 +208,5 @@ class LoggingManager:
                 msg=msg,
                 node_id=node_id,
                 node_name=node_name,
-                stacklevel=stacklevel
+                stacklevel=stacklevel,
             )

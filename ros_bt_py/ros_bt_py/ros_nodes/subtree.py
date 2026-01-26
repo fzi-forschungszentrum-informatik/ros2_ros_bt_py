@@ -33,6 +33,7 @@ import uuid
 
 from rclpy.node import Node
 
+from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py_interfaces.msg._node_structure import NodeStructure
 
 from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
@@ -93,12 +94,17 @@ class Subtree(Leaf):
         # since the subtree gets a prefix, we can just have it use the
         # parent debug manager
         self.nested_subtree_manager = SubtreeManager()
+        self.subtree_logging_manager = LoggingManager(
+            ros_node=self.ros_node,
+            publish_log_callback=self.logging_manager.publish_log_callback,
+        )
         self.manager: TreeManager = TreeManager(
             ros_node=self.ros_node,
             name=self.name,
             tree_id=self.node_id,
             debug_manager=self.debug_manager,
             subtree_manager=self.nested_subtree_manager,
+            logging_manager=self.subtree_logging_manager,
         )
 
         load_result = self.load_subtree()
