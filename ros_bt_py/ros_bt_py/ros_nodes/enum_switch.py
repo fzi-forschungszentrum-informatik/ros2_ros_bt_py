@@ -33,7 +33,7 @@ from result import Result, Ok, Err, is_err
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
 from ros_bt_py.helpers import BTNodeState
-from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.exceptions import BehaviorTreeException, NodeConfigError
 
 from ros_bt_py.node import FlowControl, define_bt_node
 from ros_bt_py.node_config import NodeConfig
@@ -61,7 +61,7 @@ class EnumSwitch(FlowControl):
         # Raise Error if no possible children
         if not self.possible_children:
             self.logerr(f"{self._message_class} has no constant fields")
-            return Ok(BTNodeState.BROKEN)
+            return Err(NodeConfigError())
 
         # Check if all constants have equal type and raise error if not. Otherwise set input to
         # constant type
@@ -73,7 +73,7 @@ class EnumSwitch(FlowControl):
             self.logerr(
                 f"{self._message_class} contains constant fields of multiple types"
             )
-            return Ok(BTNodeState.BROKEN)
+            return Err(NodeConfigError())
 
         node_inputs = {"case": pchild_types[0]}
 
