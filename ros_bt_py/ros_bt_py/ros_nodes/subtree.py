@@ -116,9 +116,11 @@ class Subtree(Leaf):
             subtree_manager=self.nested_subtree_manager,
         )
 
-        load_result = self.load_subtree()
-        if load_result.is_err():
-            raise load_result.unwrap_err()
+        match self.load_subtree():
+            case Err(e):
+                raise e
+            case Ok(None):
+                pass
 
         if self.subtree_manager:
             self.subtree_manager.add_subtree_structure(
