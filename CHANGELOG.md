@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Set_options unwire and rewire data by @Doomse in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
+
+
 ## [0.6.0] - 2026-01-14
 
 ### Added
@@ -636,6 +642,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * @fmauch made their first contribution
 * @t-schnell made their first contribution
 
+[unreleased]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.6.0..HEAD
 [0.6.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.5.1..v0.6.0
 [0.5.1]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.5.0..v0.5.1
 [0.5.0]: https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/compare/v0.4.0..v0.5.0
