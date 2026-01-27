@@ -1995,7 +1995,7 @@ class TreeManager:
         # needs the node to be set up)
         try:
             new_node = node.__class__(
-                node_id=node.node_id,  # TODO Should set_options retain the node id?
+                node_id=node_id,
                 options=deserialized_options,
                 name=request.new_name if request.rename_node else node.name,
                 debug_manager=node.debug_manager,
@@ -2017,7 +2017,11 @@ class TreeManager:
             wirings=[
                 wiring
                 for wiring in self.tree_structure.data_wirings
-                if node.node_id in [wiring.source.node_id, wiring.target.node_id]
+                if node_id
+                in [
+                    ros_to_uuid(wiring.source.node_id).unwrap(),
+                    ros_to_uuid(wiring.target.node_id).unwrap(),
+                ]
             ]
         )
 
@@ -2091,29 +2095,18 @@ class TreeManager:
                 return response
 
         # Add the new node to self.nodes
-        del self.nodes[node.node_id]
-        self.nodes[new_node.node_id] = new_node
-
-        # Re-wire all the data, just as it was before
-        new_wire_request = deepcopy(wire_request)
-        if request.rename_node:
-            for wiring in new_wire_request.wirings:
-                if wiring.source.node_id == node.node_id:
-                    wiring.source.node_id = new_node.node_id
-                if wiring.target.node_id == node.node_id:
-                    wiring.target.node_id = new_node.node_id
+        self.nodes[node_id] = new_node
 
         rewire_resp = WireNodeData.Response()
-        rewire_resp = self.wire_data(request=new_wire_request, response=rewire_resp)
+        rewire_resp = self.wire_data(request=wire_request, response=rewire_resp)
         if not get_success(rewire_resp):
             error_message = (
                 f"Failed to re-wire data to new node {new_node.name}: "
                 f"{get_error_message(rewire_resp)}"
             )
-            # Try to undo everything, starting with removing the new
-            # node from the node dict
-            del self.nodes[new_node.node_id]
-            self.nodes[node.node_id] = node
+            # Try to undo everything, starting with adding the old
+            # node back to the node dict
+            self.nodes[node_id] = node
 
             if parent is not None:
                 remove_child_result = parent.remove_child(new_node.node_id)
