@@ -2002,11 +2002,10 @@ class TreeManager:
                 subtree_manager=node.subtree_manager,
                 ros_node=self.ros_node,
             )
-        except ValueError as ex:
-            return SetOptions.Response(
-                success=False,
-                error_message=f"Failed to create node: {str(ex)}",
-            )
+        except BehaviorTreeException as exc:
+            response.success = False
+            response.error_message = str(exc)
+            return response
 
         # Use this request to unwire any data connections the existing
         # node has - if we didn't do this, the node wouldn't ever be
