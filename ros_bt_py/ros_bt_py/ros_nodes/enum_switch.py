@@ -26,9 +26,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from typing import Optional, Dict
 from rclpy.node import Node
 
 from result import Result, Ok, Err, is_err
+import uuid
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -52,7 +54,23 @@ from ros_bt_py.ros_helpers import EnumValue, get_message_constant_fields
     )
 )
 class EnumSwitch(FlowControl):
-    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def __init__(
+        self,
+        node_id: Optional[uuid.UUID] = None,
+        options: Optional[Dict] = None,
+        debug_manager: Optional[DebugManager] = None,
+        subtree_manager: Optional[SubtreeManager] = None,
+        name: Optional[str] = None,
+        ros_node: Optional[Node] = None,
+    ) -> None:
+        super().__init__(
+            node_id=node_id,
+            options=options,
+            debug_manager=debug_manager,
+            subtree_manager=subtree_manager,
+            name=name,
+            ros_node=ros_node,
+        )
         # Setup Child Dict
         self._message_class = self.options["ros_message_type"].get_type_obj()
 
@@ -61,7 +79,7 @@ class EnumSwitch(FlowControl):
         # Raise Error if no possible children
         if not self.possible_children:
             self.logerr(f"{self._message_class} has no constant fields")
-            return Err(NodeConfigError())
+            return
 
         # Check if all constants have equal type and raise error if not. Otherwise set input to
         # constant type
@@ -73,7 +91,7 @@ class EnumSwitch(FlowControl):
             self.logerr(
                 f"{self._message_class} contains constant fields of multiple types"
             )
-            return Err(NodeConfigError())
+            return
 
         node_inputs = {"case": pchild_types[0]}
 
@@ -90,6 +108,7 @@ class EnumSwitch(FlowControl):
         if register_result.is_err():
             raise register_result.unwrap_err()
 
+    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         # Create possible child dict
 
         self.msg = self._message_class()
@@ -113,6 +132,10 @@ class EnumSwitch(FlowControl):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        if "case" not in self.inputs:
+            self.logerr("Invalid message type")
+            return Ok(BTNodeState.FAILED)
+
         name = self.inputs["case"]
 
         if name in self.pchild_dict.keys():
