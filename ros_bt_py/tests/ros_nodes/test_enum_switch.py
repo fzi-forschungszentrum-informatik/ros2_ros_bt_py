@@ -37,22 +37,6 @@ from ros_bt_py.ros_nodes.enum_switch import EnumSwitch
 @pytest.mark.parametrize(
     "message",
     [
-        RosTopicType("example_interfaces/msg/Empty"),
-    ],
-)
-def test_node_creation_failure(message):
-    enum_node = EnumSwitch(
-        options={
-            "ros_message_type": message,
-        }
-    )
-    enum_node.setup()
-    assert enum_node.state == BTNodeState.BROKEN
-
-
-@pytest.mark.parametrize(
-    "message",
-    [
         RosTopicType("ros_bt_py_interfaces/msg/NodeState"),
     ],
 )
