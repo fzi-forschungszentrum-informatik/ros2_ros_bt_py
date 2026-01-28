@@ -49,6 +49,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CapabilityInterface.msg"
   # "msg/CapabilityIOBridgeData.msg"
 
+  "msg/EnumTest.msg"
   "msg/NodeOption.msg"
   "msg/NodeIO.msg"
   "msg/NodeDataLocation.msg"
