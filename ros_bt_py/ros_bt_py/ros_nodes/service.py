@@ -247,14 +247,14 @@ class ServiceInput(Leaf):
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node or self._service_client is None:
-            self.logdebug(
+            self.logwarn(
                 f"Unable to check for service {self.inputs['service_name']}, "
                 "ros node available!"
             )
             return Ok(UtilityBounds())
 
         if self._service_client.service_is_ready():
-            self.logdebug(
+            self.loginfo(
                 f"Found service {self.inputs['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
@@ -268,7 +268,7 @@ class ServiceInput(Leaf):
                 )
             )
 
-        self.logdebug(f"Service {self.inputs['service_name']} is unavailable")
+        self.logwarn(f"Service {self.inputs['service_name']} is unavailable")
         return Ok(UtilityBounds(can_execute=False))
 
 
@@ -297,7 +297,7 @@ class WaitForService(Leaf):
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
-            self.logerr("Not ROS node reference available!")
+            self.logerr("No ROS node reference available!")
             return Err(BehaviorTreeException("No ROS node reference available!"))
 
         self._service_client = self.ros_node.create_client(
@@ -365,7 +365,7 @@ class WaitForServiceInput(Leaf):
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
-            self.logerr("Not ROS node reference available!")
+            self.logerr("No ROS node reference available!")
             return Err(BehaviorTreeException("No ROS node reference available!"))
 
         self._service_client: Optional[Client] = None
@@ -574,7 +574,7 @@ class ServiceForSetType(Leaf):
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
-            self.logdebug("Future is None, starting new request!")
+            self.loginfo("Future is None, starting new request!")
             self._reported_result = False
             self.set_request()
             self._last_service_call_time = self.ros_node.get_clock().now()
@@ -588,7 +588,7 @@ class ServiceForSetType(Leaf):
             return Ok(BTNodeState.FAILED)
 
         if self._service_request_future.cancelled():
-            self.logdebug("Service request was cancelled!")
+            self.loginfo("Service request was cancelled!")
             self._service_request_future = None
             return Ok(BTNodeState.FAILED)
 
@@ -649,14 +649,14 @@ class ServiceForSetType(Leaf):
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node or self._service_client is None:
-            self.logdebug(
+            self.logwarn(
                 f"Unable to check for service {self._service_name}: "
                 "No ros node available!"
             )
             return Ok(UtilityBounds(can_execute=False))
 
         if self._service_client.service_is_ready():
-            self.logdebug(
+            self.loginfo(
                 f"Found service {self._service_name} with correct type, returning "
                 "filled out UtilityBounds"
             )
@@ -670,7 +670,7 @@ class ServiceForSetType(Leaf):
                 )
             )
 
-        self.logdebug(f"Service {self._service_name} is unavailable")
+        self.logwarn(f"Service {self._service_name} is unavailable")
         return Ok(UtilityBounds(can_execute=False))
 
 
@@ -887,9 +887,9 @@ class Service(Leaf):
         if not self.has_ros_node or self._service_client is None:
             msg = (
                 f"Unable to check for service {self._service_name}, "
-                "ros node available!"
+                "no ros node or service available!"
             )
-            self.loginfo(msg)
+            self.logwarn(msg)
             return Ok(UtilityBounds())
 
         if self._service_client.service_is_ready():
@@ -907,5 +907,5 @@ class Service(Leaf):
                 )
             )
 
-        self.loginfo(f"Service {self._service_name} is unavailable")
+        self.logwarn(f"Service {self._service_name} is unavailable")
         return Ok(UtilityBounds(can_execute=False))

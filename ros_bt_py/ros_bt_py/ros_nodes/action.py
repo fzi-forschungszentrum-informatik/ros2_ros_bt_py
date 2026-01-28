@@ -244,7 +244,7 @@ class ActionForSetType(Leaf):
 
                 self._internal_state = ActionStates.FINISHED
 
-                self.logdebug("Action result is none, action call must have failed!")
+                self.loginfo("Action result is none, action call must have failed!")
                 return Ok(BTNodeState.FAILED)
 
             # returns failed except the set.ouput() method returns True
@@ -257,7 +257,7 @@ class ActionForSetType(Leaf):
 
             self._internal_state = ActionStates.FINISHED
 
-            self.logdebug("Action succeeded, publishing result!")
+            self.loginfo("Action succeeded, publishing result!")
             return Ok(new_state)
 
         if self._running_goal_future.cancelled():
@@ -310,7 +310,7 @@ class ActionForSetType(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
-            self.logdebug("Successfully cancelled goal exectution!")
+            self.loginfo("Successfully cancelled goal exectution!")
 
             if self._input_goal != self._active_goal:
                 state = BTNodeState.RUNNING
@@ -650,7 +650,7 @@ class Action(Leaf):
 
                 self._internal_state = ActionStates.FINISHED
 
-                self.logdebug("Action result is none, action call must have failed!")
+                self.loginfo("Action result is none, action call must have failed!")
                 return Ok(BTNodeState.FAILED)
 
             # returns failed except the set.ouput() method returns True
@@ -667,7 +667,7 @@ class Action(Leaf):
 
             self._internal_state = ActionStates.FINISHED
 
-            self.logdebug("Action succeeded, publishing result!")
+            self.loginfo("Action succeeded, publishing result!")
             return Ok(new_state)
 
         if self._running_goal_future.cancelled():
@@ -724,7 +724,7 @@ class Action(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
-            self.logdebug("Successfully cancelled goal exectution!")
+            self.loginfo("Successfully cancelled goal exectution!")
 
             if self._input_goal != self._active_goal:
                 state = BTNodeState.RUNNING

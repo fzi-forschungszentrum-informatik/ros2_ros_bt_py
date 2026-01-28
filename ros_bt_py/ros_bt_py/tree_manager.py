@@ -362,30 +362,41 @@ class TreeManager:
         self.publish_tree_structure = publish_tree_structure_callback
         if self.publish_tree_structure is None:
             self.get_logger().info(
-                "No callback for publishing tree structure provided."
+                "No callback for publishing tree structure provided",
+                internal=True,
             )
         self.publish_tree_state = publish_tree_state_callback
         if self.publish_tree_state is None:
-            self.get_logger().info("No callback for publishing tree state provided.")
+            self.get_logger().info(
+                "No callback for publishing tree state provided",
+                internal=True,
+            )
         self.publish_tree_data = publish_tree_data_callback
         if self.publish_tree_data is None:
-            self.get_logger().info("No callback for publishing tree data provided.")
+            self.get_logger().info(
+                "No callback for publishing tree data provided",
+                internal=True,
+            )
 
         self.publish_diagnostic = publish_diagnostic_callback
         if self.publish_diagnostic is None:
             self.get_logger().info(
-                "No callback for publishing node diagnostics provided"
+                "No callback for publishing node diagnostics provided", internal=True
             )
 
         self.publish_tick_frequency = publish_tick_frequency_callback
         if self.publish_tick_frequency is None:
-            self.get_logger().info("No callback for publishing tree frequency provided")
+            self.get_logger().info(
+                "No callback for publishing tree frequency provided",
+                internal=True,
+            )
 
         self.debug_manager: DebugManager
         if debug_manager is None:
             self.get_logger().info(
                 "Tree manager instantiated without explicit debug manager "
-                "- building our own with default parameters"
+                "- building our own with default parameters",
+                internal=True,
             )
             self.debug_manager = DebugManager(ros_node=self.ros_node)
         else:
@@ -395,7 +406,8 @@ class TreeManager:
         if subtree_manager is None:
             self.get_logger().info(
                 "Tree manager instantiated without explicit subtree manager "
-                "- building our own with default parameters"
+                "- building our own with default parameters",
+                internal=True,
             )
             self.subtree_manager = SubtreeManager()
         else:
@@ -484,14 +496,16 @@ class TreeManager:
             ].name
             self.get_logger().warn(
                 "No tree name was found. Diagnostics data from the behavior tree will be"
-                f"published under the name of the root_node: {self.diagnostic_status.name}"
+                f"published under the name of the root_node: {self.diagnostic_status.name}",
+                internal=True,
             )
         else:
             self.diagnostic_status.name = ""
             self.get_logger().warn(
                 "Neither a tree name nor the name from the root_node was found."
                 "Diagnostics data from the behavior tree will be "
-                "published without further name specifications"
+                "published without further name specifications",
+                internal=True,
             )
 
     def clear_diagnostics_name(self) -> None:
@@ -1978,6 +1992,7 @@ class TreeManager:
                 name=request.new_name if request.rename_node else node.name,
                 debug_manager=node.debug_manager,
                 subtree_manager=node.subtree_manager,
+                logging_manager=self.get_logger(),
                 ros_node=self.ros_node,
             )
         except BehaviorTreeException as exc:

@@ -154,8 +154,9 @@ class TopicSubscriber(Leaf):
         # Unsubscribe from the topic so we don't receive further updates
         success = self.ros_node.destroy_subscription(self._subscriber)
         if not success:
-            self.logwarn("Failed to destroy subscription")
-            return Ok(BTNodeState.BROKEN)
+            error_msg = "Failed to destroy subscription"
+            self.logwarn(error_msg)
+            return Err(BehaviorTreeException(error_msg))
         self._subscriber = None
         return Ok(BTNodeState.IDLE)
 
@@ -303,8 +304,9 @@ class TopicMemorySubscriber(Leaf):
         # Unsubscribe from the topic so we don't receive further updates
         success = self.ros_node.destroy_subscription(self._subscriber)
         if not success:
-            self.logwarn("Failed to destroy subscription")
-            return Ok(BTNodeState.BROKEN)
+            error_msg = "Failed to destroy subscription"
+            self.logwarn(error_msg)
+            return Err(BehaviorTreeException(error_msg))
         self._subscriber = None
         return Ok(BTNodeState.IDLE)
 
@@ -417,8 +419,9 @@ class TopicPublisher(Leaf):
             if self._publisher is not None:
                 success = self.ros_node.destroy_publisher(self._publisher)
                 if not success:
-                    self.logwarn("Failed to destroy publisher")
-                    return Ok(BTNodeState.BROKEN)
+                    error_msg = "Failed to destroy publisher"
+                    self.logwarn(error_msg)
+                    return Err(BehaviorTreeException(error_msg))
         except AttributeError:
             self.logwarn("Can not unregister as no publisher is available.")
         self._publisher = None

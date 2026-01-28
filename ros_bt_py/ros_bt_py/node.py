@@ -1216,7 +1216,7 @@ class Node(object, metaclass=NodeMeta):
     #   to the associated logging_manager
 
     @typechecked
-    def logdebug(self, message: str, internal=False) -> None:
+    def logdebug(self, message: str, stacklevel=3, internal=False) -> None:
         """
         Wrap call to the associated logging manager.
 
@@ -1226,12 +1226,12 @@ class Node(object, metaclass=NodeMeta):
             msg=message,
             node_id=self.node_id,
             node_name=self.name,
-            stacklevel=3,
+            stacklevel=stacklevel,
             internal=internal,
         )
 
     @typechecked
-    def loginfo(self, message: str, internal=False) -> None:
+    def loginfo(self, message: str, stacklevel=3, internal=False) -> None:
         """
         Wrap call to the associated logging manager.
 
@@ -1241,12 +1241,12 @@ class Node(object, metaclass=NodeMeta):
             msg=message,
             node_id=self.node_id,
             node_name=self.name,
-            stacklevel=3,
+            stacklevel=stacklevel,
             internal=internal,
         )
 
     @typechecked
-    def logwarn(self, message: str, internal=False) -> None:
+    def logwarn(self, message: str, stacklevel=3, internal=False) -> None:
         """
         Wrap call to the associated logging manager.
 
@@ -1256,12 +1256,12 @@ class Node(object, metaclass=NodeMeta):
             msg=message,
             node_id=self.node_id,
             node_name=self.name,
-            stacklevel=3,
+            stacklevel=stacklevel,
             internal=internal,
         )
 
     @typechecked
-    def logerr(self, message: str, internal=False) -> None:
+    def logerr(self, message: str, stacklevel=3, internal=False) -> None:
         """
         Wrap call to the associated logging manager.
 
@@ -1271,12 +1271,12 @@ class Node(object, metaclass=NodeMeta):
             msg=message,
             node_id=self.node_id,
             node_name=self.name,
-            stacklevel=3,
+            stacklevel=stacklevel,
             internal=internal,
         )
 
     @typechecked
-    def logfatal(self, message: str, internal=False) -> None:
+    def logfatal(self, message: str, stacklevel=3, internal=False) -> None:
         """
         Wrap call to the associated logging manager.
 
@@ -1286,7 +1286,7 @@ class Node(object, metaclass=NodeMeta):
             msg=message,
             node_id=self.node_id,
             node_name=self.name,
-            stacklevel=3,
+            stacklevel=stacklevel,
             internal=internal,
         )
 
