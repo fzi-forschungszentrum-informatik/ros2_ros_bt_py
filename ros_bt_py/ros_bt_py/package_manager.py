@@ -220,7 +220,9 @@ class PackageManager(object):
             # Ros interfaces sometimes introduce numpy types or bytes.
             # Try their standard normalization methods.
             # If those fail, just cast to string
-            def coerce_numpy_types(obj: Any):
+            def coerce_types(obj: Any):
+                if isinstance(obj, bytes):
+                    return list(obj)
                 try:
                     return obj.tolist()
                 except AttributeError:
@@ -229,8 +231,8 @@ class PackageManager(object):
                     )
                     return str(obj)
 
-            response.fields = json.dumps(field_values, default=coerce_numpy_types)
-            response.field_types = json.dumps(field_types, default=coerce_numpy_types)
+            response.fields = json.dumps(field_values, default=coerce_types)
+            response.field_types = json.dumps(field_types, default=coerce_types)
 
             response.success = True
         except Exception as e:

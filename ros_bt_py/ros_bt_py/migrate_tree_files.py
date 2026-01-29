@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import importlib
 import itertools
+import json
 import uuid
 import os
 import sys
@@ -108,6 +109,13 @@ def find_node_class(
 
 
 def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str]:
+    # Some old version of TypeWrapper write out their `__name__` attribute
+    #   when being serialized. We need to strip that here.
+    type_dict = json.loads(option_dict["serialized_type"])
+    if type_dict.get("py/object", "") == "ros_bt_py.custom_types.TypeWrapper":
+        type_dict.pop("__name__", None)
+    option_dict["serialized_type"] = json.dumps(type_dict)
+
     # Early out if types are matching
     if json_encode(option_type) == option_dict["serialized_type"]:
         return Ok(option_dict)
