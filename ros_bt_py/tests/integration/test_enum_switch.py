@@ -40,6 +40,7 @@ from ros_bt_py_interfaces.msg import (
     NodeState,
     TreeState,
     TreeStateList,
+    TreeStructureList,
 )
 from ros_bt_py_interfaces.srv import (
     ControlTreeExecution,
@@ -50,11 +51,35 @@ from conftest import launch_description
 
 
 @pytest.mark.parametrize(
-    "tree_name",
+    "tree_name, result_dict",
     [
-        "enum_switch_test_broken.yaml",
-        "enum_switch_test_success.yaml",
-        "enum_switch_test_fail.yaml",
+        (
+            "enum_switch_test_broken.yaml",
+            {
+                "MemorySequence": "FAILED",
+                "EnumSwitch": "FAILED",
+                "FOO": "IDLE",
+                "BAR": "IDLE",
+            },
+        ),
+        (
+            "enum_switch_test_fail.yaml",
+            {
+                "MemorySequence": "FAILED",
+                "EnumSwitch": "FAILED",
+                "FOO": "IDLE",
+                "BAR": "IDLE",
+            },
+        ),
+        (
+            "enum_switch_test_success.yaml",
+            {
+                "MemorySequence": "SUCCEEDED",
+                "EnumSwitch": "SUCCEEDED",
+                "FOO": "IDLE",
+                "BAR": "SUCCEEDED",
+            },
+        ),
     ],
 )
 @pytest.mark.launch(fixture=launch_description)
@@ -63,6 +88,8 @@ def test_enum_switch(
     load_client: Client,
     execute_client: Client,
     state_list: list[TreeStateList],
+    structure_list: list[TreeStructureList],
+    result_dict: dict[str, str],
     tree_name: str,
 ):
     tree_path = os.path.join(
@@ -70,7 +97,6 @@ def test_enum_switch(
         "trees",
         tree_name,
     )
-    print(tree_path)
     load_req = LoadTreeFromPath.Request(
         path=f"file://{tree_path}",
         permissive=False,
@@ -99,5 +125,10 @@ def test_enum_switch(
         rclpy.spin_once(node, timeout_sec=10)
     final_state_msg = state_list[-1].tree_states[0]
     assert final_state_msg.state == TreeState.IDLE
-    # for node_state in final_state_msg.node_states:
-    # assert node_state.state == NodeState.SUCCEEDED
+    nodes = structure_list[0].tree_structures[0].nodes
+    node_dict: dict[str, str] = {}
+    for node in nodes:
+        node_dict[node.node_id] = node.name
+    for node_state in final_state_msg.node_states:
+        if node_dict[node_state.node_id] in result_dict:
+            assert node_state.state == result_dict[node_dict[node_state.node_id]]
