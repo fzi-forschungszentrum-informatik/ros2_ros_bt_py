@@ -45,6 +45,7 @@ from rclpy.node import Node
 
 from ros_bt_py_interfaces.msg import (
     TreeStateList,
+    TreeStructureList,
 )
 from ros_bt_py_interfaces.srv import (
     ControlTreeExecution,
@@ -121,3 +122,19 @@ def state_list(node: Node):
         1,
     )
     return state_msg_list
+
+
+@pytest.fixture
+def structure_list(node: Node):
+    structure_msg_list: list[TreeStructureList] = []
+
+    def save_structure(msg: TreeStructureList):
+        structure_msg_list.append(msg)
+
+    _ = node.create_subscription(
+        TreeStructureList,
+        "/BehaviorTreeNode/tree_structure_list",
+        save_structure,
+        1,
+    )
+    return structure_msg_list
