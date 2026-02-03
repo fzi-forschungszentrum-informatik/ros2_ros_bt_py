@@ -3,6 +3,7 @@ description: Create a new ticket for a bug.
 title: "🐛 [BUG] - <title>"
 labels: []
 type: bug
+assignees: "fzi-forschungszentrum-informatik/ros2_ros_bt_py-write"
 body:
   - type: textarea
     id: description
