@@ -5,6 +5,7 @@ labels: [
   "question"
 ]
 type: feature
+assignees: "fzi-forschungszentrum-informatik/ros2_ros_bt_py-write"
 body:
   - type: textarea
     id: implementation_pr
