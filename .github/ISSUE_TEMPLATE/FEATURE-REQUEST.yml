@@ -2,10 +2,14 @@ name: "💡 Feature Request"
 description: Create a new ticket for a new feature request
 title: "💡 [REQUEST] - <title>"
 labels: [
-  "question"
+  "question",
+  "Low Priority"
 ]
 type: feature
-assignees: "fzi-forschungszentrum-informatik/ros2_ros_bt_py-write"
+assignees: [
+  "Oberacda",
+  "nspielbau"
+]
 body:
   - type: textarea
     id: implementation_pr

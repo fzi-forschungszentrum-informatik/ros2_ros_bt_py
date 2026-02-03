@@ -1,9 +1,14 @@
 name: "🐛 Bug Report"
 description: Create a new ticket for a bug.
 title: "🐛 [BUG] - <title>"
-labels: []
+labels: [
+  "Medium Priority"
+]
 type: bug
-assignees: "fzi-forschungszentrum-informatik/ros2_ros_bt_py-write"
+assignees: [
+  "Oberacda",
+  "nspielbau"
+]
 body:
   - type: textarea
     id: description
@@ -18,9 +23,9 @@ body:
     attributes:
       label: "Reproduction URL"
       description: Please enter your GitHub URL to provide a reproduction of the issue
-      placeholder: ex. https://github.com/USERNAME/REPO-NAME
+      placeholder: ex. https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py
     validations:
-      required: true
+      required: false
   - type: textarea
     id: reprod
     attributes:
@@ -60,6 +65,8 @@ body:
       multiple: true
       options:
         - Rolling
+        - Lyrical
+        - Kilted
         - Jazzy
         - Iron
         - Humble
@@ -76,6 +83,7 @@ body:
         - Ubuntu 20.04
         - Ubuntu 22.04
         - Ubuntu 24.04
+        - Ubuntu 26.04
         - RHEL
         - Fedora
         - Mac
