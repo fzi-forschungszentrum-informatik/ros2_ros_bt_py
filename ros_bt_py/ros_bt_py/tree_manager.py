@@ -1554,6 +1554,7 @@ class TreeManager:
     ) -> ChangeTreeName.Response:
         """Change the name of the currently loaded tree."""
         self.tree_structure.name = request.name
+        self.logging_manager.set_tree_info(self.tree_id, request.name)
         self.publish_structure()
 
         response.success = True

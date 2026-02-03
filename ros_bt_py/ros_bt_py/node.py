@@ -396,12 +396,7 @@ class Node(object, metaclass=NodeMeta):
         self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager: Optional[DebugManager] = debug_manager
         self.subtree_manager: Optional[SubtreeManager] = subtree_manager
-
-        self.logging_manager: LoggingManager
-        if logging_manager is None:
-            self.logging_manager = LoggingManager(ros_node=self.ros_node)
-        else:
-            self.logging_manager = logging_manager
+        self.logging_manager: Optional[LoggingManager] = logging_manager
 
         if not self._node_config:
             raise NodeConfigError("Missing node_config, cannot initialize!")
@@ -492,7 +487,7 @@ class Node(object, metaclass=NodeMeta):
         self.logdebug(f"Setting new ROS node: {new_ros_node}")
         self._ros_node = new_ros_node
 
-    def get_logger(self) -> LoggingManager:
+    def get_logger(self) -> Optional[LoggingManager]:
         return self.logging_manager
 
     def setup(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -1222,13 +1217,15 @@ class Node(object, metaclass=NodeMeta):
 
         Adds this node's name and type to the given message
         """
-        self.get_logger().debug(
-            msg=message,
-            node_id=self.node_id,
-            node_name=self.name,
-            stacklevel=stacklevel,
-            internal=internal,
-        )
+        logger = self.get_logger()
+        if logger is not None:
+            logger.debug(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
     def loginfo(self, message: str, stacklevel=3, internal=False) -> None:
@@ -1237,13 +1234,15 @@ class Node(object, metaclass=NodeMeta):
 
         Adds this node's name and type to the given message
         """
-        self.get_logger().info(
-            msg=message,
-            node_id=self.node_id,
-            node_name=self.name,
-            stacklevel=stacklevel,
-            internal=internal,
-        )
+        logger = self.get_logger()
+        if logger is not None:
+            logger.info(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
     def logwarn(self, message: str, stacklevel=3, internal=False) -> None:
@@ -1252,13 +1251,15 @@ class Node(object, metaclass=NodeMeta):
 
         Adds this node's name and type to the given message
         """
-        self.get_logger().warn(
-            msg=message,
-            node_id=self.node_id,
-            node_name=self.name,
-            stacklevel=stacklevel,
-            internal=internal,
-        )
+        logger = self.get_logger()
+        if logger is not None:
+            logger.warn(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
     def logerr(self, message: str, stacklevel=3, internal=False) -> None:
@@ -1267,13 +1268,15 @@ class Node(object, metaclass=NodeMeta):
 
         Adds this node's name and type to the given message
         """
-        self.get_logger().error(
-            msg=message,
-            node_id=self.node_id,
-            node_name=self.name,
-            stacklevel=stacklevel,
-            internal=internal,
-        )
+        logger = self.get_logger()
+        if logger is not None:
+            logger.error(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
     def logfatal(self, message: str, stacklevel=3, internal=False) -> None:
@@ -1282,13 +1285,15 @@ class Node(object, metaclass=NodeMeta):
 
         Adds this node's name and type to the given message
         """
-        self.get_logger().fatal(
-            msg=message,
-            node_id=self.node_id,
-            node_name=self.name,
-            stacklevel=stacklevel,
-            internal=internal,
-        )
+        logger = self.get_logger()
+        if logger is not None:
+            logger.fatal(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @classmethod
     @typechecked
