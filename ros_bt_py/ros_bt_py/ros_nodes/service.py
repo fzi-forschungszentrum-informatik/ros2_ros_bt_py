@@ -249,7 +249,7 @@ class ServiceInput(Leaf):
         if not self.has_ros_node or self._service_client is None:
             self.logwarn(
                 f"Unable to check for service {self.inputs['service_name']}, "
-                "ros node available!"
+                "no ros node or service available!"
             )
             return Ok(UtilityBounds())
 

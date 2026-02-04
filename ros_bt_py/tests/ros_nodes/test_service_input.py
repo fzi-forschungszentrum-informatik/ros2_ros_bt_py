@@ -26,432 +26,274 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
-
 import unittest.mock as mock
+
+from tests.conftest import ErrorLog, WarnLog
 from std_srvs.srv import SetBool
 from ros_bt_py.custom_types import RosServiceType
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_nodes.service import ServiceInput
 from rclpy.time import Time
-from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
+from ros_bt_py_interfaces.msg import UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 
 
 class TestServiceInput:
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_success(self, ros_mock, client_mock, future_mock, clock_mock):
+
+    @pytest.fixture
+    def clock_mock(self):
+        clock_mock = mock.NonCallableMagicMock(spec_set=["now"])
+        clock_mock.now.side_effect = [Time(seconds=sec) for sec in range(20)]
+        return clock_mock
+
+    @pytest.fixture
+    def future_mock(self):
+        future_mock = mock.NonCallableMagicMock(
+            spec_set=["cancel", "cancelled", "done", "result"]
+        )
+        future_mock.cancelled.return_value = False
+        future_mock.done.return_value = False
         response = SetBool.Response()
         response.success = True
         future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
+        return future_mock
+
+    @pytest.fixture
+    def client_mock(self, future_mock):
+        client_mock = mock.NonCallableMagicMock(
+            spec_set=["call_async", "service_is_ready", "wait_for_service"]
+        )
         client_mock.call_async.return_value = future_mock
+        client_mock.service_is_ready.return_value = True
+        client_mock.wait_for_service.return_value = True
+        return client_mock
+
+    @pytest.fixture
+    def ros_mock(self, clock_mock, client_mock):
+        ros_mock = mock.NonCallableMagicMock(
+            spec_set=["create_client", "destroy_client", "get_clock"]
+        )
         ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
         ros_mock.get_clock.return_value = clock_mock
-        unavailable_service = ServiceInput(
+        return ros_mock
+
+    @pytest.fixture
+    def target_node(self, logging_mock, ros_mock):
+        node = ServiceInput(
             options={
                 "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=ros_mock,
+            logging_manager=logging_mock,
         )
+        return node
 
-        assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
+    def test_node_success(self, target_node, ros_mock, client_mock, future_mock):
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
+
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        request = SetBool.Request()
+        request.data = False
+        target_node.inputs["data"] = request.data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
+        client_mock.call_async.assert_called_with(request)
 
         future_mock.done.return_value = True
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.SUCCEEDED
+        assert target_node.outputs["success"]
 
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.SUCCEEDED
-        assert unavailable_service.outputs["success"]
-
-        unavailable_service.shutdown()
-        assert unavailable_service.state == NodeState.SHUTDOWN
+        assert target_node.shutdown().is_ok()
+        assert target_node.state == BTNodeState.SHUTDOWN
         assert ros_mock.destroy_client.called
 
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_failure(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
+    def test_node_failure(self, target_node, ros_mock, client_mock, future_mock):
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
+
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        request = SetBool.Request()
+        request.data = False
+        target_node.inputs["data"] = request.data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
+        client_mock.call_async.assert_called_with(request)
+
         future_mock.cancelled.return_value = True
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
-        ros_mock.get_clock.return_value = clock_mock
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.FAILED
 
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
-        )
+        assert target_node.shutdown().is_ok()
+        assert target_node.state == BTNodeState.SHUTDOWN
+        assert ros_mock.destroy_client.called
 
-        assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.FAILED
-
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_timeout(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
+    def test_node_timeout(self, target_node, ros_mock, client_mock, clock_mock):
+        # Take control of clock_mock to simulate timeout
+        clock_mock.now.side_effect = None
         clock_mock.now.return_value = Time(seconds=0)
-        ros_mock.get_clock.return_value = clock_mock
 
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
-        )
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
 
-        assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        request = SetBool.Request()
+        request.data = False
+        target_node.inputs["data"] = request.data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
+        client_mock.call_async.assert_called_with(request)
 
         clock_mock.now.return_value = Time(seconds=10)
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.FAILED
+        with pytest.warns(WarnLog, match=".*timed out.*"):
+            assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.FAILED
 
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_reset_shutdown(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [
-            Time(seconds=0),
-            Time(seconds=1),
-            Time(seconds=2),
-            Time(seconds=3),
-            Time(seconds=4),
-        ]
-        ros_mock.get_clock.return_value = clock_mock
+        assert target_node.shutdown().is_ok()
+        assert target_node.state == BTNodeState.SHUTDOWN
+        assert ros_mock.destroy_client.called
 
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
-        )
+    def test_node_reset_shutdown(self, target_node, ros_mock, future_mock):
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
 
-        assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        target_node.inputs["data"] = SetBool.Request().data
+        target_node.tick()
+        assert target_node.state == BTNodeState.RUNNING
 
         future_mock.done.return_value = True
+        target_node.tick()
+        assert target_node.state == BTNodeState.SUCCEEDED
+        assert target_node.outputs["success"]
 
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.SUCCEEDED
-        assert unavailable_service.outputs["success"]
-
-        unavailable_service.reset()
-        assert unavailable_service.state == NodeState.IDLE
+        target_node.reset()
+        assert target_node.state == BTNodeState.IDLE
         assert ros_mock.destroy_client.called
         assert ros_mock.destroy_client.call_count == 1
 
-        unavailable_service.shutdown()
-        assert unavailable_service.state == NodeState.SHUTDOWN
+        target_node.shutdown()
+        assert target_node.state == BTNodeState.SHUTDOWN
         assert ros_mock.destroy_client.called
         assert ros_mock.destroy_client.call_count == 1
 
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_reset(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [
-            Time(seconds=0),
-            Time(seconds=1),
-            Time(seconds=2),
-            Time(seconds=3),
-            Time(seconds=4),
-        ]
-        ros_mock.get_clock.return_value = clock_mock
+    def test_node_reset(self, target_node, future_mock):
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
 
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
-        )
-
-        assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        target_node.inputs["data"] = SetBool.Request().data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
 
         future_mock.done.return_value = True
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.SUCCEEDED
+        assert target_node.outputs["success"]
 
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.SUCCEEDED
-        assert unavailable_service.outputs["success"]
+        assert target_node.reset().is_ok()
 
-        unavailable_service.reset()
-
+        # Reset future, change response
         future_mock.done.return_value = False
         response = SetBool.Response()
         response.success = False
         future_mock.result.return_value = response
 
-        clock_mock.now.side_effect = [
-            Time(seconds=0),
-            Time(seconds=1),
-            Time(seconds=2),
-            Time(seconds=3),
-            Time(seconds=4),
-        ]
-
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
+        assert target_node.state == BTNodeState.IDLE
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        target_node.inputs["data"] = SetBool.Request().data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
 
         future_mock.done.return_value = True
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.SUCCEEDED
+        assert not target_node.outputs["success"]
 
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.SUCCEEDED
-        assert not unavailable_service.outputs["success"]
+    def test_node_name_change(self, target_node, ros_mock):
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
 
-    def test_node_no_ros(self):
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=None,
-        )
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        target_node.inputs["data"] = SetBool.Request().data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
 
-        assert unavailable_service is not None
-        setup_result = unavailable_service.setup()
-        assert isinstance(setup_result.err(), BehaviorTreeException)
-
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_name_change(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [
-            Time(seconds=0),
-            Time(seconds=1),
-            Time(seconds=2),
-            Time(seconds=3),
-            Time(seconds=4),
-        ]
-        ros_mock.get_clock.return_value = clock_mock
-
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
-        )
-
-        assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
-
-        unavailable_service.inputs["service_name"] = "bla"
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
+        target_node.inputs["service_name"] = "bla"
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
         assert ros_mock.destroy_client.called
 
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_untick(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [
-            Time(seconds=0),
-            Time(seconds=1),
-            Time(seconds=2),
-            Time(seconds=3),
-            Time(seconds=4),
-        ]
-        ros_mock.get_clock.return_value = clock_mock
+    def test_node_untick(self, target_node, future_mock):
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
 
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
-        )
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        target_node.inputs["data"] = SetBool.Request().data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
 
-        assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
-
-        unavailable_service.untick()
-        assert unavailable_service.state == NodeState.IDLE
+        assert target_node.untick().is_ok()
+        assert target_node.state == BTNodeState.IDLE
         assert future_mock.cancel.called
 
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_utility_no_ros(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [
-            Time(seconds=0),
-            Time(seconds=1),
-            Time(seconds=2),
-            Time(seconds=3),
-            Time(seconds=4),
-        ]
-        ros_mock.get_clock.return_value = clock_mock
-
+    def test_node_no_ros(self, logging_mock):
         unavailable_service = ServiceInput(
             options={
                 "service_type": RosServiceType("std_srvs/srv/SetBool"),
                 "wait_for_response_seconds": 5.0,
             },
             ros_node=None,
-        )
-        bounds_result = unavailable_service.calculate_utility()
-        assert bounds_result.ok() == UtilityBounds()
-
-        unavailable_service_2 = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
-        )
-        assert unavailable_service_2 is not None
-        unavailable_service_2.setup()
-        assert unavailable_service_2.state == NodeState.IDLE
-        bounds_result_2 = unavailable_service_2.calculate_utility()
-        assert bounds_result_2.ok() == UtilityBounds()
-
-    @mock.patch("rclpy.node.Node")
-    @mock.patch("rclpy.client.Client")
-    @mock.patch("rclpy.client.Future")
-    @mock.patch("rclpy.clock.Clock")
-    def test_node_utility(self, ros_mock, client_mock, future_mock, clock_mock):
-        response = SetBool.Response()
-        response.success = True
-        future_mock.result.return_value = response
-        future_mock.done.return_value = False
-        future_mock.cancelled.return_value = False
-        client_mock.call_async.return_value = future_mock
-        ros_mock.create_client.return_value = client_mock
-        clock_mock.now.side_effect = [
-            Time(seconds=0),
-            Time(seconds=1),
-            Time(seconds=2),
-            Time(seconds=3),
-            Time(seconds=4),
-        ]
-        ros_mock.get_clock.return_value = clock_mock
-
-        unavailable_service = ServiceInput(
-            options={
-                "service_type": RosServiceType("std_srvs/srv/SetBool"),
-                "wait_for_response_seconds": 5.0,
-            },
-            ros_node=ros_mock,
+            logging_manager=logging_mock,
         )
         assert unavailable_service is not None
-        unavailable_service.setup()
-        assert unavailable_service.state == NodeState.IDLE
-        unavailable_service.inputs["service_name"] = "this_service_does_not_exist"
-        unavailable_service.inputs["data"] = SetBool.Request().data
-        unavailable_service.tick()
-        assert unavailable_service.state == NodeState.RUNNING
+        result = unavailable_service.setup()
+        assert result.is_err()
+        assert isinstance(result.unwrap_err(), BehaviorTreeException)
+
+    def test_node_utility(self, target_node, client_mock):
+        assert target_node.setup().is_ok()
+        assert target_node.state == BTNodeState.IDLE
+
+        target_node.inputs["service_name"] = "this_service_does_not_exist"
+        target_node.inputs["data"] = SetBool.Request().data
+        assert target_node.tick().is_ok()
+        assert target_node.state == BTNodeState.RUNNING
 
         client_mock.service_is_ready.return_value = False
-        bounds_result = unavailable_service.calculate_utility()
-        assert bounds_result.ok() == UtilityBounds(can_execute=False)
+        with pytest.warns(WarnLog, match=".*unavailable.*"):
+            bounds_result = target_node.calculate_utility()
+        assert bounds_result.is_ok()
+        assert bounds_result.unwrap() == UtilityBounds(can_execute=False)
 
         client_mock.service_is_ready.return_value = True
-        bounds_result = unavailable_service.calculate_utility()
-        assert bounds_result.ok() == UtilityBounds(
+        bounds_result = target_node.calculate_utility()
+        assert bounds_result.is_ok()
+        assert bounds_result.unwrap() == UtilityBounds(
             can_execute=True,
             has_lower_bound_success=True,
             has_upper_bound_success=True,
             has_lower_bound_failure=True,
             has_upper_bound_failure=True,
         )
+
+    def test_node_utility_no_ros(self, logging_mock, target_node):
+        target_node_no_ros = ServiceInput(
+            options={
+                "service_type": RosServiceType("std_srvs/srv/SetBool"),
+                "wait_for_response_seconds": 5.0,
+            },
+            ros_node=None,
+            logging_manager=logging_mock,
+        )
+        with pytest.warns(WarnLog, match=".*no.*ros node.*"):
+            bounds_result = target_node_no_ros.calculate_utility()
+        assert bounds_result.is_ok()
+        assert bounds_result.unwrap() == UtilityBounds()
+
+        with pytest.warns(WarnLog, match=".*no.*service.*"):
+            bounds_2_result = target_node.calculate_utility()
+        assert bounds_2_result.is_ok()
+        assert bounds_2_result.unwrap() == UtilityBounds()

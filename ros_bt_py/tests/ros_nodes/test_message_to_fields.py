@@ -53,11 +53,12 @@ from ros_bt_py_interfaces.msg import NodeState
         ),
     ],
 )
-def test_node_success(message: type, fields: Dict[str, type]):
+def test_node_success(logging_mock, message: type, fields: Dict[str, type]):
     unavailable_service = MessageToFields(
         options={
             "input_type": message,
         },
+        logging_manager=logging_mock,
     )
     unavailable_service.setup()
     assert unavailable_service.state == NodeState.IDLE
