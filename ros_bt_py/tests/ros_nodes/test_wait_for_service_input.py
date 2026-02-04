@@ -28,8 +28,6 @@
 import pytest
 import unittest.mock as mock
 
-from tests.conftest import ErrorLog
-
 from ros_bt_py.custom_types import RosServiceType
 from ros_bt_py.ros_nodes.service import WaitForServiceInput
 from rclpy.time import Time
@@ -170,7 +168,7 @@ class TestWaitForService:
         assert target_node.state == NodeState.SHUTDOWN
         assert ros_mock.destroy_client.called
 
-    def test_node_no_ros(self, logging_mock):
+    def test_node_no_ros(self, logging_mock, error_log):
         unavailable_service = WaitForServiceInput(
             options={
                 "service_type": RosServiceType("std_srvs/srv/SetBool"),
@@ -179,7 +177,7 @@ class TestWaitForService:
             ros_node=None,
             logging_manager=logging_mock,
         )
-        with pytest.warns(ErrorLog, match=".*No ROS node.*"):
+        with pytest.warns(error_log, match=".*No ROS node.*"):
             setup_result = unavailable_service.setup()
         assert setup_result.is_err()
         assert isinstance(setup_result.err(), BehaviorTreeException)

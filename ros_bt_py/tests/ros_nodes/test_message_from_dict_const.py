@@ -27,8 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-from tests.conftest import ErrorLog
-
 from ros_bt_py.custom_types import RosTopicType
 from ros_bt_py.ros_nodes.messages_from_dict import MessageFromConstDict
 from ros_bt_py_interfaces.msg import NodeState
@@ -112,14 +110,14 @@ class TestMessageFromConstDict:
         assert target_node.shutdown().is_ok()
         assert target_node.state == NodeState.SHUTDOWN
 
-    def test_node_failure(self, target_node):
+    def test_node_failure(self, target_node, error_log):
         # Set message dict to junk value
         target_node.options["dict"] = {"tequila": False}
 
         assert target_node.setup().is_ok()
         assert target_node.state == NodeState.IDLE
 
-        with pytest.warns(ErrorLog, match=".*Error populating message.*"):
+        with pytest.warns(error_log, match=".*Error populating message.*"):
             assert target_node.tick().is_ok()
         assert target_node.state == NodeState.FAILURE
 

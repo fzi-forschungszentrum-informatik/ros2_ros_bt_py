@@ -28,8 +28,6 @@
 import pytest
 import unittest.mock as mock
 
-from tests.conftest import ErrorLog
-
 from rclpy.time import Time
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.ros_nodes.param import RosParamOption
@@ -155,7 +153,7 @@ class TestRosParamOptionDefaultInput:
         target_node.shutdown()
         assert target_node.state == NodeState.SHUTDOWN
 
-    def test_node_no_ros(self, logging_mock):
+    def test_node_no_ros(self, logging_mock, error_log):
         param_node = RosParamOption(
             options={
                 "param_name": "this_service_does_not_exist",
@@ -165,7 +163,7 @@ class TestRosParamOptionDefaultInput:
             ros_node=None,
             logging_manager=logging_mock,
         )
-        with pytest.warns(ErrorLog, match=".*no.*ROS node.*"):
+        with pytest.warns(error_log, match=".*no.*ROS node.*"):
             setup_result = param_node.setup()
         assert isinstance(setup_result.err(), BehaviorTreeException)
 

@@ -71,3 +71,13 @@ class TestLoggingManager:
 @pytest.fixture
 def logging_mock():
     return TestLoggingManager()
+
+
+@pytest.fixture
+def warn_log():
+    return WarnLog
+
+
+@pytest.fixture
+def error_log():
+    return ErrorLog

@@ -28,8 +28,6 @@
 import pytest
 import unittest.mock as mock
 
-from tests.conftest import ErrorLog, WarnLog
-
 from example_interfaces.action import Fibonacci
 from ros_bt_py.ros_nodes.action import Action
 from rclpy.time import Time
@@ -174,7 +172,7 @@ class TestAction:
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
-    def test_node_failure(self, setup_mocks):
+    def test_node_failure(self, setup_mocks, warn_log):
         action_node = setup_mocks["action_node"]
         running_goal_future_mock = setup_mocks["running_goal_future_mock"]
         ac_instance_mock = setup_mocks["ac_instance_mock"]
@@ -188,7 +186,7 @@ class TestAction:
         feedback_mock = self.create_and_simulate_feedback(action_node)
 
         running_goal_future_mock.done.return_value = False
-        with pytest.warns(WarnLog, match=".*[cC]ancel.*"):
+        with pytest.warns(warn_log, match=".*[cC]ancel.*"):
             action_node.tick()
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
@@ -198,7 +196,7 @@ class TestAction:
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
     @mock.patch("rclpy.task.Future")
-    def test_node_timeout(self, cancel_goal_future_mock, setup_mocks):
+    def test_node_timeout(self, cancel_goal_future_mock, setup_mocks, warn_log):
         action_node = setup_mocks["action_node"]
         running_goal_future_mock = setup_mocks["running_goal_future_mock"]
         ac_instance_mock = setup_mocks["ac_instance_mock"]
@@ -227,7 +225,7 @@ class TestAction:
 
         # Set time > timeout_seconds of action_node to create timeout
         clock_mock.now.return_value = Time(seconds=10)
-        with pytest.warns(WarnLog, match=".*[cC]ancel.*"):
+        with pytest.warns(warn_log, match=".*[cC]ancel.*"):
             action_node.tick()
         # requests goal canceling, so node is still running
         assert action_node.state == NodeState.RUNNING
@@ -310,9 +308,9 @@ class TestAction:
         action_node.tick()
         assert action_node.state == NodeState.SUCCEEDED
 
-    def test_node_no_ros(self, action_node_no_ros):
+    def test_node_no_ros(self, action_node_no_ros, error_log):
         assert action_node_no_ros is not None
-        with pytest.warns(ErrorLog):
+        with pytest.warns(error_log):
             setup_result = action_node_no_ros.setup()
         assert setup_result.is_err()
         assert isinstance(setup_result.err(), BehaviorTreeException)

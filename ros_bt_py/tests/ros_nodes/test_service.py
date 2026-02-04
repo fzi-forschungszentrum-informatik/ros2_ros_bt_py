@@ -28,7 +28,6 @@
 import pytest
 import unittest.mock as mock
 
-from tests.conftest import ErrorLog, WarnLog
 from std_srvs.srv import SetBool
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.custom_types import RosServiceName, RosServiceType
@@ -131,7 +130,9 @@ class TestService:
         assert target_node.state == BTNodeState.SHUTDOWN
         assert ros_mock.destroy_client.called
 
-    def test_node_timeout(self, target_node, ros_mock, client_mock, clock_mock):
+    def test_node_timeout(
+        self, target_node, ros_mock, client_mock, clock_mock, warn_log
+    ):
         # Take control of clock_mock to simulate timeout
         clock_mock.now.side_effect = None
         clock_mock.now.return_value = Time(seconds=0)
@@ -147,7 +148,7 @@ class TestService:
         client_mock.call_async.assert_called_with(request)
 
         clock_mock.now.return_value = Time(seconds=10)
-        with pytest.warns(WarnLog, match=".*timed out.*"):
+        with pytest.warns(warn_log, match=".*timed out.*"):
             assert target_node.tick().is_ok()
         assert target_node.state == BTNodeState.FAILED
 
@@ -218,7 +219,7 @@ class TestService:
         assert target_node.state == BTNodeState.IDLE
         assert future_mock.cancel.called
 
-    def test_node_no_ros(self, logging_mock):
+    def test_node_no_ros(self, logging_mock, error_log):
         unavailable_service = Service(
             options={
                 "service_name": RosServiceName(name="this_service_does_not_exist"),
@@ -231,12 +232,12 @@ class TestService:
             logging_manager=logging_mock,
         )
         assert unavailable_service is not None
-        with pytest.warns(ErrorLog, match=".*No ROS node.*"):
+        with pytest.warns(error_log, match=".*No ROS node.*"):
             result = unavailable_service.setup()
         assert result.is_err()
         assert isinstance(result.unwrap_err(), BehaviorTreeException)
 
-    def test_node_utility(self, target_node, client_mock):
+    def test_node_utility(self, target_node, client_mock, warn_log):
         assert target_node.setup().is_ok()
         assert target_node.state == BTNodeState.IDLE
 
@@ -245,7 +246,7 @@ class TestService:
         assert target_node.state == BTNodeState.RUNNING
 
         client_mock.service_is_ready.return_value = False
-        with pytest.warns(WarnLog, match=".*unavailable.*"):
+        with pytest.warns(warn_log, match=".*unavailable.*"):
             bounds_result = target_node.calculate_utility()
         assert bounds_result.is_ok()
         assert bounds_result.unwrap() == UtilityBounds(can_execute=False)
@@ -261,7 +262,7 @@ class TestService:
             has_upper_bound_failure=True,
         )
 
-    def test_node_utility_no_ros(self, logging_mock, target_node):
+    def test_node_utility_no_ros(self, logging_mock, target_node, warn_log):
         target_node_no_ros = Service(
             options={
                 "service_name": RosServiceName(name="this_service_does_not_exist"),
@@ -273,12 +274,12 @@ class TestService:
             ros_node=None,
             logging_manager=logging_mock,
         )
-        with pytest.warns(WarnLog, match=".*no.*ros node.*"):
+        with pytest.warns(warn_log, match=".*no.*ros node.*"):
             bounds_result = target_node_no_ros.calculate_utility()
         assert bounds_result.is_ok()
         assert bounds_result.unwrap() == UtilityBounds()
 
-        with pytest.warns(WarnLog, match=".*no.*service.*"):
+        with pytest.warns(warn_log, match=".*no.*service.*"):
             bounds_2_result = target_node.calculate_utility()
         assert bounds_2_result.is_ok()
         assert bounds_2_result.unwrap() == UtilityBounds()
