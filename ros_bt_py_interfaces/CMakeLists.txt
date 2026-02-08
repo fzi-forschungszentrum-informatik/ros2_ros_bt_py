@@ -77,6 +77,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   # "msg/RemoteSlotState.msg"
 
   "msg/BTLogMessage.msg"
+  "srv/SetLogLevel.srv"
 
   "srv/AddNode.srv"
   "srv/AddNodeAtIndex.srv"

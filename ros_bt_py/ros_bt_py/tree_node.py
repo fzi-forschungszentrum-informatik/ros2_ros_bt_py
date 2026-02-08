@@ -78,6 +78,7 @@ from ros_bt_py_interfaces.srv import (
     ChangeTreeName,
     GetFolderStructure,
     GetStorageFolders,
+    SetLogLevel,
 )
 
 from std_srvs.srv import SetBool
@@ -294,10 +295,16 @@ class TreeNode(Node):
             publish_tick_frequency_callback=self.tick_frequency_pub.publish,
             diagnostics_frequency=params.diagnostics_frequency_hz,
         )
+
         self.set_collect_node_diagnostics_service = self.create_service(
             SetBool,
             "~/debug/set_collect_node_diagnostics",
             callback=self.debug_manager.set_collect_node_diagnostics,
+        )
+        self.set_log_level_service = self.create_service(
+            SetLogLevel,
+            "~/set_log_level",
+            callback=self.logging_manager.set_min_log_level,
         )
 
         self.tree_manager_service_callback_group = ReentrantCallbackGroup()

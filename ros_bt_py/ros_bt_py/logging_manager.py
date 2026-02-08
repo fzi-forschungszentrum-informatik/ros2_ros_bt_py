@@ -39,6 +39,7 @@ import rclpy.node
 from ros_bt_py.ros_helpers import uuid_to_ros
 
 from ros_bt_py_interfaces.msg import BTLogMessage
+from ros_bt_py_interfaces.srv import SetLogLevel
 
 
 # Extend the rcutils file filter, so this file isn't picked up by logging
@@ -47,13 +48,15 @@ rcutils_logger._internal_callers.append(__file__)
 
 @typechecked
 class LoggingManager:
+    # Log levels are meant to be universal, therefore we assign them at the class level
+    _min_log_level: int = BTLogMessage.INFO
 
     def __init__(
         self,
         ros_node: rclpy.node.Node,
         publish_log_callback: Optional[Callable[[BTLogMessage], None]] = None,
     ):
-        self.ros_node = ros_node
+        self._ros_node = ros_node
         self.publish_log_callback = publish_log_callback
         self.tree_id: Optional[uuid.UUID] = None
         self.tree_name = ""
@@ -61,6 +64,19 @@ class LoggingManager:
     def set_tree_info(self, tree_id: uuid.UUID, tree_name: str):
         self.tree_id = tree_id
         self.tree_name = tree_name
+
+    @classmethod
+    def set_min_log_level(
+        cls,
+        set_level_req: SetLogLevel.Request,
+        set_level_res: SetLogLevel.Response,
+    ):
+        cls._min_log_level = set_level_req.min_log_level
+        return set_level_res
+
+    @classmethod
+    def log_level_inactive(cls, log_level: int) -> bool:
+        return cls._min_log_level > log_level
 
     @staticmethod
     def get_ros_log_name(
@@ -75,7 +91,7 @@ class LoggingManager:
         node_id: Optional[uuid.UUID] = None,
         node_name: str = "",
     ) -> rcutils_logger.RcutilsLogger:
-        ros_logger = self.ros_node.get_logger()
+        ros_logger = self._ros_node.get_logger()
         if self.tree_id is not None:
             ros_logger = ros_logger.get_child(
                 self.get_ros_log_name(self.tree_id, self.tree_name)
@@ -95,7 +111,7 @@ class LoggingManager:
         stacklevel=1,
     ):
         log_message = BTLogMessage(
-            stamp=self.ros_node.get_clock().now().to_msg(),
+            stamp=self._ros_node.get_clock().now().to_msg(),
             level=level,
             msg=msg,
             tree_name=self.tree_name,
@@ -129,6 +145,8 @@ class LoggingManager:
         stacklevel=2,
         internal=False,
     ):
+        if self.log_level_inactive(BTLogMessage.DEBUG):
+            return
         self.get_ros_logger(node_id, node_name).debug(msg)
         if not internal:
             self.log(
@@ -147,6 +165,8 @@ class LoggingManager:
         stacklevel=2,
         internal=False,
     ):
+        if self.log_level_inactive(BTLogMessage.INFO):
+            return
         self.get_ros_logger(node_id, node_name).info(msg)
         if not internal:
             self.log(
@@ -165,6 +185,8 @@ class LoggingManager:
         stacklevel=2,
         internal=False,
     ):
+        if self.log_level_inactive(BTLogMessage.WARN):
+            return
         self.get_ros_logger(node_id, node_name).warn(msg)
         if not internal:
             self.log(
@@ -183,6 +205,8 @@ class LoggingManager:
         stacklevel=2,
         internal=False,
     ):
+        if self.log_level_inactive(BTLogMessage.ERROR):
+            return
         self.get_ros_logger(node_id, node_name).error(msg)
         if not internal:
             self.log(
@@ -201,6 +225,10 @@ class LoggingManager:
         stacklevel=2,
         internal=False,
     ):
+        # Although the current system doesn't allow for disabling FATAL
+        #   we still include the check to future proof the system.
+        if self.log_level_inactive(BTLogMessage.FATAL):
+            return
         self.get_ros_logger(node_id, node_name).fatal(msg)
         if not internal:
             self.log(
