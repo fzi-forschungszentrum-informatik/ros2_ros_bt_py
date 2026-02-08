@@ -244,7 +244,7 @@ class ActionForSetType(Leaf):
 
                 self._internal_state = ActionStates.FINISHED
 
-                self.logdebug("Action result is none, action call must have failed!")
+                self.loginfo("Action result is none, action call must have failed!")
                 return Ok(BTNodeState.FAILED)
 
             # returns failed except the set.ouput() method returns True
@@ -257,7 +257,7 @@ class ActionForSetType(Leaf):
 
             self._internal_state = ActionStates.FINISHED
 
-            self.logdebug("Action succeeded, publishing result!")
+            self.loginfo("Action succeeded, publishing result!")
             return Ok(new_state)
 
         if self._running_goal_future.cancelled():
@@ -310,7 +310,7 @@ class ActionForSetType(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
-            self.logdebug("Successfully cancelled goal exectution!")
+            self.loginfo("Successfully cancelled goal exectution!")
 
             if self._input_goal != self._active_goal:
                 state = BTNodeState.RUNNING
@@ -523,23 +523,8 @@ class Action(Leaf):
 
     _internal_state = ActionStates.IDLE
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         node_inputs = {}
         node_outputs = {}
@@ -650,7 +635,7 @@ class Action(Leaf):
 
                 self._internal_state = ActionStates.FINISHED
 
-                self.logdebug("Action result is none, action call must have failed!")
+                self.loginfo("Action result is none, action call must have failed!")
                 return Ok(BTNodeState.FAILED)
 
             # returns failed except the set.ouput() method returns True
@@ -667,7 +652,7 @@ class Action(Leaf):
 
             self._internal_state = ActionStates.FINISHED
 
-            self.logdebug("Action succeeded, publishing result!")
+            self.loginfo("Action succeeded, publishing result!")
             return Ok(new_state)
 
         if self._running_goal_future.cancelled():
@@ -724,7 +709,7 @@ class Action(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
-            self.logdebug("Successfully cancelled goal exectution!")
+            self.loginfo("Successfully cancelled goal exectution!")
 
             if self._input_goal != self._active_goal:
                 state = BTNodeState.RUNNING

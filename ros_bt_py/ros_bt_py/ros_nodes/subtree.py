@@ -33,6 +33,7 @@ import uuid
 
 from rclpy.node import Node
 
+from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py_interfaces.msg._node_structure import NodeStructure
 
 from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
@@ -81,24 +82,9 @@ class Subtree(Leaf):
 
     manager: TreeManager
 
-    def __init__(  # noqa: C901
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """Create the tree manager, load the subtree."""
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+        super().__init__(*args, **kwargs)
         if not self.has_ros_node:
             raise BehaviorTreeException(
                 "{self.name} does not have a reference to a ROS Node!"
@@ -108,12 +94,17 @@ class Subtree(Leaf):
         # since the subtree gets a prefix, we can just have it use the
         # parent debug manager
         self.nested_subtree_manager = SubtreeManager()
+        self.subtree_logging_manager = LoggingManager(
+            ros_node=self.ros_node,
+            publish_log_callback=self.logging_manager.publish_log_callback,
+        )
         self.manager: TreeManager = TreeManager(
             ros_node=self.ros_node,
-            name=name,
+            name=self.name,
             tree_id=self.node_id,
-            debug_manager=debug_manager,
+            debug_manager=self.debug_manager,
             subtree_manager=self.nested_subtree_manager,
+            logging_manager=self.subtree_logging_manager,
         )
 
         match self.load_subtree():

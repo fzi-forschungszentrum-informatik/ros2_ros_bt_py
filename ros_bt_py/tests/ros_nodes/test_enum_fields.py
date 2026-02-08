@@ -39,72 +39,59 @@ from ros_bt_py.ros_nodes.enum import EnumFields
         (RosTopicType("std_msgs/msg/Int64"), 0),
     ],
 )
-def test_node_success(message, constants):
-    enum_node = EnumFields(
-        options={
-            "ros_message_type": message,
-        }
-    )
-    enum_node.setup()
-    assert enum_node.state == NodeState.IDLE
+class TestEnumFields:
 
-    enum_node.tick()
-    assert enum_node.state == NodeState.SUCCEED
-    assert len(enum_node.outputs) == constants
+    @pytest.fixture
+    def target_node(self, logging_mock, message):
+        node = EnumFields(
+            options={"ros_message_type": message},
+            logging_manager=logging_mock,
+        )
+        return node
 
-    enum_node.shutdown()
-    assert enum_node.state == NodeState.SHUTDOWN
+    def test_node_success(self, target_node, constants):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEED
+        assert len(target_node.outputs) == constants
 
-@pytest.mark.parametrize(
-    "message,constants", [(RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)]
-)
-def test_node_reset(message, constants):
-    enum_node = EnumFields(
-        options={
-            "ros_message_type": message,
-        }
-    )
-    enum_node.setup()
-    assert enum_node.state == NodeState.IDLE
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-    enum_node.tick()
-    assert enum_node.state == NodeState.SUCCEED
-    assert len(enum_node.outputs) == constants
+    def test_node_reset(self, target_node, constants):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
-    enum_node.reset()
-    assert enum_node.state == NodeState.IDLE
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEED
+        assert len(target_node.outputs) == constants
 
-    enum_node.tick()
-    assert enum_node.state == NodeState.SUCCEED
-    assert len(enum_node.outputs) == constants
+        target_node.reset()
+        assert target_node.state == NodeState.IDLE
 
-    enum_node.shutdown()
-    assert enum_node.state == NodeState.SHUTDOWN
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEED
+        assert len(target_node.outputs) == constants
 
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-@pytest.mark.parametrize(
-    "message,constants", [(RosTopicType("ros_bt_py_interfaces/msg/NodeState"), 14)]
-)
-def test_node_untick(message, constants):
-    enum_node = EnumFields(
-        options={
-            "ros_message_type": message,
-        }
-    )
-    enum_node.setup()
-    assert enum_node.state == NodeState.IDLE
+    def test_node_untick(self, target_node, constants):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
-    enum_node.tick()
-    assert enum_node.state == NodeState.SUCCEED
-    assert len(enum_node.outputs) == constants
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEED
+        assert len(target_node.outputs) == constants
 
-    enum_node.untick()
-    assert enum_node.state == NodeState.IDLE
+        target_node.untick()
+        assert target_node.state == NodeState.IDLE
 
-    enum_node.tick()
-    assert enum_node.state == NodeState.SUCCEED
-    assert len(enum_node.outputs) == constants
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEED
+        assert len(target_node.outputs) == constants
 
-    enum_node.shutdown()
-    assert enum_node.state == NodeState.SHUTDOWN
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN

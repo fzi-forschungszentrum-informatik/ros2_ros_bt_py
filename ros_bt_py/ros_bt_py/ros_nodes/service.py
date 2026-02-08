@@ -85,23 +85,8 @@ class ServiceInput(Leaf):
     _response_type: type
     _service_client: Optional[Client] = None
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
 
@@ -262,14 +247,14 @@ class ServiceInput(Leaf):
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node or self._service_client is None:
-            self.logdebug(
+            self.logwarn(
                 f"Unable to check for service {self.inputs['service_name']}, "
-                "ros node available!"
+                "no ros node or service available!"
             )
             return Ok(UtilityBounds())
 
         if self._service_client.service_is_ready():
-            self.logdebug(
+            self.loginfo(
                 f"Found service {self.inputs['service_name']} with correct type, returning "
                 "filled out UtilityBounds"
             )
@@ -283,7 +268,7 @@ class ServiceInput(Leaf):
                 )
             )
 
-        self.logdebug(f"Service {self.inputs['service_name']} is unavailable")
+        self.logwarn(f"Service {self.inputs['service_name']} is unavailable")
         return Ok(UtilityBounds(can_execute=False))
 
 
@@ -304,30 +289,15 @@ class ServiceInput(Leaf):
 class WaitForService(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
         self._service_name = self.options["service_name"].name
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
-            self.logerr("Not ROS node reference available!")
+            self.logerr("No ROS node reference available!")
             return Err(BehaviorTreeException("No ROS node reference available!"))
 
         self._service_client = self.ros_node.create_client(
@@ -388,29 +358,14 @@ class WaitForService(Leaf):
 class WaitForServiceInput(Leaf):
     """Wait for a service to be available, fails if this wait times out."""
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
-            self.logerr("Not ROS node reference available!")
+            self.logerr("No ROS node reference available!")
             return Err(BehaviorTreeException("No ROS node reference available!"))
 
         self._service_client: Optional[Client] = None
@@ -534,23 +489,8 @@ class ServiceForSetType(Leaf):
     _reported_result: bool = False
     _service_name: str
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._service_client: Optional[Client] = None
         self._service_name = self.options["service_name"].name
         self.set_service_type()
@@ -634,7 +574,7 @@ class ServiceForSetType(Leaf):
         # If theres' no service call in-flight, and we have already reported
         # the result (see below), start a new call and save the request
         if self._service_request_future is None:
-            self.logdebug("Future is None, starting new request!")
+            self.loginfo("Future is None, starting new request!")
             self._reported_result = False
             self.set_request()
             self._last_service_call_time = self.ros_node.get_clock().now()
@@ -648,7 +588,7 @@ class ServiceForSetType(Leaf):
             return Ok(BTNodeState.FAILED)
 
         if self._service_request_future.cancelled():
-            self.logdebug("Service request was cancelled!")
+            self.loginfo("Service request was cancelled!")
             self._service_request_future = None
             return Ok(BTNodeState.FAILED)
 
@@ -709,14 +649,14 @@ class ServiceForSetType(Leaf):
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         if not self.has_ros_node or self._service_client is None:
-            self.logdebug(
+            self.logwarn(
                 f"Unable to check for service {self._service_name}: "
                 "No ros node available!"
             )
             return Ok(UtilityBounds(can_execute=False))
 
         if self._service_client.service_is_ready():
-            self.logdebug(
+            self.loginfo(
                 f"Found service {self._service_name} with correct type, returning "
                 "filled out UtilityBounds"
             )
@@ -730,7 +670,7 @@ class ServiceForSetType(Leaf):
                 )
             )
 
-        self.logdebug(f"Service {self._service_name} is unavailable")
+        self.logwarn(f"Service {self._service_name} is unavailable")
         return Ok(UtilityBounds(can_execute=False))
 
 
@@ -774,23 +714,8 @@ class Service(Leaf):
     _request_type: type
     _response_type: type
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._service_type = self.options["service_type"].get_type_obj()
         self._service_name = self.options["service_name"].name
@@ -962,9 +887,9 @@ class Service(Leaf):
         if not self.has_ros_node or self._service_client is None:
             msg = (
                 f"Unable to check for service {self._service_name}, "
-                "ros node available!"
+                "no ros node or service available!"
             )
-            self.loginfo(msg)
+            self.logwarn(msg)
             return Ok(UtilityBounds())
 
         if self._service_client.service_is_ready():
@@ -982,5 +907,5 @@ class Service(Leaf):
                 )
             )
 
-        self.loginfo(f"Service {self._service_name} is unavailable")
+        self.logwarn(f"Service {self._service_name} is unavailable")
         return Ok(UtilityBounds(can_execute=False))

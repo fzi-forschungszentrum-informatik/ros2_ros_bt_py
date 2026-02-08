@@ -225,7 +225,7 @@ class GetDictItem(Decorator):
                 self.outputs["value"] = self.inputs["dict"][self.options["key"]]
                 return Ok(BTNodeState.SUCCEEDED)
             except KeyError:
-                self.logdebug(
+                self.logwarn(
                     f"Key {self.options['key']} is not in dict {str(self.inputs['dict'])}"
                 )
                 return Ok(BTNodeState.FAILED)
@@ -233,7 +233,7 @@ class GetDictItem(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.logdebug("No new data since last tick!")
+                self.loginfo("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -292,7 +292,7 @@ class GetMultipleDictItems(Decorator):
                 ]
                 return Ok(BTNodeState.SUCCEEDED)
             except KeyError:
-                self.logdebug(
+                self.logwarn(
                     f"One of the key ({self.options['keys']}) is not in dict "
                     f"{str(self.inputs['dict'])}"
                 )
@@ -301,7 +301,7 @@ class GetMultipleDictItems(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.logdebug("No new data since last tick!")
+                self.loginfo("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -358,7 +358,7 @@ class GetDictItemFromKey(Decorator):
                 self.outputs["value"] = self.options["dict"][self.inputs["key"]]
                 return Ok(BTNodeState.SUCCEEDED)
             except KeyError:
-                self.logdebug(
+                self.logwarn(
                     f"Key {self.inputs['key']} is not in dict {str(self.options['dict'])}"
                 )
                 return Ok(BTNodeState.FAILED)
@@ -366,7 +366,7 @@ class GetDictItemFromKey(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.logdebug("No new data since last tick!")
+                self.loginfo("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -433,7 +433,7 @@ class GetAttr(Decorator):
                 )
                 return Ok(BTNodeState.SUCCEEDED)
             except AttributeError:
-                self.logdebug(
+                self.logwarn(
                     f"Object {self.inputs['object']} does not have attribute "
                     f"{self.options['attr_name']}"
                 )
@@ -442,7 +442,7 @@ class GetAttr(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.logdebug("No new data since last tick!")
+                self.loginfo("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:

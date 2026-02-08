@@ -62,23 +62,8 @@ class Convert(Leaf):
     Useful in many cases indeed.
     """
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         # check the possible conversions here
 
         if self.options["input_type"] is self.options["output_type"]:
@@ -174,23 +159,8 @@ class Convert(Leaf):
 class Operation(Leaf):
     """Performs the desired binary operation on the inputs a and b."""
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.operators = {}
         self.operators["add"] = operator.add
         self.operators["+"] = operator.add
@@ -311,23 +281,8 @@ class Operation(Leaf):
 class UnaryOperation(Leaf):
     """Performs the desired unary operation on the inputs a and b."""
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.operators = {}
         self.operators["not"] = operator.not_
         self.operators["inv"] = operator.inv

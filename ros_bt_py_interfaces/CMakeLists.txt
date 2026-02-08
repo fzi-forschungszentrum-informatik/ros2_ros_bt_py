@@ -76,6 +76,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   # "msg/RemoteCapabilitySlotStatus.msg"
   # "msg/RemoteSlotState.msg"
 
+  "msg/BTLogMessage.msg"
+  "srv/SetLogLevel.srv"
 
   "srv/AddNode.srv"
   "srv/AddNodeAtIndex.srv"
@@ -123,6 +125,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   # "srv/capabilities/ReserveRemoteCapabilitySlot.srv"
   # "srv/capabilities/RunRemoteCapabilitySlot.srv"
   # "srv/capabilities/SaveCapabilities.srv"
+
+  DEPENDENCIES builtin_interfaces
 )
 
 
