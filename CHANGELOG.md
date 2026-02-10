@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add Enum Switch Node by @nspielbau in [#183](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/183)
 - Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
