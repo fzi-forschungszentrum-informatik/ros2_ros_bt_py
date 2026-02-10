@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Provide enhanced logging functionality by @Doomse in [#230](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/230)
 - Update issue templates. by @Oberacda
 - Update issue templates by @Oberacda in [#229](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/229)
 - Strip "__name__" attribute from serialized TypeWrappers by @Doomse in [#227](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/227)
