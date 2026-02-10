@@ -1,0 +1,90 @@
+version: 0.6.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: UNKNOWN TREE
+path: ''
+root_id: b0497040-34de-4ebb-b9c7-58c4ba3ac835
+nodes:
+- module: ros_bt_py.nodes.sequence
+  node_class: MemorySequence
+  version: 0.1.0
+  max_children: -1
+  node_id: b0497040-34de-4ebb-b9c7-58c4ba3ac835
+  name: MemorySequence
+  child_ids:
+  - 36f3f1c9-a26f-44be-9097-e5fc27ce8864
+  - 0cd4d0b7-bbe5-42a3-b18b-143c4bfbb069
+  options: []
+  inputs: []
+  outputs: []
+- module: ros_bt_py.nodes.constant
+  node_class: Constant
+  version: 0.1.0
+  max_children: 0
+  node_id: 36f3f1c9-a26f-44be-9097-e5fc27ce8864
+  name: Constant
+  child_ids: []
+  options:
+  - key: constant_type
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type": {"py/type": "builtins.type"}, "info": "builtin"}'
+    serialized_value: '{"py/type": "builtins.int"}'
+  - key: constant_value
+    serialized_type: '{"py/type": "builtins.int"}'
+    serialized_value: '2'
+  inputs: []
+  outputs:
+  - key: constant
+    serialized_type: '{"py/type": "builtins.int"}'
+- module: ros_bt_py.ros_nodes.enum_switch
+  node_class: EnumSwitch
+  version: 0.1.0
+  max_children: -1
+  node_id: 0cd4d0b7-bbe5-42a3-b18b-143c4bfbb069
+  name: EnumSwitch
+  child_ids:
+  - 2ba92f01-1700-45c8-a75c-9040cbcdb82a
+  - 01839a27-88bb-496d-bbe1-70a874fc70c8
+  options:
+  - key: ros_message_type
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type": {"py/type": "ros_bt_py.custom_types.RosTopicType"}, "info": "full"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str": "ros_bt_py_interfaces/msg/EnumTest"}'
+  inputs:
+  - key: case
+    serialized_type: '{"py/type": "builtins.int"}'
+  outputs: []
+- module: ros_bt_py.nodes.wait
+  node_class: Wait
+  version: 0.1.0
+  max_children: 0
+  node_id: 2ba92f01-1700-45c8-a75c-9040cbcdb82a
+  name: FOO
+  child_ids: []
+  options:
+  - key: seconds_to_wait
+    serialized_type: '{"py/type": "builtins.float"}'
+    serialized_value: '1.2'
+  inputs: []
+  outputs: []
+- module: ros_bt_py.nodes.wait
+  node_class: Wait
+  version: 0.1.0
+  max_children: 0
+  node_id: 01839a27-88bb-496d-bbe1-70a874fc70c8
+  name: BAR
+  child_ids: []
+  options:
+  - key: seconds_to_wait
+    serialized_type: '{"py/type": "builtins.float"}'
+    serialized_value: '1.2'
+  inputs: []
+  outputs: []
+data_wirings:
+- source:
+    node_id: 36f3f1c9-a26f-44be-9097-e5fc27ce8864
+    data_kind: outputs
+    data_key: constant
+  target:
+    node_id: 0cd4d0b7-bbe5-42a3-b18b-143c4bfbb069
+    data_kind: inputs
+    data_key: case
+tick_frequency_hz: 10.0
+public_node_data: []

@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright 2025 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,15 +25,26 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from . import service
-from . import action
-from . import enum
-from . import enum_switch
-from . import file
-from . import message_converters
-from . import messages_from_dict
-from . import param
-from . import subtree
-from . import throttle
-from . import time
-from . import topic
+import pytest
+
+from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.custom_types import RosTopicType
+from ros_bt_py_interfaces.msg import NodeState
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.ros_nodes.enum_switch import EnumSwitch
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        RosTopicType("ros_bt_py_interfaces/msg/NodeState"),
+    ],
+)
+def test_node_creation_success(message):
+    enum_node = EnumSwitch(
+        options={
+            "ros_message_type": message,
+        }
+    )
+    enum_node.setup()
+    assert enum_node.state == BTNodeState.IDLE
