@@ -33,186 +33,167 @@ from ros_bt_py.nodes.wait import Wait, WaitInput
 from ros_bt_py_interfaces.msg import NodeState
 
 
+@pytest.mark.parametrize(
+    "wait_time",
+    [
+        (1.0),
+        (0.05),
+    ],
+)
 class TestWait:
-    @pytest.mark.parametrize(
-        "wait_time",
-        [
-            (1.0),
-            (0.05),
-        ],
-    )
-    def test_node_success(self, wait_time: float):
-        wait_node = Wait(options={"seconds_to_wait": wait_time})
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
+
+    @pytest.fixture
+    def target_node(self, logging_mock, wait_time: float):
+        node = Wait(
+            options={"seconds_to_wait": wait_time},
+            logging_manager=logging_mock,
+        )
+        return node
+
+    def test_node_success(self, target_node: Wait, wait_time: float):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-    @pytest.mark.parametrize(
-        "wait_time",
-        [
-            (1.0),
-            (0.05),
-        ],
-    )
-    def test_node_shutdown(self, wait_time: float):
-        wait_node = Wait(options={"seconds_to_wait": wait_time})
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
+    def test_node_shutdown(self, target_node, wait_time: float):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-        wait_node.shutdown()
-        assert wait_node.state == NodeState.SHUTDOWN
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-    @pytest.mark.parametrize(
-        "wait_time",
-        [
-            (1.0),
-            (0.05),
-        ],
-    )
-    def test_node_reset(self, wait_time: float):
-        wait_node = Wait(options={"seconds_to_wait": wait_time})
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
+    def test_node_reset(self, target_node, wait_time: float):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-        wait_node.reset()
-        assert wait_node.state == NodeState.IDLE
+        target_node.reset()
+        assert target_node.state == NodeState.IDLE
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
 
+@pytest.mark.parametrize(
+    "wait_time",
+    [
+        (1.0),
+        (0.05),
+    ],
+)
 class TestWaitInput:
-    @pytest.mark.parametrize(
-        "wait_time",
-        [
-            (1.0),
-            (0.05),
-        ],
-    )
-    def test_node_success(self, wait_time: float):
-        wait_node = WaitInput()
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
 
-        wait_node.inputs["seconds_to_wait"] = wait_time
+    @pytest.fixture
+    def target_node(self, logging_mock):
+        node = WaitInput(logging_manager=logging_mock)
+        return node
+
+    def test_node_success(self, target_node: WaitInput, wait_time: float):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
+
+        target_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-    @pytest.mark.parametrize(
-        "wait_time",
-        [
-            (1.0),
-            (0.05),
-        ],
-    )
-    def test_node_shutdown(self, wait_time: float):
-        wait_node = WaitInput()
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
+    def test_node_shutdown(self, target_node: WaitInput, wait_time: float):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
-        wait_node.inputs["seconds_to_wait"] = wait_time
+        target_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-        wait_node.shutdown()
-        assert wait_node.state == NodeState.SHUTDOWN
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-    @pytest.mark.parametrize(
-        "wait_time",
-        [
-            (1.0),
-            (0.05),
-        ],
-    )
-    def test_node_reset(self, wait_time: float):
-        wait_node = WaitInput()
-        wait_node.setup()
-        assert wait_node.state == NodeState.IDLE
+    def test_node_reset(self, target_node, wait_time: float):
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
-        wait_node.inputs["seconds_to_wait"] = wait_time
+        target_node.inputs["seconds_to_wait"] = wait_time
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1
 
-        wait_node.reset()
-        assert wait_node.state == NodeState.IDLE
+        target_node.reset()
+        assert target_node.state == NodeState.IDLE
 
         start_time = time.time()
-        while NodeState.RUNNING == wait_node.tick().ok():
+        while NodeState.RUNNING == target_node.tick().ok():
             #        assert time.time() - start_time < wait_time
             pass
         end_time = time.time()
-        assert NodeState.SUCCEED == wait_node.state
+        assert NodeState.SUCCEED == target_node.state
         assert end_time - start_time >= wait_time
         assert end_time - start_time < wait_time * 1.1

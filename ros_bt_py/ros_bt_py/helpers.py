@@ -34,6 +34,7 @@ import rclpy.logging
 import jsonpickle
 import functools
 import re
+import uuid
 from collections import OrderedDict
 
 import rosidl_runtime_py.utilities

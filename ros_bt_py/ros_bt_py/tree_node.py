@@ -44,12 +44,12 @@ from std_msgs.msg import Float64
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from ros_bt_py.parameters import tree_node_parameters
 from ros_bt_py_interfaces.msg import (
+    BTLogMessage,
     MessageChannels,
     TreeStructure,
     TreeStructureList,
     TreeState,
     TreeStateList,
-    TreeData,
     TreeDataList,
     MessageTypes,
     Packages,
@@ -78,6 +78,7 @@ from ros_bt_py_interfaces.srv import (
     ChangeTreeName,
     GetFolderStructure,
     GetStorageFolders,
+    SetLogLevel,
 )
 
 from std_srvs.srv import SetBool
@@ -90,6 +91,7 @@ from ros_bt_py.tree_manager import (
 )
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
+from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py.package_manager import PackageManager
 
 from ros_bt_py.ros_helpers import publish_message_channels
@@ -113,7 +115,6 @@ class TreeNode(Node):
                 depth=1,
             ),
         )
-
         self.tree_state_pub = self.create_publisher(
             TreeStateList,
             "~/tree_state_list",
@@ -125,7 +126,6 @@ class TreeNode(Node):
                 depth=1,
             ),
         )
-
         self.tree_data_pub = self.create_publisher(
             TreeDataList,
             "~/tree_data_list",
@@ -133,6 +133,18 @@ class TreeNode(Node):
             qos_profile=QoSProfile(
                 reliability=QoSReliabilityPolicy.RELIABLE,
                 durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+            ),
+        )
+
+        self.log_message_pub = self.create_publisher(
+            BTLogMessage,
+            "~/log_messages",
+            callback_group=self.publisher_callback_group,
+            qos_profile=QoSProfile(
+                reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                durability=QoSDurabilityPolicy.VOLATILE,
                 history=QoSHistoryPolicy.KEEP_LAST,
                 depth=1,
             ),
@@ -266,11 +278,16 @@ class TreeNode(Node):
             node_diagnostics_publish_callback=self.node_diagnostics_pub.publish,
         )
         self.subtree_manager = SubtreeManager()
+        self.logging_manager = LoggingManager(
+            ros_node=self,
+            publish_log_callback=self.log_message_pub.publish,
+        )
         self.tree_manager = TreeManager(
             ros_node=self,
             module_list=params.node_modules,
             debug_manager=self.debug_manager,
             subtree_manager=self.subtree_manager,
+            logging_manager=self.logging_manager,
             publish_tree_structure_callback=self.tree_structure_pub.publish,
             publish_tree_state_callback=self.tree_state_pub.publish,
             publish_tree_data_callback=self.tree_data_pub.publish,
@@ -278,10 +295,16 @@ class TreeNode(Node):
             publish_tick_frequency_callback=self.tick_frequency_pub.publish,
             diagnostics_frequency=params.diagnostics_frequency_hz,
         )
+
         self.set_collect_node_diagnostics_service = self.create_service(
             SetBool,
             "~/debug/set_collect_node_diagnostics",
             callback=self.debug_manager.set_collect_node_diagnostics,
+        )
+        self.set_log_level_service = self.create_service(
+            SetLogLevel,
+            "~/set_log_level",
+            callback=self.logging_manager.set_min_log_level,
         )
 
         self.tree_manager_service_callback_group = ReentrantCallbackGroup()

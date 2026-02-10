@@ -25,10 +25,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Any, Generator
 import pytest
-
 import unittest.mock as mock
+
 from example_interfaces.action import Fibonacci
 from ros_bt_py.ros_nodes.action import Action
 from rclpy.time import Time
@@ -39,7 +38,7 @@ from ros_bt_py.custom_types import RosActionName, RosActionType
 
 class TestAction:
     @pytest.fixture
-    def action_node_no_ros(self):
+    def action_node_no_ros(self, logging_mock):
         action_node = Action(
             options={
                 "action_name": RosActionName("this_service_does_not_exist"),
@@ -49,11 +48,12 @@ class TestAction:
                 "fail_if_not_available": True,
             },
             ros_node=None,
+            logging_manager=logging_mock,
         )
         yield action_node
 
     @pytest.fixture
-    def setup_mocks(self):
+    def setup_mocks(self, logging_mock):
         ac_instance_mock = mock.Mock()
         with mock.patch("rclpy.node.Node") as ros_mock, mock.patch(
             "ros_bt_py.ros_nodes.action.ActionClient"
@@ -104,6 +104,7 @@ class TestAction:
                     "fail_if_not_available": True,
                 },
                 ros_node=ros_mock,
+                logging_manager=logging_mock,
             )
 
             feedback_cb_patcher = mock.patch.object(
@@ -171,7 +172,7 @@ class TestAction:
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
-    def test_node_failure(self, setup_mocks):
+    def test_node_failure(self, setup_mocks, warn_log):
         action_node = setup_mocks["action_node"]
         running_goal_future_mock = setup_mocks["running_goal_future_mock"]
         ac_instance_mock = setup_mocks["ac_instance_mock"]
@@ -185,7 +186,8 @@ class TestAction:
         feedback_mock = self.create_and_simulate_feedback(action_node)
 
         running_goal_future_mock.done.return_value = False
-        action_node.tick()
+        with pytest.warns(warn_log, match=".*[cC]ancel.*"):
+            action_node.tick()
         ac_instance_mock.send_goal_async.assert_called_with(
             goal=goal, feedback_callback=action_node._feedback_cb
         )
@@ -194,7 +196,7 @@ class TestAction:
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 
     @mock.patch("rclpy.task.Future")
-    def test_node_timeout(self, cancel_goal_future_mock, setup_mocks):
+    def test_node_timeout(self, cancel_goal_future_mock, setup_mocks, warn_log):
         action_node = setup_mocks["action_node"]
         running_goal_future_mock = setup_mocks["running_goal_future_mock"]
         ac_instance_mock = setup_mocks["ac_instance_mock"]
@@ -223,7 +225,8 @@ class TestAction:
 
         # Set time > timeout_seconds of action_node to create timeout
         clock_mock.now.return_value = Time(seconds=10)
-        action_node.tick()
+        with pytest.warns(warn_log, match=".*[cC]ancel.*"):
+            action_node.tick()
         # requests goal canceling, so node is still running
         assert action_node.state == NodeState.RUNNING
 
@@ -305,9 +308,10 @@ class TestAction:
         action_node.tick()
         assert action_node.state == NodeState.SUCCEEDED
 
-    def test_node_no_ros(self, action_node_no_ros):
+    def test_node_no_ros(self, action_node_no_ros, error_log):
         assert action_node_no_ros is not None
-        setup_result = action_node_no_ros.setup()
+        with pytest.warns(error_log):
+            setup_result = action_node_no_ros.setup()
         assert setup_result.is_err()
         assert isinstance(setup_result.err(), BehaviorTreeException)
 

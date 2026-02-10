@@ -41,7 +41,9 @@ def mock_obj() -> mock.NonCallableMagicMock:
     mock_obj = mock.NonCallableMagicMock()
     mock_obj.children = []
     for i in range(1, 4):
-        mock_node = mock.NonCallableMagicMock(set=Node)
+        mock_node = mock.NonCallableMagicMock(
+            spec_set=["setup", "tick", "untick", "reset", "shutdown"]
+        )
         mock_node.setup.return_value = Ok(BTNodeState.IDLE)
         mock_node.tick.return_value = Ok(BTNodeState.SUCCEEDED)
         mock_node.untick.return_value = Ok(BTNodeState.IDLE)
@@ -55,8 +57,8 @@ def mock_obj() -> mock.NonCallableMagicMock:
 class TestSequence:
 
     @pytest.fixture
-    def target_node(self, mock_obj: mock.NonCallableMagicMock) -> Sequence:
-        node = Sequence()
+    def target_node(self, mock_obj, logging_mock) -> Sequence:
+        node = Sequence(logging_manager=logging_mock)
         # We add node children directly to avoid node additional checks
         node.children = mock_obj.children
         node.state = BTNodeState.IDLE
@@ -215,8 +217,8 @@ class TestSequence:
 class TestMemorySequence:
 
     @pytest.fixture
-    def target_node(self, mock_obj: mock.NonCallableMagicMock) -> MemorySequence:
-        node = MemorySequence()
+    def target_node(self, mock_obj, logging_mock) -> MemorySequence:
+        node = MemorySequence(logging_manager=logging_mock)
         # We add node children directly to avoid node additional checks
         node.children = mock_obj.children
         node.state = BTNodeState.IDLE

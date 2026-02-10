@@ -25,215 +25,157 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from unittest.mock import patch
+import pytest
+import unittest.mock as mock
+
 from rclpy.time import Time
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.ros_nodes.param import RosParamOption
 from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
 
-import pytest
 
+class TestRosParamOptionDefaultInput:
 
-def has_parameter_mock(name: str) -> bool:
-    if name == "this_service_does_not_exist":
-        return True
-    else:
-        return False
+    @pytest.fixture
+    def parameter_mock(self):
+        parameter_mock = mock.NonCallableMagicMock(spec_set=["value"])
+        return parameter_mock
 
+    @pytest.fixture
+    def ros_mock(self, parameter_mock):
+        def has_parameter_mock(name: str) -> bool:
+            if name == "this_service_does_not_exist":
+                return True
+            else:
+                return False
 
-@patch("rclpy.node.Node")
-@patch("rclpy.clock.Clock")
-@patch("rclpy.parameter.Parameter")
-def test_node_success_none(ros_mock, clock_mock, parameter_mock):
-    clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
-    ros_mock.get_clock.return_value = clock_mock
-    ros_mock.has_parameter.side_effect = has_parameter_mock
-    parameter_mock.value = None
-    ros_mock.get_parameter.return_value = parameter_mock
+        clock_mock = mock.NonCallableMagicMock(spec_set=["now"])
+        clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
 
-    param_node = RosParamOption(
-        options={
-            "param_name": "this_service_does_not_exist",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=ros_mock,
-    )
-    param_node.setup()
-    assert param_node.state == NodeState.IDLE
-    param_node.tick()
-    assert param_node.state == NodeState.SUCCEEDED
-    assert param_node.outputs["param"] == "tests"
+        ros_mock = mock.NonCallableMagicMock(
+            spec_set=["get_clock", "has_parameter", "get_parameter"]
+        )
+        ros_mock.get_clock.return_value = clock_mock
+        ros_mock.has_parameter.side_effect = has_parameter_mock
+        ros_mock.get_parameter.return_value = parameter_mock
+        return ros_mock
 
+    @pytest.fixture
+    def target_node(self, logging_mock, ros_mock):
+        node = RosParamOption(
+            options={
+                "param_name": "this_service_does_not_exist",
+                "param_type": str,
+                "default_value": "tests",
+            },
+            ros_node=ros_mock,
+            logging_manager=logging_mock,
+        )
+        return node
 
-@patch("rclpy.node.Node")
-@patch("rclpy.clock.Clock")
-@patch("rclpy.parameter.Parameter")
-def test_node_success(ros_mock, clock_mock, parameter_mock):
-    clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
-    ros_mock.get_clock.return_value = clock_mock
-    ros_mock.has_parameter.side_effect = has_parameter_mock
-    parameter_mock.value = str("not_tests")
-    ros_mock.get_parameter.return_value = parameter_mock
+    def test_node_success_none(self, target_node, parameter_mock):
+        parameter_mock.value = None
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
-    param_node = RosParamOption(
-        options={
-            "param_name": "this_service_does_not_exist",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=ros_mock,
-    )
-    param_node.setup()
-    assert param_node.state == NodeState.IDLE
-    param_node.tick()
-    assert param_node.state == NodeState.SUCCEEDED
-    assert param_node.outputs["param"] == "not_tests"
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEEDED
+        assert target_node.outputs["param"] == "tests"
 
-    param_node.shutdown()
-    assert param_node.state == NodeState.SHUTDOWN
+    def test_node_success(self, target_node, parameter_mock):
+        parameter_mock.value = "not_tests"
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEEDED
+        assert target_node.outputs["param"] == "not_tests"
 
-@patch("rclpy.node.Node")
-@patch("rclpy.clock.Clock")
-def test_node_failure(ros_mock, clock_mock):
-    clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
-    ros_mock.get_clock.return_value = clock_mock
-    ros_mock.has_parameter.side_effect = has_parameter_mock
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-    param_node = RosParamOption(
-        options={
-            "param_name": "bla",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=ros_mock,
-    )
-    param_node.setup()
-    assert param_node.state == NodeState.IDLE
-    param_node.tick()
-    assert param_node.state == NodeState.FAILURE
+    def test_node_failure(self, target_node):
+        # Set param name option to junk
+        target_node.options["param_name"] = "bla"
 
-    param_node.shutdown()
-    assert param_node.state == NodeState.SHUTDOWN
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
+        target_node.tick()
+        assert target_node.state == NodeState.FAILURE
 
-@patch("rclpy.node.Node")
-@patch("rclpy.clock.Clock")
-@patch("rclpy.parameter.Parameter")
-def test_node_failure_invalid_type(ros_mock, clock_mock, parameter_mock):
-    clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
-    ros_mock.get_clock.return_value = clock_mock
-    ros_mock.has_parameter.side_effect = has_parameter_mock
-    parameter_mock.value = 1
-    ros_mock.get_parameter.return_value = parameter_mock
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-    param_node = RosParamOption(
-        options={
-            "param_name": "this_service_does_not_exist",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=ros_mock,
-    )
-    param_node.setup()
-    assert param_node.state == NodeState.IDLE
-    param_node.tick()
-    assert param_node.state == NodeState.FAILURE
+    def test_node_failure_invalid_type(self, target_node, parameter_mock):
+        parameter_mock.value = 1
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
+        target_node.tick()
+        assert target_node.state == NodeState.FAILURE
 
-@patch("rclpy.node.Node")
-@patch("rclpy.clock.Clock")
-@patch("rclpy.parameter.Parameter")
-def test_node_reset(ros_mock, clock_mock, parameter_mock):
-    clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
-    ros_mock.get_clock.return_value = clock_mock
-    ros_mock.has_parameter.side_effect = has_parameter_mock
-    parameter_mock.value = str("not_tests")
-    ros_mock.get_parameter.return_value = parameter_mock
+    def test_node_reset(self, target_node, parameter_mock):
+        parameter_mock.value = "not_tests"
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
-    param_node = RosParamOption(
-        options={
-            "param_name": "this_service_does_not_exist",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=ros_mock,
-    )
-    param_node.setup()
-    assert param_node.state == NodeState.IDLE
-    param_node.tick()
-    assert param_node.state == NodeState.SUCCEEDED
-    assert param_node.outputs["param"] == "not_tests"
-    param_node.reset()
-    assert param_node.state == NodeState.IDLE
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEEDED
+        assert target_node.outputs["param"] == "not_tests"
 
-    param_node.tick()
-    assert param_node.state == NodeState.SUCCEEDED
-    assert param_node.outputs["param"] == "not_tests"
+        target_node.reset()
+        assert target_node.state == NodeState.IDLE
 
-    param_node.shutdown()
-    assert param_node.state == NodeState.SHUTDOWN
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEEDED
+        assert target_node.outputs["param"] == "not_tests"
 
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-@patch("rclpy.node.Node")
-@patch("rclpy.clock.Clock")
-@patch("rclpy.parameter.Parameter")
-def test_node_untick(ros_mock, clock_mock, parameter_mock):
-    clock_mock.now.side_effect = [Time(seconds=0), Time(seconds=1), Time(seconds=2)]
-    ros_mock.get_clock.return_value = clock_mock
-    ros_mock.has_parameter.side_effect = has_parameter_mock
-    parameter_mock.value = str("not_tests")
-    ros_mock.get_parameter.return_value = parameter_mock
+    def test_node_untick(self, target_node, parameter_mock):
+        parameter_mock.value = "not_tests"
+        target_node.setup()
+        assert target_node.state == NodeState.IDLE
 
-    param_node = RosParamOption(
-        options={
-            "param_name": "this_service_does_not_exist",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=ros_mock,
-    )
-    param_node.setup()
-    assert param_node.state == NodeState.IDLE
-    param_node.tick()
-    assert param_node.state == NodeState.SUCCEEDED
-    assert param_node.outputs["param"] == "not_tests"
-    param_node.untick()
-    assert param_node.state == NodeState.IDLE
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEEDED
+        assert target_node.outputs["param"] == "not_tests"
 
-    param_node.tick()
-    assert param_node.state == NodeState.SUCCEEDED
-    assert param_node.outputs["param"] == "not_tests"
+        target_node.untick()
+        assert target_node.state == NodeState.IDLE
 
-    param_node.shutdown()
-    assert param_node.state == NodeState.SHUTDOWN
+        target_node.tick()
+        assert target_node.state == NodeState.SUCCEEDED
+        assert target_node.outputs["param"] == "not_tests"
 
+        target_node.shutdown()
+        assert target_node.state == NodeState.SHUTDOWN
 
-def test_node_no_ros():
+    def test_node_no_ros(self, logging_mock, error_log):
+        param_node = RosParamOption(
+            options={
+                "param_name": "this_service_does_not_exist",
+                "param_type": str,
+                "default_value": "tests",
+            },
+            ros_node=None,
+            logging_manager=logging_mock,
+        )
+        with pytest.warns(error_log, match=".*no.*ROS node.*"):
+            setup_result = param_node.setup()
+        assert isinstance(setup_result.err(), BehaviorTreeException)
 
-    param_node = RosParamOption(
-        options={
-            "param_name": "this_service_does_not_exist",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=None,
-    )
-
-    setup_result = param_node.setup()
-    assert isinstance(setup_result.err(), BehaviorTreeException)
-
-
-def test_node_utility():
-
-    param_node = RosParamOption(
-        options={
-            "param_name": "this_service_does_not_exist",
-            "param_type": str,
-            "default_value": "tests",
-        },
-        ros_node=None,
-    )
-    utility_result = param_node.calculate_utility()
-    assert utility_result.ok() == UtilityBounds()
+    def test_node_utility(self, logging_mock):
+        param_node = RosParamOption(
+            options={
+                "param_name": "this_service_does_not_exist",
+                "param_type": str,
+                "default_value": "tests",
+            },
+            ros_node=None,
+            logging_manager=logging_mock,
+        )
+        utility_result = param_node.calculate_utility()
+        assert utility_result.ok() == UtilityBounds()

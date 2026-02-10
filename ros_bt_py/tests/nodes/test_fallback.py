@@ -32,7 +32,6 @@ from copy import deepcopy
 from result import Result, Ok, Err
 
 from ros_bt_py.helpers import BTNodeState
-from ros_bt_py.node import Node
 from ros_bt_py.nodes.fallback import Fallback, MemoryFallback, NameSwitch
 
 
@@ -41,7 +40,9 @@ def mock_obj() -> mock.NonCallableMagicMock:
     mock_obj = mock.NonCallableMagicMock()
     mock_obj.children = []
     for i in range(1, 4):
-        mock_node = mock.NonCallableMagicMock(set=Node)
+        mock_node = mock.NonCallableMagicMock(
+            spec_set=["name", "setup", "tick", "untick", "reset", "shutdown"]
+        )
         mock_node.setup.return_value = Ok(BTNodeState.IDLE)
         mock_node.tick.return_value = Ok(BTNodeState.FAILED)
         mock_node.untick.return_value = Ok(BTNodeState.IDLE)
@@ -55,8 +56,8 @@ def mock_obj() -> mock.NonCallableMagicMock:
 class TestFallback:
 
     @pytest.fixture
-    def target_node(self, mock_obj: mock.NonCallableMagicMock) -> Fallback:
-        node = Fallback()
+    def target_node(self, mock_obj, logging_mock) -> Fallback:
+        node = Fallback(logging_manager=logging_mock)
         # We add node children directly to avoid node additional checks
         node.children = mock_obj.children
         node.state = BTNodeState.IDLE
@@ -215,8 +216,8 @@ class TestFallback:
 class TestMemoryFallback:
 
     @pytest.fixture
-    def target_node(self, mock_obj: mock.NonCallableMagicMock) -> MemoryFallback:
-        node = MemoryFallback()
+    def target_node(self, mock_obj, logging_mock) -> MemoryFallback:
+        node = MemoryFallback(logging_manager=logging_mock)
         # We add node children directly to avoid node additional checks
         node.children = mock_obj.children
         node.state = BTNodeState.IDLE
@@ -384,8 +385,8 @@ class TestMemoryFallback:
 class TestNameSwitch:
 
     @pytest.fixture
-    def target_node(self, mock_obj: mock.NonCallableMagicMock) -> NameSwitch:
-        node = NameSwitch()
+    def target_node(self, mock_obj, logging_mock) -> NameSwitch:
+        node = NameSwitch(logging_manager=logging_mock)
         # We add node children directly to avoid node additional checks
         node.children = mock_obj.children
         node.child_map = {

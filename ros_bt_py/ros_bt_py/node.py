@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from types import ModuleType
 
-from result import Err, Ok, Result, as_result, is_err
+from result import Err, Ok, Result
 
 import abc
 import importlib
@@ -47,7 +47,6 @@ from typing import (
     List,
     Tuple,
     Type,
-    Sequence,
     Dict,
     Optional,
 )
@@ -56,7 +55,7 @@ import rclpy
 import rclpy.logging
 from rclpy.node import Node as ROSNode
 
-from ros_bt_py_interfaces.msg import UtilityBounds, _node_data_location
+from ros_bt_py_interfaces.msg import UtilityBounds
 from typeguard import typechecked
 from ros_bt_py_interfaces.msg import (
     NodeStructure,
@@ -67,12 +66,11 @@ from ros_bt_py_interfaces.msg import (
     Wiring,
     WiringData,
     TreeStructure,
-    TreeState,
-    TreeData,
 )
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
+from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py.exceptions import (
     BehaviorTreeException,
     NodeStateError,
@@ -82,7 +80,12 @@ from ros_bt_py.exceptions import (
 from ros_bt_py.node_data import NodeData, NodeDataMap
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.custom_types import TypeWrapper
-from ros_bt_py.helpers import BTNodeState, get_default_value, json_decode, json_encode
+from ros_bt_py.helpers import (
+    BTNodeState,
+    get_default_value,
+    json_decode,
+    json_encode,
+)
 from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 
 
@@ -344,11 +347,12 @@ class Node(object, metaclass=NodeMeta):
     def __init__(
         self,
         node_id: Optional[uuid.UUID] = None,
+        name: Optional[str] = None,
         options: Optional[Dict] = None,
+        ros_node: Optional[ROSNode] = None,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[ROSNode] = None,
+        logging_manager: Optional[LoggingManager] = None,
     ) -> None:
         """
         Prepare class members.
@@ -392,6 +396,7 @@ class Node(object, metaclass=NodeMeta):
         self._ros_node: Optional[ROSNode] = ros_node
         self.debug_manager: Optional[DebugManager] = debug_manager
         self.subtree_manager: Optional[SubtreeManager] = subtree_manager
+        self.logging_manager: Optional[LoggingManager] = logging_manager
 
         if not self._node_config:
             raise NodeConfigError("Missing node_config, cannot initialize!")
@@ -420,9 +425,7 @@ class Node(object, metaclass=NodeMeta):
                 if key in self.node_config.optional_options:
                     optional_keys.append(key)
             if unset_option_keys == optional_keys:
-                rclpy.logging.get_logger(self.name).warn(
-                    f"missing optional keys: {optional_keys}"
-                )
+                self.logwarn(f"missing optional keys: {optional_keys}")
             else:
                 raise ValueError(f"Missing options: {str(unset_option_keys)}")
 
@@ -483,6 +486,9 @@ class Node(object, metaclass=NodeMeta):
     def ros_node(self, new_ros_node: ROSNode):
         self.logdebug(f"Setting new ROS node: {new_ros_node}")
         self._ros_node = new_ros_node
+
+    def get_logger(self) -> Optional[LoggingManager]:
+        return self.logging_manager
 
     def setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
@@ -1201,53 +1207,93 @@ class Node(object, metaclass=NodeMeta):
             )
         )
 
-    # Logging methods - these just use the ROS logging framework, but add the
-    # name and type of the node so it's easier to trace errors.
+    # Logging methods - these add the name and id of the node
+    #   to the associated logging_manager
 
     @typechecked
-    def logdebug(self, message: str) -> None:
+    def logdebug(self, message: str, stacklevel=3, internal=False) -> None:
         """
-        Wrap call to :func:rclpy.logger.get_logger(...).debug.
+        Wrap call to the associated logging manager.
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).debug(f"{message}")
+        logger = self.get_logger()
+        if logger is not None:
+            logger.debug(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
-    def loginfo(self, message: str) -> None:
+    def loginfo(self, message: str, stacklevel=3, internal=False) -> None:
         """
-        Wrap call to :func:rclpy.logging.get_logger(...).info.
+        Wrap call to the associated logging manager.
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).info(f"{message}")
+        logger = self.get_logger()
+        if logger is not None:
+            logger.info(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
-    def logwarn(self, message: str) -> None:
+    def logwarn(self, message: str, stacklevel=3, internal=False) -> None:
         """
-        Wrap call to :func:rclpy.logging.get_logger(...).warn.
+        Wrap call to the associated logging manager.
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).warn(f"{message}")
+        logger = self.get_logger()
+        if logger is not None:
+            logger.warn(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
-    def logerr(self, message: str) -> None:
+    def logerr(self, message: str, stacklevel=3, internal=False) -> None:
         """
-        Wrap call to :func:rclpy.logging.get_logger(...).error.
+        Wrap call to the associated logging manager.
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).error(f"{message}")
+        logger = self.get_logger()
+        if logger is not None:
+            logger.error(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @typechecked
-    def logfatal(self, message: str) -> None:
+    def logfatal(self, message: str, stacklevel=3, internal=False) -> None:
         """
-        Wrap call to :func:rclpy.logging.get_logger(...).fatal.
+        Wrap call to the associated logging manager.
 
         Adds this node's name and type to the given message
         """
-        rclpy.logging.get_logger(self.name).fatal(f"{message}")
+        logger = self.get_logger()
+        if logger is not None:
+            logger.fatal(
+                msg=message,
+                node_id=self.node_id,
+                node_name=self.name,
+                stacklevel=stacklevel,
+                internal=internal,
+            )
 
     @classmethod
     @typechecked
@@ -1257,6 +1303,7 @@ class Node(object, metaclass=NodeMeta):
         ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
+        logging_manager: Optional[LoggingManager] = None,
         permissive: bool = False,
     ) -> Result["Node", BehaviorTreeException]:
         """
@@ -1377,12 +1424,13 @@ class Node(object, metaclass=NodeMeta):
         node_class.permissive = permissive
         try:
             node_instance = node_class(
-                name=msg.name if msg.name else None,
                 node_id=node_id,
+                name=msg.name if msg.name else None,
                 options=options_dict,
+                ros_node=ros_node,
                 debug_manager=debug_manager,
                 subtree_manager=subtree_manager,
-                ros_node=ros_node,
+                logging_manager=logging_manager,
             )
         except BehaviorTreeException as ex:
             return Err(ex)

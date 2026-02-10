@@ -200,14 +200,14 @@ class IterateList(Decorator):
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if self.inputs.is_updated("list"):
-            self.logdebug("Input list changed - resetting iterator")
+            self.loginfo("Input list changed - resetting iterator")
             self.reset_counter()
 
         # if no items in 'list' directly succeed
         if len(self.inputs["list"]) > 0:
             self.outputs["list_item"] = self.inputs["list"][self.counter]
         else:
-            self.logdebug("Nothing to iterate, input list is empty")
+            self.loginfo("Nothing to iterate, input list is empty")
             return Ok(BTNodeState.SUCCEEDED)
 
         if len(self.children) == 0:
