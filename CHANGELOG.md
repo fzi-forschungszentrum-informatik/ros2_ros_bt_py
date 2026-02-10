@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Update Web-GUI to 7.0.0 by @Oberacda in [#231](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/231)
 - Provide enhanced logging functionality by @Doomse in [#230](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/230)
 - Update issue templates. by @Oberacda
 - Update issue templates by @Oberacda in [#229](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/229)
