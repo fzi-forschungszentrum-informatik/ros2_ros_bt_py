@@ -385,6 +385,9 @@ class Node(object, metaclass=NodeMeta):
             self.node_id = node_id
         else:
             self.node_id = uuid.uuid4()
+
+        self.tree_ref: Optional[uuid.UUID] = None
+
         # Only used to make finding the root of the tree easier
         self.parent: Optional[Node] = None
         self._state: BTNodeState = BTNodeState.UNINITIALIZED
@@ -1930,6 +1933,7 @@ class Node(object, metaclass=NodeMeta):
                 if self.node_config.max_children is not None
                 else -1
             ),
+            tree_ref=(uuid_to_ros(self.tree_ref) if self.tree_ref is not None else ""),
         )
 
     def to_state_msg(self):

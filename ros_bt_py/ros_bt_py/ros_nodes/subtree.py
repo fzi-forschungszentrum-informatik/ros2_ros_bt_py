@@ -91,17 +91,26 @@ class Subtree(Leaf):
             )
 
         self.root: Optional[BTNode] = None
+
+        # Since node_id is only unique within one tree and tree_id has to be globally unique
+        #   we generate a new uuid and store it in `tree_ref`
+        self.tree_ref = uuid.uuid4()
+
         # since the subtree gets a prefix, we can just have it use the
-        # parent debug manager
+        # parent debug manager TODO Is that still true?
         self.nested_subtree_manager = SubtreeManager()
-        self.subtree_logging_manager = LoggingManager(
-            ros_node=self.ros_node,
-            publish_log_callback=self.logging_manager.publish_log_callback,
+        self.subtree_logging_manager = (
+            LoggingManager(
+                ros_node=self.ros_node,
+                publish_log_callback=self.logging_manager.publish_log_callback,
+            )
+            if self.logging_manager is not None
+            else None
         )
         self.manager: TreeManager = TreeManager(
             ros_node=self.ros_node,
             name=self.name,
-            tree_id=self.node_id,
+            tree_id=self.tree_ref,
             debug_manager=self.debug_manager,
             subtree_manager=self.nested_subtree_manager,
             logging_manager=self.subtree_logging_manager,
