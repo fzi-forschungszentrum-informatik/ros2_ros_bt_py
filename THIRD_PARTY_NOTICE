@@ -1,0 +1,5 @@
+This project includes software from the following third parties:
+
+result (https://github.com/rustedpy/result)
+Copyright (c) 2015-2020 Danilo Bargen and contributors
+Licensed under the MIT License. See ros_bt_py/ros_bt_py/vendor/result/LICENSE for details.
