@@ -1,0 +1,176 @@
+version: 0.6.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: UNKNOWN TREE
+path: ''
+root_id: a97eb6e6-a7e8-4040-988e-e3926bc76d8a
+nodes:
+- module: ros_bt_py.nodes.sequence
+  node_class: MemorySequence
+  version: 0.1.0
+  max_children: -1
+  node_id: e95e9cce-4305-4bb8-a1b5-a4aec1788a78
+  name: MemorySequence
+  child_ids:
+  - 8d4152bd-d696-4a2e-b0c0-860be37f08ef
+  - 2a8ab76b-afe7-4b49-a6c5-98af3b3d2ae9
+  - ecd62c6a-665a-4c40-b26f-cae4cc2c30f7
+  options: []
+  inputs: []
+  outputs: []
+- module: ros_bt_py.ros_nodes.subtree
+  node_class: Subtree
+  version: 0.2.0
+  max_children: 0
+  node_id: 8d4152bd-d696-4a2e-b0c0-860be37f08ef
+  name: Subtree
+  child_ids: []
+  options:
+  - key: subtree_path
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.FilePath"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.FilePath", "path": "package://ros_bt_py/trees/nested_five_pub_sub_test.yaml"}'
+  - key: use_io_nodes
+    serialized_type: '{"py/type": "builtins.bool"}'
+    serialized_value: 'true'
+  inputs: []
+  outputs:
+  - key: load_success
+    serialized_type: '{"py/type": "builtins.bool"}'
+  - key: load_error_msg
+    serialized_type: '{"py/type": "builtins.str"}'
+- module: ros_bt_py.nodes.sequence
+  node_class: MemorySequence
+  version: 0.1.0
+  max_children: -1
+  node_id: 2a8ab76b-afe7-4b49-a6c5-98af3b3d2ae9
+  name: MemorySequence
+  child_ids:
+  - ae5fb49d-bad7-46c5-b617-47cb5705f709
+  - ab5bafad-3c1b-4dd2-a777-65eb2b0bd4d2
+  - ed8822ca-8473-4fe8-ad89-afe6b619c045
+  options: []
+  inputs: []
+  outputs: []
+- module: ros_bt_py.ros_nodes.subtree
+  node_class: Subtree
+  version: 0.2.0
+  max_children: 0
+  node_id: ae5fb49d-bad7-46c5-b617-47cb5705f709
+  name: Subtree
+  child_ids: []
+  options:
+  - key: subtree_path
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.FilePath"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.FilePath", "path": "package://ros_bt_py/trees/nested_five_pub_sub_test.yaml"}'
+  - key: use_io_nodes
+    serialized_type: '{"py/type": "builtins.bool"}'
+    serialized_value: 'true'
+  inputs: []
+  outputs:
+  - key: load_success
+    serialized_type: '{"py/type": "builtins.bool"}'
+  - key: load_error_msg
+    serialized_type: '{"py/type": "builtins.str"}'
+- module: ros_bt_py.nodes.sequence
+  node_class: MemorySequence
+  version: 0.1.0
+  max_children: -1
+  node_id: ab5bafad-3c1b-4dd2-a777-65eb2b0bd4d2
+  name: MemorySequence
+  child_ids:
+  - 100c54d8-6e6c-46d1-92b0-1c59f86cde22
+  options: []
+  inputs: []
+  outputs: []
+- module: ros_bt_py.ros_nodes.subtree
+  node_class: Subtree
+  version: 0.2.0
+  max_children: 0
+  node_id: 100c54d8-6e6c-46d1-92b0-1c59f86cde22
+  name: Subtree
+  child_ids: []
+  options:
+  - key: subtree_path
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.FilePath"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.FilePath", "path": "package://ros_bt_py/trees/nested_five_pub_sub_test.yaml"}'
+  - key: use_io_nodes
+    serialized_type: '{"py/type": "builtins.bool"}'
+    serialized_value: 'true'
+  inputs: []
+  outputs:
+  - key: load_success
+    serialized_type: '{"py/type": "builtins.bool"}'
+  - key: load_error_msg
+    serialized_type: '{"py/type": "builtins.str"}'
+- module: ros_bt_py.ros_nodes.subtree
+  node_class: Subtree
+  version: 0.2.0
+  max_children: 0
+  node_id: ed8822ca-8473-4fe8-ad89-afe6b619c045
+  name: Subtree
+  child_ids: []
+  options:
+  - key: subtree_path
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.FilePath"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.FilePath", "path": "package://ros_bt_py/trees/nested_five_pub_sub_test.yaml"}'
+  - key: use_io_nodes
+    serialized_type: '{"py/type": "builtins.bool"}'
+    serialized_value: 'true'
+  inputs: []
+  outputs:
+  - key: load_success
+    serialized_type: '{"py/type": "builtins.bool"}'
+  - key: load_error_msg
+    serialized_type: '{"py/type": "builtins.str"}'
+- module: ros_bt_py.ros_nodes.subtree
+  node_class: Subtree
+  version: 0.2.0
+  max_children: 0
+  node_id: ecd62c6a-665a-4c40-b26f-cae4cc2c30f7
+  name: Subtree
+  child_ids: []
+  options:
+  - key: subtree_path
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.FilePath"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.FilePath", "path": "package://ros_bt_py/trees/nested_five_pub_sub_test.yaml"}'
+  - key: use_io_nodes
+    serialized_type: '{"py/type": "builtins.bool"}'
+    serialized_value: 'true'
+  inputs: []
+  outputs:
+  - key: load_success
+    serialized_type: '{"py/type": "builtins.bool"}'
+  - key: load_error_msg
+    serialized_type: '{"py/type": "builtins.str"}'
+data_wirings: []
+tick_frequency_hz: 10.0
+public_node_data:
+- node_id: 8d4152bd-d696-4a2e-b0c0-860be37f08ef
+  data_kind: outputs
+  data_key: load_success
+- node_id: 8d4152bd-d696-4a2e-b0c0-860be37f08ef
+  data_kind: outputs
+  data_key: load_error_msg
+- node_id: ae5fb49d-bad7-46c5-b617-47cb5705f709
+  data_kind: outputs
+  data_key: load_success
+- node_id: ae5fb49d-bad7-46c5-b617-47cb5705f709
+  data_kind: outputs
+  data_key: load_error_msg
+- node_id: 100c54d8-6e6c-46d1-92b0-1c59f86cde22
+  data_kind: outputs
+  data_key: load_success
+- node_id: 100c54d8-6e6c-46d1-92b0-1c59f86cde22
+  data_kind: outputs
+  data_key: load_error_msg
+- node_id: ed8822ca-8473-4fe8-ad89-afe6b619c045
+  data_kind: outputs
+  data_key: load_success
+- node_id: ed8822ca-8473-4fe8-ad89-afe6b619c045
+  data_kind: outputs
+  data_key: load_error_msg
+- node_id: ecd62c6a-665a-4c40-b26f-cae4cc2c30f7
+  data_kind: outputs
+  data_key: load_success
+- node_id: ecd62c6a-665a-4c40-b26f-cae4cc2c30f7
+  data_kind: outputs
+  data_key: load_error_msg

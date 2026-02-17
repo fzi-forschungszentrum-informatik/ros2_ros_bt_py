@@ -29,15 +29,12 @@ import pytest
 
 import rclpy
 
-import ament_index_python
-import os
 import time
 
 from rclpy.node import Node
 from rclpy.client import Client
 
 from ros_bt_py_interfaces.msg import (
-    NodeState,
     TreeState,
     TreeStateList,
     TreeStructureList,
@@ -92,13 +89,8 @@ def test_enum_switch(
     result_dict: dict[str, str],
     tree_name: str,
 ):
-    tree_path = os.path.join(
-        ament_index_python.get_package_share_directory("ros_bt_py"),
-        "trees",
-        tree_name,
-    )
     load_req = LoadTreeFromPath.Request(
-        path=f"file://{tree_path}",
+        path=f"package://ros_bt_py/trees/{tree_name}",
         permissive=False,
     )
     assert load_client.wait_for_service(timeout_sec=30)

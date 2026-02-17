@@ -34,15 +34,17 @@ from result import Err, Ok, Result
 from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import TreeStructure, TreeState, TreeData
-from ros_bt_py.exceptions import BehaviorTreeException
 
 
 @typechecked
 class SubtreeManager(object):
     """
-    Manages the collection of the states of a :class:`ros_bt_py.nodes.Subtree`.
+    Collects information about all subtrees in a given tree.
 
-    The subtree states are published by the :class:`TreeManager`.
+    Subtrees are identified based on the node_id of the node that 'owns' the subtree,
+      instead of the tree_id of the subtree itself.
+    This helps with maintaining information when a node is updated because the node_id
+      is persisted while the tree_id is not.
     """
 
     def __init__(self):
@@ -138,9 +140,9 @@ class SubtreeManager(object):
     def remove_subtree(self, node_id: uuid.UUID):
 
         def query_dict(node_id: uuid.UUID, dict: dict[uuid.UUID, Any]):
-            for tree_id in list(dict.keys()):
-                if tree_id == node_id:
-                    del dict[tree_id]
+            for n_id in list(dict.keys()):
+                if n_id == node_id:
+                    del dict[n_id]
 
         with self._lock:
             query_dict(node_id, self.subtree_structures)

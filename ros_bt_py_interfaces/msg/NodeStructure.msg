@@ -46,3 +46,7 @@ string[] child_ids
 NodeOption[] options
 NodeIO[] inputs
 NodeIO[] outputs
+
+# If this node is related to a different tree e.g. a Subtree node hoisting a subtree
+#   we store this tree-id here, otherwise this is left blank
+string tree_ref
