@@ -31,7 +31,7 @@ import uuid
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager

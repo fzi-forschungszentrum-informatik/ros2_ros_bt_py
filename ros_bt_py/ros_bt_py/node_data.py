@@ -28,7 +28,7 @@
 from typing import Any
 import rclpy
 import rclpy.logging
-from result import Err, Ok, Result
+from ros_bt_py.vendor.result import Err, Ok, Result
 
 from ros_bt_py.custom_types import (
     FilePath,

@@ -29,7 +29,7 @@
 from rclpy.utilities import ament_index_python
 import yaml
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState

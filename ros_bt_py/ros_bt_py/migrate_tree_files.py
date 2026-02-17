@@ -35,7 +35,7 @@ import yaml
 from importlib import metadata
 from packaging.version import Version
 from typing import Literal
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 from ros_bt_py.node import Node
 from ros_bt_py.custom_types import (
     FilePath,

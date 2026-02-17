@@ -30,7 +30,7 @@
 from copy import deepcopy
 from typing import Dict, Optional
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 from rclpy.node import Node

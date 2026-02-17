@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from string import Formatter
 import os
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState

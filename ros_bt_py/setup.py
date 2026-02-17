@@ -54,6 +54,8 @@ setup(
         "ros_bt_py",
         "ros_bt_py.nodes",
         "ros_bt_py.ros_nodes",
+        "ros_bt_py.vendor",
+        "ros_bt_py.vendor.result",
     ],
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),

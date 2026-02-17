@@ -29,7 +29,7 @@ import pytest
 import unittest.mock as mock
 
 from copy import deepcopy
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Node
