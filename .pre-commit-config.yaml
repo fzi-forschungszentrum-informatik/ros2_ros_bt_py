@@ -34,6 +34,7 @@ repos:
         stages: [pre-commit]
         entry: ament_copyright
         language: system
+        exclude: "ros_bt_py/ros_bt_py/vendor/*"
       - id: ament_xmllint
         name: ament_xmllint
         description: Static code analysis of xml files.
