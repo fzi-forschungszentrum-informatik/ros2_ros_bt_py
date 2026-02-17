@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from time import time
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig

@@ -29,7 +29,7 @@
 from typing import Optional, Dict
 from rclpy.node import Node
 
-from result import Result, Ok, Err, is_err
+from ros_bt_py.vendor.result import Result, Ok, Err, is_err
 import uuid
 
 from ros_bt_py.debug_manager import DebugManager

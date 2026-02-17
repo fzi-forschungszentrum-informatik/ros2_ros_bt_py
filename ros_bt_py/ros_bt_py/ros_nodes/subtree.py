@@ -28,7 +28,7 @@
 """BT node to encapsulate a part of a tree in a reusable subtree."""
 from typing import List, Optional, Dict
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 from rclpy.node import Node
