@@ -28,7 +28,6 @@
   <!-- Python3 dependencies -->
   <depend>python3-toml</depend>
   <depend>python3-typeguard</depend>
-  <depend>python3-typing-extensions</depend>
   <depend>python3-jsonpickle</depend>
   <depend>python3-requests</depend>
   <depend>python3-simplejson</depend>
