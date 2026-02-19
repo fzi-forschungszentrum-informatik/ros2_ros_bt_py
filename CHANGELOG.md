@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add typing extensions dependency. by @Oberacda
+- Add result library. by @Oberacda
 - Add Enum Switch Node by @nspielbau in [#183](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/183)
 - Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Switch to vendor result. by @Oberacda
 - Update Web-GUI to 7.0.1 by @Oberacda in [#235](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/235)
 - Decouple subtree ids from node ids by @Doomse in [#232](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/232)
 - Update Web-GUI to 7.0.0 by @Oberacda in [#231](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/231)
@@ -21,6 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Strip "__name__" attribute from serialized TypeWrappers by @Doomse in [#227](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/227)
 - Update Web-GUI to 6.0.2 by @Oberacda in [#226](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/226)
 - Set_options unwire and rewire data by @Doomse in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
+
+### Fixed
+- Fix imports test to deal with nested packages. by @Oberacda
+- Fix formatting. by @Oberacda
+
+### Removed
+- Remove typing_extensiosn. by @Oberacda in [#241](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/241)
+- Remove dependency. by @Oberacda
 
 
 ## [0.6.0] - 2026-01-14
