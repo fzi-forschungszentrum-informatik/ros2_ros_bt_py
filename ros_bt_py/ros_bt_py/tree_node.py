@@ -30,6 +30,7 @@
 from typeguard import typechecked
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.exceptions import InvalidHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.logging import get_logger
 from rclpy.node import Node
@@ -528,7 +529,11 @@ def main(argv=None):
     executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(tree_node)
     try:
-        executor.spin()
+        while rclpy.ok():
+            try:
+                executor.spin()
+            except InvalidHandle:
+                get_logger("tree_node").error("Rclpy InvalidHandle Error, resuming")
     except KeyboardInterrupt:
         get_logger("tree_node").fatal("Shutting down rclpy!")
 
