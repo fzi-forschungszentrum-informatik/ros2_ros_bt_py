@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Respin executor on InvalidHandle by @Doomse in [#238](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/238)
 - Switch to vendor result. by @Oberacda
 - Update Web-GUI to 7.0.1 by @Oberacda in [#235](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/235)
 - Decouple subtree ids from node ids by @Doomse in [#232](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/232)
