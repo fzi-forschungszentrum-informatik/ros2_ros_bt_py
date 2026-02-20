@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creating a Node Class package &mdash; ros_bt_py 0.1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/ros_bt_py.ico"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=a58bc63e"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Creating Node Classes" href="creating_node_classes.html" />
+    <link rel="prev" title="Creating Nodes" href="node_creation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ros_bt_py
+              <img src="_static/ros_bt_py_128.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#installing-from-binary-packages">Installing from binary packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#installing-from-source">Installing from source</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#running-ros-bt-py">Running ros_bt_py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#launch-options">Launch Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#stand-alone-web-interface">Stand-alone Web Interface</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html">Basic Tutorial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#starting-up-ros-bt-py">Starting up ros_bt_py</a></li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#examining-the-interface">Examining the Interface</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#menu-bars">Menu Bars</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#package-loader">Package Loader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#node-list">Node List</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#editor-window">Editor Window</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#node-menu">Node Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#writing-your-first-bt">Writing your first BT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#make-sure-the-tree-is-not-currently-running">1. Make sure the Tree is not currently running</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#add-a-control-flow-node">2. Add a control flow node</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#add-a-leaf-node-to-the-tree">3. Add a leaf node to the tree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#modify-the-constant-node">4. Modify the Constant node</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#add-a-second-constant-and-a-processing-step">5. Add a second Constant and a processing step</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#connecting-the-data-wirings">6. Connecting the Data Wirings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#run-the-finished-tree">7. Run the finished tree</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#working-with-bt-py">Working with bt_py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#tree-execution">Tree Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#nodes">Nodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#data-graph">Data Graph</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#working-with-larger-trees">Working with larger trees</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#understanding-flow-control">Understanding Flow Control</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#basic-control-flows">Basic Control Flows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#advanced-control-flows">Advanced Control Flows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#regarding-memory">Regarding Memory</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#writing-a-more-complex-bt">Writing a more complex BT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#adding-a-branching-path">1. Adding a branching path</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#introducing-randomized-outputs">2. Introducing randomized Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#using-subtrees">Using Subtrees</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#subtree-i-o">Subtree I/O</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#using-a-subtree-in-our-example-tree">Using a Subtree in our example tree</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#using-ros-interfaces-with-ros-bt-py">Using ROS Interfaces with ros_bt_py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#building-and-processing-messages">Building and processing messages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#topics">Topics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#services-and-actions">Services and Actions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_tutorial.html">Advanced Tutorial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="advanced_tutorial.html#using-optionrefs">Using OptionRefs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="advanced_tutorial.html#defining-optionrefs-in-the-nodeconfig">Defining OptionRefs in the NodeConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="node_creation.html">Creating Nodes</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Creating a Node Class package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#package-creation">Package Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-package">Example Package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="creating_node_classes.html">Creating Node Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#create-a-new-class">1. Create a new class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#fill-in-the-nodeconfig">2. Fill in the NodeConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#implement-the-do-methods">3. Implement the <code class="code docutils literal notranslate"><span class="pre">_do_</span></code> methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#test-your-node">4. Test your node!</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing_node_classes.html">Testing Node Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#creating-a-test-folder-and-unit-test-script">Creating a Test Folder and Unit Test Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#running-your-unit-tests">Running your Unit Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#adding-your-unit-tests-to-cmakelists-txt">Adding your Unit Tests to CMakeLists.txt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#adding-your-unit-tests-to-setup-py">Adding your Unit Tests to setup.py</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#running-tests-via-colcon">Running Tests via colcon</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration &amp; Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced_launch_configuration.html">Advanced Launch Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="advanced_launch_configuration.html#using-custom-node-classes-in-a-project">Using Custom Node Classes in a Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced_launch_configuration.html#other-important-launch-arguments">Other Important Launch Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utility_functions.html">Utility Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utility_functions.html#what">What?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="utility_functions.html#why">Why?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="utility_functions.html#how">How?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.debug_manager">ros_bt_py.debug_manager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager"><code class="docutils literal notranslate"><span class="pre">DebugManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager.report_state"><code class="docutils literal notranslate"><span class="pre">DebugManager.report_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager.report_tick"><code class="docutils literal notranslate"><span class="pre">DebugManager.report_tick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager.set_collect_node_diagnostics"><code class="docutils literal notranslate"><span class="pre">DebugManager.set_collect_node_diagnostics()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.exceptions">ros_bt_py.exceptions module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.AssignmentException"><code class="docutils literal notranslate"><span class="pre">AssignmentException</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.BehaviorTreeException"><code class="docutils literal notranslate"><span class="pre">BehaviorTreeException</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.MigrationException"><code class="docutils literal notranslate"><span class="pre">MigrationException</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.MissingParentError"><code class="docutils literal notranslate"><span class="pre">MissingParentError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.NodeConfigError"><code class="docutils literal notranslate"><span class="pre">NodeConfigError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.NodeStateError"><code class="docutils literal notranslate"><span class="pre">NodeStateError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.TreeTopologyError"><code class="docutils literal notranslate"><span class="pre">TreeTopologyError</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-helpers-module">ros_bt_py.helpers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-node-module">ros_bt_py.node module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.node_config">ros_bt_py.node_config module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeConfig"><code class="docutils literal notranslate"><span class="pre">NodeConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeConfig.extend"><code class="docutils literal notranslate"><span class="pre">NodeConfig.extend()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node_config.OptionRef"><code class="docutils literal notranslate"><span class="pre">OptionRef</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-node-data-module">ros_bt_py.node_data module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.ros_helpers">ros_bt_py.ros_helpers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.EnumValue"><code class="docutils literal notranslate"><span class="pre">EnumValue</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.LoggerLevel"><code class="docutils literal notranslate"><span class="pre">LoggerLevel</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.get_interface_name"><code class="docutils literal notranslate"><span class="pre">get_interface_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.get_message_constant_fields"><code class="docutils literal notranslate"><span class="pre">get_message_constant_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.get_message_field_type"><code class="docutils literal notranslate"><span class="pre">get_message_field_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.publish_message_channels"><code class="docutils literal notranslate"><span class="pre">publish_message_channels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.ros_to_uuid"><code class="docutils literal notranslate"><span class="pre">ros_to_uuid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.uuid_to_ros"><code class="docutils literal notranslate"><span class="pre">uuid_to_ros()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#ros-bt-py-tree-manager-module">ros_bt_py.tree_manager module</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ros_bt_py</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="node_creation.html">Creating Nodes</a></li>
+      <li class="breadcrumb-item active">Creating a Node Class package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="creating-a-node-class-package">
+<span id="creating-packages"></span><h1>Creating a Node Class package<a class="headerlink" href="#creating-a-node-class-package" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>When adding more complex node classes it is strongly advised, that you create your own Python
+package for them, so you don’t have to fork (or even have uncommited changes!!) in your
+<code class="docutils literal notranslate"><span class="pre">ros_bt_py</span></code> repository.</p>
+<section id="package-creation">
+<h2>Package Creation<a class="headerlink" href="#package-creation" title="Link to this heading"></a></h2>
+<p>You can use the standard ament package creation methods to create an empty python package.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ros2<span class="w"> </span>pkg<span class="w"> </span>create<span class="w"> </span>--build-type<span class="w"> </span>ament_python<span class="w"> </span>&lt;package_name&gt;
+</pre></div>
+</div>
+<p>Afterwards simply create your Node Classes inside the <cite>package_name</cite> module.
+Always remember to add your modules inside the <cite>packages</cite> tag of your <cite>setup.py</cite> for them to be
+recognized as modules.</p>
+</section>
+<section id="example-package">
+<h2>Example Package<a class="headerlink" href="#example-package" title="Link to this heading"></a></h2>
+<p>Below is the example sturcture of a package called <code class="docutils literal notranslate"><span class="pre">test_behaviors</span></code> with a <code class="docutils literal notranslate"><span class="pre">node</span></code> module for
+custom node classes inside the <code class="docutils literal notranslate"><span class="pre">example.py</span></code> file.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>test_behaviors/
+├── test_behaviors/
+│   ├── __init__.py
+│   └── nodes/
+│       ├── __init__.py
+│       └── example.py
+├── test/
+│   ├── test_copyright.py
+│   ├── test_flake8.py
+│   └── test_pep257.py
+├── setup.py
+├── setup.cfg
+└── README.md
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> file in this case should look like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="kn">import</span> <span class="n">glob</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">setuptools</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup</span>
+
+<span class="n">package_name</span> <span class="o">=</span> <span class="s1">&#39;test_behaviors&#39;</span>
+
+<span class="n">setup</span><span class="p">(</span>
+     <span class="n">name</span><span class="o">=</span><span class="n">package_name</span><span class="p">,</span>
+     <span class="n">version</span><span class="o">=</span><span class="s1">&#39;0.0.0&#39;</span><span class="p">,</span>
+     <span class="n">packages</span><span class="o">=</span><span class="p">[</span>
+         <span class="s2">&quot;test_behaviors&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;test_behaviors.nodes&quot;</span><span class="p">,</span>
+     <span class="p">],</span>
+     <span class="n">data_files</span><span class="o">=</span><span class="p">[</span>
+         <span class="p">(</span><span class="s1">&#39;share/ament_index/resource_index/packages&#39;</span><span class="p">,</span>
+             <span class="p">[</span><span class="s1">&#39;resource/&#39;</span> <span class="o">+</span> <span class="n">package_name</span><span class="p">]),</span>
+         <span class="p">(</span><span class="s1">&#39;share/&#39;</span> <span class="o">+</span> <span class="n">package_name</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;package.xml&#39;</span><span class="p">]),</span>
+         <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;share&#39;</span><span class="p">,</span> <span class="n">package_name</span><span class="p">,</span> <span class="s1">&#39;launch&#39;</span><span class="p">),</span> <span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;launch&#39;</span><span class="p">,</span> <span class="s1">&#39;*.launch.py&#39;</span><span class="p">))),</span>
+         <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;share&#39;</span><span class="p">,</span> <span class="n">package_name</span><span class="p">,</span> <span class="s1">&#39;trees&#39;</span><span class="p">),</span> <span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;trees&#39;</span><span class="p">,</span> <span class="s1">&#39;*.yaml&#39;</span><span class="p">)))</span>
+     <span class="p">],</span>
+     <span class="n">install_requires</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;setuptools&#39;</span><span class="p">],</span>
+     <span class="n">zip_safe</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+     <span class="n">maintainer</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+     <span class="n">maintainer_email</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+     <span class="n">description</span><span class="o">=</span><span class="s1">&#39;TODO: Package description&#39;</span><span class="p">,</span>
+     <span class="n">license</span><span class="o">=</span><span class="s1">&#39;TODO: License declaration&#39;</span><span class="p">,</span>
+     <span class="n">tests_require</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pytest&#39;</span><span class="p">],</span>
+     <span class="n">entry_points</span><span class="o">=</span><span class="p">{</span>
+         <span class="s1">&#39;console_scripts&#39;</span><span class="p">:</span> <span class="p">[</span>
+         <span class="p">],</span>
+     <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="node_creation.html" class="btn btn-neutral float-left" title="Creating Nodes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="creating_node_classes.html" class="btn btn-neutral float-right" title="Creating Node Classes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, FZI Forschungszentrum Informatik.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
