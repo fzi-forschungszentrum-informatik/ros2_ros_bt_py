@@ -258,62 +258,78 @@ def update_action_io(tree_dict: dict):
     return tree_dict
 
 
-def update_subtree_io(tree_dict) -> Result[dict, str]:
-    def update_io_key(subtree_dict: dict, io_key: str):
-        key_parts = io_key.split(".")
-        if len(key_parts) != 2:
-            return io_key
-        for node_dict in subtree_dict["nodes"]:
-            if node_dict["name"] == key_parts[0]:
-                return node_dict["node_id"] + "." + key_parts[1]
-        print(f"Can't find node with name {key_parts[0]}")
-        return io_key
+def get_subtree_dict(node_dict: dict) -> Result[dict, str]:
+    # Find option that contains the subtree path
+    for option_dict in node_dict["options"]:
+        if option_dict["key"] != "subtree_path":
+            continue
+        path_dict = json.loads(option_dict["serialized_value"])
+        url = path_dict["path"]
 
+    # Load the subtree
+    if url.startswith("file://"):
+        file_path = url[len("file://") :]
+    elif url.startswith("package://"):
+        package_name = url[len("package://") :].split("/", 1)[0]
+        package_path = ament_index_python.get_package_share_directory(
+            package_name=package_name
+        )
+        file_path = package_path + url[len("package://") + len(package_name) :]
+    else:
+        return Err(f"Invalid file url {url}")
+
+    with open(file_path, "r") as f:
+        subtree_dict = yaml.safe_load(f.read())
+    for node_dict in subtree_dict["nodes"]:
+        if node_dict.get("node_id", None) is None:
+            return Err(
+                f"Subtree at {url} does not have node ids. Please migrate that subtree first."
+            )
+    return Ok(subtree_dict)
+
+
+def update_subtree_io_key(subtree_dict: dict, io_key: str):
+    key_parts = io_key.split(".")
+    if len(key_parts) != 2:
+        return io_key
+    for node_dict in subtree_dict["nodes"]:
+        if node_dict["name"] == key_parts[0]:
+            return node_dict["node_id"] + "." + key_parts[1]
+    print(f"Can't find node with name {key_parts[0]}")
+    return io_key
+
+
+def update_subtree_io(tree_dict) -> Result[dict, str]:
     for node_dict in tree_dict["nodes"]:
         if (
             node_dict["node_class"] != "Subtree"
             or node_dict["module"] != "ros_bt_py.ros_nodes.subtree"
         ):
             continue
-        for option_dict in node_dict["options"]:
-            if option_dict["key"] != "subtree_path":
-                continue
-            path_dict = json.loads(option_dict["serialized_value"])
-            match migrate_from_file_url(path_dict["path"]):
-                case Err(e):
-                    return Err(f"Cannot migrate subtree: {e}")
-                case Ok(u):
-                    url = u
-            path_dict["path"] = url
-            option_dict["serialized_value"] = json.dumps(path_dict)
-        if url.startswith("file://"):
-            file_path = url[len("file://") :]
-        elif url.startswith("package://"):
-            package_name = url[len("package://") :].split("/", 1)[0]
-            package_path = ament_index_python.get_package_share_directory(
-                package_name=package_name
-            )
-            file_path = package_path + url[len("package://") + len(package_name) :]
-        else:
-            return Err(f"Invalid file url {url}")
-        with open(file_path, "r") as f:
-            subtree_dict = yaml.safe_load(f.read())
+
+        match get_subtree_dict(node_dict):
+            case Err(e):
+                return Err(e)
+            case Ok(d):
+                subtree_dict = d
+
+        # Replace node names with node ids
         for input_dict in node_dict["inputs"]:
-            input_dict["key"] = update_io_key(subtree_dict, input_dict["key"])
+            input_dict["key"] = update_subtree_io_key(subtree_dict, input_dict["key"])
         for output_dict in node_dict["outputs"]:
-            output_dict["key"] = update_io_key(subtree_dict, output_dict["key"])
+            output_dict["key"] = update_subtree_io_key(subtree_dict, output_dict["key"])
         for wiring_dict in tree_dict["data_wirings"]:
             if wiring_dict["source"]["node_id"] == node_dict["node_id"]:
-                wiring_dict["source"]["data_key"] = update_io_key(
+                wiring_dict["source"]["data_key"] = update_subtree_io_key(
                     subtree_dict, wiring_dict["source"]["data_key"]
                 )
             if wiring_dict["target"]["node_id"] == node_dict["node_id"]:
-                wiring_dict["target"]["data_key"] = update_io_key(
+                wiring_dict["target"]["data_key"] = update_subtree_io_key(
                     subtree_dict, wiring_dict["target"]["data_key"]
                 )
         for public_data_dict in tree_dict["public_node_data"]:
             if public_data_dict["node_id"] == node_dict["node_id"]:
-                public_data_dict["data_key"] = update_io_key(
+                public_data_dict["data_key"] = update_subtree_io_key(
                     subtree_dict, public_data_dict["data_key"]
                 )
     return Ok(tree_dict)
@@ -346,93 +362,32 @@ def migrate_legacy_tree_structure(tree_dict: dict) -> Result[dict, str]:
             case Ok(d):
                 tree_dict = d
 
+    # Once all migrations are successful, update the version number
+    tree_dict["version"] = metadata.version("ros_bt_py")
     return Ok(tree_dict)
-
-
-def migrate_tree_file(file: str) -> Result[str, str]:
-    name, ext = os.path.splitext(file)
-    new_file = f"{name}_new{ext}"
-    counter = 1
-    while os.path.exists(new_file):
-        # If one of the existing files is on the current version, just use that one.
-        with open(new_file, "r") as n_f:
-            new_tree_dict: dict = yaml.safe_load(n_f.read())
-        new_tree_version = Version(new_tree_dict.get("version", "0.0.0"))
-        if new_tree_version >= Version(metadata.version("ros_bt_py")):
-            # File up to date, nothing to do
-            return Ok(new_file)
-
-        new_file = f"{name}_new_{counter}{ext}"
-        counter += 1
-
-    with open(file, "r") as f:
-        tree_dict = yaml.safe_load(f.read())
-    original_tree_dict = deepcopy(tree_dict)
-
-    match migrate_legacy_tree_structure(tree_dict):
-        case Err(e):
-            return Err(e)
-        case Ok(d):
-            new_tree_dict = d
-
-    # Don't write the migration to a new file if there were no actual changes
-    if new_tree_dict == original_tree_dict:
-        print("Tree didn't change")
-        new_tree_dict = original_tree_dict
-        new_file = file
-
-    # Always update the version number once the migration is completed
-    new_tree_dict["version"] = metadata.version("ros_bt_py")
-
-    with open(new_file, "w+") as f:
-        f.write(yaml.safe_dump(new_tree_dict, sort_keys=False))
-
-    return Ok(new_file)
-
-
-# If there are no migrations to be run, just returns the given url.
-#   If the tree was migrated, returns the url of the new version.
-def migrate_from_file_url(url: str) -> Result[str, str]:
-    try:
-        if url.startswith("file://"):
-            file_path = url[len("file://") :]
-            from_package = False
-        elif url.startswith("package://"):
-            package_name = url[len("package://") :].split("/", 1)[0]
-            package_path = ament_index_python.get_package_share_directory(
-                package_name=package_name
-            )
-            file_path = package_path + url[len("package://") + len(package_name) :]
-            from_package = True
-        else:
-            return Err(f"Invalid file url {url}")
-
-        with open(file_path, "r") as f:
-            tree_version = Version(yaml.safe_load(f.read()).get("version", "0.0.0"))
-
-        if tree_version >= Version(metadata.version("ros_bt_py")):
-            # File up to date, nothing to do
-            return Ok(url)
-
-        if from_package:
-            return Err(f"Cannot migrate tree files from package source {url}")
-
-        match migrate_tree_file(file_path):
-            case Err(e):
-                return Err(e)
-            case Ok(new_path):
-                return Ok(f"file://{new_path}")
-    # Catch all exceptions so we never crash
-    except Exception as e:
-        return Err(f"Migration failed due to {str(e)}")
 
 
 def main():
     for file in sys.argv[1:]:
         print(f"Migrating file {file}")
 
-        match migrate_tree_file(file):
+        name, ext = os.path.splitext(file)
+        new_file = f"{name}_new{ext}"
+        counter = 1
+        while os.path.exists(new_file):
+            new_file = f"{name}_new_{counter}{ext}"
+            counter += 1
+
+        with open(file, "r") as f:
+            tree_dict = yaml.safe_load(f.read())
+
+        match migrate_legacy_tree_structure(tree_dict):
             case Err(e):
                 print(f"Failed to migrate: {e}")
-            case Ok(new_file):
-                print(f"Saved migration to {new_file}")
+                continue
+            case Ok(d):
+                new_tree_dict = d
+
+        with open(new_file, "w+") as f:
+            f.write(yaml.safe_dump(new_tree_dict, sort_keys=False))
+        print(f"Saved migration to {new_file}")

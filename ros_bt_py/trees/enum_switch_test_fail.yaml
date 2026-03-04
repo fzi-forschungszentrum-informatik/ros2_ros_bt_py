@@ -25,8 +25,7 @@ nodes:
   child_ids: []
   options:
   - key: constant_type
-    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type":
-      {"py/type": "builtins.type"}, "info": "builtin"}'
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type": {"py/type": "builtins.type"}, "info": "builtin"}'
     serialized_value: '{"py/type": "builtins.int"}'
   - key: constant_value
     serialized_type: '{"py/type": "builtins.int"}'
@@ -46,10 +45,8 @@ nodes:
   - 01839a27-88bb-496d-bbe1-70a874fc70c8
   options:
   - key: ros_message_type
-    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type":
-      {"py/type": "ros_bt_py.custom_types.RosTopicType"}, "info": "full"}'
-    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str":
-      "ros_bt_py_interfaces/msg/EnumTest"}'
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type": {"py/type": "ros_bt_py.custom_types.RosTopicType"}, "info": "full"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str": "ros_bt_py_interfaces/msg/EnumTest"}'
   inputs:
   - key: case
     serialized_type: '{"py/type": "builtins.int"}'

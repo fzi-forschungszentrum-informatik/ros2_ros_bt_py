@@ -31,7 +31,3 @@ bool permissive
 ---
 bool success
 string error_message
-
-# In case we had to run a migration on the tree,
-#   its actual path will be different than the one in the request
-string actual_path
