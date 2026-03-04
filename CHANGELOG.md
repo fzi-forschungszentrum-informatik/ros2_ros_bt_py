@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data by @Doomse in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Fix node options with complex types by @Doomse in [#244](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/244)
 - Fix imports test to deal with nested packages. by @Oberacda
 - Fix formatting. by @Oberacda
 
