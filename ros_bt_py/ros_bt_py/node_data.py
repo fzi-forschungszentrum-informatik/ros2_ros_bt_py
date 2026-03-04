@@ -28,19 +28,10 @@
 from typing import Any
 import rclpy
 import rclpy.logging
+from rosidl_runtime_py.utilities import is_message
 from ros_bt_py.vendor.result import Err, Ok, Result
 
-from ros_bt_py.custom_types import (
-    FilePath,
-    RosActionName,
-    RosActionType,
-    RosServiceName,
-    RosServiceType,
-    RosTopicName,
-    RosTopicType,
-)
 from ros_bt_py.helpers import json_encode
-from ros_bt_py.ros_helpers import get_interface_name
 from ros_bt_py.custom_types import TypeWrapper
 
 import array
@@ -135,6 +126,9 @@ class NodeData(object):
                 new_value = float(new_value)
             elif real_data_type == list and isinstance(new_value, array.array):
                 new_value = list(new_value)
+            elif is_message(real_data_type) and new_value == {}:
+                # Default initialize ROS message on empty dict
+                new_value = real_data_type()
             else:
                 if type(new_value) is dict and "py/type" in new_value:
                     raise TypeError(

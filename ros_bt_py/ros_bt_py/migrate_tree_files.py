@@ -116,6 +116,10 @@ def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str
         type_dict.pop("__name__", None)
     option_dict["serialized_type"] = json.dumps(type_dict)
 
+    # Clear any values that include the `SLOT_TYPES` attribute
+    if option_dict["serialized_value"].find("SLOT_TYPES") >= 0:
+        option_dict["serialized_value"] = "{}"
+
     # Early out if types are matching
     if json_encode(option_type) == option_dict["serialized_type"]:
         return Ok(option_dict)
