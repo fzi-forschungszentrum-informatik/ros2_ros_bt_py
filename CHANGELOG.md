@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Update Web-GUI to 7.1.0 by @Oberacda in [#246](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/246)
 - Do not persist serialized values by @Doomse in [#245](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/245)
 - Respin executor on InvalidHandle by @Doomse in [#238](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/238)
 - Switch to vendor result. by @Oberacda
