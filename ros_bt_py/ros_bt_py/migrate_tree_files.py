@@ -285,6 +285,14 @@ def get_subtree_dict(node_dict: dict) -> Result[dict, str]:
             return Err(
                 f"Subtree at {url} does not have node ids. Please migrate that subtree first."
             )
+
+    # Dry-run migration of subtree to confirm there won't be issues later down the line.
+    match migrate_legacy_tree_structure(subtree_dict):
+        case Err(e):
+            return Err(f"Subtree at {url} cannot be migrated on demand: {e}")
+        case Ok(_):
+            pass
+
     return Ok(subtree_dict)
 
 
@@ -368,15 +376,25 @@ def migrate_legacy_tree_structure(tree_dict: dict) -> Result[dict, str]:
 
 
 def main():
+    inplace: bool
+    try:
+        sys.argv.remove("--inplace")
+        inplace = True
+    except ValueError:
+        inplace = False
+
     for file in sys.argv[1:]:
         print(f"Migrating file {file}")
 
-        name, ext = os.path.splitext(file)
-        new_file = f"{name}_new{ext}"
-        counter = 1
-        while os.path.exists(new_file):
-            new_file = f"{name}_new_{counter}{ext}"
-            counter += 1
+        if inplace:
+            new_file = file
+        else:
+            name, ext = os.path.splitext(file)
+            new_file = f"{name}_new{ext}"
+            counter = 1
+            while os.path.exists(new_file):
+                new_file = f"{name}_new_{counter}{ext}"
+                counter += 1
 
         with open(file, "r") as f:
             tree_dict = yaml.safe_load(f.read())
