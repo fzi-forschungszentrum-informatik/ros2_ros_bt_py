@@ -57,12 +57,9 @@ class NodeData(object):
     def __init__(self, data_type: type | TypeWrapper, initial_value=None, static=False):
         self.updated = False
         self._value = None
-        self._serialized_value = json_encode(None)
         self._static = static
 
         self.data_type = data_type
-
-        self._serialized_type = json_encode(self.data_type)
 
         # use set here to ensure initial_value is the right type
         # this also sets updated to True
@@ -141,8 +138,6 @@ class NodeData(object):
                     f"Expected data to be of type {real_data_type.__name__}, "
                     f"got {type(new_value).__name__} instead"
                 )
-        if self._serialized_value is not None and new_value != self._value:
-            self._serialized_value = json_encode(new_value)
         self._value = new_value
         self.set_updated()
 
@@ -159,12 +154,10 @@ class NodeData(object):
         return self._value
 
     def get_serialized(self):
-        if self._serialized_value is None:
-            self._serialized_value = json_encode(self._value)
-        return self._serialized_value
+        return json_encode(self._value)
 
     def get_serialized_type(self):
-        return self._serialized_type
+        return json_encode(self.data_type)
 
     def set_updated(self):
         self.updated = True
