@@ -1,74 +1,73 @@
 name: legacy_tree_file.yaml
 path: ''
-root_name: Sequence
 nodes:
 - module: ros_bt_py.nodes.sequence
   node_class: Sequence
   version: 0.1.0
   max_children: -1
   name: Sequence
-  child_names:
-  - Constant
-  - FieldsToMessage
-  - TopicPublisher
-  - TopicSubscriber
-  - MessageToFields
-  - CompareConstant
   options: []
   inputs: []
   outputs: []
-  state: SHUTDOWN
+  node_id: 1022e2fc-c084-491a-bf39-88b68fca537d
+  child_ids:
+  - 18cfb280-9632-49af-bbc2-d11b27d4eeaa
+  - 61961a41-0822-4c81-adca-2ab3b22528d0
+  - f7b6eedb-d388-44d7-9012-e0650615dabc
+  - 1b850650-8e0d-4731-b49b-e44cbec2c42b
+  - 7d22ddf2-6871-4aa9-9ce4-e8962d5c27fd
+  - 3ece9824-dbb4-4b0c-bbc7-842b93ac21a1
 - module: ros_bt_py.nodes.constant
   node_class: Constant
   version: 0.1.0
   max_children: 0
   name: Constant
-  child_names: []
   options:
   - key: constant_type
     serialized_value: '{"py/type": "builtins.int"}'
-    serialized_type: '{"py/type": "builtins.type"}'
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type":
+      {"py/type": "builtins.type"}, "info": "builtin"}'
   - key: constant_value
     serialized_value: '42'
     serialized_type: '{"py/type": "builtins.int"}'
   inputs: []
   outputs:
   - key: constant
-    serialized_value: 'null'
     serialized_type: '{"py/type": "builtins.int"}'
-  state: SHUTDOWN
+  node_id: 18cfb280-9632-49af-bbc2-d11b27d4eeaa
+  child_ids: []
 - module: ros_bt_py.ros_nodes.message_converters
   node_class: FieldsToMessage
   version: 0.1.0
   max_children: 0
   name: FieldsToMessage
-  child_names: []
   options:
   - key: output_type
-    serialized_value: '{"py/type": "std_msgs.msg._int64.Int64"}'
-    serialized_type: '{"py/type": "builtins.type"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str":
+      "std_msgs/msg/Int64"}'
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.RosTopicType"}'
   inputs:
   - key: data
-    serialized_value: 'null'
     serialized_type: '{"py/type": "builtins.int"}'
   outputs:
   - key: out
-    serialized_value: 'null'
     serialized_type: '{"py/type": "std_msgs.msg._int64.Int64"}'
-  state: SHUTDOWN
+  node_id: 61961a41-0822-4c81-adca-2ab3b22528d0
+  child_ids: []
 - module: ros_bt_py.ros_nodes.topic
   node_class: TopicPublisher
   version: 1.0.0
   max_children: 0
   name: TopicPublisher
-  child_names: []
   options:
   - key: topic_type
-    serialized_value: '{"py/type": "std_msgs.msg._int64.Int64"}'
-    serialized_type: '{"py/type": "builtins.type"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str":
+      "std_msgs/msg/Int64"}'
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.RosTopicType"}'
   - key: topic_name
-    serialized_value: '"/test"'
-    serialized_type: '{"py/type": "builtins.str"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicName", "name":
+      "/test"}'
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.RosTopicName"}'
   - key: reliable
     serialized_value: 'true'
     serialized_type: '{"py/type": "builtins.bool"}'
@@ -80,23 +79,24 @@ nodes:
     serialized_type: '{"py/type": "builtins.int"}'
   inputs:
   - key: message
-    serialized_value: 'null'
     serialized_type: '{"py/type": "std_msgs.msg._int64.Int64"}'
   outputs: []
-  state: SHUTDOWN
+  node_id: f7b6eedb-d388-44d7-9012-e0650615dabc
+  child_ids: []
 - module: ros_bt_py.ros_nodes.topic
   node_class: TopicSubscriber
   version: 0.1.0
   max_children: 0
   name: TopicSubscriber
-  child_names: []
   options:
   - key: topic_type
-    serialized_value: '{"py/type": "std_msgs.msg._int64.Int64"}'
-    serialized_type: '{"py/type": "builtins.type"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str":
+      "std_msgs/msg/Int64"}'
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.RosTopicType"}'
   - key: topic_name
-    serialized_value: '"/test"'
-    serialized_type: '{"py/type": "builtins.str"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicName", "name":
+      "/test"}'
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.RosTopicName"}'
   - key: reliable
     serialized_value: 'true'
     serialized_type: '{"py/type": "builtins.bool"}'
@@ -109,80 +109,81 @@ nodes:
   inputs: []
   outputs:
   - key: message
-    serialized_value: 'null'
     serialized_type: '{"py/type": "std_msgs.msg._int64.Int64"}'
-  state: SHUTDOWN
+  node_id: 1b850650-8e0d-4731-b49b-e44cbec2c42b
+  child_ids: []
 - module: ros_bt_py.ros_nodes.message_converters
   node_class: MessageToFields
   version: 0.1.0
   max_children: 0
   name: MessageToFields
-  child_names: []
   options:
   - key: input_type
-    serialized_value: '{"py/type": "std_msgs.msg._int64.Int64"}'
-    serialized_type: '{"py/type": "builtins.type"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str":
+      "std_msgs/msg/Int64"}'
+    serialized_type: '{"py/type": "ros_bt_py.custom_types.RosTopicType"}'
   inputs:
   - key: in
-    serialized_value: 'null'
     serialized_type: '{"py/type": "std_msgs.msg._int64.Int64"}'
   outputs:
   - key: data
-    serialized_value: 'null'
     serialized_type: '{"py/type": "builtins.int"}'
-  state: SHUTDOWN
+  node_id: 7d22ddf2-6871-4aa9-9ce4-e8962d5c27fd
+  child_ids: []
 - module: ros_bt_py.nodes.compare
   node_class: CompareConstant
   version: 0.1.0
   max_children: 0
   name: CompareConstant
-  child_names: []
   options:
   - key: compare_type
     serialized_value: '{"py/type": "builtins.int"}'
-    serialized_type: '{"py/type": "builtins.type"}'
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type":
+      {"py/type": "builtins.type"}, "info": "builtin"}'
   - key: expected
     serialized_value: '42'
     serialized_type: '{"py/type": "builtins.int"}'
   inputs:
   - key: in
-    serialized_value: 'null'
     serialized_type: '{"py/type": "builtins.int"}'
   outputs: []
-  state: SHUTDOWN
+  node_id: 3ece9824-dbb4-4b0c-bbc7-842b93ac21a1
+  child_ids: []
 data_wirings:
 - source:
-    node_name: Constant
     data_kind: outputs
     data_key: constant
+    node_id: 18cfb280-9632-49af-bbc2-d11b27d4eeaa
   target:
-    node_name: FieldsToMessage
     data_kind: inputs
     data_key: data
+    node_id: 61961a41-0822-4c81-adca-2ab3b22528d0
 - source:
-    node_name: FieldsToMessage
     data_kind: outputs
     data_key: out
+    node_id: 61961a41-0822-4c81-adca-2ab3b22528d0
   target:
-    node_name: TopicPublisher
     data_kind: inputs
     data_key: message
+    node_id: f7b6eedb-d388-44d7-9012-e0650615dabc
 - source:
-    node_name: TopicSubscriber
     data_kind: outputs
     data_key: message
+    node_id: 1b850650-8e0d-4731-b49b-e44cbec2c42b
   target:
-    node_name: MessageToFields
     data_kind: inputs
     data_key: in
+    node_id: 7d22ddf2-6871-4aa9-9ce4-e8962d5c27fd
 - source:
-    node_name: MessageToFields
     data_kind: outputs
     data_key: data
+    node_id: 7d22ddf2-6871-4aa9-9ce4-e8962d5c27fd
   target:
-    node_name: CompareConstant
     data_kind: inputs
     data_key: in
+    node_id: 3ece9824-dbb4-4b0c-bbc7-842b93ac21a1
 tick_frequency_hz: 10.0
-state: IDLE
 public_node_data: []
+tree_id: 00000000-0000-0000-0000-000000000000
+root_id: 1022e2fc-c084-491a-bf39-88b68fca537d
+version: 0.7.0
