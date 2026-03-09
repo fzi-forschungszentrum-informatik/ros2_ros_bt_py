@@ -36,7 +36,7 @@ import yaml
 from importlib import metadata
 from packaging.version import Version
 from typing import Literal, cast
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import ament_index_python
 from ros_bt_py.node import Node
 from ros_bt_py.custom_types import (
@@ -117,6 +117,10 @@ def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str
     if type_dict.get("py/object", "") == "ros_bt_py.custom_types.TypeWrapper":
         type_dict.pop("__name__", None)
     option_dict["serialized_type"] = json.dumps(type_dict)
+
+    # Clear any values that include the `SLOT_TYPES` attribute
+    if option_dict["serialized_value"].find("SLOT_TYPES") >= 0:
+        option_dict["serialized_value"] = "{}"
 
     # Early out if types are matching
     if json_encode(option_type) == option_dict["serialized_type"]:

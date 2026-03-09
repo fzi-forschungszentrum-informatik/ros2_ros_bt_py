@@ -46,7 +46,7 @@ from ros_bt_py.ros_helpers import get_message_field_type
 
 import abc
 from typing import Any, Optional, Dict
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 

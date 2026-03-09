@@ -29,7 +29,7 @@ from threading import Lock
 import abc
 from typing import Optional, Any, Dict
 from enum import Enum
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 import rclpy

@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import Optional, Dict
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 from ros_bt_py.custom_types import RosTopicType

@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import math
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py_interfaces.msg import UtilityBounds
 

@@ -35,7 +35,7 @@ from packaging.version import Version
 from threading import Thread, Lock, RLock
 from typing import Any, Callable, Dict, Optional, List, cast
 
-from result import Err, Ok, Result
+from ros_bt_py.vendor.result import Err, Ok, Result
 
 import rclpy
 import rclpy.logging

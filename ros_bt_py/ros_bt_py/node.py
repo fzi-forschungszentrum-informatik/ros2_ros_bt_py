@@ -31,7 +31,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from types import ModuleType
 
-from result import Err, Ok, Result
+from ros_bt_py.vendor.result import Err, Ok, Result
 
 import abc
 import importlib

@@ -28,19 +28,10 @@
 from typing import Any
 import rclpy
 import rclpy.logging
-from result import Err, Ok, Result
+from rosidl_runtime_py.utilities import is_message
+from ros_bt_py.vendor.result import Err, Ok, Result
 
-from ros_bt_py.custom_types import (
-    FilePath,
-    RosActionName,
-    RosActionType,
-    RosServiceName,
-    RosServiceType,
-    RosTopicName,
-    RosTopicType,
-)
 from ros_bt_py.helpers import json_encode
-from ros_bt_py.ros_helpers import get_interface_name
 from ros_bt_py.custom_types import TypeWrapper
 
 import array
@@ -66,12 +57,9 @@ class NodeData(object):
     def __init__(self, data_type: type | TypeWrapper, initial_value=None, static=False):
         self.updated = False
         self._value = None
-        self._serialized_value = json_encode(None)
         self._static = static
 
         self.data_type = data_type
-
-        self._serialized_type = json_encode(self.data_type)
 
         # use set here to ensure initial_value is the right type
         # this also sets updated to True
@@ -135,6 +123,9 @@ class NodeData(object):
                 new_value = float(new_value)
             elif real_data_type == list and isinstance(new_value, array.array):
                 new_value = list(new_value)
+            elif is_message(real_data_type) and new_value == {}:
+                # Default initialize ROS message on empty dict
+                new_value = real_data_type()
             else:
                 if type(new_value) is dict and "py/type" in new_value:
                     raise TypeError(
@@ -147,8 +138,6 @@ class NodeData(object):
                     f"Expected data to be of type {real_data_type.__name__}, "
                     f"got {type(new_value).__name__} instead"
                 )
-        if self._serialized_value is not None and new_value != self._value:
-            self._serialized_value = json_encode(new_value)
         self._value = new_value
         self.set_updated()
 
@@ -165,12 +154,10 @@ class NodeData(object):
         return self._value
 
     def get_serialized(self):
-        if self._serialized_value is None:
-            self._serialized_value = json_encode(self._value)
-        return self._serialized_value
+        return json_encode(self._value)
 
     def get_serialized_type(self):
-        return self._serialized_type
+        return json_encode(self.data_type)
 
     def set_updated(self):
         self.updated = True
