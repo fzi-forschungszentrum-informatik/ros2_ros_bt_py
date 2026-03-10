@@ -542,11 +542,11 @@ class Action(Leaf):
 
         result_msg = self._result_type()
         for field in result_msg._fields_and_field_types:
-            node_outputs["result_" + field] = get_message_field_type(result_msg, field)
+            node_outputs["result." + field] = get_message_field_type(result_msg, field)
 
         feedback_msg = self._feedback_type()
         for field in feedback_msg._fields_and_field_types:
-            node_outputs["feedback_" + field] = get_message_field_type(
+            node_outputs["feedback." + field] = get_message_field_type(
                 feedback_msg, field
             )
 
@@ -607,10 +607,10 @@ class Action(Leaf):
         self._last_goal_time: Optional[Time] = None
 
         for k, v in self._result_type.get_fields_and_field_types().items():
-            self.outputs["result_" + k] = None
+            self.outputs["result." + k] = None
 
         for k, v in self._feedback_type.get_fields_and_field_types().items():
-            self.outputs["feedback_" + k] = None
+            self.outputs["feedback." + k] = None
 
         return Ok(BTNodeState.IDLE)
 
@@ -643,7 +643,7 @@ class Action(Leaf):
 
             res = self._result.result
             for k, v in res.get_fields_and_field_types().items():
-                self.outputs["result_" + k] = getattr(res, k)
+                self.outputs["result." + k] = getattr(res, k)
 
             new_state = BTNodeState.SUCCEEDED
             self._running_goal_handle = None
@@ -680,7 +680,7 @@ class Action(Leaf):
         if self._feedback is not None:
             feed = self._feedback.feedback
             for k, v in feed.get_fields_and_field_types().items():
-                self.outputs["feedback_" + k] = getattr(feed, k)
+                self.outputs["feedback." + k] = getattr(feed, k)
 
         return Ok(BTNodeState.RUNNING)
 
@@ -858,10 +858,10 @@ class Action(Leaf):
         untick_result = self._do_untick()
         # but also clear the outputs
         for k, v in self._result_type.get_fields_and_field_types().items():
-            self.outputs["result_" + k] = None
+            self.outputs["result." + k] = None
 
         for k, v in self._feedback_type.get_fields_and_field_types().items():
-            self.outputs["feedback_" + k] = None
+            self.outputs["feedback." + k] = None
         return untick_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:

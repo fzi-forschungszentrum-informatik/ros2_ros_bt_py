@@ -45,12 +45,12 @@ class TestSubtreeManager:
     @pytest.fixture
     def subtree_manager_no_publish(self):
         subtree_manager = SubtreeManager()
+        subtree_manager.publish_subtrees = False
         return subtree_manager
 
     @pytest.fixture
     def subtree_manager(self):
         subtree_manager = SubtreeManager()
-        subtree_manager.publish_subtrees = True
         return subtree_manager
 
     def test_add_subtree_structure(self, subtree_manager: SubtreeManager):

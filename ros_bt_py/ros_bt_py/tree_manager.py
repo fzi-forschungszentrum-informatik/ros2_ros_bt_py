@@ -154,18 +154,15 @@ def parse_tree_yaml(tree_yaml: str) -> MigrateTree.Response:
         if datum is None:
             continue
         if not read_data:
-            if Version(datum.get("version", "0.0.0")) < Version(
-                metadata.version("ros_bt_py")
-            ):
-                match migrate_legacy_tree_structure(datum):
-                    case Err(e):
-                        response.success = False
-                        response.error_message = (
-                            f"Failed to migrate legacy tree file: {e}"
-                        )
-                        return response
-                    case Ok(d):
-                        datum = d
+            # This doesn't perform any work if the tree is up-to-date,
+            #   so we can just call it regardless of tree version.
+            match migrate_legacy_tree_structure(datum):
+                case Err(e):
+                    response.success = False
+                    response.error_message = f"Failed to migrate legacy tree file: {e}"
+                    return response
+                case Ok(d):
+                    datum = d
             datum.pop("version")
             rosidl_runtime_py.set_message_fields(response.tree, datum)
             read_data = True
@@ -238,6 +235,8 @@ def load_tree_from_file(
                 response.error_message = (
                     f"Encountered a ScannerError while parsing the tree yaml: {str(ex)}"
                 )
+                return response
+            if not response.success:
                 return response
             tree = response.tree
             tree.path = request.tree.path

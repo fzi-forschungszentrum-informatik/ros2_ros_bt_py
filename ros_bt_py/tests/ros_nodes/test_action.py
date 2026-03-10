@@ -392,8 +392,8 @@ class TestAction:
         self.node_setup(action_node)
 
         assert (
-            "feedback_sequence" in action_node.outputs
-            and "result_sequence" in action_node.outputs
+            "feedback.sequence" in action_node.outputs
+            and "result.sequence" in action_node.outputs
         )
 
         goal = self.create_and_set_input_goal(action_node)
@@ -407,18 +407,18 @@ class TestAction:
         )
         assert action_node.state == NodeState.RUNNING
 
-        assert action_node.outputs["feedback_sequence"] == list(
+        assert action_node.outputs["feedback.sequence"] == list(
             feedback_mock.feedback.sequence
         )
-        assert isinstance(action_node.outputs["feedback_sequence"], list)
-        assert action_node.outputs["result_sequence"] is None
+        assert isinstance(action_node.outputs["feedback.sequence"], list)
+        assert action_node.outputs["result.sequence"] is None
 
         # Result available
         running_goal_future_mock.done.return_value = True
         action_node.tick()
         assert action_node.state == NodeState.SUCCEEDED
-        assert isinstance(action_node.outputs["result_sequence"], list)
-        assert action_node.outputs["result_sequence"] == list(
+        assert isinstance(action_node.outputs["result.sequence"], list)
+        assert action_node.outputs["result.sequence"] == list(
             goal_result.result.sequence
         )
 

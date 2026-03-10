@@ -237,11 +237,11 @@ class Subtree(Leaf):
             node = self.manager.nodes[ros_to_uuid(node_data.node_id).unwrap()]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
-                subtree_inputs[f"{node.name}.{node_data.data_key}"] = (
+                subtree_inputs[f"{node.node_id}.{node_data.data_key}"] = (
                     node.inputs.get_type(node_data.data_key)
                 )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
-                subtree_outputs[f"{node.name}.{node_data.data_key}"] = (
+                subtree_outputs[f"{node.node_id}.{node_data.data_key}"] = (
                     node.outputs.get_type(node_data.data_key)
                 )
 
@@ -277,7 +277,7 @@ class Subtree(Leaf):
                     )
                 else:
                     self.inputs.subscribe(
-                        key=f"{node.name}.{node_data.data_key}",
+                        key=f"{node.node_id}.{node_data.data_key}",
                         callback=node.inputs.get_callback(node_data.data_key),
                     )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
@@ -287,7 +287,7 @@ class Subtree(Leaf):
                     node.outputs.subscribe(
                         key=node_data.data_key,
                         callback=self.outputs.get_callback(
-                            f"{node.name}.{node_data.data_key}"
+                            f"{node.node_id}.{node_data.data_key}"
                         ),
                     )
         return Ok(None)
