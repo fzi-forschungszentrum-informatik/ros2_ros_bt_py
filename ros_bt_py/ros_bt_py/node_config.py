@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import Any, Dict, Optional, List
-from result import Result, Err, Ok
+from ros_bt_py.vendor.result import Result, Err, Ok
 
 from ros_bt_py.exceptions import NodeConfigError
 

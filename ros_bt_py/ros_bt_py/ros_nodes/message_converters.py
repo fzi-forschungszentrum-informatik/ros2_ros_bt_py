@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from typing import Optional, Dict
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 from ros_bt_py.custom_types import RosTopicType
@@ -52,23 +52,8 @@ from ros_bt_py.ros_helpers import get_message_field_type
     )
 )
 class MessageToFields(Leaf):
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._message_type = self.options["input_type"].get_type_obj()
 
@@ -139,23 +124,8 @@ class FieldsToMessage(Leaf):
 
     """
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         self._message_type = self.options["output_type"].get_type_obj()
 

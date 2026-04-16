@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 from ros_bt_py.node import IO, define_bt_node
 from ros_bt_py.node_config import NodeConfig, OptionRef
 from ros_bt_py.helpers import BTNodeState
@@ -63,10 +63,10 @@ class IOInputOption(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logdebug('ignoring unset "in" input and using default value')
+                self.loginfo('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logdebug("Running tick() with stale data!")
+                    self.loginfo("Running tick() with stale data!")
         self.inputs.handle_subscriptions()
         return Ok(None)
 
@@ -117,10 +117,10 @@ class IOInput(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logdebug('ignoring unset "in" input and using default value')
+                self.loginfo('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logdebug("Running tick() with stale data!")
+                    self.loginfo("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
                     return Err(
                         ValueError(
@@ -177,10 +177,10 @@ class IOOutputOption(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logdebug('ignoring unset "in" input and using default value')
+                self.loginfo('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logdebug("Running tick() with stale data!")
+                    self.loginfo("Running tick() with stale data!")
         self.inputs.handle_subscriptions()
         return Ok(None)
 
@@ -231,10 +231,10 @@ class IOOutput(IO):
         """
         for input_name in self.inputs:
             if input_name == "in" and self.inputs[input_name] is None:
-                self.logdebug('ignoring unset "in" input and using default value')
+                self.loginfo('ignoring unset "in" input and using default value')
             else:
                 if not self.inputs.is_updated(input_name):
-                    self.logdebug("Running tick() with stale data!")
+                    self.loginfo("Running tick() with stale data!")
                 if self.inputs[input_name] is None:
                     return Err(
                         ValueError(

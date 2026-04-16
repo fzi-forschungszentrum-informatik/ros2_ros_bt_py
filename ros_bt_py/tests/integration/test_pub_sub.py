@@ -29,8 +29,6 @@ import pytest
 
 import rclpy
 
-import ament_index_python
-import os
 import time
 
 from rclpy.node import Node
@@ -56,13 +54,8 @@ def test_pub_sub(
     execute_client: Client,
     state_list: list[TreeStateList],
 ):
-    tree_path = os.path.join(
-        ament_index_python.get_package_share_directory("ros_bt_py"),
-        "trees",
-        "pub_sub_test.yaml",
-    )
     load_req = LoadTreeFromPath.Request(
-        path=f"file://{tree_path}",
+        path="package://ros_bt_py/trees/pub_sub_test.yaml",
         permissive=False,
     )
     assert load_client.wait_for_service(timeout_sec=30)

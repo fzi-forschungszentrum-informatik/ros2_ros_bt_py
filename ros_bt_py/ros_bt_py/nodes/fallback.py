@@ -32,7 +32,7 @@ from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import FlowControl, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
-from result import Result, Ok, Err, is_err
+from ros_bt_py.vendor.result import Result, Ok, Err, is_err
 
 
 @define_bt_node(

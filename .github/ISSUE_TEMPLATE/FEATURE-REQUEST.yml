@@ -3,7 +3,12 @@ description: Create a new ticket for a new feature request
 title: "💡 [REQUEST] - <title>"
 labels: [
   "question",
-  "enhancement"
+  "Low Priority"
+]
+type: feature
+assignees: [
+  "Oberacda",
+  "nspielbau"
 ]
 body:
   - type: textarea

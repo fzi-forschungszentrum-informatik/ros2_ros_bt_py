@@ -29,7 +29,7 @@ import inspect
 import array
 import uuid
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 import rclpy.logging
 from rclpy import action

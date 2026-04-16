@@ -25,16 +25,19 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from copy import deepcopy
 import importlib
 import itertools
+import json
 import uuid
 import os
 import sys
 import yaml
 from importlib import metadata
 from packaging.version import Version
-from typing import Literal
-from result import Result, Ok, Err
+from typing import Literal, cast
+from ros_bt_py.vendor.result import Result, Ok, Err
+import ament_index_python
 from ros_bt_py.node import Node
 from ros_bt_py.custom_types import (
     FilePath,
@@ -108,6 +111,17 @@ def find_node_class(
 
 
 def update_node_option(option_dict: dict, option_type: type) -> Result[dict, str]:
+    # Some old version of TypeWrapper write out their `__name__` attribute
+    #   when being serialized. We need to strip that here.
+    type_dict = json.loads(option_dict["serialized_type"])
+    if type_dict.get("py/object", "") == "ros_bt_py.custom_types.TypeWrapper":
+        type_dict.pop("__name__", None)
+    option_dict["serialized_type"] = json.dumps(type_dict)
+
+    # Clear any values that include the `SLOT_TYPES` attribute
+    if option_dict["serialized_value"].find("SLOT_TYPES") >= 0:
+        option_dict["serialized_value"] = "{}"
+
     # Early out if types are matching
     if json_encode(option_type) == option_dict["serialized_type"]:
         return Ok(option_dict)
@@ -215,6 +229,124 @@ def assign_uuids(tree_dict: dict) -> dict:
     return tree_dict
 
 
+def update_action_io(tree_dict: dict):
+    action_node_ids = []
+    for node_dict in tree_dict["nodes"]:
+        if (
+            node_dict["node_class"] == "Action"
+            and node_dict["module"] == "ros_bt_py.ros_nodes.action"
+        ):
+            action_node_ids.append(node_dict["node_id"])
+    for node_dict in tree_dict["nodes"]:
+        if node_dict["node_id"] not in action_node_ids:
+            continue
+        for output_dict in node_dict["outputs"]:
+            key = cast(str, output_dict["key"])
+            key = key.replace("result_", "result.")
+            key = key.replace("feedback_", "feedback.")
+            output_dict["key"] = key
+    for wiring_dict in tree_dict["data_wirings"]:
+        if wiring_dict["source"]["node_id"] not in action_node_ids:
+            continue
+        key = cast(str, wiring_dict["source"]["data_key"])
+        key = key.replace("result_", "result.")
+        key = key.replace("feedback_", "feedback.")
+        wiring_dict["source"]["data_key"] = key
+    for public_data_dict in tree_dict["public_node_data"]:
+        if public_data_dict["node_id"] not in action_node_ids:
+            continue
+        key = cast(str, public_data_dict["data_key"])
+        key = key.replace("result_", "result.")
+        key = key.replace("feedback_", "feedback.")
+        public_data_dict["data_key"] = key
+    return tree_dict
+
+
+def get_subtree_dict(node_dict: dict) -> Result[dict, str]:
+    # Find option that contains the subtree path
+    for option_dict in node_dict["options"]:
+        if option_dict["key"] != "subtree_path":
+            continue
+        path_dict = json.loads(option_dict["serialized_value"])
+        url = path_dict["path"]
+
+    # Load the subtree
+    if url.startswith("file://"):
+        file_path = url[len("file://") :]
+    elif url.startswith("package://"):
+        package_name = url[len("package://") :].split("/", 1)[0]
+        package_path = ament_index_python.get_package_share_directory(
+            package_name=package_name
+        )
+        file_path = package_path + url[len("package://") + len(package_name) :]
+    else:
+        return Err(f"Invalid file url {url}")
+
+    with open(file_path, "r") as f:
+        subtree_dict = yaml.safe_load(f.read())
+    for node_dict in subtree_dict["nodes"]:
+        if node_dict.get("node_id", None) is None:
+            return Err(
+                f"Subtree at {url} does not have node ids. Please migrate that subtree first."
+            )
+
+    # Dry-run migration of subtree to confirm there won't be issues later down the line.
+    match migrate_legacy_tree_structure(subtree_dict):
+        case Err(e):
+            return Err(f"Subtree at {url} cannot be migrated on demand: {e}")
+        case Ok(_):
+            pass
+
+    return Ok(subtree_dict)
+
+
+def update_subtree_io_key(subtree_dict: dict, io_key: str):
+    key_parts = io_key.split(".")
+    if len(key_parts) != 2:
+        return io_key
+    for node_dict in subtree_dict["nodes"]:
+        if node_dict["name"] == key_parts[0]:
+            return node_dict["node_id"] + "." + key_parts[1]
+    print(f"Can't find node with name {key_parts[0]}")
+    return io_key
+
+
+def update_subtree_io(tree_dict) -> Result[dict, str]:
+    for node_dict in tree_dict["nodes"]:
+        if (
+            node_dict["node_class"] != "Subtree"
+            or node_dict["module"] != "ros_bt_py.ros_nodes.subtree"
+        ):
+            continue
+
+        match get_subtree_dict(node_dict):
+            case Err(e):
+                return Err(e)
+            case Ok(d):
+                subtree_dict = d
+
+        # Replace node names with node ids
+        for input_dict in node_dict["inputs"]:
+            input_dict["key"] = update_subtree_io_key(subtree_dict, input_dict["key"])
+        for output_dict in node_dict["outputs"]:
+            output_dict["key"] = update_subtree_io_key(subtree_dict, output_dict["key"])
+        for wiring_dict in tree_dict["data_wirings"]:
+            if wiring_dict["source"]["node_id"] == node_dict["node_id"]:
+                wiring_dict["source"]["data_key"] = update_subtree_io_key(
+                    subtree_dict, wiring_dict["source"]["data_key"]
+                )
+            if wiring_dict["target"]["node_id"] == node_dict["node_id"]:
+                wiring_dict["target"]["data_key"] = update_subtree_io_key(
+                    subtree_dict, wiring_dict["target"]["data_key"]
+                )
+        for public_data_dict in tree_dict["public_node_data"]:
+            if public_data_dict["node_id"] == node_dict["node_id"]:
+                public_data_dict["data_key"] = update_subtree_io_key(
+                    subtree_dict, public_data_dict["data_key"]
+                )
+    return Ok(tree_dict)
+
+
 def migrate_legacy_tree_structure(tree_dict: dict) -> Result[dict, str]:
     # Since the option migrations are safe (and could be extended later),
     #   we always run them if the version is not up-to-date.
@@ -234,21 +366,39 @@ def migrate_legacy_tree_structure(tree_dict: dict) -> Result[dict, str]:
     if tree_version < Version("0.6.0"):
         tree_dict = assign_uuids(tree_dict)
 
+    if tree_version < Version("0.7.0"):
+        tree_dict = update_action_io(tree_dict)
+        match update_subtree_io(tree_dict):
+            case Err(e):
+                return Err(e)
+            case Ok(d):
+                tree_dict = d
+
     # Once all migrations are successful, update the version number
     tree_dict["version"] = metadata.version("ros_bt_py")
     return Ok(tree_dict)
 
 
 def main():
+    inplace: bool
+    try:
+        sys.argv.remove("--inplace")
+        inplace = True
+    except ValueError:
+        inplace = False
+
     for file in sys.argv[1:]:
         print(f"Migrating file {file}")
 
-        name, ext = os.path.splitext(file)
-        new_file = f"{name}_new{ext}"
-        counter = 1
-        while os.path.exists(new_file):
-            new_file = f"{name}_new_{counter}{ext}"
-            counter += 1
+        if inplace:
+            new_file = file
+        else:
+            name, ext = os.path.splitext(file)
+            new_file = f"{name}_new{ext}"
+            counter = 1
+            while os.path.exists(new_file):
+                new_file = f"{name}_new_{counter}{ext}"
+                counter += 1
 
         with open(file, "r") as f:
             tree_dict = yaml.safe_load(f.read())

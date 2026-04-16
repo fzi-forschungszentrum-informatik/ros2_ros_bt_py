@@ -32,20 +32,19 @@ import pkgutil
 
 
 def import_module_from_package(package) -> None:
-    print(f"Beginning function: {package.__path__}")
-    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__):
-        full_name = package.__name__ + "." + name
-        if is_pkg:
-            new_package = __import__(full_name, fromlist=[package.__name__])
-            import_module_from_package(new_package)
-        else:
-            try:
-                importlib.import_module(full_name)
-            except ModuleNotFoundError as exc:
-                if exc.name == "ros_bt_py.parameters":
-                    continue
-                else:
-                    raise exc
+    prefix = package.__name__ + "."
+
+    print(f"Walking package: {package.__name__} at {package.__path__}")
+
+    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__, prefix):
+        # name is already the full dotted path here because of the prefix argument
+        try:
+            print(f"Importing: {name}")
+            importlib.import_module(name)
+        except ModuleNotFoundError as exc:
+            if "ros_bt_py.parameters" in str(exc):
+                continue
+            raise exc
 
 
 class TestImport:

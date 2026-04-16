@@ -28,11 +28,12 @@
 """BT node to encapsulate a part of a tree in a reusable subtree."""
 from typing import List, Optional, Dict
 
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 from rclpy.node import Node
 
+from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py_interfaces.msg._node_structure import NodeStructure
 
 from ros_bt_py_interfaces.msg import UtilityBounds, TreeStructure, NodeDataLocation
@@ -81,39 +82,38 @@ class Subtree(Leaf):
 
     manager: TreeManager
 
-    def __init__(  # noqa: C901
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """Create the tree manager, load the subtree."""
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+        super().__init__(*args, **kwargs)
         if not self.has_ros_node:
             raise BehaviorTreeException(
                 "{self.name} does not have a reference to a ROS Node!"
             )
 
         self.root: Optional[BTNode] = None
+
+        # Since node_id is only unique within one tree and tree_id has to be globally unique
+        #   we generate a new uuid and store it in `tree_ref`
+        self.tree_ref = uuid.uuid4()
+
         # since the subtree gets a prefix, we can just have it use the
-        # parent debug manager
+        # parent debug manager TODO Is that still true?
         self.nested_subtree_manager = SubtreeManager()
+        self.subtree_logging_manager = (
+            LoggingManager(
+                ros_node=self.ros_node,
+                publish_log_callback=self.logging_manager.publish_log_callback,
+            )
+            if self.logging_manager is not None
+            else None
+        )
         self.manager: TreeManager = TreeManager(
             ros_node=self.ros_node,
-            name=name,
-            tree_id=self.node_id,
-            debug_manager=debug_manager,
+            name=self.name,
+            tree_id=self.tree_ref,
+            debug_manager=self.debug_manager,
             subtree_manager=self.nested_subtree_manager,
+            logging_manager=self.subtree_logging_manager,
         )
 
         match self.load_subtree():
@@ -237,11 +237,11 @@ class Subtree(Leaf):
             node = self.manager.nodes[ros_to_uuid(node_data.node_id).unwrap()]
 
             if node_data.data_kind == NodeDataLocation.INPUT_DATA:
-                subtree_inputs[f"{node.name}.{node_data.data_key}"] = (
+                subtree_inputs[f"{node.node_id}.{node_data.data_key}"] = (
                     node.inputs.get_type(node_data.data_key)
                 )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
-                subtree_outputs[f"{node.name}.{node_data.data_key}"] = (
+                subtree_outputs[f"{node.node_id}.{node_data.data_key}"] = (
                     node.outputs.get_type(node_data.data_key)
                 )
 
@@ -277,7 +277,7 @@ class Subtree(Leaf):
                     )
                 else:
                     self.inputs.subscribe(
-                        key=f"{node.name}.{node_data.data_key}",
+                        key=f"{node.node_id}.{node_data.data_key}",
                         callback=node.inputs.get_callback(node_data.data_key),
                     )
             elif node_data.data_kind == NodeDataLocation.OUTPUT_DATA:
@@ -287,7 +287,7 @@ class Subtree(Leaf):
                     node.outputs.subscribe(
                         key=node_data.data_key,
                         callback=self.outputs.get_callback(
-                            f"{node.name}.{node_data.data_key}"
+                            f"{node.node_id}.{node_data.data_key}"
                         ),
                     )
         return Ok(None)

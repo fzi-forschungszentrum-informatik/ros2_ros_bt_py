@@ -29,7 +29,7 @@ from threading import Lock
 import abc
 from typing import Optional, Any, Dict
 from enum import Enum
-from result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err
 import uuid
 
 import rclpy
@@ -244,7 +244,7 @@ class ActionForSetType(Leaf):
 
                 self._internal_state = ActionStates.FINISHED
 
-                self.logdebug("Action result is none, action call must have failed!")
+                self.loginfo("Action result is none, action call must have failed!")
                 return Ok(BTNodeState.FAILED)
 
             # returns failed except the set.ouput() method returns True
@@ -257,7 +257,7 @@ class ActionForSetType(Leaf):
 
             self._internal_state = ActionStates.FINISHED
 
-            self.logdebug("Action succeeded, publishing result!")
+            self.loginfo("Action succeeded, publishing result!")
             return Ok(new_state)
 
         if self._running_goal_future.cancelled():
@@ -310,7 +310,7 @@ class ActionForSetType(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
-            self.logdebug("Successfully cancelled goal exectution!")
+            self.loginfo("Successfully cancelled goal exectution!")
 
             if self._input_goal != self._active_goal:
                 state = BTNodeState.RUNNING
@@ -523,23 +523,8 @@ class Action(Leaf):
 
     _internal_state = ActionStates.IDLE
 
-    def __init__(
-        self,
-        node_id: Optional[uuid.UUID] = None,
-        options: Optional[Dict] = None,
-        debug_manager: Optional[DebugManager] = None,
-        subtree_manager: Optional[SubtreeManager] = None,
-        name: Optional[str] = None,
-        ros_node: Optional[Node] = None,
-    ) -> None:
-        super().__init__(
-            node_id=node_id,
-            options=options,
-            debug_manager=debug_manager,
-            subtree_manager=subtree_manager,
-            name=name,
-            ros_node=ros_node,
-        )
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
         node_inputs = {}
         node_outputs = {}
@@ -557,11 +542,11 @@ class Action(Leaf):
 
         result_msg = self._result_type()
         for field in result_msg._fields_and_field_types:
-            node_outputs["result_" + field] = get_message_field_type(result_msg, field)
+            node_outputs["result." + field] = get_message_field_type(result_msg, field)
 
         feedback_msg = self._feedback_type()
         for field in feedback_msg._fields_and_field_types:
-            node_outputs["feedback_" + field] = get_message_field_type(
+            node_outputs["feedback." + field] = get_message_field_type(
                 feedback_msg, field
             )
 
@@ -622,10 +607,10 @@ class Action(Leaf):
         self._last_goal_time: Optional[Time] = None
 
         for k, v in self._result_type.get_fields_and_field_types().items():
-            self.outputs["result_" + k] = None
+            self.outputs["result." + k] = None
 
         for k, v in self._feedback_type.get_fields_and_field_types().items():
-            self.outputs["feedback_" + k] = None
+            self.outputs["feedback." + k] = None
 
         return Ok(BTNodeState.IDLE)
 
@@ -650,7 +635,7 @@ class Action(Leaf):
 
                 self._internal_state = ActionStates.FINISHED
 
-                self.logdebug("Action result is none, action call must have failed!")
+                self.loginfo("Action result is none, action call must have failed!")
                 return Ok(BTNodeState.FAILED)
 
             # returns failed except the set.ouput() method returns True
@@ -658,7 +643,7 @@ class Action(Leaf):
 
             res = self._result.result
             for k, v in res.get_fields_and_field_types().items():
-                self.outputs["result_" + k] = getattr(res, k)
+                self.outputs["result." + k] = getattr(res, k)
 
             new_state = BTNodeState.SUCCEEDED
             self._running_goal_handle = None
@@ -667,7 +652,7 @@ class Action(Leaf):
 
             self._internal_state = ActionStates.FINISHED
 
-            self.logdebug("Action succeeded, publishing result!")
+            self.loginfo("Action succeeded, publishing result!")
             return Ok(new_state)
 
         if self._running_goal_future.cancelled():
@@ -695,7 +680,7 @@ class Action(Leaf):
         if self._feedback is not None:
             feed = self._feedback.feedback
             for k, v in feed.get_fields_and_field_types().items():
-                self.outputs["feedback_" + k] = getattr(feed, k)
+                self.outputs["feedback." + k] = getattr(feed, k)
 
         return Ok(BTNodeState.RUNNING)
 
@@ -724,7 +709,7 @@ class Action(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
-            self.logdebug("Successfully cancelled goal exectution!")
+            self.loginfo("Successfully cancelled goal exectution!")
 
             if self._input_goal != self._active_goal:
                 state = BTNodeState.RUNNING
@@ -873,10 +858,10 @@ class Action(Leaf):
         untick_result = self._do_untick()
         # but also clear the outputs
         for k, v in self._result_type.get_fields_and_field_types().items():
-            self.outputs["result_" + k] = None
+            self.outputs["result." + k] = None
 
         for k, v in self._feedback_type.get_fields_and_field_types().items():
-            self.outputs["feedback_" + k] = None
+            self.outputs["feedback." + k] = None
         return untick_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:

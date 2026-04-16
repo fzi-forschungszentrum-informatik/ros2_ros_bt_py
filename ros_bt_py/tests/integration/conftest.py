@@ -43,6 +43,8 @@ import domain_coordinator
 
 from rclpy.node import Node
 
+from std_srvs.srv import SetBool
+
 from ros_bt_py_interfaces.msg import (
     TreeStateList,
     TreeStructureList,
@@ -90,6 +92,11 @@ def node():
     yield node
     node.destroy_node()
     rclpy.shutdown()
+
+
+@pytest.fixture
+def pub_subtrees_client(node: Node):
+    return node.create_client(SetBool, "/BehaviorTreeNode/debug/set_publish_subtrees")
 
 
 @pytest.fixture

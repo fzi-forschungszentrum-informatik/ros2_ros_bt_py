@@ -1,4 +1,4 @@
-version: 0.6.0
+version: 0.7.0
 tree_id: 00000000-0000-0000-0000-000000000000
 name: UNKNOWN TREE
 path: ''
@@ -25,7 +25,8 @@ nodes:
   child_ids: []
   options:
   - key: constant_type
-    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type": {"py/type": "builtins.type"}, "info": "builtin"}'
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type":
+      {"py/type": "builtins.type"}, "info": "builtin"}'
     serialized_value: '{"py/type": "builtins.int"}'
   - key: constant_value
     serialized_type: '{"py/type": "builtins.int"}'
@@ -45,8 +46,10 @@ nodes:
   - 01839a27-88bb-496d-bbe1-70a874fc70c8
   options:
   - key: ros_message_type
-    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type": {"py/type": "ros_bt_py.custom_types.RosTopicType"}, "info": "full"}'
-    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str": "std_msgs/msg/Empty"}'
+    serialized_type: '{"py/object": "ros_bt_py.custom_types.TypeWrapper", "actual_type":
+      {"py/type": "ros_bt_py.custom_types.RosTopicType"}, "info": "full"}'
+    serialized_value: '{"py/object": "ros_bt_py.custom_types.RosTopicType", "type_str":
+      "std_msgs/msg/Empty"}'
   inputs: []
   outputs: []
 - module: ros_bt_py.nodes.wait
