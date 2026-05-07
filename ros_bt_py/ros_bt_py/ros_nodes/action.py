@@ -209,8 +209,6 @@ class ActionBase(Leaf):
             with self._lock:
                 self.set_feedback_outputs(self._feedback.feedback)
                 self._feedback = None
-            # TODO What is the state here, SUCCEEDED implies the action is finished,
-            #   RUNNING doesn't allow the outputs to be processed in a sequence.
 
         return Ok(BTNodeState.RUNNING)
 
@@ -515,7 +513,7 @@ class Action(ActionBase):
         ) in self._result_type.get_fields_and_field_types().items():
             combined_fields[f"feedback.{field_name}"] = field_type
         outputs = {}
-        for field_name, field_type in combined_fields:
+        for field_name, field_type in combined_fields.items():
             match get_message_field_io_type(field_type):
                 case Err(e):
                     return Err(NodeConfigError(e))

@@ -762,7 +762,9 @@ class TreeExecManager:
         with self._tree_lock:
             # These reassignments makes the typing happy,
             #   because they ensure that `.append .extent .remove ...` exists
-            self._tree_structure.data_wirings = []
+            self.wirings = []
+            self.name = "UNKNOWN TREE"
+            self._tree_structure.path = ""
         self.subtree_manager.clear_subtrees()
         self.clear_diagnostics_name()
         response.success = True

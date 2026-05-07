@@ -29,13 +29,9 @@
 # from enum import StrEnum Not available in Python3.10
 import abc
 import functools
-import re
-from typing import Any, Optional, cast
-from typeguard import typechecked
 
-import rclpy
-import rclpy.logging
-import rosidl_runtime_py.utilities
+from typing import cast
+from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import NodeState
 

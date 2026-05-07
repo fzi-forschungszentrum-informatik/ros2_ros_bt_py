@@ -166,7 +166,7 @@ class Subtree(Leaf):
                 case Ok(None):
                     self.is_set_up = True
         node_inputs = {}
-        for node in self.manager.nodes:
+        for node in self.manager.nodes.values():
             if not isinstance(node, IOInput):
                 continue
             node_inputs[f"{str(node.node_id)}.in"] = node.node_config.inputs[
@@ -183,10 +183,10 @@ class Subtree(Leaf):
                 case Ok(None):
                     self.is_set_up = True
         node_outputs = {}
-        for node in self.manager.nodes:
+        for node in self.manager.nodes.values():
             if not isinstance(node, IOOutput):
                 continue
-            node_outputs[f"{str(node.node_id)}.out"] = node.node_config.inputs[
+            node_outputs[f"{str(node.node_id)}.out"] = node.node_config.outputs[
                 "out"
             ].get_runtime_type()
         return Ok(node_outputs)

@@ -1661,6 +1661,9 @@ class ReferenceListType(ReferenceContainer):
             case Ok(None):
                 pass
         self._inner_type = ListType(element_type=self._inner_type)
+        self._inner_type.allow_dynamic = self.allow_dynamic
+        self._inner_type.allow_static = self.allow_static
+        self._inner_type.is_static = self.is_static
         return Ok(None)
 
 
@@ -1681,6 +1684,9 @@ class ReferenceDictType(ReferenceContainer):
             case Ok(None):
                 pass
         self._inner_type = DictType(element_type=self._inner_type)
+        self._inner_type.allow_dynamic = self.allow_dynamic
+        self._inner_type.allow_static = self.allow_static
+        self._inner_type.is_static = self.is_static
         return Ok(None)
 
 

@@ -80,6 +80,9 @@ from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_helpers import ros_to_uuid, uuid_to_ros
 
 
+RET = TypeVar("RET")
+
+
 class Node(abc.ABC):
     """
     Base class for Behavior Tree nodes.
@@ -313,6 +316,21 @@ class Node(abc.ABC):
         """
         return Ok({})
 
+    @staticmethod
+    def log_errors(
+        func: Callable[["Node"], Result[RET, BehaviorTreeException]],
+    ) -> Callable[["Node"], Result[RET, BehaviorTreeException]]:
+        def inner(self: "Node") -> Result[RET, BehaviorTreeException]:
+            match func(self):
+                case Err(e):
+                    self.logerr(str(e))
+                    return Err(e)
+                case Ok(v):
+                    return Ok(v)
+
+        return inner
+
+    @log_errors
     def setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Prepare the node to be ticked for the first time.
@@ -376,6 +394,7 @@ class Node(abc.ABC):
         self.logerr(msg)
         return Err(BehaviorTreeException(msg))
 
+    @log_errors
     def tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Handle node on tick action everytime this is called (at ~10-20Hz, usually).
@@ -474,6 +493,7 @@ class Node(abc.ABC):
         self.logerr(msg)
         return Err(BehaviorTreeException(msg))
 
+    @log_errors
     def untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Signal a node that it should stop any background tasks.
@@ -533,6 +553,7 @@ class Node(abc.ABC):
         self.logerr(msg)
         return Err(BehaviorTreeException(msg))
 
+    @log_errors
     def reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Reset a node completly.
@@ -597,6 +618,7 @@ class Node(abc.ABC):
         self.logerr(msg)
         return Err(BehaviorTreeException(msg))
 
+    @log_errors
     def shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         """
         Prepare a node for deletion.
