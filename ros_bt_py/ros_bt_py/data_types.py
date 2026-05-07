@@ -113,6 +113,24 @@ class DataContainer(Generic[ANY], abc.ABC):
                 case Ok(None):
                     pass
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DataContainer):
+            return False
+        if not self.is_compatible(other):
+            return False
+        if not other.is_compatible(self):
+            return False
+        if self.is_static != other.is_static:
+            return False
+        same_value: bool | Iterable[bool] = self._value == other._value
+        # Since we potentially handle numpy arrays, we have to account for `==`
+        #   returing an iterable of bools rather than a single bool
+        if isinstance(same_value, Iterable):
+            same_value = all(same_value)
+        if not same_value:
+            return False
+        return True
+
     @classmethod
     @abc.abstractmethod
     @typechecked

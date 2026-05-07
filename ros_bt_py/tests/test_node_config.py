@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-from ros_bt_py.data_types import IntType, FloatType, BuiltinType, ReferenceType
+from ros_bt_py.data_types import IntType, FloatType, GenericType, ReferenceType
 from ros_bt_py.exceptions import NodeConfigError
 from ros_bt_py.node_config import NodeConfig
 
@@ -35,7 +35,7 @@ from ros_bt_py.node_config import NodeConfig
 @pytest.fixture
 def example_inputs():
     return {
-        "tinput": BuiltinType(),
+        "tinput": GenericType(),
         "input1": IntType(),
         "input2": ReferenceType(reference="tinput"),
     }
@@ -55,11 +55,6 @@ def example_max_children():
 
 
 @pytest.fixture
-def example_version():
-    return "1.0"
-
-
-@pytest.fixture
 def example_tags():
     return ["tag1", "tag2"]
 
@@ -75,46 +70,41 @@ class TestNodeConfig:
         assert node_config.outputs == example_outputs
         assert node_config.max_children == example_max_children
         assert node_config.tags == []
-        assert node_config.version == ""
 
     def test_repr(
         self,
         example_inputs,
         example_outputs,
         example_max_children,
-        example_version,
         example_tags,
     ):
         node_config = NodeConfig(
             inputs=example_inputs,
             outputs=example_outputs,
             max_children=example_max_children,
-            version=example_version,
             tags=example_tags,
         )
 
         expected_repr = (
             f"NodeConfig(inputs={example_inputs}, outputs={example_outputs}, "
-            f"max_children={example_max_children}, version={example_version})"
+            f"max_children={example_max_children})"
         )
         assert repr(node_config) == expected_repr
 
     @staticmethod
     @pytest.mark.parametrize(
-        "same, other, result",
+        "config1, config2, result",
         [
             (
                 NodeConfig(
                     inputs={"input1": IntType()},
                     outputs={"output1": FloatType()},
                     max_children=3,
-                    version="1.0",
                 ),
                 NodeConfig(
                     inputs={"input1": IntType()},
                     outputs={"output1": FloatType()},
                     max_children=3,
-                    version="1.0",
                 ),
                 True,
             ),
@@ -123,13 +113,11 @@ class TestNodeConfig:
                     inputs={"input1": IntType()},
                     outputs={"output1": FloatType()},
                     max_children=3,
-                    version="1.0",
                 ),
                 NodeConfig(
                     inputs={"input1": IntType()},
                     outputs={"output1": FloatType()},
                     max_children=4,
-                    version="1.0",
                 ),
                 False,
             ),
@@ -138,13 +126,11 @@ class TestNodeConfig:
                     inputs={"input1": IntType()},
                     outputs={"output1": FloatType()},
                     max_children=3,
-                    version="1.0",
                 ),
                 NodeConfig(
                     inputs={"input2": IntType()},
                     outputs={"output1": FloatType()},
                     max_children=3,
-                    version="1.0",
                 ),
                 False,
             ),
@@ -153,13 +139,11 @@ class TestNodeConfig:
                     inputs={"input1": IntType()},
                     outputs={"output1": FloatType()},
                     max_children=3,
-                    version="1.0",
                 ),
                 NodeConfig(
                     inputs={"input1": IntType()},
                     outputs={"output1": IntType()},
                     max_children=3,
-                    version="1.0",
                 ),
                 False,
             ),
@@ -173,13 +157,11 @@ class TestNodeConfig:
             inputs={"input1": IntType(), "input2": FloatType()},
             outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            version="1.0",
         )
         extension_config = NodeConfig(
             inputs={"input3": IntType(), "input4": FloatType()},
             outputs={"output3": FloatType(), "output4": IntType()},
             max_children=3,
-            version="1.0",
         )
         assert base_config.extend(extension_config).is_ok()
         assert base_config.inputs == {
@@ -189,26 +171,23 @@ class TestNodeConfig:
             "input4": FloatType(),
         }
         assert base_config.outputs == {
-            "output1": FloatType(),
-            "output2": IntType(),
-            "output3": FloatType(),
-            "output4": IntType(),
+            "output1": FloatType(allow_static=False),
+            "output2": IntType(allow_static=False),
+            "output3": FloatType(allow_static=False),
+            "output4": IntType(allow_static=False),
         }
         assert base_config.max_children == 3
-        assert base_config.version == "1.0"
 
     def test_extend_diff_max_childs(self):
         base_config = NodeConfig(
             inputs={"input1": IntType(), "input2": FloatType()},
             outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            version="1.0",
         )
         extension_config = NodeConfig(
             inputs={"input3": IntType(), "input4": FloatType()},
             outputs={"output3": FloatType(), "output4": IntType()},
             max_children=4,
-            version="1.0",
         )
         result = base_config.extend(extension_config)
         assert result.is_err()
@@ -219,13 +198,11 @@ class TestNodeConfig:
             inputs={"input1": IntType(), "input2": FloatType()},
             outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            version="1.0",
         )
         extension_config = NodeConfig(
             inputs={"input1": IntType(), "input4": FloatType()},
             outputs={"output3": FloatType(), "output4": IntType()},
             max_children=3,
-            version="1.0",
         )
         result = base_config.extend(extension_config)
         assert result.is_err()
@@ -236,13 +213,11 @@ class TestNodeConfig:
             inputs={"input1": IntType(), "input2": FloatType()},
             outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            version="1.0",
         )
         extension_config = NodeConfig(
             inputs={"input3": IntType(), "input4": FloatType()},
             outputs={"output3": FloatType(), "output2": IntType()},
             max_children=3,
-            version="1.0",
         )
         result = base_config.extend(extension_config)
         assert result.is_err()
