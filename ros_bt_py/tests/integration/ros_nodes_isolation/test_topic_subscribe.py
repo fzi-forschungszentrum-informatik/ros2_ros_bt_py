@@ -27,9 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
-import rclpy
 import time
 
+from rclpy.publisher import Publisher
 from rclpy.qos import (
     QoSDurabilityPolicy,
     QoSProfile,
@@ -46,13 +46,8 @@ from ros_bt_py_interfaces.srv import ControlTreeExecution
 from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
-@pytest.mark.launch(fixture=standard_tree_node)
-def test_topic_subscriber_node(tree_control_node: TreeControlNode):
-    load_result = tree_control_node.load_tree(
-        "trees/ros_nodes_isolation/topic_subscribe.yaml"
-    )
-    assert load_result.is_ok()
-
+@pytest.fixture
+def foo_publisher(tree_control_node: TreeControlNode):
     msg_publisher = tree_control_node.create_publisher(
         Empty,
         "/foo",
@@ -62,6 +57,22 @@ def test_topic_subscriber_node(tree_control_node: TreeControlNode):
             depth=1,
         ),
     )
+    return msg_publisher
+
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency()
+def test_tree_load(tree_control_node: TreeControlNode):
+    load_result = tree_control_node.load_tree(
+        "trees/ros_nodes_isolation/topic_subscribe.yaml"
+    )
+    assert load_result.is_ok()
+
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_tree_load"])
+def test_first_tick_running(tree_control_node: TreeControlNode):
+    test_tree_load(tree_control_node)
 
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
@@ -73,7 +84,16 @@ def test_topic_subscriber_node(tree_control_node: TreeControlNode):
             state: NodeState = s.node_states[0]  # type: ignore
     assert state.state == NodeState.RUNNING
 
-    msg_publisher.publish(Empty())
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_first_tick_running"])
+def test_receive_msg(
+    tree_control_node: TreeControlNode,
+    foo_publisher: Publisher,
+):
+    test_first_tick_running(tree_control_node)
+
+    foo_publisher.publish(Empty())
 
     # Give the tree time to process callbacks (simulate tick frequency)
     time.sleep(0.1)
@@ -89,6 +109,15 @@ def test_topic_subscriber_node(tree_control_node: TreeControlNode):
             state: NodeState = s.node_states[0]  # type: ignore
     assert state.state == NodeState.SUCCEEDED
 
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_receive_msg"])
+def test_running_after_msg(
+    tree_control_node: TreeControlNode,
+    foo_publisher: Publisher,
+):
+    test_receive_msg(tree_control_node, foo_publisher)
+
     # Another tick should set it back to RUNNING
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
@@ -99,6 +128,15 @@ def test_topic_subscriber_node(tree_control_node: TreeControlNode):
         case Ok(s):
             state: NodeState = s.node_states[0]  # type: ignore
     assert state.state == NodeState.RUNNING
+
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_running_after_msg"])
+def test_receive_after_reset(
+    tree_control_node: TreeControlNode,
+    foo_publisher: Publisher,
+):
+    test_running_after_msg(tree_control_node, foo_publisher)
 
     # Since the topic we defined is latching, it should eventually succeed after a reset.
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.RESET)
@@ -121,6 +159,15 @@ def test_topic_subscriber_node(tree_control_node: TreeControlNode):
         case Ok(s):
             state: NodeState = s.node_states[0]  # type: ignore
     assert state.state == NodeState.SUCCEEDED
+
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_receive_after_reset"])
+def test_running_after_reset_msg(
+    tree_control_node: TreeControlNode,
+    foo_publisher: Publisher,
+):
+    test_receive_after_reset(tree_control_node, foo_publisher)
 
     # And then go back to RUNNING after another tick
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)

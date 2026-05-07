@@ -27,7 +27,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
+from typing import Optional
+
 import rclpy
+from rclpy.node import Node
+from threading import Lock
 import time
 
 from example_interfaces.msg import String
@@ -37,64 +41,100 @@ from ros_bt_py_interfaces.srv import ControlTreeExecution
 from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
+class FooSubscriber(Node):
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("foo_subscriber", *args, **kwargs)
+
+        self._last_message: Optional[String] = None
+        self._message_lock = Lock()
+
+        _ = self.create_subscription(
+            String,
+            "/foo",
+            self._callback,
+            1,
+        )
+
+    def _callback(self, msg: String):
+        with self._message_lock:
+            self._last_message = msg
+
+    def get_msg(self, wait_time=10) -> Optional[String]:
+        start_time = time.time()
+        while start_time + wait_time > time.time():
+            with self._message_lock:
+                if self._last_message is not None:
+                    return self._last_message
+            rclpy.spin_once(self, timeout_sec=2)
+        return None
+
+    def clear_msg(self):
+        with self._message_lock:
+            self._last_message = None
+
+
+@pytest.fixture()
+def foo_subscriber():
+    node = FooSubscriber()
+    yield node
+    node.destroy_node()
+
+
 @pytest.mark.launch(fixture=standard_tree_node)
-def test_topic_publisher_node(tree_control_node: TreeControlNode):
+@pytest.mark.dependency()
+def test_tree_load(tree_control_node: TreeControlNode):
     load_result = tree_control_node.load_tree(
         "trees/ros_nodes_isolation/topic_publish.yaml"
     )
     assert load_result.is_ok()
 
-    has_received_msg = False
 
-    def _recieve_msg(msg: String):
-        nonlocal has_received_msg
-        if msg.data == "foobarbaz":
-            has_received_msg = True
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_tree_load"])
+def test_first_tick_msg_receive(
+    tree_control_node: TreeControlNode,
+    foo_subscriber: FooSubscriber,
+):
+    test_tree_load(tree_control_node)
 
-    _ = tree_control_node.create_subscription(
-        String,
-        "/foo",
-        _recieve_msg,
-        1,
-    )
-
-    has_received_msg = False
+    foo_subscriber.clear_msg()
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
     # We expect a message after the first tick
-    start_time = time.time()
-    while start_time + 10 > time.time():
-        if has_received_msg:
-            break
-        assert rclpy.ok()
-        rclpy.spin_once(tree_control_node, timeout_sec=2)
-    assert has_received_msg
+    assert foo_subscriber.get_msg() is not None
 
-    has_received_msg = False
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_first_tick_msg_receive"])
+def test_second_tick_no_msg_receive(
+    tree_control_node: TreeControlNode,
+    foo_subscriber: FooSubscriber,
+):
+    test_first_tick_msg_receive(tree_control_node, foo_subscriber)
+
+    foo_subscriber.clear_msg()
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
     # We expect NO message after the second tick
-    start_time = time.time()
-    while start_time + 10 > time.time():
-        if has_received_msg:
-            break
-        assert rclpy.ok()
-        rclpy.spin_once(tree_control_node, timeout_sec=2)
-    assert not has_received_msg
+    assert foo_subscriber.get_msg() is None
 
-    has_received_msg = False
+
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_second_tick_no_msg_receive"])
+def test_reset_msg_receive(
+    tree_control_node: TreeControlNode,
+    foo_subscriber: FooSubscriber,
+):
+    test_second_tick_no_msg_receive(tree_control_node, foo_subscriber)
+
+    foo_subscriber.clear_msg()
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.RESET)
     assert run_result.is_ok()
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
     # We expect a message after a reset
-    start_time = time.time()
-    while start_time + 10 > time.time():
-        if has_received_msg:
-            break
-        assert rclpy.ok()
-        rclpy.spin_once(tree_control_node, timeout_sec=2)
-    assert has_received_msg
+    assert foo_subscriber.get_msg() is not None

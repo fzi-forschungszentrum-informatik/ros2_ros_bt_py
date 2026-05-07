@@ -6,7 +6,6 @@ root_id: b1380e47-adce-4cf5-983a-3f3e43d07736
 nodes:
 - module: ros_bt_py.ros_nodes.topic
   node_class: TopicPublisher
-  version: 1.0.0
   max_children: 0
   node_id: b1380e47-adce-4cf5-983a-3f3e43d07736
   name: TopicPublisher
@@ -104,7 +103,7 @@ nodes:
     serialized_value: '1'
   - key: message
     type:
-      type_identifier: 14
+      type_identifier: 13
       value_type_identifier: []
       allow_dynamic: true
       allow_static: true

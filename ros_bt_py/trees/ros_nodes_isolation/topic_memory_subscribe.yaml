@@ -6,7 +6,6 @@ root_id: 12f4ae47-1909-466e-9aa1-4d8118d54bef
 nodes:
 - module: ros_bt_py.ros_nodes.topic
   node_class: TopicMemorySubscriber
-  version: 0.1.0
   max_children: 0
   node_id: 12f4ae47-1909-466e-9aa1-4d8118d54bef
   name: TopicMemorySubscriber
@@ -123,7 +122,7 @@ nodes:
   outputs:
   - key: message
     type:
-      type_identifier: 14
+      type_identifier: 13
       value_type_identifier: []
       allow_dynamic: true
       allow_static: false
