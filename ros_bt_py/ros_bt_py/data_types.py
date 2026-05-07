@@ -30,7 +30,9 @@ import builtins
 from copy import deepcopy
 import json
 import re
-from typing import Any, Generic, Iterable, Optional, Protocol, Self, TypeGuard, TypeVar
+
+# TODO Include the import for `typing.Self` and apply it (check inline comments).
+from typing import Any, Generic, Iterable, Optional, Protocol, TypeGuard, TypeVar
 from typeguard import typechecked
 
 from ros_bt_py.helpers import INT_LIMITS, FLOAT_LIMITS, INT_FLOAT_MAX
@@ -151,7 +153,9 @@ class DataContainer(Generic[ANY], abc.ABC):
 
     @classmethod
     @typechecked
-    def from_msg(cls, msg: NodeDataType) -> Result[Self, str]:
+    def from_msg(
+        cls, msg: NodeDataType
+    ) -> Result["DataContainer", str]:  # -> Result[Self, str]
         """
         Factory function that returns an instance of this data type,
         based on the given :obj:`NodeDataType` ROS message.
@@ -173,7 +177,9 @@ class DataContainer(Generic[ANY], abc.ABC):
 
     @abc.abstractmethod
     @typechecked
-    def is_compatible(self, other: "DataContainer") -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: "DataContainer"
+    ) -> TypeGuard["DataContainer"]:  # TypeGuard[Self]
         """
         Check if the given container is compatible with this one,
         meaning that its constraints are at least as narrow as the ones in :obj:`self`.
@@ -209,7 +215,7 @@ class DataContainer(Generic[ANY], abc.ABC):
         )
         return type_msg
 
-    def get_runtime_type(self) -> Self:
+    def get_runtime_type(self) -> "DataContainer":  # -> Self
         """
         Returns the own runtime type, which is used to determine whether two types
         have compatible values at runtime (is used to validate wirings between data types).
@@ -446,7 +452,9 @@ class BoolType(BuiltinContainer[bool]):
         # Nothing to add for bool
         return super()._dict_from_msg(msg)
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["BoolType"]:  # -> TypeGuard[Self]
         # Nothing to add for bool
         return super().is_compatible(other)
 
@@ -501,7 +509,9 @@ class NumericContainer(BuiltinContainer[NUM]):
             return Err(f"Given value {value} is larger than maximum {self.max_value}")
         return super().set_value(value)
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["NumericContainer"]:  # -> TypeGuard[Self]
         if not super().is_compatible(other):
             return False
         if other.min_value < self.min_value:
@@ -620,7 +630,9 @@ class StringContainer(BuiltinContainer[STRING]):
                 )
         return super().set_value(value)
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["StringContainer"]:  # -> TypeGuard[Self]
         if not super().is_compatible(other):
             return False
         if other.max_length > self.max_length:
@@ -771,7 +783,9 @@ class IterableContainer(BuiltinContainer[ITER]):
         config["strict_length"] = msg.iterable_strict_length[0]  # type: ignore
         return Ok(config)
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["IterableContainer"]:  # -> TypeGuard[Self]
         if not super().is_compatible(other):
             return False
         return self._element_type != other._element_type
@@ -1110,7 +1124,9 @@ class GenericType(TypeContainerMixin, BuiltinContainer[dict]):
                 super().set_value(value)
                 return Ok(None)
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["GenericType"]:  # -> TypeGuard[Self]
         if not super().is_compatible(other):
             return False
         for type_elem in other.valid_types:
@@ -1179,14 +1195,18 @@ class RosContainer(DataContainer):
 
     @classmethod
     @typechecked
-    def from_msg(cls, msg: NodeDataType) -> Result[Self, str]:
+    def from_msg(
+        cls, msg: NodeDataType
+    ) -> Result["RosContainer", str]:  # -> Result[Self, str]
         if not hasattr(cls, "interface_kind"):
             raise NotImplementedError("Called on abstract base class")
         if msg.ros_interface_kind != cls.interface_kind:
             return Err("Wrong kind of ROS interface")
         return super().from_msg(msg)
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["RosContainer"]:  # -> TypeGuard[Self]
         if not super().is_compatible(other):
             return False
         return self.interface_id == other.interface_id
@@ -1277,7 +1297,9 @@ class RosMessageType(RosContainer):
         except AttributeError:
             return Err(f"Cannot find message type '{msg.ros_msg_type}'")
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["RosMessageType"]:  # -> TypeGuard[Self]
         if not super().is_compatible(other):
             return False
         # This is basically an == check, since ROS types don't have inheritance.
@@ -1545,7 +1567,9 @@ class ReferenceContainer(DataContainer[Any]):
         config["reference"] = msg.reference_target
         return Ok(config)
 
-    def is_compatible(self, other: DataContainer) -> TypeGuard[Self]:
+    def is_compatible(
+        self, other: DataContainer
+    ) -> TypeGuard["ReferenceContainer"]:  # -> TypeGuard[Self]
         """
         Compatibility here is only evaluated within exact matching references.
         See also :obj:`self.get_runtime_type`
