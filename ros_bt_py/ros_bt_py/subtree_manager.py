@@ -53,7 +53,7 @@ class SubtreeManager(object):
         self.subtree_states: Dict[uuid.UUID, TreeState] = {}
         self.subtree_data: Dict[uuid.UUID, TreeData] = {}
         self.nested_subtree_managers: Dict[uuid.UUID, SubtreeManager] = {}
-        self._publish_subtrees: bool = False
+        self._publish_subtrees: bool = True
         self._publish_data: bool = False
 
         self._lock = Lock()

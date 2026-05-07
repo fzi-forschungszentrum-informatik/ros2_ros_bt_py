@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Subtree IO use node ids by @Doomse in [#247](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/247)
+- Update Web-GUI to 7.1.0 by @Oberacda in [#246](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/246)
+- Do not persist serialized values by @Doomse in [#245](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/245)
 - Respin executor on InvalidHandle by @Doomse in [#238](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/238)
 - Switch to vendor result. by @Oberacda
 - Update Web-GUI to 7.0.1 by @Oberacda in [#235](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/235)
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data by @Doomse in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Fix node options with complex types by @Doomse in [#244](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/244)
 - Fix imports test to deal with nested packages. by @Oberacda
 - Fix formatting. by @Oberacda
 
