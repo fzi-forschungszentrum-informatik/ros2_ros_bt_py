@@ -136,7 +136,7 @@ def verify_node_states(
         node_id = node_id_map[name]
         match get_node_state(tree_control_node, node_id):
             case Err(e):
-                return Err(e)
+                assert False, e
             case Ok(s):
                 act_state = s
         assert act_state == exp_state, f"State mismatch for node {name}"
