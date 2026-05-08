@@ -32,7 +32,16 @@ import json
 import re
 
 # TODO Include the import for `typing.Self` and apply it (check inline comments).
-from typing import Any, Generic, Iterable, Optional, Protocol, TypeGuard, TypeVar
+from typing import (
+    Any,
+    ClassVar,
+    Generic,
+    Iterable,
+    Optional,
+    Protocol,
+    TypeGuard,
+    TypeVar,
+)
 from typeguard import typechecked
 
 from ros_bt_py.helpers import INT_LIMITS, FLOAT_LIMITS, INT_FLOAT_MAX
@@ -62,7 +71,7 @@ class DataContainer(Generic[ANY], abc.ABC):
     # This type_identifier has to be assigned a value in subclass definitions
     #   and should only be a class attribute.
     """The type identifier maps data types to :obj:`NodeDataType` messages"""
-    type_identifier: int
+    type_identifier: ClassVar[int]
 
     allow_dynamic: bool
     allow_static: bool
@@ -1164,7 +1173,7 @@ class RosContainer(DataContainer):
 
     # This `interface_kind` has to be assigned a value in subclass definitions
     #   and should ONLY be a class attribute
-    interface_kind: int
+    interface_kind: ClassVar[int]
     interface_id: int
 
     @typechecked

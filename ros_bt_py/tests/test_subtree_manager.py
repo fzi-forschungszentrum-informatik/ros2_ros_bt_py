@@ -156,8 +156,6 @@ class TestSubtreeManager:
                             ),
                         ),
                         serialized_data="1",
-                        serialized_type="int",
-                        serialized_expected_type="int",
                     )
                 ],
             },
@@ -176,8 +174,6 @@ class TestSubtreeManager:
                             ),
                         ),
                         serialized_data="1",
-                        serialized_type="int",
-                        serialized_expected_type="int",
                     )
                 ],
             },

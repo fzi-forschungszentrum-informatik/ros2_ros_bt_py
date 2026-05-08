@@ -138,3 +138,18 @@ def test_reset_msg_receive(
 
     # We expect a message after a reset
     assert foo_subscriber.get_msg() is not None
+
+
+# This marker name can be used for other tests to depend on,
+#   in case they rely on this node to work properly.
+# NOTE The dependencies for this test should be set in a way
+#   that includes all tests in the module.
+@pytest.mark.dependency(
+    name="TopicPublisher",
+    depends=[
+        "test_reset_msg_receive",
+    ],
+)
+def test_confirm_node_function():
+    # This test is purely for dependency handling and doesn't do anything on its own.
+    pass

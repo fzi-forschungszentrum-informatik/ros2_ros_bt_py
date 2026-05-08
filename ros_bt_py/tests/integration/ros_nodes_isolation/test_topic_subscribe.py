@@ -179,3 +179,18 @@ def test_running_after_reset_msg(
         case Ok(s):
             state: NodeState = s.node_states[0]  # type: ignore
     assert state.state == NodeState.RUNNING
+
+
+# This marker name can be used for other tests to depend on,
+#   in case they rely on this node to work properly.
+# NOTE The dependencies for this test should be set in a way
+#   that includes all tests in the module.
+@pytest.mark.dependency(
+    name="TopicSubscriber",
+    depends=[
+        "test_running_after_reset_msg",
+    ],
+)
+def test_confirm_node_function():
+    # This test is purely for dependency handling and doesn't do anything on its own.
+    pass

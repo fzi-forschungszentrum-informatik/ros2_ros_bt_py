@@ -29,18 +29,10 @@ import pytest
 
 import time
 
-from rclpy.publisher import Publisher
-from rclpy.qos import (
-    QoSDurabilityPolicy,
-    QoSProfile,
-    QoSReliabilityPolicy,
-)
-
 from ros_bt_py.vendor.result import Result, Ok, Err
 
-from example_interfaces.msg import Empty
+from ros_bt_py.helpers import BTNodeState
 
-from ros_bt_py_interfaces.msg import NodeState
 from ros_bt_py_interfaces.srv import ControlTreeExecution
 
 from tests.integration.conftest import (
@@ -49,23 +41,14 @@ from tests.integration.conftest import (
     sim_time_tree_node,
 )
 
-
-@pytest.fixture
-def foo_publisher(tree_control_node: TreeControlNode):
-    msg_publisher = tree_control_node.create_publisher(
-        Empty,
-        "/foo",
-        QoSProfile(
-            reliability=QoSReliabilityPolicy.RELIABLE,
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            depth=1,
-        ),
-    )
-    return msg_publisher
+from tests.integration.flow_control_isolation.conftest import (
+    MultiPublishNode,
+    verify_node_states,
+)
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["TopicMemorySubscriber"], scope="session")
 def test_tree_load(
     tree_control_node: TreeControlNode,
     time_control_node: TimeControlNode,
@@ -73,7 +56,7 @@ def test_tree_load(
     time_control_node.set_time(10)
 
     load_result = tree_control_node.load_tree(
-        "trees/ros_nodes_isolation/topic_memory_subscribe.yaml"
+        "trees/flow_control_isolation/sequence.yaml"
     )
     assert load_result.is_ok()
 
@@ -89,180 +72,186 @@ def test_first_tick_running(
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
-    match tree_control_node.get_tree_state():
-        case Err(e):
-            assert False, e
-        case Ok(s):
-            state: NodeState = s.node_states[0]  # type: ignore
-    assert state.state == NodeState.RUNNING
+    expected_states = {
+        "Sequence": BTNodeState.RUNNING,
+        "Child1": BTNodeState.RUNNING,
+        "Child2": BTNodeState.IDLE,
+        "Child3": BTNodeState.IDLE,
+    }
+
+    verify_node_states(tree_control_node, expected_states)
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
 @pytest.mark.dependency(depends=["test_first_tick_running"])
-def test_receive_msg(
+def test_second_tick_running(
     tree_control_node: TreeControlNode,
     time_control_node: TimeControlNode,
-    foo_publisher: Publisher,
+    multi_publish_node: MultiPublishNode,
 ):
     test_first_tick_running(tree_control_node, time_control_node)
 
-    foo_publisher.publish(Empty())
+    multi_publish_node.publish_topic_1()
 
-    # Give the tree time to process callbacks (simulate tick frequency)
+    # Give the tree time to process callbacks
     time.sleep(0.1)
 
-    # We expect the node to switch to SUCCEEDED after receiving the message
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
-    match tree_control_node.get_tree_state():
-        case Err(e):
-            assert False, e
-        case Ok(s):
-            state: NodeState = s.node_states[0]  # type: ignore
-    assert state.state == NodeState.SUCCEEDED
+    expected_states = {
+        "Sequence": BTNodeState.RUNNING,
+        "Child1": BTNodeState.SUCCEEDED,
+        "Child2": BTNodeState.RUNNING,
+        "Child3": BTNodeState.IDLE,
+    }
+
+    verify_node_states(tree_control_node, expected_states)
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
-@pytest.mark.dependency(depends=["test_receive_msg"])
-def test_saved_msg(
+@pytest.mark.dependency(depends=["test_second_tick_running"])
+def test_third_tick_running(
     tree_control_node: TreeControlNode,
     time_control_node: TimeControlNode,
-    foo_publisher: Publisher,
+    multi_publish_node: MultiPublishNode,
 ):
-    test_receive_msg(
+    test_second_tick_running(
         tree_control_node,
         time_control_node,
-        foo_publisher,
+        multi_publish_node,
     )
 
-    # Since time is paused, the node should stay in SUCCEEDED
+    multi_publish_node.publish_topic_2()
+
+    # Give the tree time to process callbacks
+    time.sleep(0.1)
+
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
-    match tree_control_node.get_tree_state():
-        case Err(e):
-            assert False, e
-        case Ok(s):
-            state: NodeState = s.node_states[0]  # type: ignore
-    assert state.state == NodeState.SUCCEEDED
+    expected_states = {
+        "Sequence": BTNodeState.RUNNING,
+        "Child1": BTNodeState.SUCCEEDED,
+        "Child2": BTNodeState.SUCCEEDED,
+        "Child3": BTNodeState.RUNNING,
+    }
+
+    verify_node_states(tree_control_node, expected_states)
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
-@pytest.mark.dependency(depends=["test_saved_msg"])
-def test_msg_timeout(
+@pytest.mark.dependency(depends=["test_third_tick_running"])
+def test_forth_tick_success(
     tree_control_node: TreeControlNode,
     time_control_node: TimeControlNode,
-    foo_publisher: Publisher,
+    multi_publish_node: MultiPublishNode,
 ):
-    test_saved_msg(
+    test_third_tick_running(
         tree_control_node,
         time_control_node,
-        foo_publisher,
+        multi_publish_node,
     )
 
-    # Once we move the time past the set delay, the node should return FAILED
+    multi_publish_node.publish_topic_3()
+
+    # Give the tree time to process callbacks
+    time.sleep(0.1)
+
+    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
+    assert run_result.is_ok()
+
+    expected_states = {
+        "Sequence": BTNodeState.SUCCEEDED,
+        "Child1": BTNodeState.SUCCEEDED,
+        "Child2": BTNodeState.SUCCEEDED,
+        "Child3": BTNodeState.SUCCEEDED,
+    }
+
+    verify_node_states(tree_control_node, expected_states)
+
+
+@pytest.mark.launch(fixture=sim_time_tree_node)
+@pytest.mark.dependency(depends=["test_forth_tick_success"])
+def test_auto_reset_after_success(
+    tree_control_node: TreeControlNode,
+    time_control_node: TimeControlNode,
+    multi_publish_node: MultiPublishNode,
+):
+    test_forth_tick_success(
+        tree_control_node,
+        time_control_node,
+        multi_publish_node,
+    )
+
+    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
+    assert run_result.is_ok()
+
+    expected_states = {
+        "Sequence": BTNodeState.RUNNING,
+        "Child1": BTNodeState.RUNNING,
+        "Child2": BTNodeState.IDLE,
+        "Child3": BTNodeState.IDLE,
+    }
+
+    verify_node_states(tree_control_node, expected_states)
+
+
+@pytest.mark.launch(fixture=sim_time_tree_node)
+@pytest.mark.dependency(depends=["test_second_tick_running"])
+def test_timeout_first_topic(
+    tree_control_node: TreeControlNode,
+    time_control_node: TimeControlNode,
+    multi_publish_node: MultiPublishNode,
+):
+    test_second_tick_running(
+        tree_control_node,
+        time_control_node,
+        multi_publish_node,
+    )
+
+    # Trigger timeout for Child1
     time_control_node.set_time(15)
+
     time.sleep(0.1)
 
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
-    match tree_control_node.get_tree_state():
-        case Err(e):
-            assert False, e
-        case Ok(s):
-            state: NodeState = s.node_states[0]  # type: ignore
-    assert state.state == NodeState.FAILED
+    expected_states = {
+        "Sequence": BTNodeState.FAILED,
+        "Child1": BTNodeState.FAILED,
+        "Child2": BTNodeState.IDLE,
+        "Child3": BTNodeState.IDLE,
+    }
+
+    verify_node_states(tree_control_node, expected_states)
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
-@pytest.mark.dependency(depends=["test_msg_timeout"])
-def test_receive_after_reset(
+@pytest.mark.dependency(depends=["test_timeout_first_topic"])
+def test_auto_reset_after_failure(
     tree_control_node: TreeControlNode,
     time_control_node: TimeControlNode,
-    foo_publisher: Publisher,
+    multi_publish_node: MultiPublishNode,
 ):
-    test_msg_timeout(
+    test_timeout_first_topic(
         tree_control_node,
         time_control_node,
-        foo_publisher,
+        multi_publish_node,
     )
 
-    # Since the topic we defined is latching, it should eventually succeed after a reset.
-    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.RESET)
-    assert run_result.is_ok()
-
-    # First tick to recreate the subscriber
     run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
     assert run_result.is_ok()
 
-    # Give the tree time to process callbacks (simulate tick frequency)
-    time.sleep(0.1)
+    expected_states = {
+        "Sequence": BTNodeState.RUNNING,
+        "Child1": BTNodeState.RUNNING,
+        "Child2": BTNodeState.IDLE,
+        "Child3": BTNodeState.IDLE,
+    }
 
-    # Second tick receives the latched message
-    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
-    assert run_result.is_ok()
-
-    match tree_control_node.get_tree_state():
-        case Err(e):
-            assert False, e
-        case Ok(s):
-            state: NodeState = s.node_states[0]  # type: ignore
-    assert state.state == NodeState.SUCCEEDED
-
-
-@pytest.mark.launch(fixture=sim_time_tree_node)
-@pytest.mark.dependency(depends=["test_receive_after_reset"])
-def test_saved_msg_after_reset(
-    tree_control_node: TreeControlNode,
-    time_control_node: TimeControlNode,
-    foo_publisher: Publisher,
-):
-    test_receive_after_reset(
-        tree_control_node,
-        time_control_node,
-        foo_publisher,
-    )
-
-    # Since time is paused, the node should stay in SUCCEEDED
-    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
-    assert run_result.is_ok()
-
-    match tree_control_node.get_tree_state():
-        case Err(e):
-            assert False, e
-        case Ok(s):
-            state: NodeState = s.node_states[0]  # type: ignore
-    assert state.state == NodeState.SUCCEEDED
-
-
-@pytest.mark.launch(fixture=sim_time_tree_node)
-@pytest.mark.dependency(depends=["test_saved_msg_after_reset"])
-def test_timeout_after_reset(
-    tree_control_node: TreeControlNode,
-    time_control_node: TimeControlNode,
-    foo_publisher: Publisher,
-):
-    test_saved_msg_after_reset(
-        tree_control_node,
-        time_control_node,
-        foo_publisher,
-    )
-
-    # Once we move the time past the set delay, the node should return FAILED
-    time_control_node.set_time(20)
-    time.sleep(0.1)
-
-    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
-    assert run_result.is_ok()
-
-    match tree_control_node.get_tree_state():
-        case Err(e):
-            assert False, e
-        case Ok(s):
-            state: NodeState = s.node_states[0]  # type: ignore
-    assert state.state == NodeState.FAILED
+    verify_node_states(tree_control_node, expected_states)
 
 
 # This marker name can be used for other tests to depend on,
@@ -270,9 +259,10 @@ def test_timeout_after_reset(
 # NOTE The dependencies for this test should be set in a way
 #   that includes all tests in the module.
 @pytest.mark.dependency(
-    name="TopicMemorySubscriber",
+    name="Sequence",
     depends=[
-        "test_timeout_after_reset",
+        "test_auto_reset_after_success",
+        "test_auto_reset_after_failure",
     ],
 )
 def test_confirm_node_function():
