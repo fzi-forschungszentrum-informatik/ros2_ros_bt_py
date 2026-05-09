@@ -925,7 +925,7 @@ class Node(abc.ABC):
     @classmethod
     @typechecked
     def from_msg(
-        cls: type["Node"],
+        cls,
         msg: NodeStructure,
         ros_node: ROSNode,
         debug_manager: Optional[DebugManager] = None,
