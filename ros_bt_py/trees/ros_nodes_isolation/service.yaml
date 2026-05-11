@@ -1,0 +1,109 @@
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: UNKNOWN TREE
+path: ''
+root_id: 9474388a-ff1e-408c-a7a3-aa411900ce44
+nodes:
+- module: ros_bt_py.ros_nodes.service
+  node_class: Service
+  max_children: 0
+  node_id: 9474388a-ff1e-408c-a7a3-aa411900ce44
+  name: Service
+  child_ids: []
+  inputs:
+  - key: service_type
+    type:
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 2
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"example_interfaces/srv/Trigger"'
+  - key: service_name
+    type:
+      type_identifier: 10
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 2
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"/foo"'
+  - key: wait_for_response_seconds
+    type:
+      type_identifier: 3
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-1.7976931348623157e+308'
+      max_value: '1.7976931348623157e+308'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '2.5'
+  outputs:
+  - key: success
+    type:
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  - key: message
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  tree_ref: ''
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []
