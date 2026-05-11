@@ -343,6 +343,8 @@ class ActionBase(Leaf):
                 callback_group=ReentrantCallbackGroup(),
             )
 
+        # TODO Maybe this should have a fallthrough in case of fast-responsing servers?
+
         if self._internal_state == ActionStates.IDLE:
             return self._do_tick_send_new_goal()
 

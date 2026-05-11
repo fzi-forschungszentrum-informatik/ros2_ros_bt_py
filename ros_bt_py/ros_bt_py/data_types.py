@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import abc
+import array
 import builtins
 from copy import deepcopy
 import json
@@ -797,7 +798,14 @@ class IterableContainer(BuiltinContainer[ITER]):
     ) -> TypeGuard["IterableContainer"]:  # -> TypeGuard[Self]
         if not super().is_compatible(other):
             return False
-        return self._element_type != other._element_type
+        if other.max_length > self.max_length:
+            return False
+        if self.strict_length:
+            if not other.strict_length:
+                return False
+            if other.max_length != self.strict_length:
+                return False
+        return self._element_type.is_compatible(other._element_type)
 
     def serialize_type(self) -> NodeDataType:
         type_msg = super().serialize_type()
@@ -837,7 +845,9 @@ class ListType(IterableContainer[list[Any]]):
     _value = []
 
     @typechecked
-    def set_value(self, value: list) -> Result[None, str]:
+    def set_value(self, value: list | array.array) -> Result[None, str]:
+        if isinstance(value, array.array):
+            value = list(value)
         for item in value:
             match self._element_type.set_value(item):
                 case Err(e):
