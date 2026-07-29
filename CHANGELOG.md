@@ -8,33 +8,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add data flow test
+- Add tests for MemorySequence
+- Add tests for Sequence node, update test dependencies
+- Add element type to configs
+- Add use_sim_time param to launch file
+- Add documentation to data types
+- Add handling for nested ros types
+- Add message field information to publishing
+- Add blank type, more node configs
+- Add data map wrapper
+- Add support for typed and recursive iterables and references
+- Add data flow manager for pushing data between trees and nodes
+- Add placeholder for ambiguous type values
+- Add types for everything ROS
+- Add types for builtins and references
+- Add types for builtins
 - Add typing extensions dependency. by @Oberacda
 - Add result library. by @Oberacda
 - Add Enum Switch Node by @nspielbau in [#183](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/183)
-- Adds support for the `bytes` type by @Doomse in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
+- Adds support for the `bytes` type in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
-- Subtree IO use node ids by @Doomse in [#247](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/247)
+- List type accept and convert array.array values
+- Start adding tests for service node (does not cover reset behavior)
+- Subtree IO use node ids in [#247](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/247)
 - Update Web-GUI to 7.1.0 by @Oberacda in [#246](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/246)
-- Do not persist serialized values by @Doomse in [#245](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/245)
-- Respin executor on InvalidHandle by @Doomse in [#238](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/238)
+- Do not persist serialized values in [#245](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/245)
+- Minor updates and fixes
+- Update topic node tests
+- Simplify handling of generic type fields
+- Update action node, introduce base class (untested)
+- Update Service node, introduce base class
+- Isolated tests for topic nodes
+- Initial integration test
+- Update utils tests
+- Update api docs
+- Update migration handler
+- Update docs, include data type infos
+- Standardize deepcopy in data types
+- Update WiringData publishing
+- Update tree edit services
+- Update node configs, remove convert clamp option
+- Update recursive serialization process
+- Only allow one config per node
+- Set updated flags on reset
+- Node configs, bugfixes and convert node clamping
+- Update data value serialization
+- Update tree services
+- Update handling of data update flag
+- Refactor node modules
+- Update type value handling
+- Update ros node configs
+- Type handling updates
+- Update numeric type handling
+- Update MixedType container
+- More node configs, more compact result handling
+- Use more compact result handling
+- Start updating node configs
+- Typecheck data classes, add typed getter
+- Update node and tree manager
+- Update node and node-config implementation
+- Start working on custom type system
+- Refactor and clean up tree manager
+- Refactor tree manager into exec and edit components
+- Move get_available_nodes callback to package manager
+- Respin executor on InvalidHandle in [#238](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/238)
 - Switch to vendor result. by @Oberacda
 - Update Web-GUI to 7.0.1 by @Oberacda in [#235](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/235)
-- Decouple subtree ids from node ids by @Doomse in [#232](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/232)
+- Decouple subtree ids from node ids in [#232](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/232)
 - Update Web-GUI to 7.0.0 by @Oberacda in [#231](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/231)
-- Provide enhanced logging functionality by @Doomse in [#230](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/230)
+- Provide enhanced logging functionality in [#230](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/230)
 - Update issue templates. by @Oberacda
 - Update issue templates by @Oberacda in [#229](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/229)
-- Strip "__name__" attribute from serialized TypeWrappers by @Doomse in [#227](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/227)
+- Strip "__name__" attribute from serialized TypeWrappers in [#227](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/227)
 - Update Web-GUI to 6.0.2 by @Oberacda in [#226](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/226)
-- Set_options unwire and rewire data by @Doomse in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
+- Set_options unwire and rewire data in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
-- Fix node options with complex types by @Doomse in [#244](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/244)
+- Fix small issues. by @Oberacda
+- Fix data type equals
+- Fix node options with complex types in [#244](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/244)
+- Fix action node
+- Fix removed node versioning
+- Fix ros message type, update node configs
+- Fix bad uses of `do(...)`
+- Fix list and dict types
+- Fix runtime types
+- Fix ros type validation, add path type
 - Fix imports test to deal with nested packages. by @Oberacda
 - Fix formatting. by @Oberacda
 
+### Merged
+- Merge pull request #249 from Doomse/node-data-rework by @Oberacda in [#249](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/249)
+- Merge branch 'main' into node-data-rework
+
 ### Removed
+- Remove usage of typing.Self for compatibility with python 3.10
+- Remove outdated unit tests and test trees
+- Remove node config versioning
+- Remove unused legacy code
+- Remove NodeMeta modifying docstring
+- Remove dynamic classes and minor bugfixes
+- Remove blank type, update ros value serialization
+- Remove strict length strings
 - Remove typing_extensiosn. by @Oberacda in [#241](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/241)
 - Remove dependency. by @Oberacda
 
@@ -42,51 +119,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0] - 2026-01-14
 
 ### Added
-- Add uuid to message definitions by @Doomse
+- Add uuid to message definitions
 - Add integration test scafolding by @Oberacda in [#220](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/220)
-- Add rmw isolation to integration tests by @Doomse
-- Add pytest integration tests by @Doomse
-- Add first test tree by @Doomse
-- Add base test framework by @Doomse
+- Add rmw isolation to integration tests
+- Add pytest integration tests
+- Add first test tree
+- Add base test framework
 
 ### Changed
 - Release 0.6.0. by @Oberacda
 - Bump interfaces version. by @Oberacda
 - Update Web-GUI to 6.0.1 by @Oberacda in [#222](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/222)
 - Use UUIDs  instead of Names for BTNodes by @Oberacda in [#211](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/211)
-- Update subtree tests and bugfixes by @Doomse
-- Switch to string based ros uuids by @Doomse
-- Finish tree file migration utility by @Doomse
-- Update load save and migrate process. by @Doomse
-- Start bugfixing by @Doomse
-- More node uuid handling by @Doomse
-- Update subtree handling by @Doomse
-- Update tree manager to use uuids by @Doomse
-- Start uuid handling by @Doomse
-- Wait for service before calling by @Doomse
+- Update subtree tests and bugfixes
+- Switch to string based ros uuids
+- Finish tree file migration utility
+- Update load save and migrate process.
+- Start bugfixing
+- More node uuid handling
+- Update subtree handling
+- Update tree manager to use uuids
+- Start uuid handling
+- Wait for service before calling
 
 ### Fixed
-- Fix node option migrations by @Doomse
+- Fix node option migrations
 
 ### Removed
-- Remove custom type conversions from NodeData by @Doomse
-- Remove integration tests from web-gui package by @Doomse
+- Remove custom type conversions from NodeData
+- Remove integration tests from web-gui package
 
 
 ## [0.5.1] - 2025-12-08
 
 ### Added
-- Add tests for parallel nodes by @Doomse
-- Add tests for node switch by @Doomse
-- Add tests for sequence nodes by @Doomse
+- Add tests for parallel nodes
+- Add tests for node switch
+- Add tests for sequence nodes
 
 ### Changed
 - Release v0.5.1 by @Oberacda
 - Improve service client shutdown robustness by @henningkayser
 - Update ros_bt_py/ros_bt_py/ros_nodes/service.py by @Oberacda
-- Copy dictionary when setting msg fields by @Doomse
-- Rewrite tests with global call order by @Doomse
-- Bugfix and add tests for fallback nodes by @Doomse
+- Copy dictionary when setting msg fields
+- Rewrite tests with global call order
+- Bugfix and add tests for fallback nodes
 
 ### Fixed
 - Fix typo in self. by @Oberacda
@@ -100,7 +177,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge pull request #215 from Doomse/flow-control-tests by @Oberacda in [#215](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/215)
 
 ### Removed
-- Remove log message that is triggered frequently by @Doomse
+- Remove log message that is triggered frequently
 
 ## New Contributors
 * @henningkayser made their first contribution
@@ -108,9 +185,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.0] - 2025-11-25
 
 ### Added
-- Add wait_for_service check to Service node by @Doomse
-- Add try except block to node constructor call by @Doomse
-- Add type hints to all nodes and fix type mismatch issues by @Doomse
+- Add wait_for_service check to Service node
+- Add try except block to node constructor call
+- Add type hints to all nodes and fix type mismatch issues
 - Added type checks for action feedback and result by @nspielbau
 - Added silent conversion of arrays to lists by @nspielbau
 - Added helper function for setting data graph nodes by @nspielbau
@@ -120,42 +197,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Bump ros_bt_py_web_ui version. by @Oberacda
 - Update pre-commit config. by @Oberacda
-- Update behavior for omitting options by @Doomse
-- Only wait for service if fail_if_not_available is set by @Doomse
-- Don't set tree state to ERROR on edit operations by @Doomse
-- Always publish structure after calling load by @Doomse
-- Load tree error shouldn't set the tree state by @Doomse
-- Formatting by @Doomse
-- Update subscriber nodes to handle latched topics by @Doomse
+- Update behavior for omitting options
+- Only wait for service if fail_if_not_available is set
+- Don't set tree state to ERROR on edit operations
+- Always publish structure after calling load
+- Load tree error shouldn't set the tree state
+- Formatting
+- Update subscriber nodes to handle latched topics
 - Update Web-GUI to 5.0.0 by @Oberacda
-- Do not store tree.path when saving to file, this is set on load by @Doomse
-- Don't overwrite name on save, set path on load by @Doomse
-- Py-black formatting by @Doomse
-- Also update test case accordingly by @Doomse
-- Action cancellation returns RUNNING if there is a new goal available and FAILED otherwise by @Doomse
-- Also reorder WaitForService by @Doomse
-- Reorder ROS node options to always be name first, then type by @Doomse
+- Do not store tree.path when saving to file, this is set on load
+- Don't overwrite name on save, set path on load
+- Py-black formatting
+- Also update test case accordingly
+- Action cancellation returns RUNNING if there is a new goal available and FAILED otherwise
+- Also reorder WaitForService
+- Reorder ROS node options to always be name first, then type
 - Update Web-GUI to 4.1.0 by @Oberacda
 - Updated the Getting Started and Basic Tutorial of the online documentation by @chriseichmann in [#195](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/195)
-- Update node config tests by @Doomse
-- Update node shutdown control flow by @Doomse
-- Handle results in node init function by @Doomse
-- Replace typing.Self since it's not available in Python3.10 by @Doomse
-- Update tests and fix test failures by @Doomse
-- Do not put tree in error state if node replacing fails (this is an edit operation) by @Doomse
-- Duct tape the StrEnum workaround to satisfy both static and runtime typing by @Doomse
-- StrEnum not available in Python3.10, use workaround by @Doomse
-- Py-black formatting by @Doomse
-- Ensure flake8 compliance by @Doomse
-- More minor fixes by @Doomse
+- Update node config tests
+- Update node shutdown control flow
+- Handle results in node init function
+- Replace typing.Self since it's not available in Python3.10
+- Update tests and fix test failures
+- Do not put tree in error state if node replacing fails (this is an edit operation)
+- Duct tape the StrEnum workaround to satisfy both static and runtime typing
+- StrEnum not available in Python3.10, use workaround
+- Py-black formatting
+- Ensure flake8 compliance
+- More minor fixes
 - Explicitly cast test sequences to lists by @nspielbau
 - Update status badge. by @Oberacda
 - Use flake8 instead of ament_flake8 by @Oberacda
 
 ### Fixed
-- Fix shutdown method by @Doomse
-- Fix rename on save by @Doomse
-- Fix issues that came up due to merging by @Doomse
+- Fix shutdown method
+- Fix rename on save
+- Fix issues that came up due to merging
 - Fix elif statement by @nspielbau
 - Fixed data type in/outputs by @nspielbau
 - Fix TopicSubscriber durability policy by @RobertWilbrandt
@@ -175,7 +252,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge pull request #198 from fzi-forschungszentrum-informatik/update-web-gui-to-4.1.0 by @Oberacda in [#198](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/198)
 - Merge pull request #197 from Doomse/fb_rework_error_handling by @Oberacda in [#197](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/197)
 - Merge branch 'main' into fb_rework_error_handling by @Oberacda
-- Merge branch 'main' into fb_rework_error_handling by @Doomse in [#137](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/137)
+- Merge branch 'main' into fb_rework_error_handling in [#137](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/137)
 - Merge pull request #106 from fzi-forschungszentrum-informatik/fb_check_list_from_srv_res by @Oberacda in [#106](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/106)
 - Merge pull request #184 from RobertWilbrandt/topic_durability_policy by @Oberacda in [#184](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/184)
 - Merge pull request #180 from fzi-forschungszentrum-informatik/add_pre-commit_ci by @Oberacda in [#180](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/180)
@@ -184,7 +261,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge pull request #178 from fzi-forschungszentrum-informatik/fix_launch_file by @Oberacda in [#178](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/178)
 
 ### Removed
-- Remove unnecessary check by @Doomse
+- Remove unnecessary check
 - Remove no-main commit check. by @Oberacda
 
 ## New Contributors
@@ -207,20 +284,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changle cliff.toml by @Oberacda
 - Update Web-GUI to 4.0.1 by @Oberacda
 - Update Web-GUI to 4.0.0 by @Oberacda
-- Update tests to new tree message types by @Doomse
-- Always collect subtree messages and toggle publishing in manager. by @Doomse
-- Properly set tree ids and clean up outdated subtree by @Doomse
-- Clear tree data on disable by @Doomse
-- Manually enable data publish, data is published with every tick by @Doomse
-- Include subtree information in tree topics by @Doomse
-- Change ppublishing to produce more consistent results and overwrite stale data by @Doomse
-- Publish Wiring Data if tree is run with 'Tick Once' by @Doomse
-- Revert to explicitly specifying "serialized" on message fields by @Doomse
-- Implement tree state publishing by @Doomse
-- Update tree manager part1 by @Doomse
-- Update imports for state constants by @Doomse
-- Update service definitions by @Doomse
-- Rework message types by @Doomse
+- Update tests to new tree message types
+- Always collect subtree messages and toggle publishing in manager.
+- Properly set tree ids and clean up outdated subtree
+- Clear tree data on disable
+- Manually enable data publish, data is published with every tick
+- Include subtree information in tree topics
+- Change ppublishing to produce more consistent results and overwrite stale data
+- Publish Wiring Data if tree is run with 'Tick Once'
+- Revert to explicitly specifying "serialized" on message fields
+- Implement tree state publishing
+- Update tree manager part1
+- Update imports for state constants
+- Update service definitions
+- Rework message types
 
 ### Fixed
 - Fix import error by @Oberacda
@@ -229,8 +306,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix seconds_running calculation error in action by @mdeitersen
 - Fix changelog ci job by @Oberacda
 - Fix changelog ci job by @Oberacda
-- Fix cleanup of outdated subtrees by @Doomse
-- Fix initially apparent errors (from message class rework) by @Doomse
+- Fix cleanup of outdated subtrees
+- Fix initially apparent errors (from message class rework)
 
 ### Merged
 - Merge pull request #144 from mdeitersen/add_action_tests by @Oberacda in [#144](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/144)
@@ -241,7 +318,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Remove commented out code by @mdeitersen
-- Remove data publish on unwire, since that dumps all data (tree is shutdown) by @Doomse
+- Remove data publish on unwire, since that dumps all data (tree is shutdown)
 
 ## New Contributors
 * @github-actions[bot] made their first contribution
@@ -249,26 +326,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2025-02-26
 
 ### Added
-- Add custom types by @Doomse
-- Add typing hints for builtin by @Doomse
+- Add custom types
+- Add typing hints for builtin
 
 ### Changed
 - Update Web-GUI to release/3.3.1 by @Oberacda
 - Update Web-GUI to release/3.3.0 by @Oberacda
-- Integrate abc into NodeMeta and Node classes by @Doomse
-- Reenable Node metaclass and fix docstring generator by @Doomse
-- Update tests for EnumFields node by @Doomse
-- Apply TopicType to EnumFields by @Doomse
-- Update ConstFields Service by @Doomse
-- Integrate TypeWrapper with compatibility conversions by @Doomse
-- Implement generic type wrapper by @Doomse
-- Update get_message_fields to provide recursive type information by @Doomse
-- Allow for node options to give type hints by @Doomse
+- Integrate abc into NodeMeta and Node classes
+- Reenable Node metaclass and fix docstring generator
+- Update tests for EnumFields node
+- Apply TopicType to EnumFields
+- Update ConstFields Service
+- Integrate TypeWrapper with compatibility conversions
+- Implement generic type wrapper
+- Update get_message_fields to provide recursive type information
+- Allow for node options to give type hints
 - Switch to best_effort for tree publishing. by @Oberacda
 
 ### Fixed
 - Fixed TopicSubscriber node behavior by @Oberacda
-- Fix message constant fields service including tests by @Doomse
+- Fix message constant fields service including tests
 
 ### Merged
 - Merge pull request #165 from fzi-forschungszentrum-informatik/update-web-gui-to-release/3.3.1 by @Oberacda in [#165](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/165)
@@ -280,28 +357,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge pull request #159 from Doomse/type-hints by @Oberacda in [#159](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/159)
 
 ### Removed
-- Remove non-functional enum node by @Doomse
+- Remove non-functional enum node
 
 
 ## [0.2.0] - 2025-01-23
 
 ### Added
 - Add handler to allow the loading of old trees. by @Oberacda
-- Add default values to Ros Message types by @Doomse
-- Add action name discovery by @Doomse
-- Add Ros Service types by @Doomse
+- Add default values to Ros Message types
+- Add action name discovery
+- Add Ros Service types
 - Added missing ) by @nspielbau
 - Added showcase gif by @nspielbau
 - Added line between icons and header by @nspielbau
 
 ### Changed
-- Restructure MessageType publlishing by @Doomse
-- Keep maths types in helpers.py for compatibility by @Doomse
-- Implement Ros Topic types by @Doomse
-- Implement Ros Action types and baseclasses by @Doomse
-- Publish names and types of existing topics and services. Actions still missing by @Doomse
-- Move math types to new location by @Doomse
-- Implement FilePath type by @Doomse
+- Restructure MessageType publlishing
+- Keep maths types in helpers.py for compatibility
+- Implement Ros Topic types
+- Implement Ros Action types and baseclasses
+- Publish names and types of existing topics and services. Actions still missing
+- Move math types to new location
+- Implement FilePath type
 - Updated Changelog by @nspielbau
 - Updated gif by @nspielbau
 - Update CI workflow. by @Oberacda
@@ -330,7 +407,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Remove empty action. by @Oberacda
-- Remove checks that are now redundant by @Doomse
+- Remove checks that are now redundant
 
 
 ## [0.1.1] - 2024-11-04
