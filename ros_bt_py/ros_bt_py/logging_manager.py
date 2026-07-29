@@ -190,7 +190,7 @@ class LoggingManager:
     ):
         if self.log_level_inactive(BTLogMessage.WARN):
             return
-        self.get_ros_logger(node_id, node_name).warn(msg)
+        self.get_ros_logger(node_id, node_name).warning(msg)
         if not internal:
             self.log(
                 level=BTLogMessage.WARN,

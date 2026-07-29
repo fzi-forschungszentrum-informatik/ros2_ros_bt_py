@@ -76,14 +76,18 @@ def make_filepath_unique(filepath):
     return name + extension
 
 
-def to_message_type(message: type) -> MessageType:
+def to_message_type(message: type) -> Optional[MessageType]:
     message_type_msg = MessageType()
     message_type_msg.name = get_interface_name(message)
-    container = RosMessageType(message)
+    try:
+        container = RosMessageType(message)
+    except Exception as exc:
+        LOGGER.warning(f"Unable to inspect message type {message_type_msg.name}: {exc}")
+        return None
     message_type_msg.type = container.serialize_type()
     match container.get_element_fields():
         case Err(e):
-            LOGGER.warn(e)
+            LOGGER.warning(e)
             return message_type_msg
         case Ok(f):
             field_types = f
@@ -207,7 +211,7 @@ class PackageManager(object):
         """
 
         if self.message_list_pub is None:
-            LOGGER.warn("No callback for publishing message list data provided.")
+            LOGGER.warning("No callback for publishing message list data provided.")
             return
 
         message_types = MessageTypes()
@@ -225,7 +229,9 @@ class PackageManager(object):
                 message_type = rosidl_runtime_py.utilities.get_message(
                     package + "/" + message
                 )
-                message_types.topics.append(to_message_type(message_type))
+                message_type_msg = to_message_type(message_type)
+                if message_type_msg is not None:
+                    message_types.topics.append(message_type_msg)
         for package, package_services in rosidl_runtime_py.get_service_interfaces(
             packages
         ).items():
@@ -241,7 +247,7 @@ class PackageManager(object):
 
     def publish_packages_list(self):
         if self.packages_list_pub is None:
-            LOGGER.warn("No callback for publishing packages list data provided.")
+            LOGGER.warning("No callback for publishing packages list data provided.")
             return
         self.package_paths = []
         list_of_packages = Packages()
@@ -379,7 +385,7 @@ class PackageManager(object):
         for module, nodes in Node.node_classes.items():
             for class_name, node_class in nodes.items():
                 if not node_class._node_config:
-                    LOGGER.warn(
+                    LOGGER.warning(
                         f"Node class: {node_class.__name__} does not have node config!"
                     )
                     continue

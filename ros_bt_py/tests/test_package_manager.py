@@ -28,6 +28,7 @@
 
 import pytest
 
+import ros_bt_py.package_manager
 from ros_bt_py.data_types import StringType, RosMessageType
 from ros_bt_py.package_manager import PackageManager, to_message_type
 
@@ -43,6 +44,7 @@ class TestPackageManager:
 
     def test_data_type_to_message_type(self):
         message_type_msg = to_message_type(Header)
+        assert message_type_msg is not None
         assert message_type_msg.name == "std_msgs/msg/Header"
         assert message_type_msg.type == RosMessageType(Header).serialize_type()
 
@@ -54,3 +56,11 @@ class TestPackageManager:
         for field in message_type_msg.fields:
             assert field.key in fields_dict.keys()
             assert field.type == fields_dict[field.key]
+
+    def test_data_type_to_message_type_skips_uninstantiable_message(self, monkeypatch):
+        def raise_on_init(message):
+            raise TypeError("broken message constructor")
+
+        monkeypatch.setattr(ros_bt_py.package_manager, "RosMessageType", raise_on_init)
+
+        assert to_message_type(Header) is None

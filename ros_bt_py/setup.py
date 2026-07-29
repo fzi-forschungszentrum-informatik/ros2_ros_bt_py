@@ -88,7 +88,7 @@ setup(
     maintainer_email=maintainer_email_str,
     description=description_str,
     license=license_str,
-    tests_require=["pytest", "pytest-cov"],
+    extras_require={"test": ["pytest", "pytest-cov"]},
     entry_points={
         "console_scripts": [
             "tree_node = ros_bt_py.tree_node:main",
