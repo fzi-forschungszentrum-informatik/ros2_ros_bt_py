@@ -59,16 +59,13 @@ pre-commit run --all
 
 ## Code Style
 
-**Python:** ROS 2 ament_lint standards via pre-commit:
-- `black` (py36+)
-- `flake8`
-- `ament_copyright` (BSD-3-Clause header required)
-- `ament_xmllint` (for XML files)
-- `ament_lint_cmake` (for CMakeLists.txt)
+**Python:** pre-commit checks use Ruff formatting and linting.
+
+**Other checks:** pre-commit validates XML, runs `cmake-lint`, and inserts BSD-3-Clause headers.
 
 **Pre-commit config:** `.pre-commit-config.yaml`
 
-**Important:** All new files must include BSD-3-Clause copyright header. Use `ament_copyright` to check.
+**Important:** All new files must include a BSD-3-Clause copyright header. The `insert-license` pre-commit hooks add it automatically.
 
 ## Testing
 
