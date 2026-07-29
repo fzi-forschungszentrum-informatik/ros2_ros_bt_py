@@ -26,6 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 """BT Node to open a file from disk and publish its contents."""
+
 from rclpy.utilities import ament_index_python
 import yaml
 
@@ -217,7 +218,7 @@ class YamlDict(Leaf):
                 outputs["content"] = data
             else:
                 outputs["load_success"] = False
-                outputs["load_error_msg"] = "Yaml file should be a list"
+                outputs["load_error_msg"] = "Yaml file should be a dict"
         except LoadFileError as ex:
             outputs["load_success"] = False
             outputs["load_error_msg"] = str(ex)

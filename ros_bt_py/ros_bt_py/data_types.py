@@ -803,7 +803,7 @@ class IterableContainer(BuiltinContainer[ITER]):
         if self.strict_length:
             if not other.strict_length:
                 return False
-            if other.max_length != self.strict_length:
+            if other.max_length != self.max_length:
                 return False
         return self._element_type.is_compatible(other._element_type)
 

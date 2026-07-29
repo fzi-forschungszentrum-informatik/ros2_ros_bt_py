@@ -25,7 +25,7 @@ as well as identifiers that are used to for serializing types as ROS messages.
 
 Intermediary classes are commonly named ``...Container``, whereas concrete classes are named ``...Type``.
 
-.. image:: _static/data_types.jpg
+.. image:: _static/data_types.png
    :alt: Data Type Structure
 
 ************
