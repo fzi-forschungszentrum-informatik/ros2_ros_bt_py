@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add stability warning. by @Oberacda
 - Add lyrical target. by @Oberacda
 - Add data flow test
 - Add tests for MemorySequence
