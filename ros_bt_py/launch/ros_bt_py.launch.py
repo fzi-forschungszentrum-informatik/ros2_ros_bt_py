@@ -26,7 +26,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -43,6 +43,18 @@ def generate_module_list():
 
 
 def generate_launch_description():
+    use_sim_time_launch_arg = DeclareLaunchArgument(
+        "use_sim_time",
+        default_value="False",
+    )
+    use_sim_time_value = LaunchConfiguration("use_sim_time")
+
+    set_use_sim_time_parameter = SetParameter(
+        name="use_sim_time",
+        value=True,
+        condition=IfCondition(use_sim_time_value),
+    )
+
     robot_namespace_launch_arg = DeclareLaunchArgument(
         "robot_namespace",
         default_value="/",
@@ -161,6 +173,8 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            use_sim_time_launch_arg,
+            set_use_sim_time_parameter,
             robot_namespace_launch_arg,
             node_modules_launch_arg,
             tree_storage_paths_launch_arg,

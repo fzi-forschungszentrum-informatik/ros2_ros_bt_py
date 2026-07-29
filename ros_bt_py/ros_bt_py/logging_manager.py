@@ -61,8 +61,10 @@ class LoggingManager:
         self.tree_id: Optional[uuid.UUID] = None
         self.tree_name = ""
 
-    def set_tree_info(self, tree_id: uuid.UUID, tree_name: str):
+    def set_tree_id(self, tree_id: uuid.UUID):
         self.tree_id = tree_id
+
+    def set_tree_name(self, tree_name: str):
         self.tree_name = tree_name
 
     @classmethod

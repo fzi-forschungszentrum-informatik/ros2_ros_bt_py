@@ -25,75 +25,63 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Optional, Dict
 
 from ros_bt_py.vendor.result import Result, Ok, Err
-import uuid
 
-from ros_bt_py.custom_types import RosTopicType
-from rclpy.node import Node
-
-from ros_bt_py.debug_manager import DebugManager
-from ros_bt_py.subtree_manager import SubtreeManager
+from ros_bt_py.data_types import (
+    DataContainer,
+    RosTopicType,
+    ReferenceType,
+    get_message_field_io_type,
+)
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
-from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.exceptions import BehaviorTreeException, NodeConfigError
 from ros_bt_py.helpers import BTNodeState
-from ros_bt_py.ros_helpers import get_message_field_type
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"input_type": RosTopicType},
-        inputs={},
+        inputs={
+            "input_type": RosTopicType(),
+            "in": ReferenceType(reference="input_type"),
+        },
         outputs={},
         max_children=0,
     )
 )
 class MessageToFields(Leaf):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._message_type = self.options["input_type"].get_type_obj()
-
-        node_inputs = {"in": self._message_type}
-        node_outputs = {}
-
-        msg = self._message_type()
-        for field in msg._fields_and_field_types:
-            node_outputs[field] = get_message_field_type(msg, field)
-
-        extend_result = self.node_config.extend(
-            NodeConfig(
-                options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
-            )
-        )
-        if extend_result.is_err():
-            raise extend_result.unwrap_err()
-
-        register_result = self._register_node_data(
-            source_map=node_inputs, target_map=self.inputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
-        register_result = self._register_node_data(
-            source_map=node_outputs, target_map=self.outputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
+    def add_extra_outputs(self) -> Result[dict[str, DataContainer], NodeConfigError]:
+        match self.inputs.get_value_as("input_type", type):
+            case Err(e):
+                return Err(e)
+            case Ok(t):
+                self.msg_type = t
+        outputs = {}
+        for (
+            field_name,
+            field_type,
+        ) in self.msg_type.get_fields_and_field_types().items():
+            match get_message_field_io_type(field_type):
+                case Err(e):
+                    return Err(NodeConfigError(e))
+                case Ok(t):
+                    outputs[field_name] = t
+        return Ok(outputs)
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        self.msg_fields = list(self.msg_type.get_fields_and_field_types().keys())
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for field in self.outputs:
-            value = getattr(self.inputs["in"], field)
-            if isinstance(value, tuple) and self.outputs.get_type(field) == list:
-                self.outputs[field] = list(value)
-            else:
-                self.outputs[field] = value
-        return Ok(BTNodeState.SUCCEEDED)
+        match self.inputs.get_value_as("in", self.msg_type):
+            case Err(e):
+                return Err(e)
+            case Ok(m):
+                msg = m
+        return self.outputs.set_multiple_values(
+            **{field: getattr(msg, field) for field in self.msg_fields}
+        ).map(lambda _: BTNodeState.SUCCEEDED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
@@ -107,10 +95,8 @@ class MessageToFields(Leaf):
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"output_type": RosTopicType},
-        inputs={},
-        outputs={},
+        inputs={"output_type": RosTopicType()},
+        outputs={"out": ReferenceType(reference="output_type")},
         max_children=0,
     )
 )
@@ -119,55 +105,41 @@ class FieldsToMessage(Leaf):
     Take multiple fields as input and outputs a ROS message.
 
     The inputs will be named after the fields in the output message
-
-    If the output is not as ROS message, the input will be be passed through
-
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._message_type = self.options["output_type"].get_type_obj()
-
-        node_inputs = {}
-        node_outputs = {"out": self._message_type}
-
-        msg = self._message_type()
-        for field in msg._fields_and_field_types:
-            node_inputs[field] = get_message_field_type(msg, field)
-
-        # TODO: Use result type.
-        extend_result = self.node_config.extend(
-            NodeConfig(
-                options={}, inputs=node_inputs, outputs=node_outputs, max_children=0
-            )
-        )
-        if extend_result.is_err():
-            raise extend_result.unwrap_err()
-
-        register_result = self._register_node_data(
-            source_map=node_inputs, target_map=self.inputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
-
-        register_result = self._register_node_data(
-            source_map=node_outputs, target_map=self.outputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
+    def add_extra_inputs(self) -> Result[dict[str, DataContainer], NodeConfigError]:
+        match self.inputs.get_value_as("output_type", type):
+            case Err(e):
+                return Err(e)
+            case Ok(t):
+                self.msg_type = t
+        inputs = {}
+        for (
+            field_name,
+            field_type,
+        ) in self.msg_type.get_fields_and_field_types().items():
+            match get_message_field_io_type(field_type):
+                case Err(e):
+                    return Err(NodeConfigError(e))
+                case Ok(t):
+                    inputs[field_name] = t
+        return Ok(inputs)
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        self.msg_fields = list(self.msg_type.get_fields_and_field_types().keys())
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        msg = self._message_type()
+        msg = self.msg_type()
+        for field in self.msg_fields:
+            match self.inputs.get_value(field):
+                case Err(e):
+                    return Err(e)
+                case Ok(v):
+                    value = v
+            setattr(msg, field, value)
 
-        for field in msg._fields_and_field_types:
-            setattr(msg, field, self.inputs[field])
-
-        self.outputs["out"] = msg
-        return Ok(BTNodeState.SUCCEEDED)
+        return self.outputs.set_value("out", msg).map(lambda _: BTNodeState.SUCCEEDED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)

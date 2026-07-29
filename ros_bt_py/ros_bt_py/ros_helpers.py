@@ -29,33 +29,16 @@ import inspect
 import array
 import uuid
 
-from ros_bt_py.vendor.result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err, do
 
-import rclpy.logging
 from rclpy import action
 from rclpy.node import Node, Publisher
 
-from ros_bt_py.exceptions import BehaviorTreeException
-from ros_bt_py_interfaces.msg import MessageChannel, MessageChannels
+from ros_bt_py.exceptions import NodeConfigError
+from ros_bt_py_interfaces.msg import MessageChannel, MessageChannels, Wiring
 
 # Type alias for ros uuids
 ROS_UUID = str
-
-
-class LoggerLevel(object):
-    """Data class containing a logging level."""
-
-    def __init__(self, logger_level=rclpy.logging.LoggingSeverity.INFO):
-        """Initialize a new LoggerLevel class."""
-        self.logger_level = logger_level
-
-
-class EnumValue(object):
-    """Data class containing an enum value."""
-
-    def __init__(self, enum_value=""):
-        """Initialize a new EnumValue class."""
-        self.enum_value = enum_value
 
 
 def ros_to_uuid(ros_uuid_msg: ROS_UUID) -> Result[uuid.UUID, str]:
@@ -67,6 +50,14 @@ def ros_to_uuid(ros_uuid_msg: ROS_UUID) -> Result[uuid.UUID, str]:
 
 def uuid_to_ros(uuid: uuid.UUID) -> ROS_UUID:
     return str(uuid)
+
+
+def wiring_has_id(wiring: Wiring, node_id: uuid.UUID) -> bool:
+    return do(
+        Ok(source_id == node_id or target_id == node_id)
+        for source_id in ros_to_uuid(wiring.source.node_id)
+        for target_id in ros_to_uuid(wiring.target.node_id)
+    ).unwrap_or(False)
 
 
 def get_interface_name(msg_metaclass: type) -> str:
@@ -84,10 +75,11 @@ def get_interface_name(msg_metaclass: type) -> str:
     return f"{package_name}/{message_type}/{message_name}"
 
 
-def get_message_constant_fields(message_class):
+def get_message_constant_fields(message_class) -> Result[list[str], NodeConfigError]:
     """Return all constant fields of a message as a list."""
     if inspect.isclass(message_class):
         # This is highly dependend on the ROS message class generation.
+        # TODO Seems overly convoluted, why not just check for uppercase attr names?
         members = [
             attr
             for attr in dir(message_class.__class__)
@@ -95,9 +87,9 @@ def get_message_constant_fields(message_class):
             and not callable(getattr(message_class.__class__, attr))
         ]
 
-        return members
+        return Ok(members)
     else:
-        raise BehaviorTreeException(f"{message_class} is not a ROS Message")
+        return Err(NodeConfigError(f"{message_class} is not a ROS Message"))
 
 
 def publish_message_channels(node: Node, publisher: Publisher):
@@ -116,11 +108,3 @@ def publish_message_channels(node: Node, publisher: Publisher):
     for name, [interface, *_] in action.get_action_names_and_types(node):
         msg.actions.append(MessageChannel(name=name, type=interface))
     publisher.publish(msg)
-
-
-def get_message_field_type(msg, field) -> type:
-    """Return type of a field in a ros msg but check for arrays to be converted into lists."""
-    if isinstance((getattr(msg, field)), array.array):
-        return list
-    else:
-        return type(getattr(msg, field))

@@ -71,8 +71,6 @@ from ros_bt_py_interfaces.srv import (
     ClearTree,
     MorphNode,
     SaveTree,
-    GetMessageFields,
-    GetMessageConstantFields,
     GetPackageStructure,
     GenerateSubtree,
     ReloadTree,
@@ -84,11 +82,10 @@ from ros_bt_py_interfaces.srv import (
 
 from std_srvs.srv import SetBool
 
-from ros_bt_py.tree_manager import (
-    TreeManager,
+from ros_bt_py.tree_edit_manager import (
+    TreeEditManager,
     get_success,
     get_error_message,
-    get_available_nodes,
 )
 from ros_bt_py.debug_manager import DebugManager
 from ros_bt_py.subtree_manager import SubtreeManager
@@ -232,18 +229,6 @@ class TreeNode(Node):
 
         self.package_manager_service_callback_group = ReentrantCallbackGroup()
 
-        self.get_message_fields_service = self.create_service(
-            GetMessageFields,
-            "~/get_message_fields",
-            callback=self.package_manager.get_message_fields,
-            callback_group=self.package_manager_service_callback_group,
-        )
-        self.get_message_constant_fields_service = self.create_service(
-            GetMessageConstantFields,
-            "~/get_message_constant_fields",
-            callback=self.package_manager.get_message_constant_fields_handler,
-            callback_group=self.package_manager_service_callback_group,
-        )
         self.get_package_structure_service = self.create_service(
             GetPackageStructure,
             "~/get_package_structure",
@@ -268,6 +253,12 @@ class TreeNode(Node):
             callback=self.package_manager.get_storage_folders,
             callback_group=self.package_manager_service_callback_group,
         )
+        self.get_available_nodes_service = self.create_service(
+            GetAvailableNodes,
+            "~/get_available_nodes",
+            callback=self.package_manager.get_available_nodes,
+            callback_group=self.package_manager_service_callback_group,
+        )
 
         self.package_manager.publish_message_list()
         self.get_logger().info("initialized package manager")
@@ -283,7 +274,7 @@ class TreeNode(Node):
             ros_node=self,
             publish_log_callback=self.log_message_pub.publish,
         )
-        self.tree_manager = TreeManager(
+        self.tree_manager = TreeEditManager(
             ros_node=self,
             module_list=params.node_modules,
             debug_manager=self.debug_manager,
@@ -350,12 +341,6 @@ class TreeNode(Node):
             ControlTreeExecution,
             "~/control_tree_execution",
             callback=self.tree_manager.control_execution,
-            callback_group=self.tree_manager_service_callback_group,
-        )
-        self.get_available_nodes_service = self.create_service(
-            GetAvailableNodes,
-            "~/get_available_nodes",
-            callback=get_available_nodes,
             callback_group=self.tree_manager_service_callback_group,
         )
         self.get_subtree_service = self.create_service(

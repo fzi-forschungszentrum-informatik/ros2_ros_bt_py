@@ -25,8 +25,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import sys
-
 import importlib
 import pkgutil
 
@@ -36,7 +34,7 @@ def import_module_from_package(package) -> None:
 
     print(f"Walking package: {package.__name__} at {package.__path__}")
 
-    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__, prefix):
+    for _, name, _ in pkgutil.walk_packages(package.__path__, prefix):
         # name is already the full dotted path here because of the prefix argument
         try:
             print(f"Importing: {name}")

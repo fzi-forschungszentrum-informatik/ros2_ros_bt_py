@@ -25,56 +25,77 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from ros_bt_py.helpers import (
-    get_default_value,
-)
 import pytest
 import unittest.mock as mock
-from collections import OrderedDict
-from ros_bt_py.ros_helpers import EnumValue, LoggerLevel
+
+from ros_bt_py.helpers import int_limits_dict, float_limits_dict, rgetattr, rsetattr
 
 
 class TestHelpers:
-    @pytest.mark.parametrize(
-        "data_type, expected_output, ros",
-        [
-            (type, int, False),
-            (int, 0, False),
-            (str, "foo", False),
-            (float, 1.2, False),
-            (bool, False, False),
-            (list, [], False),
-            (dict, {}, False),
-            (type, int, True),
-            (list, [], True),
-        ],
-    )
-    def test_get_default_value_basic_data_types(self, data_type, expected_output, ros):
-        output = get_default_value(data_type, ros)
-        assert output == expected_output
 
     @pytest.mark.parametrize(
-        "data_type, ros",
+        "key, min_v, max_v",
         [
-            (OrderedDict, False),
-            (LoggerLevel, False),
-            (EnumValue, False),
-            (OrderedDict, True),
+            ("int8", -(2**7), 2**7 - 1),
+            ("int16", -(2**15), 2**15 - 1),
+            ("int32", -(2**31), 2**31 - 1),
+            ("int64", -(2**63), 2**63 - 1),
+            ("uint8", 0, 2**8 - 1),
+            ("uint16", 0, 2**16 - 1),
+            ("uint32", 0, 2**32 - 1),
+            ("uint64", 0, 2**64 - 1),
         ],
     )
-    def test_get_default_value_defined_class_data_types(self, data_type, ros):
-        output = get_default_value(data_type, ros)
-        assert isinstance(output, data_type)
+    def test_int_limits_dict(self, key, min_v, max_v):
+        limits = int_limits_dict(key)
+        assert limits["min_value"] == min_v
+        assert limits["max_value"] == max_v
 
     @pytest.mark.parametrize(
-        "data_type, expected_output, ros",
-        [(mock.Mock(), mock.Mock, True), (mock.Mock(), {}, False)],
+        "key, min_v, max_v",
+        [
+            ("float", -3.4028235e38, 3.4028235e38),
+            ("double", -1.7976931348623157e308, 1.7976931348623157e308),
+        ],
     )
-    def test_get_default_value_other_class_data_types(
-        self, data_type, expected_output, ros
-    ):
-        output = get_default_value(data_type, ros)
-        if ros:
-            assert isinstance(output, expected_output)
-        else:
-            assert output == expected_output
+    def test_float_limits_dict(self, key, min_v, max_v):
+        limits = float_limits_dict(key)
+        assert limits["min_value"] == min_v
+        assert limits["max_value"] == max_v
+
+    @pytest.mark.parametrize(
+        "obj, attr_name, attr_val",
+        [
+            (
+                type("a", (), {"a": 1})(),
+                "a",
+                1,
+            ),
+            (
+                type("a", (), {"a": type("b", (), {"b": 1})()})(),
+                "a.b",
+                1,
+            ),
+        ],
+    )
+    def test_rgetattr(self, obj, attr_name, attr_val):
+        assert rgetattr(obj, attr_name) == attr_val
+
+    @pytest.mark.parametrize(
+        "obj, attr_name, attr_val",
+        [
+            (
+                type("a", (), {"a": 1})(),
+                "a",
+                2,
+            ),
+            (
+                type("a", (), {"a": type("b", (), {"b": 1})()})(),
+                "a.b",
+                2,
+            ),
+        ],
+    )
+    def test_rsetattr(self, obj, attr_name, attr_val):
+        rsetattr(obj, attr_name, attr_val)
+        assert rgetattr(obj, attr_name) == attr_val

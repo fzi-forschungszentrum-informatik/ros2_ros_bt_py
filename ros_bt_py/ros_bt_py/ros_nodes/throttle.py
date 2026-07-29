@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from ros_bt_py.vendor.result import Result, Ok, Err
 
+from ros_bt_py.data_types import FloatType
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Decorator, define_bt_node
@@ -35,9 +36,7 @@ from ros_bt_py.node_config import NodeConfig
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"tick_interval": float},
-        inputs={},
+        inputs={"tick_interval": FloatType(allow_dynamic=False, min_value=0)},
         outputs={},
         max_children=1,
     )
@@ -56,22 +55,22 @@ class Throttle(Decorator):
             error_msg = f"{self.name} does not have a reference to a ROS node"
             self.logerr(error_msg)
             return Err(BehaviorTreeException(error_msg))
-
         self._last_tick = None
         self._last_result = Ok(BTNodeState.FAILED)
+        match self.inputs.get_value_as("tick_interval", float):
+            case Err(e):
+                return Err(e)
+            case Ok(f):
+                self._tick_interval = f
         for child in self.children:
-            setup_result = child.setup()
-            # TODO This seems unnecessary, since len(self.children) == 1 always
-            if setup_result.is_err():
-                return setup_result
-        return setup_result
+            return child.setup()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         current_time = self.ros_node.get_clock().now()
         if (
             self._last_tick is None
-            or (current_time - self._last_tick).nanoseconds / 1e9
-            > self.options["tick_interval"]
+            or (current_time - self._last_tick).nanoseconds / 1e9 > self._tick_interval
         ):
             for child in self.children:
                 result = child.tick()
@@ -101,9 +100,7 @@ class Throttle(Decorator):
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"tick_interval": float},
-        inputs={},
+        inputs={"tick_interval": FloatType(allow_dynamic=False)},
         outputs={},
         max_children=1,
     )
@@ -124,19 +121,21 @@ class ThrottleSuccess(Decorator):
             return Err(BehaviorTreeException(error_msg))
 
         self._last_success_tick = None
+        match self.inputs.get_value_as("tick_interval", float):
+            case Err(e):
+                return Err(e)
+            case Ok(f):
+                self._tick_interval = f
         for child in self.children:
-            setup_result = child.setup()
-            # TODO This seems unnecessary, since len(self.children) == 1 always
-            if setup_result.is_err():
-                return setup_result
-        return setup_result
+            return child.setup()
+        return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         current_time = self.ros_node.get_clock().now()
         if (
             self._last_success_tick is None
             or (current_time - self._last_success_tick).nanoseconds / 1e9
-            > self.options["tick_interval"]
+            > self._tick_interval
         ):
             for child in self.children:
                 result = child.tick()
@@ -148,10 +147,10 @@ class ThrottleSuccess(Decorator):
         return Ok(BTNodeState.FAILED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self._last_success_tick = None
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        self._last_success_tick = None
         for child in self.children:
             return child.reset()
         return Ok(BTNodeState.IDLE)

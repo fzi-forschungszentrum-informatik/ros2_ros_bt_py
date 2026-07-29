@@ -4,10 +4,7 @@
 Advanced Tutorial
 #################
 
-.. toctree::
-   :maxdepth: 2
-
-   Using OptionRefs
+.. contents::
 
 In this Tutorial more advanced concepts are introduced.
 
@@ -15,10 +12,14 @@ In this Tutorial more advanced concepts are introduced.
 Using OptionRefs
 ****************
 
+TODO This section is based on an outdated version of IO handling.
+Options are no longer a thing (deprecated in favor of static/dynamic inputs).
+OptionRefs have been replaced by Reference types (they are functionally equivalent).
+
 As you have seen there are nodes like the constant node that can change the types of their
 Parameters (Options, Inputs and Outputs are collectively called Parameters).
 
-While bt_py uses only strongly typed parameters, we might want to edit them during three creation
+While bt_py uses only strongly typed parameters, we might want to edit them during tree creation
 instead of while defining Node Classes.
 
 To understand how this is done, it is helpful to take a look at the formal definition:

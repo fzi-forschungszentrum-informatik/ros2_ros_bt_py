@@ -70,12 +70,17 @@ extensions = [
 autodoc_mock_imports = [
     "rclpy",
     "rclpy_message_converter",
-    "ros_bt_py_interfaces",
+    # "ros_bt_py_interfaces",
     "diagnostic_msgs",
     "std_msgs",
     "std_srvs",
     "ament_index_python",
 ]
+
+typehints_use_rtype = False
+typehints_defaults = "comma"
+typehints_use_signature = True  # show parameter types in signature
+typehints_use_signature_return = True  # show return type in signature
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

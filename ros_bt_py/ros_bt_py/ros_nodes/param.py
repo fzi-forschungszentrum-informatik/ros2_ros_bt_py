@@ -25,31 +25,35 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from typing import Optional
+
 from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py_interfaces.msg import UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
 
+from ros_bt_py.data_types import (
+    GenericType,
+    StringType,
+    ReferenceType,
+)
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.custom_types import TypeWrapper, TYPE_BUILTIN
+from ros_bt_py.node_config import NodeConfig
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={
-            "param_type": TypeWrapper(type, info=TYPE_BUILTIN),
-            "default_value": OptionRef("param_type"),
-            "param_name": str,
+        inputs={
+            "param_name": StringType(),
+            "param_type": GenericType(valid_types=[bool, int, float, bytes, list]),
+            "default_value": ReferenceType(reference="param_type"),
         },
-        inputs={},
-        outputs={"param": OptionRef("param_type")},
+        outputs={"param": ReferenceType(reference="param_type")},
         max_children=0,
     )
 )
-class RosParamOption(Leaf):
+class RosParam(Leaf):
     """Read a parameter from the ROS parameter server."""
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -62,131 +66,26 @@ class RosParamOption(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if not self.ros_node.has_parameter(self.options["param_name"]):
+        match self.inputs.get_value_as("param_name", str):
+            case Err(e):
+                return Err(e)
+            case Ok(s):
+                param_name = s
+        if not self.ros_node.has_parameter(param_name):
             return Ok(BTNodeState.FAILED)
         else:
-            param = self.ros_node.get_parameter(self.options["param_name"])
+            param = self.ros_node.get_parameter(param_name)
             param_value = param.value
             if param_value is None:
-                self.outputs["param"] = self.options["default_value"]
-                return Ok(BTNodeState.SUCCEEDED)
+                return (
+                    self.inputs.get_value("default_value")
+                    .and_then(lambda val: self.outputs.set_value("param", val))
+                    .map(lambda _: BTNodeState.SUCCEEDED)
+                )
             else:
-                if isinstance(param_value, self.options["param_type"]):
-                    self.outputs["param"] = param_value
-                    return Ok(BTNodeState.SUCCEEDED)
-                else:
-                    return Ok(BTNodeState.FAILED)
-
-    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.SHUTDOWN)
-
-    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
-        return Ok(UtilityBounds())
-
-
-@define_bt_node(
-    NodeConfig(
-        version="0.1.0",
-        options={
-            "param_type": TypeWrapper(type, info=TYPE_BUILTIN),
-            "param_name": str,
-        },
-        inputs={
-            "default_value": OptionRef("param_type"),
-        },
-        outputs={"param": OptionRef("param_type")},
-        max_children=0,
-    )
-)
-class RosParamOptionDefaultInput(Leaf):
-    """Read a parameter from the ROS parameter server."""
-
-    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if not self.has_ros_node:
-            error_msg = (
-                f"RosParamOptionDefaultInput node {self.name} "
-                "does not have ROS node reference!"
-            )
-            self.logerr(error_msg)
-            return Err(BehaviorTreeException(error_msg))
-        return Ok(BTNodeState.IDLE)
-
-    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if not self.ros_node.has_parameter(self.options["param_name"]):
-            self.outputs["param"] = self.inputs["default_value"]
-            return Ok(BTNodeState.FAILED)
-        else:
-            param = self.ros_node.get_parameter(self.options["param_name"])
-            param_value = param.value
-            if param_value is None:
-                self.outputs["param"] = self.inputs["default_value"]
-                return Ok(BTNodeState.SUCCEEDED)
-            else:
-                if isinstance(param_value, self.options["param_type"]):
-                    self.outputs["param"] = param_value
-                    return Ok(BTNodeState.SUCCEEDED)
-                else:
-                    return Ok(BTNodeState.FAILED)
-
-    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.SHUTDOWN)
-
-    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
-        return Ok(UtilityBounds())
-
-
-@define_bt_node(
-    NodeConfig(
-        version="0.1.0",
-        options={
-            "param_type": TypeWrapper(type, info=TYPE_BUILTIN),
-            "default_value": OptionRef("param_type"),
-        },
-        inputs={"param_name": str},
-        outputs={"param": OptionRef("param_type")},
-        max_children=0,
-    )
-)
-class RosParamInput(Leaf):
-    """Read a parameter from the ROS parameter server."""
-
-    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if not self.has_ros_node:
-            error_msg = (
-                f"RosParamInput node {self.name} does not have ROS node reference!"
-            )
-            self.logerr(error_msg)
-            return Err(BehaviorTreeException(error_msg))
-        return Ok(BTNodeState.IDLE)
-
-    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if not self.ros_node.has_parameter(self.inputs["param_name"]):
-            self.outputs["param"] = self.options["default_value"]
-            return Ok(BTNodeState.FAILED)
-        else:
-            param = self.ros_node.get_parameter(self.inputs["param_name"])
-            param_value = param.value
-            if param_value is None:
-                self.outputs["param"] = self.options["default_value"]
-                return Ok(BTNodeState.SUCCEEDED)
-            else:
-                if isinstance(param_value, self.options["param_type"]):
-                    self.outputs["param"] = param_value
-                    return Ok(BTNodeState.SUCCEEDED)
-                else:
-                    return Ok(BTNodeState.FAILED)
+                return self.outputs.set_value("param", param_value).map(
+                    lambda _: BTNodeState.SUCCEEDED
+                )
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)

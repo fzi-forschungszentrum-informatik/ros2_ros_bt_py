@@ -25,29 +25,29 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Optional, Dict
-from rclpy.node import Node
+
+from typing import Optional
 
 from ros_bt_py.vendor.result import Result, Ok, Err
-import uuid
 
-from ros_bt_py.debug_manager import DebugManager
-from ros_bt_py.subtree_manager import SubtreeManager
-from ros_bt_py.helpers import BTNodeState
-from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.data_types import (
+    DataContainer,
+    RosComponentType,
+    GENERIC_TYPE_MAP,
+    get_iotype_for_dict,
+)
+from ros_bt_py.exceptions import BehaviorTreeException, NodeConfigError
+
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
-from ros_bt_py.custom_types import TypeWrapper, RosTopicType, ROS_TYPE_FULL
-
+from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_helpers import get_message_constant_fields
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"ros_message_type": TypeWrapper(RosTopicType, info=ROS_TYPE_FULL)},
-        inputs={},
+        inputs={"ros_message_type": RosComponentType()},
         outputs={},
         max_children=0,
     )
@@ -59,37 +59,39 @@ class EnumFields(Leaf):
     The outputs will be named after the fields in the ROS message
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def add_extra_outputs(self) -> Result[dict[str, DataContainer], NodeConfigError]:
+        match self.inputs.get_value("ros_message_type"):
+            case Err(e):
+                return Err(e)
+            case Ok(v):
+                self._message_class = v
 
-        self._message_class = self.options["ros_message_type"].get_type_obj()
+        match get_message_constant_fields(self._message_class):
+            case Err(e):
+                return Err(e)
+            case Ok(c):
+                self._constants = c
 
         node_outputs = {}
-
-        constants = get_message_constant_fields(self._message_class)
-
-        for field in constants:
-            node_outputs[field] = type(getattr(self._message_class, field))
-
-        extend_result = self.node_config.extend(
-            NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
-        )
-        if extend_result.is_err():
-            raise extend_result.unwrap_err()
-
-        register_result = self._register_node_data(
-            source_map=node_outputs, target_map=self.outputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
+        for field in self._constants:
+            field_type = type(getattr(self._message_class, field))
+            if field not in GENERIC_TYPE_MAP.keys():
+                return Err(NodeConfigError(f"Field {field} has an incompatible type"))
+            match get_iotype_for_dict(GENERIC_TYPE_MAP[field_type]):
+                case Err(e):
+                    return Err(NodeConfigError(e))
+                case Ok(c):
+                    node_outputs[field] = c
+        return Ok(node_outputs)
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        self.first_tick = True
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for field in self.outputs:
-            self.outputs[field] = getattr(self._message_class, field)
-        return Ok(BTNodeState.SUCCEEDED)
+        return self.outputs.set_multiple_values(
+            **{field: getattr(self._message_class, field) for field in self._constants}
+        ).map(lambda _: BTNodeState.SUCCEEDED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
@@ -98,4 +100,5 @@ class EnumFields(Leaf):
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        self.first_tick = True
         return Ok(BTNodeState.IDLE)

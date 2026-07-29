@@ -4,14 +4,7 @@
 Testing Node Classes
 ####################
 
-.. toctree::
-   :maxdepth: 2
-
-   Creating a Test Folder and Unit Test Script
-   Running your Unit Tests
-   Adding your Unit Tests to CMakeLists.txt
-   Adding your Unit Tests to setup.py
-   Running Tests via colcon
+.. contents::
 
 Even though a lot of errors are harder to make and/or easier to catch
 with :mod:`ros_bt_py` than with other libraries, you should still

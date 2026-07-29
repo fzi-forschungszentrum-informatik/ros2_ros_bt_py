@@ -26,9 +26,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 string node_id
-string data_kind
 string data_key
-
-string INPUT_DATA = inputs
-string OUTPUT_DATA = outputs
-string OPTION_DATA = options

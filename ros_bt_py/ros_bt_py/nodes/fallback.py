@@ -27,17 +27,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from ros_bt_py_interfaces.msg import UtilityBounds
 
+from ros_bt_py.data_types import StringType
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import FlowControl, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
-from ros_bt_py.vendor.result import Result, Ok, Err, is_err
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0", options={}, inputs={"name": str}, outputs={}, max_children=None
+        inputs={"name": StringType(is_static=False)},
+        outputs={},
+        max_children=None,
     )
 )
 class NameSwitch(FlowControl):
@@ -52,7 +55,11 @@ class NameSwitch(FlowControl):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        name = self.inputs["name"]
+        match self.inputs.get_value_as("name", str):
+            case Err(e):
+                return Err(e)
+            case Ok(n):
+                name = n
         if name not in self.child_map:
             self.logwarn("Ticking without children. Is this really what you want?")
             return Ok(BTNodeState.FAILED)
@@ -67,13 +74,13 @@ class NameSwitch(FlowControl):
                         pass
 
         for child_name, child in self.child_map.items():
-            if not child_name == name:
-                match child.untick():
-                    case Err(e):
-                        return Err(e)
-                    case Ok(_):
-                        pass
-
+            if child_name == name:
+                continue
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
         return self.child_map[name].tick()
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -101,9 +108,7 @@ class NameSwitch(FlowControl):
         return calculate_utility_fallback(self.children)
 
 
-@define_bt_node(
-    NodeConfig(version="0.1.0", options={}, inputs={}, outputs={}, max_children=None)
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=None))
 class Fallback(FlowControl):
     """
     Flow control node that succeeds when any one of its children succeeds.
@@ -203,9 +208,7 @@ class Fallback(FlowControl):
         return calculate_utility_fallback(self.children)
 
 
-@define_bt_node(
-    NodeConfig(version="0.1.0", options={}, inputs={}, outputs={}, max_children=None)
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=None))
 class MemoryFallback(FlowControl):
     """
     Flow control node that succeeds when any one of its children succeeds and has a memory.
@@ -297,23 +300,24 @@ class MemoryFallback(FlowControl):
         return Ok(BTNodeState.FAILED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        # TODO Should we really reset this on untick?
+        self.last_running_child = 0
         for child in self.children:
             match child.untick():
                 case Err(e):
                     return Err(e)
                 case Ok(_):
                     pass
-        self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        self.last_running_child = 0
         for child in self.children:
             match child.reset():
                 case Err(e):
                     return Err(e)
                 case Ok(_):
                     pass
-        self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:

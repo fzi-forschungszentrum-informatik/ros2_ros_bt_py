@@ -25,10 +25,13 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from typing import Optional
+
 from ros_bt_py.vendor.result import Result, Ok, Err
 
 from builtin_interfaces.msg import Time
 
+from ros_bt_py.data_types import RosMessageType
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import define_bt_node, Leaf
@@ -37,10 +40,8 @@ from ros_bt_py.node_config import NodeConfig
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={},
         inputs={},
-        outputs={"current_time": Time},
+        outputs={"current_time": RosMessageType(message_type=Time)},
         max_children=0,
     )
 )
@@ -48,13 +49,17 @@ class GetTimeNow(Leaf):
     """Output current time stamp."""
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        # TODO Should we check here if we actually have a ros node?
+        if not self.has_ros_node:
+            error_msg = f"{self.name} does not have a reference to a ROS node"
+            self.logerr(error_msg)
+            return Err(BehaviorTreeException(error_msg))
         return Ok(BTNodeState.IDLE)
 
-    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+    def _do_tick(self) -> Result[Optional[BTNodeState], BehaviorTreeException]:
         current_time = self.ros_node.get_clock().now()
-        self.outputs["current_time"] = current_time.to_msg()
-        return Ok(BTNodeState.SUCCEEDED)
+        return self.outputs.set_value("current_time", current_time.to_msg()).map(
+            lambda _: BTNodeState.SUCCEEDED
+        )
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)

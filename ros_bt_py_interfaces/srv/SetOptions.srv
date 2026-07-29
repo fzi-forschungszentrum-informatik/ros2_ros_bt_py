@@ -28,7 +28,7 @@
 string node_id
 bool rename_node
 string new_name
-NodeOption[] options
+NodeIO[] inputs
 ---
 bool success
 string error_message

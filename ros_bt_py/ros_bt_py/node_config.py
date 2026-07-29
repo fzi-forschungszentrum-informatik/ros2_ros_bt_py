@@ -25,69 +25,136 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Any, Dict, Optional, List
+from copy import deepcopy
+from typing import Any, Optional, TypeVar
+
+from typeguard import typechecked
+
+import itertools
+
 from ros_bt_py.vendor.result import Result, Err, Ok
 
+from ros_bt_py.data_types import DataContainer, TypeContainerMixin, ReferenceContainer
 from ros_bt_py.exceptions import NodeConfigError
 
 
-class OptionRef(object):
+@typechecked
+class NodeDataMap:
     """
-    Mark an input or output type as dependent on an option value.
-
-    Can be used instead of an actual type in the maps passed to a
-    :class:NodeConfig
+    This wrapper around a plain `dict[str, DataContainer]`
+    for easier access to value and updated status and easier error handling.
     """
 
-    def __init__(self, option_key: str):
-        self.option_key = option_key
+    def __init__(self, name: str, data: dict[str, DataContainer]) -> None:
+        self.name = name
+        self.data = data
 
-    def __repr__(self) -> str:
-        return f"OptionRef(option_key={self.option_key!r})"
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, OptionRef):
-            return False
-        return self.option_key == other.option_key
-
-    def __ne__(self, other: Any) -> bool:
-        return not self == other
-
-    def __name__(self) -> str:
-        return f"OptionRef(option_key={self.option_key!r})"
+    def _get_item(self, key: str) -> Result[DataContainer, NodeConfigError]:
+        if key not in self.data.keys():
+            return Err(NodeConfigError(f"Key {key} does not exist in {self.name}"))
+        return Ok(self.data[key])
 
 
-class NodeConfig(object):
+T = TypeVar("T")
+
+
+@typechecked
+class NodeInputMap(NodeDataMap):
+
+    def get_value(self, key: str) -> Result[Any, NodeConfigError]:
+        match self._get_item(key):
+            case Err(e):
+                return Err(e)
+            case Ok(c):
+                container = c
+        match container.get_value():
+            case Err(None):
+                return Err(
+                    NodeConfigError(f"No value set for key {key} in {self.name}")
+                )
+            case Ok(v):
+                return Ok(v)
+
+    def get_value_as(self, key: str, type_: type[T]) -> Result[T, NodeConfigError]:
+        match self._get_item(key):
+            case Err(e):
+                return Err(e)
+            case Ok(c):
+                container = c
+        match container.get_value_as(type_):
+            case Err(v):
+                return Err(
+                    NodeConfigError(
+                        f"Value {v} for key {key} in {self.name} is not of type {type_}"
+                    )
+                )
+            case Ok(v):
+                return Ok(v)
+
+    def any_updated(self, *keys: str) -> Result[bool, NodeConfigError]:
+        updated = False
+        for key in keys:
+            match self._get_item(key):
+                case Err(e):
+                    return Err(e)
+                case Ok(c):
+                    container = c
+            if container.is_updated():
+                updated = True
+        return Ok(updated)
+
+
+@typechecked
+class NodeOutputMap(NodeDataMap):
+
+    def set_value(self, key: str, value: Any) -> Result[None, NodeConfigError]:
+        match self._get_item(key):
+            case Err(e):
+                return Err(e)
+            case Ok(c):
+                container = c
+        match container.set_value(value):
+            case Err(s):
+                return Err(
+                    NodeConfigError(
+                        f"Error setting value {value} for key {key} in {self.name}: {s}"
+                    )
+                )
+            case Ok(None):
+                return Ok(None)
+
+    def set_multiple_values(self, **value_dict: Any) -> Result[None, NodeConfigError]:
+        for key, value in value_dict.items():
+            match self.set_value(key, value):
+                case Err(e):
+                    return Err(e)
+                case Ok(None):
+                    pass
+        return Ok(None)
+
+
+@typechecked
+class NodeConfig:
+
     def __init__(
         self,
-        options: Dict[str, Any],
-        inputs: Dict[str, Any],
-        outputs: Dict[str, Any],
+        inputs: dict[str, DataContainer],
+        outputs: dict[str, DataContainer],
         max_children: Optional[int],
-        optional_options: Optional[List[str]] = None,
-        version: str = "",
-        tags: Optional[List[str]] = None,
+        tags: Optional[list[str]] = None,
     ):
         """
         Describe the interface of a :class:ros_bt_py.node.Node .
 
-        :type options Dict[str, type]
-        :param options
-
-        Map from option names to their types. Note that unlike `inputs`
-        and `outputs`, option types can **not** use :class:OptionRef !
-
-        :type inputs Dict[str, type]
+        :type inputs Dict[str, DataContainer]
         :param inputs:
 
-        Map from input names to their types, or an :class:OptionRef
-        object that points to the option key to take the type from.
+        Map from input names to their data types.
 
-        :type outputs Dict[str, type]
+        :type outputs Dict[str, DataContainer]
         :param outputs:
 
-        Map from output names to their types, or an :class:OptionRef
-        object that points to the option key to take the type from.
+        Map from output names to their data types.
 
         :type max_children: int or None
         :param max_children:
@@ -98,37 +165,46 @@ class NodeConfig(object):
         """
         self.inputs = inputs
         self.outputs = outputs
-        self.options = options
         self.max_children = max_children
-
-        if optional_options is None:
-            optional_options = []
-        self.optional_options = optional_options
-        self.version = version
 
         if tags is None:
             tags = []
         self.tags = tags
+
+        # For convenience, all outputs are silently forced to be dynamic only
+        # If an output is an instance of `TypeContainerMixin`, raise `NodeConfigError`
+        for output in self.outputs.values():
+            if isinstance(output, TypeContainerMixin):
+                raise NodeConfigError("Cannot have a TypeContainer as an output")
+            output.allow_dynamic = True
+            output.allow_static = False
+            output.is_static = False
+
+        # Initialize all instances of `ReferenceContainer`
+        for io_item in itertools.chain(self.inputs.values(), self.outputs.values()):
+            if not isinstance(io_item, ReferenceContainer):
+                continue
+            match io_item.set_type_map(self.inputs):
+                case Err(e):
+                    raise NodeConfigError(e)
+                case Ok(None):
+                    pass
 
     def __repr__(self) -> str:
         return (
             "NodeConfig("
             f"inputs={self.inputs}, "
             f"outputs={self.outputs}, "
-            f"options={self.options}, "
-            f"max_children={self.max_children}, "
-            f"optional_options={self.optional_options}, "
-            f"version={self.version})"
+            f"max_children={self.max_children})"
         )
 
     def __eq__(self, other) -> bool:
+        if not isinstance(other, NodeConfig):
+            return False
         return (
             self.inputs == other.inputs
             and self.outputs == other.outputs
-            and self.options == other.options
             and self.max_children == other.max_children
-            and self.optional_options == other.optional_options
-            and self.version == other.version
         )
 
     def __ne__(self, other) -> bool:
@@ -136,12 +212,10 @@ class NodeConfig(object):
 
     def extend(self, other: "NodeConfig") -> Result[None, NodeConfigError]:
         """
-        Extend the input, output and option dicts with values from `other`.
+        Extend the input and output dicts with values from `other`.
 
-        :raises: KeyError, ValueError
-          If any of the dicts in `other` contains keys that already exist,
-          raise `KeyError`. If `max_children` has a value different from ours,
-          raise `ValueError`.
+        Returns an error if if the two configs are incompatible,
+        either due to duplicate io keys or mismatch in allowed number of child nodes.
         """
         if self.max_children != other.max_children:
             return Err(
@@ -161,28 +235,25 @@ class NodeConfig(object):
                 duplicate_outputs.append(key)
                 continue
             self.outputs[key] = other.outputs[key]
-        duplicate_options = []
-        for key in other.options:
-            if key in self.options:
-                duplicate_options.append(key)
-                continue
-            self.options[key] = other.options[key]
 
-        for optional_option in other.optional_options:
-            if optional_option in self.optional_options:
-                continue
-            else:
-                self.optional_options.append(optional_option)
-
-        if duplicate_inputs or duplicate_outputs or duplicate_options:
+        if duplicate_inputs or duplicate_outputs:
             msg = "Duplicate keys: "
             keys_strings = []
             if duplicate_inputs:
                 keys_strings.append(f"inputs: {str(duplicate_inputs)}")
             if duplicate_outputs:
                 keys_strings.append(f"outputs: {str(duplicate_outputs)}")
-            if duplicate_options:
-                keys_strings.append(f"options: {str(duplicate_options)}")
             msg += ", ".join(keys_strings)
             return Err(NodeConfigError(msg))
         return Ok(None)
+
+    def copy(self) -> "NodeConfig":
+        """
+        Implement a custom copy operation that also updates all IO references.
+        """
+        return NodeConfig(
+            inputs=deepcopy(self.inputs),
+            outputs=deepcopy(self.outputs),
+            max_children=self.max_children,
+            tags=self.tags,
+        )

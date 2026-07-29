@@ -25,13 +25,10 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import Dict, Optional
+from typing import Optional
 
-from ros_bt_py.vendor.result import Result, Ok, Err
-import uuid
+from ros_bt_py.vendor.result import Result, Ok, Err, do
 
-from rclpy.node import Node
-from rclpy.publisher import Publisher
 from rclpy.qos import (
     QoSDurabilityPolicy,
     QoSProfile,
@@ -42,27 +39,30 @@ from rclpy.time import Time
 
 from ros_bt_py_interfaces.msg import UtilityBounds
 
+from ros_bt_py.data_types import (
+    BoolType,
+    FloatType,
+    IntType,
+    RosTopicName,
+    RosTopicType,
+    ReferenceType,
+)
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
-from ros_bt_py.custom_types import RosTopicName, RosTopicType
-from ros_bt_py.debug_manager import DebugManager
-from ros_bt_py.subtree_manager import SubtreeManager
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={
-            "topic_name": RosTopicName,
-            "topic_type": RosTopicType,
-            "reliable": bool,
-            "transient_local": bool,
-            "depth": int,
+        inputs={
+            "topic_name": RosTopicName(interface_id=1),
+            "topic_type": RosTopicType(interface_id=1),
+            "reliable": BoolType(),
+            "transient_local": BoolType(),
+            "depth": IntType(min_value=0),
         },
-        inputs={},
-        outputs={},
+        outputs={"message": ReferenceType(reference="topic_type")},
         max_children=0,
     )
 )
@@ -77,48 +77,15 @@ class TopicSubscriber(Leaf):
     This node never returns FAILED.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._topic_type = self.options["topic_type"].get_type_obj()
-        self._topic_name = self.options["topic_name"].name
-
-        node_outputs = {"message": self._topic_type}
-
-        extend_result = self.node_config.extend(
-            NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
-        )
-        if extend_result.is_err():
-            raise extend_result.unwrap_err()
-
-        register_result = self._register_node_data(
-            source_map=node_outputs, target_map=self.outputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
-
     _lock = Lock()
-    _subscriber = None
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
+        if not self.has_ros_node:
+            error_msg = f"{self.name} does not have a refrence to a ROS node!"
+            self.logerr(error_msg)
+            return Err(BehaviorTreeException(error_msg))
+        self._subscriber = None
         self._msg = None
-
-        reliability_policy = (
-            QoSReliabilityPolicy.RELIABLE
-            if self.options["reliable"]
-            else QoSReliabilityPolicy.BEST_EFFORT
-        )
-        durability_policy = (
-            QoSDurabilityPolicy.TRANSIENT_LOCAL
-            if self.options["transient_local"]
-            else QoSDurabilityPolicy.VOLATILE
-        )
-        depth = self.options["depth"]
-
-        self._qos_profile = QoSProfile(
-            reliability=reliability_policy, durability=durability_policy, depth=depth
-        )
-        # Subscriber is constructed in tick to properly handle latched topics
         return Ok(BTNodeState.IDLE)
 
     def _callback(self, msg):
@@ -126,34 +93,85 @@ class TopicSubscriber(Leaf):
             self._msg = msg
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        match self.inputs.any_updated(
+            "topic_type", "topic_name", "reliable", "transient_local", "depth"
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok(b):
+                updated = b
+        if updated:
+            match self._do_reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+
         if self._subscriber is None:
+            match do(
+                Ok((r, t, d))
+                for r in self.inputs.get_value_as("reliable", bool)
+                for t in self.inputs.get_value_as("transient_local", bool)
+                for d in self.inputs.get_value_as("depth", int)
+            ):
+                case Err(e):
+                    return Err(e)
+                case Ok((r, t, d)):
+                    reliable = r
+                    transient_local = t
+                    depth = d
+            reliability_policy = (
+                QoSReliabilityPolicy.RELIABLE
+                if reliable
+                else QoSReliabilityPolicy.BEST_EFFORT
+            )
+            durability_policy = (
+                QoSDurabilityPolicy.TRANSIENT_LOCAL
+                if transient_local
+                else QoSDurabilityPolicy.VOLATILE
+            )
+            qos_profile = QoSProfile(
+                reliability=reliability_policy,
+                durability=durability_policy,
+                depth=depth,
+            )
+
+            match do(
+                Ok((t, n))
+                for t in self.inputs.get_value("topic_type")
+                for n in self.inputs.get_value_as("topic_name", str)
+            ):
+                case Err(e):
+                    return Err(e)
+                case Ok((t, n)):
+                    topic_type = t
+                    topic_name = n
             self._subscriber = self.ros_node.create_subscription(
-                msg_type=self._topic_type,
-                topic=self._topic_name,
+                msg_type=topic_type,
+                topic=topic_name,
                 callback=self._callback,
-                qos_profile=self._qos_profile,
+                qos_profile=qos_profile,
             )
 
         with self._lock:
             if self._msg is None:
                 return Ok(BTNodeState.RUNNING)
-            self.outputs["message"] = self._msg
-            self._msg = None
+            match self.outputs.set_value("message", self._msg):
+                case Err(e):
+                    return Err(e)
+                case Ok(None):
+                    self._msg = None
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        reset_result = self._do_reset()
-        if reset_result.is_err():
-            return reset_result
-        return Ok(BTNodeState.SHUTDOWN)
+        return self._do_reset().map(lambda _: BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._msg = None
         if self._subscriber is None:
             return Ok(BTNodeState.IDLE)
         # Unsubscribe from the topic so we don't receive further updates
-        success = self.ros_node.destroy_subscription(self._subscriber)
-        if not success:
+        if not self.ros_node.destroy_subscription(self._subscriber):
             error_msg = "Failed to destroy subscription"
             self.logwarn(error_msg)
             return Err(BehaviorTreeException(error_msg))
@@ -167,12 +185,49 @@ class TopicSubscriber(Leaf):
         if not self.has_ros_node:
             return Ok(UtilityBounds(can_execute=False))
 
-        resolved_topic = self.ros_node.resolve_topic_name(self._topic_name)
+        match do(
+            Ok((r, t, d))
+            for r in self.inputs.get_value_as("reliable", bool)
+            for t in self.inputs.get_value_as("transient_local", bool)
+            for d in self.inputs.get_value_as("depth", int)
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok((r, t, d)):
+                reliable = r
+                transient_local = t
+                depth = d
+        reliability_policy = (
+            QoSReliabilityPolicy.RELIABLE
+            if reliable
+            else QoSReliabilityPolicy.BEST_EFFORT
+        )
+        durability_policy = (
+            QoSDurabilityPolicy.TRANSIENT_LOCAL
+            if transient_local
+            else QoSDurabilityPolicy.VOLATILE
+        )
+        qos_profile = QoSProfile(
+            reliability=reliability_policy, durability=durability_policy, depth=depth
+        )
+
+        match do(
+            Ok((t, n))
+            for t in self.inputs.get_value("topic_type")
+            for n in self.inputs.get_value_as("topic_name", str)
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok((t, n)):
+                topic_type = t
+                topic_name = n
+
+        resolved_topic = self.ros_node.resolve_topic_name(topic_name)
 
         for endpoint in self.ros_node.get_publishers_info_by_topic(resolved_topic):
             if (
-                endpoint.topic_type == self._topic_type
-                and endpoint.qos_profile == self._qos_profile
+                endpoint.topic_type == topic_type
+                and endpoint.qos_profile == qos_profile
             ):
                 # if the topic we want exists, we can do our job, so
                 # set all the bounds and leave their values at 0
@@ -190,17 +245,15 @@ class TopicSubscriber(Leaf):
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={
-            "topic_name": RosTopicName,
-            "topic_type": RosTopicType,
-            "memory_delay": float,
-            "reliable": bool,
-            "transient_local": bool,
-            "depth": int,
+        inputs={
+            "topic_name": RosTopicName(interface_id=1),
+            "topic_type": RosTopicType(interface_id=1),
+            "reliable": BoolType(),
+            "transient_local": BoolType(),
+            "depth": IntType(min_value=0),
+            "memory_delay": FloatType(allow_dynamic=False),
         },
-        inputs={},
-        outputs={},
+        outputs={"message": ReferenceType(reference="topic_type")},
         max_children=0,
     )
 )
@@ -215,54 +268,21 @@ class TopicMemorySubscriber(Leaf):
     the last memory_delay seconds.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._topic_type = self.options["topic_type"].get_type_obj()
-        self._topic_name = self.options["topic_name"].name
-
-        node_outputs = {"message": self._topic_type}
-
-        extend_result = self.node_config.extend(
-            NodeConfig(options={}, inputs={}, outputs=node_outputs, max_children=0)
-        )
-        if extend_result.is_err():
-            raise extend_result.unwrap_err()
-
-        register_result = self._register_node_data(
-            source_map=node_outputs, target_map=self.outputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
-
     _lock = Lock()
-    _subscriber = None
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
             error_msg = f"{self.name} does not have a refrence to a ROS node!"
             self.logerr(error_msg)
             return Err(BehaviorTreeException(error_msg))
-
+        self._subscriber = None
         self._msg = None
         self._msg_timestamp: Optional[Time] = self.ros_node.get_clock().now()
-
-        reliability_policy = (
-            QoSReliabilityPolicy.RELIABLE
-            if self.options["reliable"]
-            else QoSReliabilityPolicy.BEST_EFFORT
-        )
-        durability_policy = (
-            QoSDurabilityPolicy.TRANSIENT_LOCAL
-            if self.options["transient_local"]
-            else QoSDurabilityPolicy.VOLATILE
-        )
-        depth = self.options["depth"]
-
-        self._qos_profile = QoSProfile(
-            reliability=reliability_policy, durability=durability_policy, depth=depth
-        )
-        # Subscriber is created during tick to properly handle latched topics
+        match self.inputs.get_value_as("memory_delay", float):
+            case Err(e):
+                return Err(e)
+            case Ok(f):
+                self._memory_delay = f
         return Ok(BTNodeState.IDLE)
 
     def _callback(self, msg):
@@ -271,13 +291,66 @@ class TopicMemorySubscriber(Leaf):
             self._msg_timestamp = self.ros_node.get_clock().now()
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        match self.inputs.any_updated(
+            "topic_name", "reliable", "transient_local", "depth"
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok(b):
+                updated = b
+        if updated:
+            match self._do_reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+
         if self._subscriber is None:
-            self._subscriber = self.ros_node.create_subscription(
-                msg_type=self._topic_type,
-                topic=self._topic_name,
-                callback=self._callback,
-                qos_profile=self._qos_profile,
+            match do(
+                Ok((r, t, d))
+                for r in self.inputs.get_value_as("reliable", bool)
+                for t in self.inputs.get_value_as("transient_local", bool)
+                for d in self.inputs.get_value_as("depth", int)
+            ):
+                case Err(e):
+                    return Err(e)
+                case Ok((r, t, d)):
+                    reliable = r
+                    transient_local = t
+                    depth = d
+            reliability_policy = (
+                QoSReliabilityPolicy.RELIABLE
+                if reliable
+                else QoSReliabilityPolicy.BEST_EFFORT
             )
+            durability_policy = (
+                QoSDurabilityPolicy.TRANSIENT_LOCAL
+                if transient_local
+                else QoSDurabilityPolicy.VOLATILE
+            )
+            qos_profile = QoSProfile(
+                reliability=reliability_policy,
+                durability=durability_policy,
+                depth=depth,
+            )
+
+            match do(
+                Ok((t, n))
+                for t in self.inputs.get_value("topic_type")
+                for n in self.inputs.get_value_as("topic_name", str)
+            ):
+                case Err(e):
+                    return Err(e)
+                case Ok((t, n)):
+                    topic_type = t
+                    topic_name = n
+            self._subscriber = self.ros_node.create_subscription(
+                msg_type=topic_type,
+                topic=topic_name,
+                callback=self._callback,
+                qos_profile=qos_profile,
+            )
+
         with self._lock:
             if self._msg is None:
                 return Ok(BTNodeState.RUNNING)
@@ -285,16 +358,14 @@ class TopicMemorySubscriber(Leaf):
                 if (
                     (self.ros_node.get_clock().now() - self._msg_timestamp).nanoseconds
                     / 1e9
-                ) > self.options["memory_delay"]:
+                ) > self._memory_delay:
                     return Ok(BTNodeState.FAILED)
-            self.outputs["message"] = self._msg
-        return Ok(BTNodeState.SUCCEEDED)
+            return self.outputs.set_value("message", self._msg).map(
+                lambda _: BTNodeState.SUCCEEDED
+            )
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        reset_result = self._do_reset()
-        if reset_result.is_err():
-            return reset_result
-        return Ok(BTNodeState.SHUTDOWN)
+        return self._do_reset().map(lambda _: BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._msg = None
@@ -302,8 +373,7 @@ class TopicMemorySubscriber(Leaf):
         if self._subscriber is None:
             return Ok(BTNodeState.IDLE)
         # Unsubscribe from the topic so we don't receive further updates
-        success = self.ros_node.destroy_subscription(self._subscriber)
-        if not success:
+        if not self.ros_node.destroy_subscription(self._subscriber):
             error_msg = "Failed to destroy subscription"
             self.logwarn(error_msg)
             return Err(BehaviorTreeException(error_msg))
@@ -317,12 +387,49 @@ class TopicMemorySubscriber(Leaf):
         if not self.has_ros_node:
             return Ok(UtilityBounds(can_execute=False))
 
-        resolved_topic = self.ros_node.resolve_topic_name(self._topic_name)
+        match do(
+            Ok((r, t, d))
+            for r in self.inputs.get_value_as("reliable", bool)
+            for t in self.inputs.get_value_as("transient_local", bool)
+            for d in self.inputs.get_value_as("depth", int)
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok((r, t, d)):
+                reliable = r
+                transient_local = t
+                depth = d
+        reliability_policy = (
+            QoSReliabilityPolicy.RELIABLE
+            if reliable
+            else QoSReliabilityPolicy.BEST_EFFORT
+        )
+        durability_policy = (
+            QoSDurabilityPolicy.TRANSIENT_LOCAL
+            if transient_local
+            else QoSDurabilityPolicy.VOLATILE
+        )
+        qos_profile = QoSProfile(
+            reliability=reliability_policy, durability=durability_policy, depth=depth
+        )
+
+        match do(
+            Ok((t, n))
+            for t in self.inputs.get_value("topic_type")
+            for n in self.inputs.get_value_as("topic_name", str)
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok((t, n)):
+                topic_type = t
+                topic_name = n
+
+        resolved_topic = self.ros_node.resolve_topic_name(topic_name)
 
         for endpoint in self.ros_node.get_publishers_info_by_topic(resolved_topic):
             if (
-                endpoint.topic_type == self._topic_type
-                and endpoint.qos_profile == self._qos_profile
+                endpoint.topic_type == topic_type
+                and endpoint.qos_profile == qos_profile
             ):
                 # if the topic we want exists, we can do our job, so
                 # set all the bounds and leave their values at 0
@@ -340,40 +447,19 @@ class TopicMemorySubscriber(Leaf):
 
 @define_bt_node(
     NodeConfig(
-        version="1.0.0",
-        options={
-            "topic_name": RosTopicName,
-            "topic_type": RosTopicType,
-            "reliable": bool,
-            "transient_local": bool,
-            "depth": int,
+        inputs={
+            "topic_name": RosTopicName(interface_id=1),
+            "topic_type": RosTopicType(interface_id=1),
+            "reliable": BoolType(),
+            "transient_local": BoolType(),
+            "depth": IntType(min_value=0),
+            "message": ReferenceType(reference="topic_type"),
         },
-        inputs={},
         outputs={},
         max_children=0,
     )
 )
 class TopicPublisher(Leaf):
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self._topic_type = self.options["topic_type"].get_type_obj()
-        self._topic_name = self.options["topic_name"].name
-
-        node_inputs = {"message": self._topic_type}
-
-        extend_result = self.node_config.extend(
-            NodeConfig(options={}, inputs=node_inputs, outputs={}, max_children=0)
-        )
-        if extend_result.is_err():
-            raise extend_result.unwrap_err()
-
-        register_result = self._register_node_data(
-            source_map=node_inputs, target_map=self.inputs
-        )
-        if register_result.is_err():
-            raise register_result.unwrap_err()
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.has_ros_node:
@@ -381,53 +467,96 @@ class TopicPublisher(Leaf):
             self.logerr(error_msg)
             return Err(BehaviorTreeException(error_msg))
 
-        reliability_policy = (
-            QoSReliabilityPolicy.RELIABLE
-            if self.options["reliable"]
-            else QoSReliabilityPolicy.BEST_EFFORT
-        )
-        durability_policy = (
-            QoSDurabilityPolicy.TRANSIENT_LOCAL
-            if self.options["transient_local"]
-            else QoSDurabilityPolicy.VOLATILE
-        )
-        depth = self.options["depth"]
-
-        self._qos_profile = QoSProfile(
-            reliability=reliability_policy, durability=durability_policy, depth=depth
-        )
-
-        self._publisher = self.ros_node.create_publisher(
-            msg_type=self._topic_type,
-            topic=self._topic_name,
-            qos_profile=self._qos_profile,
-        )
+        self._publisher = None
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        match self.inputs.any_updated(
+            "topic_name", "reliable", "transient_local", "depth"
+        ):
+            case Err(e):
+                return Err(e)
+            case Ok(b):
+                updated = b
+        if updated:
+            match self._do_reset():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+
+        if self._publisher is None:
+            match do(
+                Ok((r, t, d))
+                for r in self.inputs.get_value_as("reliable", bool)
+                for t in self.inputs.get_value_as("transient_local", bool)
+                for d in self.inputs.get_value_as("depth", int)
+            ):
+                case Err(e):
+                    return Err(e)
+                case Ok((r, t, d)):
+                    reliable = r
+                    transient_local = t
+                    depth = d
+            reliability_policy = (
+                QoSReliabilityPolicy.RELIABLE
+                if reliable
+                else QoSReliabilityPolicy.BEST_EFFORT
+            )
+            durability_policy = (
+                QoSDurabilityPolicy.TRANSIENT_LOCAL
+                if transient_local
+                else QoSDurabilityPolicy.VOLATILE
+            )
+            qos_profile = QoSProfile(
+                reliability=reliability_policy,
+                durability=durability_policy,
+                depth=depth,
+            )
+
+            match do(
+                Ok((t, n))
+                for t in self.inputs.get_value("topic_type")
+                for n in self.inputs.get_value_as("topic_name", str)
+            ):
+                case Err(e):
+                    return Err(e)
+                case Ok((t, n)):
+                    topic_type = t
+                    topic_name = n
+            self._publisher = self.ros_node.create_publisher(
+                msg_type=topic_type,
+                topic=topic_name,
+                qos_profile=qos_profile,
+            )
+
         # Only publish a new message if our input data has been updated - the
         # old one is latched anyway.
-        if self.inputs.is_updated("message"):
-            if self._publisher is None:
-                return Ok(BTNodeState.BROKEN)
-            self._publisher.publish(self.inputs["message"])
+        match self.inputs.any_updated("message"):
+            case Err(e):
+                return Err(e)
+            case Ok(b):
+                msg_updated = b
+        if msg_updated:
+            match self.inputs.get_value("message"):
+                case Err(e):
+                    return Err(e)
+                case Ok(m):
+                    message = m
+            self._publisher.publish(message)
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        # Unregister the publisher
-        try:
-            if self._publisher is not None:
-                success = self.ros_node.destroy_publisher(self._publisher)
-                if not success:
-                    error_msg = "Failed to destroy publisher"
-                    self.logwarn(error_msg)
-                    return Err(BehaviorTreeException(error_msg))
-        except AttributeError:
-            self.logwarn("Can not unregister as no publisher is available.")
-        self._publisher = None
-        return Ok(BTNodeState.SHUTDOWN)
+        return self._do_reset().map(lambda _: BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        if self._publisher is None:
+            return Ok(BTNodeState.IDLE)
+        if not self.ros_node.destroy_publisher(self._publisher):
+            error_msg = "Failed to destroy publisher"
+            self.logwarn(error_msg)
+            return Err(BehaviorTreeException(error_msg))
+        self._publisher = None
         return Ok(BTNodeState.IDLE)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:

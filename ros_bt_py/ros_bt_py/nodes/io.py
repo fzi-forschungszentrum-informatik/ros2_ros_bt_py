@@ -25,57 +25,51 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+import abc
 
 from ros_bt_py.vendor.result import Result, Ok, Err
-from ros_bt_py.node import IO, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.helpers import BTNodeState
-from ros_bt_py.exceptions import BehaviorTreeException
 
-# FIXME: input/output are exact copies of each other, move this code to a common implementation
+from ros_bt_py.data_types import GenericType, ReferenceType
+from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.node import Leaf, define_bt_node
+from ros_bt_py.node_config import NodeConfig
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"io_type": type, "default": OptionRef("io_type")},
-        inputs={"in": OptionRef("io_type")},
-        outputs={"out": OptionRef("io_type")},
+        inputs={
+            "io_type": GenericType(),
+            "in": ReferenceType("io_type"),
+            "default": ReferenceType("io_type"),
+        },
+        outputs={"out": ReferenceType("io_type")},
         max_children=0,
     )
 )
-class IOInputOption(IO):
+class IO(Leaf):
     """
-    Explicitly marks the input of a subtree.
+    Base class for IO nodes in the tree.
 
-    If no input is connected to `in`, the value provided via the `default` option is used.
+    IO nodes have no children. Subclasses can define inputs and outputs,
+    but never change `max_children`.
     """
+
+    @abc.abstractmethod
+    def _abstract_flag(self):
+        # This is used to prevent the common base class from being picked up as a valid node
+        pass
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
-    def _handle_inputs(self):
-        """
-        Overwrite the Nodes _handle_input() function, ignoring an unset 'in' input.
-
-        Execute the callbacks registered by :meth:`_wire_input`
-        But only if an input has been updated since the last tick.
-        """
-        for input_name in self.inputs:
-            if input_name == "in" and self.inputs[input_name] is None:
-                self.loginfo('ignoring unset "in" input and using default value')
-            else:
-                if not self.inputs.is_updated(input_name):
-                    self.loginfo("Running tick() with stale data!")
-        self.inputs.handle_subscriptions()
-        return Ok(None)
-
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.inputs["in"] is not None:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            self.outputs["out"] = self.options["default"]
-        return Ok(BTNodeState.SUCCEEDED)
+        return (
+            self.inputs.get_value("in")
+            .or_else(lambda _: self.inputs.get_value("default"))
+            .and_then(lambda val: self.outputs.set_value("out", val))
+            .map(lambda _: BTNodeState.SUCCEEDED)
+        )
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
@@ -84,20 +78,10 @@ class IOInputOption(IO):
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self.outputs["out"] = None
-        self.outputs.reset_updated()
         return Ok(BTNodeState.IDLE)
 
 
-@define_bt_node(
-    NodeConfig(
-        version="0.1.0",
-        options={"io_type": type},
-        inputs={"in": OptionRef("io_type"), "default": OptionRef("io_type")},
-        outputs={"out": OptionRef("io_type")},
-        max_children=0,
-    )
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
 class IOInput(IO):
     """
     Explicitly marks the input of a subtree.
@@ -105,113 +89,11 @@ class IOInput(IO):
     If no input is connected to `in`, the value provided via the `default` input is used.
     """
 
-    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _handle_inputs(self):
-        """
-        Overwrite the Nodes _handle_input() function, ignoring an unset 'in' input.
-
-        Execute the callbacks registered by :meth:`_wire_input`.
-        But only if an input has been updated since the last tick.
-        """
-        for input_name in self.inputs:
-            if input_name == "in" and self.inputs[input_name] is None:
-                self.loginfo('ignoring unset "in" input and using default value')
-            else:
-                if not self.inputs.is_updated(input_name):
-                    self.loginfo("Running tick() with stale data!")
-                if self.inputs[input_name] is None:
-                    return Err(
-                        ValueError(
-                            f"Trying to tick a node with an unset input ({input_name})!"
-                        )
-                    )
-        self.inputs.handle_subscriptions()
-        return Ok(None)
-
-    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.inputs["in"] is not None:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            self.outputs["out"] = self.inputs["default"]
-        return Ok(BTNodeState.SUCCEEDED)
-
-    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.SHUTDOWN)
-
-    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self.outputs["out"] = None
-        self.outputs.reset_updated()
-        return Ok(BTNodeState.IDLE)
+    def _abstract_flag(self):
+        pass
 
 
-@define_bt_node(
-    NodeConfig(
-        version="0.1.0",
-        options={"io_type": type, "default": OptionRef("io_type")},
-        inputs={"in": OptionRef("io_type")},
-        outputs={"out": OptionRef("io_type")},
-        max_children=0,
-    )
-)
-class IOOutputOption(IO):
-    """
-    Explicitly marks the output of a subtree.
-
-    If no input is connected to `in`, the value provided via the `default` option is used.
-    """
-
-    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _handle_inputs(self):
-        """
-        Overwrite the Nodes _handle_input() function, ignoring an unset 'in' input.
-
-        Execute the callbacks registered by :meth:`_wire_input`.
-        But only if an input has been updated since the last tick.
-        """
-        for input_name in self.inputs:
-            if input_name == "in" and self.inputs[input_name] is None:
-                self.loginfo('ignoring unset "in" input and using default value')
-            else:
-                if not self.inputs.is_updated(input_name):
-                    self.loginfo("Running tick() with stale data!")
-        self.inputs.handle_subscriptions()
-        return Ok(None)
-
-    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.inputs["in"] is not None:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            self.outputs["out"] = self.options["default"]
-        return Ok(BTNodeState.SUCCEEDED)
-
-    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.SHUTDOWN)
-
-    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self.outputs["out"] = None
-        self.outputs.reset_updated()
-        return Ok(BTNodeState.IDLE)
-
-
-@define_bt_node(
-    NodeConfig(
-        version="0.1.0",
-        options={"io_type": type},
-        inputs={"in": OptionRef("io_type"), "default": OptionRef("io_type")},
-        outputs={"out": OptionRef("io_type")},
-        max_children=0,
-    )
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
 class IOOutput(IO):
     """
     Explicitly marks the output of a subtree.
@@ -219,45 +101,5 @@ class IOOutput(IO):
     If no input is connected to `in`, the value provided via the `default` input is used.
     """
 
-    def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _handle_inputs(self):
-        """
-        Overwrite the Nodes _handle_input() function, ignoring an unset 'in' input.
-
-        Execute the callbacks registered by :meth:`_wire_input`.
-        But only if an input has been updated since the last tick.
-        """
-        for input_name in self.inputs:
-            if input_name == "in" and self.inputs[input_name] is None:
-                self.loginfo('ignoring unset "in" input and using default value')
-            else:
-                if not self.inputs.is_updated(input_name):
-                    self.loginfo("Running tick() with stale data!")
-                if self.inputs[input_name] is None:
-                    return Err(
-                        ValueError(
-                            f"Trying to tick a node with an unset input ({input_name})!"
-                        )
-                    )
-        self.inputs.handle_subscriptions()
-        return Ok(None)
-
-    def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.inputs["in"] is not None:
-            self.outputs["out"] = self.inputs["in"]
-        else:
-            self.outputs["out"] = self.inputs["default"]
-        return Ok(BTNodeState.SUCCEEDED)
-
-    def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
-
-    def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.SHUTDOWN)
-
-    def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self.outputs["out"] = None
-        self.outputs.reset_updated()
-        return Ok(BTNodeState.IDLE)
+    def _abstract_flag(self):
+        pass

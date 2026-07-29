@@ -29,6 +29,5 @@
 string name
 string description
 
-NodeOption[] options
 NodeIO[] inputs
 NodeIO[] outputs

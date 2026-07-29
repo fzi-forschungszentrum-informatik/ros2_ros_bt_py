@@ -27,12 +27,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import json
 import os
-import yaml
+import inspect
 from importlib import metadata
 import ament_index_python
 from ament_index_python import PackageNotFoundError
 
-from typing import Any, Optional, List
+from typing import Optional, List
+from typeguard import typechecked
 
 import rclpy
 import rclpy.publisher
@@ -41,19 +42,30 @@ import rclpy.logging
 import rosidl_runtime_py
 import rosidl_runtime_py.utilities
 
-from ros_bt_py_interfaces.msg import MessageTypes, Package, Packages
+from ros_bt_py.vendor.result import Ok, Err
+
+from ros_bt_py.data_types import RosMessageType
+from ros_bt_py.node import Node, load_node_module, increment_name
+from ros_bt_py.ros_helpers import get_interface_name
+
+from ros_bt_py_interfaces.msg import (
+    DocumentedNode,
+    MessageType,
+    NodeIO,
+    MessageTypes,
+    Package,
+    Packages,
+)
 from ros_bt_py_interfaces.srv import (
-    GetMessageFields,
-    GetMessageConstantFields,
     SaveTree,
     GetPackageStructure,
     GetFolderStructure,
     GetStorageFolders,
+    GetAvailableNodes,
 )
 
-from ros_bt_py.node import increment_name
-from ros_bt_py.helpers import json_encode, build_message_field_dicts
-from ros_bt_py.ros_helpers import get_message_constant_fields
+
+LOGGER = rclpy.logging.get_logger("package_manager")
 
 
 def make_filepath_unique(filepath):
@@ -61,6 +73,24 @@ def make_filepath_unique(filepath):
     while os.path.exists(name + extension):
         name = increment_name(name)
     return name + extension
+
+
+def to_message_type(message: type) -> MessageType:
+    message_type_msg = MessageType()
+    message_type_msg.name = get_interface_name(message)
+    container = RosMessageType(message)
+    message_type_msg.type = container.serialize_type()
+    match container.get_element_fields():
+        case Err(e):
+            LOGGER.warn(e)
+            return message_type_msg
+        case Ok(f):
+            field_types = f
+    message_type_msg.fields = [
+        NodeIO(key=field_name, type=field_container.serialize_type())
+        for field_name, field_container in field_types.items()
+    ]
+    return message_type_msg
 
 
 class PackageManager(object):
@@ -174,10 +204,9 @@ class PackageManager(object):
 
         Uses a similar strategy to rosmsg/rossrv to detect message/service files.
         """
+
         if self.message_list_pub is None:
-            rclpy.logging.get_logger("package_manager").warn(
-                "No callback for publishing message list data provided."
-            )
+            LOGGER.warn("No callback for publishing message list data provided.")
             return
 
         message_types = MessageTypes()
@@ -192,7 +221,10 @@ class PackageManager(object):
             packages
         ).items():
             for message in package_messages:
-                message_types.topics.append(package + "/" + message)
+                message_type = rosidl_runtime_py.utilities.get_message(
+                    package + "/" + message
+                )
+                message_types.topics.append(to_message_type(message_type))
         for package, package_services in rosidl_runtime_py.get_service_interfaces(
             packages
         ).items():
@@ -206,67 +238,9 @@ class PackageManager(object):
 
         self.message_list_pub.publish(message_types)
 
-    def get_message_fields(
-        self, request: GetMessageFields.Request, response: GetMessageFields.Response
-    ):
-        """Return the fields and field types of the provided message type."""
-        try:
-            message_class = rosidl_runtime_py.utilities.get_message(
-                request.message_type
-            )
-
-            field_values, field_types = build_message_field_dicts(message_class())
-
-            # Ros interfaces sometimes introduce numpy types or bytes.
-            # Try their standard normalization methods.
-            # If those fail, just cast to string
-            def coerce_types(obj: Any):
-                if isinstance(obj, bytes):
-                    return list(obj)
-                try:
-                    return obj.tolist()
-                except AttributeError:
-                    rclpy.logging.get_logger("package_manager").warn(
-                        f"Object of type {obj.__class__.__name__} can't be serialized properly"
-                    )
-                    return str(obj)
-
-            response.fields = json.dumps(field_values, default=coerce_types)
-            response.field_types = json.dumps(field_types, default=coerce_types)
-
-            response.success = True
-        except Exception as e:
-            response.success = False
-            response.error_message = (
-                f"Could not get message fields for {request.message_type}: {e}"
-            )
-        return response
-
-    # TODO Maybe instead of introducing a new message type,
-    # constant_fields should also be returned as a dict?
-    def get_message_constant_fields_handler(
-        self,
-        request: GetMessageConstantFields.Request,
-        response: GetMessageConstantFields.Response,
-    ):
-        try:
-            message_class = rosidl_runtime_py.utilities.get_message(
-                request.message_type
-            )
-            response.field_names = get_message_constant_fields(message_class)
-            response.success = True
-        except Exception as e:
-            response.success = False
-            response.error_message = (
-                f"Could not get message fields for {request.message_type}: {e}"
-            )
-        return response
-
     def publish_packages_list(self):
         if self.packages_list_pub is None:
-            rclpy.logging.get_logger("package_manager").warn(
-                "No callback for publishing packages list data provided."
-            )
+            LOGGER.warn("No callback for publishing packages list data provided.")
             return
         self.package_paths = []
         list_of_packages = Packages()
@@ -333,7 +307,7 @@ class PackageManager(object):
             )
 
             response.success = True
-            response.package_structure = json_encode(package_structure)
+            response.package_structure = json.dumps(package_structure)
         except PackageNotFoundError:
             response.success = False
             response.error_message = f'Package "{request.package}" does not exist'
@@ -364,7 +338,7 @@ class PackageManager(object):
         )
 
         response.success = True
-        response.storage_folder_structure = json_encode(package_structure)
+        response.storage_folder_structure = json.dumps(package_structure)
 
         return response
 
@@ -372,4 +346,69 @@ class PackageManager(object):
         self, request: GetStorageFolders.Request, response: GetStorageFolders.Response
     ) -> GetStorageFolders.Response:
         response.storage_folders = self.tree_storage_directory_paths
+        return response
+
+    @typechecked
+    @staticmethod
+    def get_available_nodes(
+        request: GetAvailableNodes.Request, response: GetAvailableNodes.Response
+    ) -> GetAvailableNodes.Response:
+        """
+        List the types of nodes that are currently known.
+
+        This includes all nodes from modules that were passed to our
+        constructor in `module_list`, ones from modules that nodes have
+        been successfully loaded from since launch, and ones from
+        modules explicitly asked for in `request.node_modules`
+
+        :param ros_bt_py_msgs.srv.GetAvailableNodesRequest request:
+
+        If `request.node_modules` is not empty, try to load those
+        modules before responding.
+
+        :returns: :class:`ros_bt_py_msgs.src.GetAvailableNodesResponse`
+        """
+        for module_name in request.node_modules:
+            if module_name and load_node_module(module_name) is None:
+                response.success = False
+                response.error_message = f"Failed to import module {module_name}"
+                return response
+
+        response.available_nodes = []
+        for module, nodes in Node.node_classes.items():
+            for class_name, node_class in nodes.items():
+                if not node_class._node_config:
+                    LOGGER.warn(
+                        f"Node class: {node_class.__name__} does not have node config!"
+                    )
+                    continue
+                max_children = node_class._node_config.max_children
+                max_children = -1 if max_children is None else max_children
+                doc = inspect.getdoc(node_class) or ""
+                response.available_nodes.append(
+                    DocumentedNode(
+                        module=module,
+                        node_class=class_name,
+                        max_children=max_children,
+                        inputs=[
+                            NodeIO(
+                                key=key,
+                                type=cont.serialize_type(),
+                                serialized_value=cont.serialize_value(),
+                            )
+                            for key, cont in node_class._node_config.inputs.items()
+                        ],
+                        outputs=[
+                            NodeIO(
+                                key=key,
+                                type=cont.serialize_type(),
+                            )
+                            for key, cont in node_class._node_config.outputs.items()
+                        ],
+                        doc=str(doc),
+                        tags=node_class._node_config.tags,
+                    )
+                )
+
+        response.success = True
         return response

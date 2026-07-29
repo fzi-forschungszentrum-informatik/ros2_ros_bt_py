@@ -26,10 +26,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
-from ros_bt_py_interfaces.srv import GetMessageConstantFields
-from ros_bt_py.package_manager import PackageManager
 
-from typing import List
+from ros_bt_py.data_types import StringType, RosMessageType
+from ros_bt_py.package_manager import PackageManager, to_message_type
+
+from std_msgs.msg import Header
+from builtin_interfaces.msg import Time
+from ros_bt_py_interfaces.msg import NodeIO
 
 
 class TestPackageManager:
@@ -37,61 +40,16 @@ class TestPackageManager:
     def package_manager(self):
         return PackageManager(["/tmp"])
 
-    @pytest.mark.parametrize(
-        "msg_type, constant_values",
-        [
-            ("geometry_msgs/msg/Twist", []),
-            (
-                "ros_bt_py_interfaces/msg/NodeState",
-                [
-                    "UNINITIALIZED",
-                    "IDLE",
-                    "UNASSIGNED",
-                    "ASSIGNED",
-                    "RUNNING",
-                    "SUCCEEDED",
-                    "SUCCEED",
-                    "SUCCESS",
-                    "FAILED",
-                    "FAIL",
-                    "FAILURE",
-                    "BROKEN",
-                    "PAUSED",
-                    "SHUTDOWN",
-                ],
-            ),
-        ],
-    )
-    def test_get_message_constant_fields_successful(
-        self, package_manager: PackageManager, msg_type: str, constant_values: List[str]
-    ):
-        request = GetMessageConstantFields.Request()
-        request.message_type = msg_type
+    def test_data_type_to_message_type(self):
+        message_type_msg = to_message_type(Header)
+        assert message_type_msg.name == "std_msgs/msg/Header"
+        assert message_type_msg.type == RosMessageType(Header).serialize_type()
 
-        response = GetMessageConstantFields.Response()
-        response = package_manager.get_message_constant_fields_handler(
-            request=request, response=response
-        )
-        assert response is not None
-        assert response.success
-        assert len(response.field_names) == len(constant_values)
-        for constant in constant_values:
-            assert constant in response.field_names
-
-    @pytest.mark.parametrize(
-        "msg_type", ["test_msgs/msg/Bla", "ros_bt_py_interfaces/msg/None"]
-    )
-    def test_get_message_constant_fields_invalid_msgs(
-        self, package_manager: PackageManager, msg_type: str
-    ):
-        request = GetMessageConstantFields.Request()
-        request.message_type = msg_type
-
-        response = GetMessageConstantFields.Response()
-        response = package_manager.get_message_constant_fields_handler(
-            request=request, response=response
-        )
-
-        assert response is not None
-        assert not response.success
-        assert len(response.error_message) > 0
+        fields_dict = {
+            "stamp": RosMessageType(Time).serialize_type(),
+            "frame_id": StringType().serialize_type(),
+        }
+        field: NodeIO
+        for field in message_type_msg.fields:
+            assert field.key in fields_dict.keys()
+            assert field.type == fields_dict[field.key]

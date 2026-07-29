@@ -25,12 +25,11 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 # The python module the node is from
 string module
 # The python class name of the node
 string node_class
-# The version of this node
-string version
 
 # The maximum amount of children this node supports, where -1 means
 # infinite children
@@ -43,7 +42,6 @@ string node_id
 string name
 # Order is important for child_names!
 string[] child_ids
-NodeOption[] options
 NodeIO[] inputs
 NodeIO[] outputs
 

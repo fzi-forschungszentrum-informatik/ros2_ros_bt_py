@@ -25,78 +25,28 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 import pytest
+
+from ros_bt_py.data_types import IntType, FloatType, GenericType, ReferenceType
 from ros_bt_py.exceptions import NodeConfigError
-from ros_bt_py.node_config import OptionRef, NodeConfig
-
-
-@pytest.mark.parametrize("option_key", ["Test", 1, 1.0, True])
-class TestOptionRefInputs:
-    @staticmethod
-    def test_init(option_key):
-        option_ref = OptionRef(option_key)
-        assert option_ref.option_key == option_key
-
-    @staticmethod
-    def test_repr(option_key):
-        option_ref = OptionRef(option_key)
-        expected_repr = f"OptionRef(option_key={option_key!r})"
-        assert repr(option_ref) == expected_repr
-
-    @staticmethod
-    def test_name(option_key):
-        option_ref = OptionRef(option_key)
-        expected_name = f"OptionRef(option_key={option_key!r})"
-        assert option_ref.__name__() == expected_name
-
-
-class TestOptionRefEqs:
-    @staticmethod
-    @pytest.mark.parametrize(
-        "same, other, result",
-        [
-            (OptionRef("Same"), OptionRef("Same"), True),
-            (OptionRef("Same"), OptionRef("Other"), False),
-            (OptionRef("Other"), OptionRef("Same"), False),
-            (OptionRef("Other"), OptionRef("Other"), True),
-        ],
-    )
-    def test_eq(same, other, result):
-        assert (same == other) == result
-
-    @staticmethod
-    @pytest.mark.parametrize(
-        "same, other, result",
-        [
-            (OptionRef("Same"), OptionRef("Same"), False),
-            (OptionRef("Same"), OptionRef("Other"), True),
-            (OptionRef("Other"), OptionRef("Same"), True),
-            (OptionRef("Other"), OptionRef("Other"), False),
-        ],
-    )
-    def test_ne(same, other, result):
-        assert (same != other) == result
+from ros_bt_py.node_config import NodeConfig
 
 
 @pytest.fixture
 def example_inputs():
-    return {"input1": int, "input2": OptionRef(1)}
+    return {
+        "tinput": GenericType(),
+        "input1": IntType(),
+        "input2": ReferenceType(reference="tinput"),
+    }
 
 
 @pytest.fixture
 def example_outputs():
-    return {"output1": float, "output2": OptionRef("Test")}
-
-
-@pytest.fixture
-def example_options():
-    return {"option1": str, "option2": bool}
-
-
-@pytest.fixture
-def example_optional_options():
-    return (["optional1", "optional2"],)
+    return {
+        "output1": FloatType(),
+        "output2": ReferenceType(reference="tinput"),
+    }
 
 
 @pytest.fixture
@@ -105,310 +55,170 @@ def example_max_children():
 
 
 @pytest.fixture
-def example_version():
-    return "1.0"
-
-
-@pytest.fixture
 def example_tags():
     return ["tag1", "tag2"]
 
 
 class TestNodeConfig:
-    def test_init_required(
-        example_inputs, example_outputs, example_options, example_max_children
-    ):
+    def test_init(self, example_inputs, example_outputs, example_max_children):
         node_config = NodeConfig(
-            options=example_options,
             inputs=example_inputs,
             outputs=example_outputs,
             max_children=example_max_children,
         )
         assert node_config.inputs == example_inputs
         assert node_config.outputs == example_outputs
-        assert node_config.options == example_options
         assert node_config.max_children == example_max_children
-        assert node_config.optional_options == []
         assert node_config.tags == []
-        assert node_config.version == ""
-
-    def test_init_optional(
-        example_inputs,
-        example_outputs,
-        example_options,
-        example_optional_options,
-        example_max_children,
-        example_version,
-        example_tags,
-    ):
-
-        node_config = NodeConfig(
-            options=example_options,
-            inputs=example_inputs,
-            outputs=example_outputs,
-            max_children=example_max_children,
-            optional_options=example_optional_options,
-            version=example_version,
-            tags=example_tags,
-        )
-
-        assert node_config.inputs == example_inputs
-        assert node_config.outputs == example_outputs
-        assert node_config.options == example_options
-        assert node_config.max_children == example_max_children
-        assert node_config.optional_options == example_optional_options
-        assert node_config.tags == example_tags
-        assert node_config.version == example_version
 
     def test_repr(
+        self,
         example_inputs,
         example_outputs,
-        example_options,
-        example_optional_options,
         example_max_children,
-        example_version,
         example_tags,
     ):
         node_config = NodeConfig(
-            options=example_options,
             inputs=example_inputs,
             outputs=example_outputs,
             max_children=example_max_children,
-            optional_options=example_optional_options,
-            version=example_version,
             tags=example_tags,
         )
 
         expected_repr = (
             f"NodeConfig(inputs={example_inputs}, outputs={example_outputs}, "
-            f"options={example_options}, max_children={example_max_children}, "
-            f"optional_options={example_optional_options}, version={example_version})"
+            f"max_children={example_max_children})"
         )
         assert repr(node_config) == expected_repr
 
     @staticmethod
     @pytest.mark.parametrize(
-        "same, other, result",
+        "config1, config2, result",
         [
-            (0, 0, True),
-            (0, 1, False),
-            (1, 0, False),
-            (1, 1, True),
+            (
+                NodeConfig(
+                    inputs={"input1": IntType()},
+                    outputs={"output1": FloatType()},
+                    max_children=3,
+                ),
+                NodeConfig(
+                    inputs={"input1": IntType()},
+                    outputs={"output1": FloatType()},
+                    max_children=3,
+                ),
+                True,
+            ),
+            (
+                NodeConfig(
+                    inputs={"input1": IntType()},
+                    outputs={"output1": FloatType()},
+                    max_children=3,
+                ),
+                NodeConfig(
+                    inputs={"input1": IntType()},
+                    outputs={"output1": FloatType()},
+                    max_children=4,
+                ),
+                False,
+            ),
+            (
+                NodeConfig(
+                    inputs={"input1": IntType()},
+                    outputs={"output1": FloatType()},
+                    max_children=3,
+                ),
+                NodeConfig(
+                    inputs={"input2": IntType()},
+                    outputs={"output1": FloatType()},
+                    max_children=3,
+                ),
+                False,
+            ),
+            (
+                NodeConfig(
+                    inputs={"input1": IntType()},
+                    outputs={"output1": FloatType()},
+                    max_children=3,
+                ),
+                NodeConfig(
+                    inputs={"input1": IntType()},
+                    outputs={"output1": IntType()},
+                    max_children=3,
+                ),
+                False,
+            ),
         ],
     )
-    def test_eq(same, other, result):
-        test_0 = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
-            max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
-        )
-
-        test_1 = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
-            max_children=4,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
-        )
-        node_config_0 = test_0 if same == 0 else test_1
-        node_config_1 = test_0 if other == 0 else test_1
-        assert (node_config_0 == node_config_1) == result
-
-    @staticmethod
-    @pytest.mark.parametrize(
-        "same, other, result",
-        [
-            (0, 0, False),
-            (0, 1, True),
-            (1, 0, True),
-            (1, 1, False),
-        ],
-    )
-    def test_ne(same, other, result):
-        test_0 = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
-            max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
-        )
-
-        test_1 = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
-            max_children=4,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
-        )
-        node_config_0 = test_0 if same == 0 else test_1
-        node_config_1 = test_0 if other == 0 else test_1
-        assert (node_config_0 != node_config_1) == result
+    def test_eq(config1, config2, result):
+        assert (config1 == config2) == result
 
     def test_extend_success(self):
         base_config = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
+            inputs={"input1": IntType(), "input2": FloatType()},
+            outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
         )
-
         extension_config = NodeConfig(
-            inputs={"input3": int, "input4": OptionRef(1)},
-            outputs={"output3": float, "output4": OptionRef("Test")},
-            options={"option3": str, "option4": bool},
+            inputs={"input3": IntType(), "input4": FloatType()},
+            outputs={"output3": FloatType(), "output4": IntType()},
             max_children=3,
-            optional_options=["optional3", "optional4"],
-            version="1.0",
         )
         assert base_config.extend(extension_config).is_ok()
         assert base_config.inputs == {
-            "input1": int,
-            "input2": OptionRef(1),
-            "input3": int,
-            "input4": OptionRef(1),
+            "input1": IntType(),
+            "input2": FloatType(),
+            "input3": IntType(),
+            "input4": FloatType(),
         }
         assert base_config.outputs == {
-            "output1": float,
-            "output2": OptionRef("Test"),
-            "output3": float,
-            "output4": OptionRef("Test"),
-        }
-        assert base_config.options == {
-            "option1": str,
-            "option2": bool,
-            "option3": str,
-            "option4": bool,
+            "output1": FloatType(allow_static=False),
+            "output2": IntType(allow_static=False),
+            "output3": FloatType(allow_static=False),
+            "output4": IntType(allow_static=False),
         }
         assert base_config.max_children == 3
-        assert base_config.optional_options == [
-            "optional1",
-            "optional2",
-            "optional3",
-            "optional4",
-        ]
-        assert base_config.version == "1.0"
 
     def test_extend_diff_max_childs(self):
         base_config = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
+            inputs={"input1": IntType(), "input2": FloatType()},
+            outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
         )
-
         extension_config = NodeConfig(
-            inputs={"input3": int, "input4": OptionRef(1)},
-            outputs={"output3": float, "output4": OptionRef("Test")},
-            options={"option3": str, "option4": bool},
+            inputs={"input3": IntType(), "input4": FloatType()},
+            outputs={"output3": FloatType(), "output4": IntType()},
             max_children=4,
-            optional_options=["optional3", "optional4"],
-            version="1.0",
         )
-
         result = base_config.extend(extension_config)
         assert result.is_err()
         assert isinstance(result.unwrap_err(), NodeConfigError)
 
     def test_extend_duplicate_input(self):
         base_config = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
+            inputs={"input1": IntType(), "input2": FloatType()},
+            outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
         )
-
         extension_config = NodeConfig(
-            inputs={"input1": int, "input4": OptionRef(1)},
-            outputs={"output3": float, "output4": OptionRef("Test")},
-            options={"option3": str, "option4": bool},
+            inputs={"input1": IntType(), "input4": FloatType()},
+            outputs={"output3": FloatType(), "output4": IntType()},
             max_children=3,
-            optional_options=["optional3", "optional4"],
-            version="1.0",
         )
-
         result = base_config.extend(extension_config)
         assert result.is_err()
         assert isinstance(result.unwrap_err(), NodeConfigError)
 
     def test_extend_duplicate_output(self):
         base_config = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
+            inputs={"input1": IntType(), "input2": FloatType()},
+            outputs={"output1": FloatType(), "output2": IntType()},
             max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
         )
-
         extension_config = NodeConfig(
-            inputs={"input3": int, "input4": OptionRef(1)},
-            outputs={"output1": float, "output4": OptionRef("Test")},
-            options={"option3": str, "option4": bool},
+            inputs={"input3": IntType(), "input4": FloatType()},
+            outputs={"output3": FloatType(), "output2": IntType()},
             max_children=3,
-            optional_options=["optional3", "optional4"],
-            version="1.0",
         )
-
         result = base_config.extend(extension_config)
         assert result.is_err()
         assert isinstance(result.unwrap_err(), NodeConfigError)
-
-    def test_extend_duplicate_option(self):
-        base_config = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
-            max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
-        )
-
-        extension_config = NodeConfig(
-            inputs={"input3": int, "input4": OptionRef(1)},
-            outputs={"output3": float, "output4": OptionRef("Test")},
-            options={"option1": str, "option4": bool},
-            max_children=3,
-            optional_options=["optional3", "optional4"],
-            version="1.0",
-        )
-
-        result = base_config.extend(extension_config)
-        assert result.is_err()
-        assert isinstance(result.unwrap_err(), NodeConfigError)
-
-    def test_extend_duplicate_optional_option(self):
-        base_config = NodeConfig(
-            inputs={"input1": int, "input2": OptionRef(1)},
-            outputs={"output1": float, "output2": OptionRef("Test")},
-            options={"option1": str, "option2": bool},
-            max_children=3,
-            optional_options=["optional1", "optional2"],
-            version="1.0",
-        )
-
-        extension_config = NodeConfig(
-            inputs={"input3": int, "input4": OptionRef(1)},
-            outputs={"output3": float, "output4": OptionRef("Test")},
-            options={"option3": str, "option4": bool},
-            max_children=3,
-            optional_options=["optional1", "optional4"],
-            version="1.0",
-        )
-
-        result = base_config.extend(extension_config)
-
-        assert result.is_ok()
-
-        assert base_config.optional_options == ["optional1", "optional2", "optional4"]

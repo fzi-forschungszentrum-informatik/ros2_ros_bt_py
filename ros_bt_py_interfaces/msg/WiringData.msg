@@ -28,5 +28,6 @@
 
 Wiring wiring
 string serialized_data
-string serialized_type #TODO Maybe this is unnecessary
-string serialized_expected_type #TODO Maybe this is unnecessary
+bool is_current # Signals if this is the current value for the target
+NodeDataType source_type # This is the fully resolved RUNTIME type
+NodeDataType target_type # This is the fully resolved RUNTIME type

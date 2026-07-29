@@ -38,6 +38,7 @@ library = [
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
+    "--order-dependencies",
 ]
 testpaths = [
     "tests",

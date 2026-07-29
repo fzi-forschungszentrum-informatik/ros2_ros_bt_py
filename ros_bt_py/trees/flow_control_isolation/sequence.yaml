@@ -1,0 +1,427 @@
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: UNKNOWN TREE
+path: ''
+root_id: 0d9a0b1b-ce3a-4cec-8dda-80731d7b2e64
+nodes:
+- module: ros_bt_py.nodes.sequence
+  node_class: Sequence
+  max_children: -1
+  node_id: 0d9a0b1b-ce3a-4cec-8dda-80731d7b2e64
+  name: Sequence
+  child_ids:
+  - 974d1a00-f3c3-4418-9a5f-32baf3608d04
+  - 46ff8b32-a2fa-4637-8c67-7e3dc840868f
+  - 9d7cd5c7-d287-4d0c-bb60-348907b24cee
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.ros_nodes.topic
+  node_class: TopicMemorySubscriber
+  max_children: 0
+  node_id: 974d1a00-f3c3-4418-9a5f-32baf3608d04
+  name: Child1
+  child_ids: []
+  inputs:
+  - key: topic_name
+    type:
+      type_identifier: 10
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"/foo_1"'
+  - key: topic_type
+    type:
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"example_interfaces/msg/Empty"'
+  - key: reliable
+    type:
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: 'false'
+  - key: transient_local
+    type:
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: 'false'
+  - key: depth
+    type:
+      type_identifier: 2
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '0'
+      max_value: '18446744073709551615'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '0'
+  - key: memory_delay
+    type:
+      type_identifier: 3
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-1.7976931348623157e+308'
+      max_value: '1.7976931348623157e+308'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '2.5'
+  outputs:
+  - key: message
+    type:
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: topic_type
+      ros_interface_kind: 1
+      ros_msg_type: example_interfaces/msg/Empty
+      interface_id: 0
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.ros_nodes.topic
+  node_class: TopicMemorySubscriber
+  max_children: 0
+  node_id: 46ff8b32-a2fa-4637-8c67-7e3dc840868f
+  name: Child2
+  child_ids: []
+  inputs:
+  - key: topic_name
+    type:
+      type_identifier: 10
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"/foo_2"'
+  - key: topic_type
+    type:
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"example_interfaces/msg/Empty"'
+  - key: reliable
+    type:
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: 'false'
+  - key: transient_local
+    type:
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: 'false'
+  - key: depth
+    type:
+      type_identifier: 2
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '0'
+      max_value: '18446744073709551615'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '0'
+  - key: memory_delay
+    type:
+      type_identifier: 3
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-1.7976931348623157e+308'
+      max_value: '1.7976931348623157e+308'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '2.5'
+  outputs:
+  - key: message
+    type:
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: topic_type
+      ros_interface_kind: 1
+      ros_msg_type: example_interfaces/msg/Empty
+      interface_id: 0
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.ros_nodes.topic
+  node_class: TopicMemorySubscriber
+  max_children: 0
+  node_id: 9d7cd5c7-d287-4d0c-bb60-348907b24cee
+  name: Child3
+  child_ids: []
+  inputs:
+  - key: topic_name
+    type:
+      type_identifier: 10
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"/foo_3"'
+  - key: topic_type
+    type:
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 1
+    serialized_value: '"example_interfaces/msg/Empty"'
+  - key: reliable
+    type:
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: 'false'
+  - key: transient_local
+    type:
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: 'false'
+  - key: depth
+    type:
+      type_identifier: 2
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '0'
+      max_value: '18446744073709551615'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '0'
+  - key: memory_delay
+    type:
+      type_identifier: 3
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-1.7976931348623157e+308'
+      max_value: '1.7976931348623157e+308'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '2.5'
+  outputs:
+  - key: message
+    type:
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: topic_type
+      ros_interface_kind: 1
+      ros_msg_type: example_interfaces/msg/Empty
+      interface_id: 0
+    serialized_value: ''
+  tree_ref: ''
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

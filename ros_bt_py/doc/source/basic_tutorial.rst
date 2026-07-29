@@ -4,17 +4,8 @@
 Basic Tutorial
 ##############
 
-.. toctree::
-   :maxdepth: 2
+.. contents::
 
-   Starting up ros_bt_py
-   Examining the Interface
-   Writing your first BT
-   Working with bt_py
-   Understanding Flow Control
-   Writing a more complex BT
-   Using Subtrees
-   Using ROS Interfaces with ros_bt_py
 
 *********************
 Starting up ros_bt_py
@@ -347,6 +338,9 @@ it is used in bt_cpp and other implementations.
 This means that data needs to be explicitly wired between Inputs and Outputs of the individual
 nodes, but you don't need to worry about which entries are in your blackboard at a certain time.
 
+Node inputs and outputs use a set of custom data types,
+which are explained in detail in the :ref:`data types chapter<node-data-types>`
+
 To wire Data, draw a graph edge from an input to an output or vice versa.
 While both Inputs and Outputs can have multiple connections at the same time, allowing for complex
 information flow in the tree, Inputs need to have at least one connection for the tree to start
@@ -356,7 +350,7 @@ Outputs do not need to have a connection and can be left empty.
 Output values are only sent through the Data Graph when the node they are attached to is ticked, so
 make sure that your control flow takes that into account.
 
-Input and Output data types need to match when creating an edge, which can lead to problems when
+Input and Output data types need to be compatible when creating an edge, which can lead to problems when
 changing Node Classes for already connected trees.
 To ensure easy tree manipulation delete edges from nodes before changing the node or the Node Class
 implementation.

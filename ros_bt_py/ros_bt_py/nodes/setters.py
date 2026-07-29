@@ -27,20 +27,30 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from copy import deepcopy
 
-from ros_bt_py.vendor.result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok, Err, do
 
-from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
-from ros_bt_py.helpers import rsetattr, BTNodeState
+from ros_bt_py.data_types import (
+    GenericType,
+    ReferenceListType,
+    ReferenceType,
+    ReferenceDictType,
+    StringType,
+    RosTopicType,
+)
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import rsetattr, BTNodeState
+from ros_bt_py.node import Leaf, define_bt_node
+from ros_bt_py.node_config import NodeConfig
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"list_type": type},
-        inputs={"list": list, "value": OptionRef("list_type")},
-        outputs={"new_list": list},
+        inputs={
+            "list_type": GenericType(),
+            "list": ReferenceListType(reference="list_type"),
+            "value": ReferenceType(reference="list_type"),
+        },
+        outputs={"new_list": ReferenceListType(reference="list_type")},
         max_children=0,
     )
 )
@@ -51,10 +61,15 @@ class AppendListItem(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.inputs.is_updated("list") or self.inputs.is_updated("value"):
-            self.outputs["new_list"] = self.inputs["list"] + [self.inputs["value"]]
-
-        return Ok(BTNodeState.SUCCEEDED)
+        return (
+            do(
+                Ok(li + [v])
+                for li in self.inputs.get_value_as("list", list)
+                for v in self.inputs.get_value("value")
+            )
+            .and_then(lambda val: self.outputs.set_value("new_list", val))
+            .map(lambda _: BTNodeState.SUCCEEDED)
+        )
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)
@@ -68,13 +83,14 @@ class AppendListItem(Leaf):
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"object_type": type, "attr_name": str, "attr_type": type},
         inputs={
-            "object": OptionRef("object_type"),
-            "attr_value": OptionRef("attr_type"),
+            "object_type": RosTopicType(),
+            "attr_type": GenericType(),
+            "attr_name": StringType(),
+            "object": ReferenceType(reference="object_type"),
+            "attr_value": ReferenceType(reference="attr_type"),
         },
-        outputs={"new_object": OptionRef("object_type")},
+        outputs={"new_object": ReferenceType(reference="object_type")},
         max_children=0,
     )
 )
@@ -85,11 +101,20 @@ class SetAttr(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.inputs.is_updated("object") or self.inputs.is_updated("attr_value"):
-            obj = deepcopy(self.inputs["object"])
-            rsetattr(obj, self.options["attr_name"], self.inputs["attr_value"])
-            self.outputs["new_object"] = obj
-        return Ok(BTNodeState.SUCCEEDED)
+        def set_and_return(obj, attr, val):
+            rsetattr(obj, attr, val)
+            return obj
+
+        return (
+            do(
+                Ok(set_and_return(o, n, v))
+                for o in self.inputs.get_value("object")
+                for n in self.inputs.get_value_as("attr_name", str)
+                for v in self.inputs.get_value("value")
+            )
+            .and_then(lambda val: self.outputs.set_value("new_object", val))
+            .map(lambda _: BTNodeState.SUCCEEDED)
+        )
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)
@@ -103,10 +128,13 @@ class SetAttr(Leaf):
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"attr_name": str, "attr_type": type},
-        inputs={"object": dict, "attr_value": OptionRef("attr_type")},
-        outputs={"new_object": dict},
+        inputs={
+            "attr_type": GenericType(),
+            "attr_name": StringType(),
+            "object": ReferenceDictType(reference="attr_type"),
+            "attr_value": ReferenceType(reference="attr_type"),
+        },
+        outputs={"new_object": ReferenceDictType(reference="attr_type")},
         max_children=0,
     )
 )
@@ -117,11 +145,20 @@ class SetDictItem(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if self.inputs.is_updated("object") or self.inputs.is_updated("attr_value"):
-            obj = deepcopy(self.inputs["object"])
-            obj[self.options["attr_name"]] = self.inputs["attr_value"]
-            self.outputs["new_object"] = obj
-        return Ok(BTNodeState.SUCCEEDED)
+        def set_and_return(dir, key, val):
+            dir[key] = val
+            return dir
+
+        return (
+            do(
+                Ok(set_and_return(d, k, v))
+                for d in self.inputs.get_value_as("object", dict)
+                for k in self.inputs.get_value_as("attr_name", str)
+                for v in self.inputs.get_value("attr_value")
+            )
+            .and_then(lambda val: self.outputs.set_value("new_object", val))
+            .map(lambda _: BTNodeState.SUCCEEDED)
+        )
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.SHUTDOWN)

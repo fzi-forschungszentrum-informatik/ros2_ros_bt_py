@@ -25,20 +25,19 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from typing import List
-from ros_bt_py.vendor.result import Result, Ok, Err
 from typeguard import typechecked
+
+from ros_bt_py.vendor.result import Result, Ok, Err, do
+
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
-from ros_bt_py_interfaces.msg import UtilityBounds
-
 from ros_bt_py.node import FlowControl, Node, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
+from ros_bt_py_interfaces.msg import UtilityBounds
 
-@define_bt_node(
-    NodeConfig(version="0.1.0", options={}, inputs={}, outputs={}, max_children=None)
-)
+
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=None))
 class Sequence(FlowControl):
     """
     Flow control node that succeeds when all children succeed.
@@ -105,8 +104,7 @@ class Sequence(FlowControl):
             if state != BTNodeState.SUCCEEDED:
                 # For all states other than RUNNING...
                 if state != BTNodeState.RUNNING:
-                    # ...untick all children after the one that hasn't
-                    # succeeded
+                    # ...untick all children after the one that hasn't succeeded
                     for untick_child in self.children[index + 1 :]:
                         match untick_child.untick():
                             case Err(e):
@@ -142,9 +140,7 @@ class Sequence(FlowControl):
         return calculate_utility_sequence(self.children)
 
 
-@define_bt_node(
-    NodeConfig(version="0.1.0", options={}, inputs={}, outputs={}, max_children=None)
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=None))
 class MemorySequence(FlowControl):
     """
     Flow control node that succeeds when all children succeed and has a memory.
@@ -228,31 +224,34 @@ class MemorySequence(FlowControl):
                     # For all states other than RUNNING, untick all
                     # children after the one that hasn't succeeded
                     for untick_child in self.children[index + 1 :]:
-                        child_untick_result = untick_child.untick()
-                        if child_untick_result.is_err():
-                            return child_untick_result
+                        match untick_child.untick():
+                            case Err(e):
+                                return Err(e)
+                            case Ok(_):
+                                pass
                 return Ok(state)
         # If all children succeeded, we too succeed
         return Ok(BTNodeState.SUCCEEDED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
+        # TODO Should we reset this on untick?
+        self.last_running_child = 0
         for child in self.children:
-            match child.untick():
+            match child.setup():
                 case Err(e):
                     return Err(e)
                 case Ok(_):
                     pass
-        self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
+        self.last_running_child = 0
         for child in self.children:
-            match child.reset():
+            match child.setup():
                 case Err(e):
                     return Err(e)
                 case Ok(_):
                     pass
-        self.last_running_child = 0
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -264,7 +263,7 @@ class MemorySequence(FlowControl):
 
 
 def calculate_utility_sequence(
-    children: List[Node],
+    children: list[Node],
 ) -> Result[UtilityBounds, BehaviorTreeException]:
     """Shared Utility aggregation for Sequence and MemorySequence."""
     bounds = UtilityBounds(

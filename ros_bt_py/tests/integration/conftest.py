@@ -1,4 +1,4 @@
-# Copyright 2025 FZI Forschungszentrum Informatik
+# Copyright 2026 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -27,25 +27,34 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import pytest
 
+from typing import Optional
+
 import contextlib
+from threading import Lock
+import time
+import uuid
 
 import launch
 import launch_pytest
 import launch_ros
 import launch_testing.actions
 import launch_testing.event_handlers
+
 import rclpy
+from rclpy.node import Node
 
 # ROS2 versions starting from Kilted have a EnableRmwIsolation launch Action
 #   Use that instead of this custom implementation once available
 import os
 import domain_coordinator
 
-from rclpy.node import Node
+from ros_bt_py.vendor.result import Result, Ok, Err
 
-from std_srvs.srv import SetBool
+from ros_bt_py.ros_helpers import uuid_to_ros
 
 from ros_bt_py_interfaces.msg import (
+    TreeState,
+    TreeStructure,
     TreeStateList,
     TreeStructureList,
 )
@@ -54,10 +63,11 @@ from ros_bt_py_interfaces.srv import (
     LoadTreeFromPath,
 )
 
+from rosgraph_msgs.msg import Clock
+
 
 # This function specifies the processes to be run for our test.
-@launch_pytest.fixture
-def launch_description():
+def tree_launch_description(use_sim_time: bool):
     with contextlib.ExitStack() as stack:
         if (
             "ROS_DOMAIN_ID" not in os.environ
@@ -69,7 +79,10 @@ def launch_description():
         tree_node = launch_ros.actions.Node(
             package="ros_bt_py",
             executable="tree_node",
-            additional_env={"PYTHONUNBUFFERED": "1"},
+            parameters=[{"use_sim_time": use_sim_time}],
+            additional_env={
+                "PYTHONUNBUFFERED": "1"
+            },  # Necessary for the ReadyListener below
         )
         yield launch.LaunchDescription(
             [
@@ -85,63 +98,158 @@ def launch_description():
         )
 
 
+@launch_pytest.fixture
+def standard_tree_node():
+    yield from tree_launch_description(use_sim_time=False)
+
+
+@launch_pytest.fixture
+def sim_time_tree_node():
+    yield from tree_launch_description(use_sim_time=True)
+
+
+class TreeControlNode(Node):
+    """
+    Provides functions to easily interact with the BT under testing.
+
+    Most of these functions use return values of type ``Result``.
+    Make sure to check (assert) them in a way that allows the error message
+    to be picked up, like ``assert result.is_ok()`` or
+    ``match result:
+        case Err(e):
+            assert False, e
+        case Ok(v):
+            ...``
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("tree_control_node", *args, **kwargs)
+
+        self._tree_msg_lock = Lock()
+        self._tree_structure_msg: Optional[TreeStructureList] = None
+        self._tree_state_msg: Optional[TreeStateList] = None
+
+        self.load_tree_client = self.create_client(
+            LoadTreeFromPath,
+            "/BehaviorTreeNode/load_tree_from_path",
+        )
+        self.execute_tree_client = self.create_client(
+            ControlTreeExecution,
+            "/BehaviorTreeNode/control_tree_execution",
+        )
+        self.tree_structure_subscription = self.create_subscription(
+            TreeStructureList,
+            "/BehaviorTreeNode/tree_structure_list",
+            self._new_tree_structure_msg,
+            1,
+        )
+        self.tree_state_subscription = self.create_subscription(
+            TreeStateList,
+            "/BehaviorTreeNode/tree_state_list",
+            self._new_tree_state_msg,
+            1,
+        )
+
+    def _new_tree_structure_msg(self, msg: TreeStructureList):
+        with self._tree_msg_lock:
+            self._tree_structure_msg = msg
+
+    def _new_tree_state_msg(self, msg: TreeStateList):
+        with self._tree_msg_lock:
+            self._tree_state_msg = msg
+
+    def load_tree(self, tree_file: str, wait_time=30) -> Result[None, str]:
+        load_req = LoadTreeFromPath.Request(
+            path=f"package://ros_bt_py/{tree_file}",
+            permissive=False,
+        )
+        if not self.load_tree_client.wait_for_service(timeout_sec=wait_time):
+            return Err("Load tree server not available")
+        load_future = self.load_tree_client.call_async(load_req)
+        rclpy.spin_until_future_complete(self, load_future, timeout_sec=wait_time)
+        if not load_future.done():
+            return Err("Load tree request did not complete")
+        if load_future.result().success:  # type: ignore
+            return Ok(None)
+        else:
+            return Err(load_future.result().error_message)  # type: ignore
+
+    def execute_tree(self, tree_action: int, wait_time=30) -> Result[None, str]:
+        run_req = ControlTreeExecution.Request(
+            command=tree_action,
+            tick_frequency_hz=10.0,
+        )
+        if not self.execute_tree_client.wait_for_service(timeout_sec=wait_time):
+            return Err("Execute tree server not available")
+        run_future = self.execute_tree_client.call_async(run_req)
+        rclpy.spin_until_future_complete(self, run_future, timeout_sec=wait_time)
+        if not run_future.done():
+            return Err("Execute tree request did not complete")
+        if run_future.result().success:  # type: ignore
+            return Ok(None)
+        else:
+            return Err(run_future.result().error_message)  # type: ignore
+
+    def get_tree_structure(
+        self, tree_id=uuid.UUID(int=0), wait_time=60
+    ) -> Result[TreeStructure, str]:
+        ros_tree_id = uuid_to_ros(tree_id)
+        start_time = time.time()
+        while start_time + wait_time > time.time():
+            if self._tree_structure_msg is not None:
+                with self._tree_msg_lock:
+                    structure: TreeStructure
+                    for structure in self._tree_structure_msg.tree_structures:
+                        if structure.tree_id == ros_tree_id:
+                            return Ok(structure)
+            rclpy.spin_once(self, timeout_sec=5)
+        return Err("No tree structure with this id")
+
+    def get_tree_state(
+        self, tree_id=uuid.UUID(int=0), wait_time=60
+    ) -> Result[TreeState, str]:
+        ros_tree_id = uuid_to_ros(tree_id)
+        start_time = time.time()
+        while start_time + wait_time > time.time():
+            if self._tree_state_msg is not None:
+                with self._tree_msg_lock:
+                    state: TreeState
+                    for state in self._tree_state_msg.tree_states:
+                        if state.tree_id == ros_tree_id:
+                            return Ok(state)
+            rclpy.spin_once(self, timeout_sec=5)
+        return Err("No tree structure with this id")
+
+
 @pytest.fixture
-def node():
+def tree_control_node():
     rclpy.init()
-    node = rclpy.create_node("test_node")
+    node = TreeControlNode()
     yield node
     node.destroy_node()
     rclpy.shutdown()
 
 
-@pytest.fixture
-def pub_subtrees_client(node: Node):
-    return node.create_client(SetBool, "/BehaviorTreeNode/debug/set_publish_subtrees")
+class TimeControlNode(Node):
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__("time_control_node", *args, **kwargs)
+
+        self.clock_publisher = self.create_publisher(
+            Clock,
+            "/clock",
+            1,
+        )
+
+    def set_time(self, seconds: int):
+        clock_msg = Clock()
+        clock_msg.clock.sec = seconds
+        self.clock_publisher.publish(clock_msg)
 
 
 @pytest.fixture
-def load_client(node: Node):
-    return node.create_client(
-        LoadTreeFromPath,
-        "/BehaviorTreeNode/load_tree_from_path",
-    )
-
-
-@pytest.fixture
-def execute_client(node: Node):
-    return node.create_client(
-        ControlTreeExecution,
-        "/BehaviorTreeNode/control_tree_execution",
-    )
-
-
-@pytest.fixture
-def state_list(node: Node):
-    state_msg_list: list[TreeStateList] = []
-
-    def save_state(msg: TreeStateList):
-        state_msg_list.append(msg)
-
-    _ = node.create_subscription(
-        TreeStateList,
-        "/BehaviorTreeNode/tree_state_list",
-        save_state,
-        1,
-    )
-    return state_msg_list
-
-
-@pytest.fixture
-def structure_list(node: Node):
-    structure_msg_list: list[TreeStructureList] = []
-
-    def save_structure(msg: TreeStructureList):
-        structure_msg_list.append(msg)
-
-    _ = node.create_subscription(
-        TreeStructureList,
-        "/BehaviorTreeNode/tree_structure_list",
-        save_structure,
-        1,
-    )
-    return structure_msg_list
+def time_control_node():
+    # No rclpy init, we assume a tree_control_node to always be used
+    node = TimeControlNode()
+    yield node
+    node.destroy_node()

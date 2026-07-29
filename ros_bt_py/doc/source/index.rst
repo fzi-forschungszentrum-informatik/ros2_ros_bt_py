@@ -7,6 +7,8 @@
 Welcome to ros_bt_py's documentation!
 #####################################
 
+.. contents::
+
 ************
 Introduction
 ************
@@ -16,7 +18,7 @@ ros_bt_py is a Python package for writing and executing Behavior Trees.
 It is built to enable high-level (aka task level) mission control for
 robots, similar to BehaviorTree.Cpp_, SMACH_, FlexBE_ or RAFCON_.
 
-The roy_bt_py repository is home to multiple elements enabling you to quickly get started with BT
+The ros_bt_py repository is home to multiple elements enabling you to quickly get started with BT
 development without the need to write any code:
 
 * The basic framework holding ros_bt_py together.
@@ -40,7 +42,7 @@ Mission Statement
 ros_bt_py was created with the following goals in mind:
 
 * Fully ROS compatible.
-* Mission control for Robots, meaning long runing processes.
+* Mission control for Robots, meaning long running processes.
 * Possiblity to distribute it among multiple robots to enable cooperation in robot teams.
 * Extendible, understandable and typesafe implementation.
 

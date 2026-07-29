@@ -6,3 +6,4 @@ ros_bt_py/doc/build/
 ros_bt_py/capabilities/
 .coverage
 parameters.py
+.codegraph/

@@ -27,18 +27,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from ros_bt_py.vendor.result import Result, Ok, Err
 
-from ros_bt_py.node import Leaf, define_bt_node
-from ros_bt_py.node_config import NodeConfig, OptionRef
+from ros_bt_py.data_types import GenericType, ReferenceType
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.node import Leaf, define_bt_node
+from ros_bt_py.node_config import NodeConfig
 
 
 @define_bt_node(
     NodeConfig(
-        version="0.1.0",
-        options={"passthrough_type": type},
-        inputs={"in": OptionRef("passthrough_type")},
-        outputs={"out": OptionRef("passthrough_type")},
+        inputs={
+            "passthrough_type": GenericType(),
+            "in": ReferenceType("passthrough_type", is_static=False),
+        },
+        outputs={"out": ReferenceType("passthrough_type")},
         max_children=0,
     )
 )
@@ -55,8 +57,11 @@ class PassthroughNode(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self.outputs["out"] = self.inputs["in"]
-        return Ok(BTNodeState.SUCCEEDED)
+        return (
+            self.inputs.get_value("in")
+            .and_then(lambda val: self.outputs.set_value("out", val))
+            .map(lambda _: BTNodeState.SUCCEEDED)
+        )
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
@@ -65,6 +70,4 @@ class PassthroughNode(Leaf):
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self.outputs["out"] = None
-        self.outputs.reset_updated()
         return Ok(BTNodeState.IDLE)
