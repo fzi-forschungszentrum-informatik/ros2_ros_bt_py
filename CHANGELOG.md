@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Update Web-GUI to 8.0.0 by @Oberacda
 - List type accept and convert array.array values
 - Start adding tests for service node (does not cover reset behavior)
 - Subtree IO use node ids in [#247](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/247)
@@ -100,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #254 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.0 by @Oberacda in [#254](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/254)
 - Merge pull request #249 from Doomse/node-data-rework by @Oberacda in [#249](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/249)
 - Merge branch 'main' into node-data-rework
 
