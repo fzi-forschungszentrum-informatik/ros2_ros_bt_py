@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add lyrical target. by @Oberacda
 - Add data flow test
 - Add tests for MemorySequence
 - Add tests for Sequence node, update test dependencies
@@ -30,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Update license headers. by @Oberacda
+- Update license headers. by @Oberacda
+- Update configs by @Oberacda
 - Update Web-GUI to 8.0.0 by @Oberacda
 - List type accept and convert array.array values
 - Start adding tests for service node (does not cover reset behavior)
@@ -87,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Restore pytest execution on lyrical by @Oberacda
+- Fix formatting. by @Oberacda
 - Fix small issues. by @Oberacda
 - Fix data type equals
 - Fix node options with complex types in [#244](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/244)
@@ -101,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #257 from fzi-forschungszentrum-informatik/fb_update_workflows by @Oberacda in [#257](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/257)
 - Merge pull request #254 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.0 by @Oberacda in [#254](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/254)
 - Merge pull request #249 from Doomse/node-data-rework by @Oberacda in [#249](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/249)
 - Merge branch 'main' into node-data-rework
