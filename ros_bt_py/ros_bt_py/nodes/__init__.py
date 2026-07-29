@@ -26,18 +26,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from . import compare
-from . import io
-from . import constant
-from . import decorators
-from . import fallback
-from . import file
-from . import format
-from . import getters
-from . import list
-from . import maths
-from . import parallel
-from . import passthrough_node
-from . import random_number
-from . import sequence
-from . import setters
+from . import compare as compare
+from . import io as io
+from . import constant as constant
+from . import decorators as decorators
+from . import fallback as fallback
+from . import file as file
+from . import format as format
+from . import getters as getters
+from . import list as list
+from . import maths as maths
+from . import parallel as parallel
+from . import passthrough_node as passthrough_node
+from . import random_number as random_number
+from . import sequence as sequence
+from . import setters as setters

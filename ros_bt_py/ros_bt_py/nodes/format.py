@@ -29,7 +29,7 @@
 from string import Formatter
 import os
 
-from ros_bt_py.vendor.result import Result, Ok, Err, do
+from ros_bt_py.vendor.result import Result, Ok, do
 
 from ros_bt_py.data_types import DictType, ListType, StringType
 from ros_bt_py.exceptions import BehaviorTreeException

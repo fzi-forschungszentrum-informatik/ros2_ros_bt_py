@@ -27,7 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
-import unittest.mock as mock
 
 from ros_bt_py.helpers import int_limits_dict, float_limits_dict, rgetattr, rsetattr
 

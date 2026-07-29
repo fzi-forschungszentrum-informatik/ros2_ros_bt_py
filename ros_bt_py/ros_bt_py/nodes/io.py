@@ -28,7 +28,7 @@
 
 import abc
 
-from ros_bt_py.vendor.result import Result, Ok, Err
+from ros_bt_py.vendor.result import Result, Ok
 
 from ros_bt_py.data_types import GenericType, ReferenceType
 from ros_bt_py.exceptions import BehaviorTreeException

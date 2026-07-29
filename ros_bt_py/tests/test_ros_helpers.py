@@ -31,7 +31,6 @@ import unittest.mock as mock
 
 import uuid
 
-from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.ros_helpers import (
     ros_to_uuid,
     uuid_to_ros,

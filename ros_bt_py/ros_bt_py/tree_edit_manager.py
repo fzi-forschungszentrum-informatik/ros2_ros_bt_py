@@ -31,7 +31,7 @@ from copy import deepcopy
 from typing import Any
 
 from ros_bt_py.tree_exec_manager import TreeExecManager, is_edit_service
-from ros_bt_py.vendor.result import Err, Ok, Result
+from ros_bt_py.vendor.result import Err, Ok
 
 from typeguard import typechecked
 

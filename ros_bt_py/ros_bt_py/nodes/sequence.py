@@ -28,7 +28,7 @@
 
 from typeguard import typechecked
 
-from ros_bt_py.vendor.result import Result, Ok, Err, do
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState

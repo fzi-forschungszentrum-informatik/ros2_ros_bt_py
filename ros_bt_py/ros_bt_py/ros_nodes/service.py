@@ -29,7 +29,7 @@
 import abc
 from typing import Any, Optional
 
-from ros_bt_py.vendor.result import Result, Ok, Err, do
+from ros_bt_py.vendor.result import Result, Ok, Err
 
 from rclpy.task import Future
 from rclpy.callback_groups import ReentrantCallbackGroup

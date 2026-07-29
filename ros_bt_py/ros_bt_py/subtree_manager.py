@@ -28,10 +28,9 @@
 
 from copy import deepcopy
 from threading import Lock
-from typing import Any, Dict, Mapping
+from typing import Any, Dict
 import uuid
 
-from ros_bt_py.vendor.result import Err, Ok, Result
 from typeguard import typechecked
 
 from ros_bt_py_interfaces.msg import TreeStructure, TreeState, TreeData

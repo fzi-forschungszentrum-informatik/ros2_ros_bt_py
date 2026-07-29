@@ -31,15 +31,13 @@ import abc
 from typing import Optional, Any
 from enum import Enum
 
-from ros_bt_py.vendor.result import Result, Ok, Err, do
+from ros_bt_py.vendor.result import Result, Ok, Err
 
-import rclpy
-from rclpy.action.client import ActionClient, ClientGoalHandle
+from rclpy.action.client import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.time import Time
 
 from ros_bt_py.data_types import (
-    BoolType,
     DataContainer,
     FloatType,
     RosActionName,

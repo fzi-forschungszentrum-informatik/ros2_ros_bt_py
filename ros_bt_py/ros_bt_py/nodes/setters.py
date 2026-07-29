@@ -26,9 +26,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from copy import deepcopy
 
-from ros_bt_py.vendor.result import Result, Ok, Err, do
+from ros_bt_py.vendor.result import Result, Ok, do
 
 from ros_bt_py.data_types import (
     GenericType,

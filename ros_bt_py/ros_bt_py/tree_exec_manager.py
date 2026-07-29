@@ -50,7 +50,6 @@ from ros_bt_py.migrate_tree_files import migrate_legacy_tree_structure
 from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py_interfaces.msg import (
     NodeStructure,
-    NodeDataLocation,
     TreeStructure,
     TreeStructureList,
     TreeState,
@@ -753,7 +752,7 @@ class TreeExecManager:
             # No root, no problems
             response.success = True
             return response
-        if not (root.state in [BTNodeState.UNINITIALIZED, BTNodeState.SHUTDOWN]):
+        if root.state not in [BTNodeState.UNINITIALIZED, BTNodeState.SHUTDOWN]:
             self.get_logger().error("Please shut down the tree before clearing it")
             response.success = False
             response.error_message = "Please shut down the tree before clearing it"

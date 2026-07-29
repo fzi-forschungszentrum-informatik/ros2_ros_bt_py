@@ -37,7 +37,7 @@ from rclpy.qos import (
     QoSReliabilityPolicy,
 )
 
-from ros_bt_py.vendor.result import Result, Ok, Err
+from ros_bt_py.vendor.result import Ok, Err
 
 from example_interfaces.msg import Empty
 

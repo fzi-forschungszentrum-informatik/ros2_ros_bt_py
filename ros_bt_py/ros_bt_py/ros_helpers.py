@@ -27,7 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import inspect
-import array
 import uuid
 
 from ros_bt_py.vendor.result import Result, Ok, Err, do

@@ -26,14 +26,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from . import service
-from . import action
-from . import enum
-from . import enum_switch
-from . import message_converters
-from . import param
-from . import subtree
-from . import throttle
-from . import time
-from . import topic
-from . import wait
+from . import service as service
+from . import action as action
+from . import enum as enum
+from . import enum_switch as enum_switch
+from . import message_converters as message_converters
+from . import param as param
+from . import subtree as subtree
+from . import throttle as throttle
+from . import time as time
+from . import topic as topic
+from . import wait as wait

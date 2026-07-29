@@ -28,13 +28,12 @@
 
 import pytest
 
-import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from threading import Condition, Thread
 import time
 
-from ros_bt_py.vendor.result import Result, Ok, Err
+from ros_bt_py.vendor.result import Ok, Err
 
 from example_interfaces.srv import Trigger
 

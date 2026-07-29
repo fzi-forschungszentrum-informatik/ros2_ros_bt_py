@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import functools
 import inspect
-import sys
 from warnings import warn
 from typing import (
     Any,
