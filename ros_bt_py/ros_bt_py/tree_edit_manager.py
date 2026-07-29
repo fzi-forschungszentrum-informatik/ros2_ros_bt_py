@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 #      notice, this list of conditions and the following disclaimer in the
 #      documentation and/or other materials provided with the distribution.
 #
-#    * Neither the name of the FZI Forschungszentrum Informatik nor the names of its
+#    * Neither the name of the copyright holder nor the names of its
 #      contributors may be used to endorse or promote products derived from
 #      this software without specific prior written permission.
 #
@@ -25,12 +25,13 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 import uuid
 from copy import deepcopy
 from typing import Any
 
 from ros_bt_py.tree_exec_manager import TreeExecManager, is_edit_service
-from ros_bt_py.vendor.result import Err, Ok, Result
+from ros_bt_py.vendor.result import Err, Ok
 
 from typeguard import typechecked
 
@@ -271,7 +272,7 @@ class TreeEditManager(TreeExecManager):
         if node_id not in self.nodes:
             response.success = False
             response.error_message = (
-                f"No node with id {request.node_id} in " f"tree {self.name}"
+                f"No node with id {request.node_id} in tree {self.name}"
             )
             return response
 
@@ -301,8 +302,7 @@ class TreeEditManager(TreeExecManager):
         if not unwire_response.success:
             response.success = False
             response.error_message = (
-                "Failed to unwire nodes for removal: "
-                f"{unwire_response.error_message}"
+                f"Failed to unwire nodes for removal: {unwire_response.error_message}"
             )
             return response
 
@@ -316,8 +316,7 @@ class TreeEditManager(TreeExecManager):
             # If we have a parent, remove the node from that parent
             # TODO Why this convoluted double lookup, the `parent` reference should be good?
             if (
-                r_node.parent is not None
-                and r_node.parent.node_id in self.nodes  # type: ignore
+                r_node.parent is not None and r_node.parent.node_id in self.nodes  # type: ignore
             ):
                 self.nodes[r_node.parent.node_id].remove_child(r_node.node_id)  # type: ignore
             del self.nodes[r_node.node_id]
@@ -426,10 +425,13 @@ class TreeEditManager(TreeExecManager):
 
         # Move the children from old to new
         for child_id in [child.node_id for child in old_node.children]:
-            match old_node.remove_child(child_id).map_err(
-                lambda err: f"Could not remove child from old node: {str(err)}"
-            ).and_then(lambda child: new_node.add_child(child)).map_err(
-                lambda err: f"Could not add child to new node: {str(err)}"
+            match (
+                old_node.remove_child(child_id)
+                .map_err(
+                    lambda err: f"Could not remove child from old node: {str(err)}"
+                )
+                .and_then(lambda child: new_node.add_child(child))
+                .map_err(lambda err: f"Could not add child to new node: {str(err)}")
             ):
                 case Err(e):
                     response.success = False
@@ -478,7 +480,7 @@ class TreeEditManager(TreeExecManager):
         if node_id not in self.nodes:
             response.success = False
             response.error_message = (
-                f"Unable to find node {node_id} in tree " f"{self.name}"
+                f"Unable to find node {node_id} in tree {self.name}"
             )
             return response
 
@@ -754,7 +756,7 @@ class TreeEditManager(TreeExecManager):
         if old_node_id not in self.nodes:
             response.success = False
             response.error_message = (
-                f'Node to be replaced ("{old_node_id}")' "is not in tree."
+                f'Node to be replaced ("{old_node_id}")is not in tree.'
             )
             return response
         if new_node_id not in self.nodes:

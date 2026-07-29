@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 #      notice, this list of conditions and the following disclaimer in the
 #      documentation and/or other materials provided with the distribution.
 #
-#    * Neither the name of the FZI Forschungszentrum Informatik nor the names of its
+#    * Neither the name of the copyright holder nor the names of its
 #      contributors may be used to endorse or promote products derived from
 #      this software without specific prior written permission.
 #
@@ -25,18 +25,19 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-from . import compare
-from . import io
-from . import constant
-from . import decorators
-from . import fallback
-from . import file
-from . import format
-from . import getters
-from . import list
-from . import maths
-from . import parallel
-from . import passthrough_node
-from . import random_number
-from . import sequence
-from . import setters
+
+from . import compare as compare
+from . import io as io
+from . import constant as constant
+from . import decorators as decorators
+from . import fallback as fallback
+from . import file as file
+from . import format as format
+from . import getters as getters
+from . import list as list
+from . import maths as maths
+from . import parallel as parallel
+from . import passthrough_node as passthrough_node
+from . import random_number as random_number
+from . import sequence as sequence
+from . import setters as setters

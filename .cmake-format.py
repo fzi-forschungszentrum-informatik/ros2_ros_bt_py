@@ -26,15 +26,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# The empty string for the main tree, the tree prefix for subtrees
-string tree_id
-
-string state
-NodeState[] node_states
-
-string IDLE = IDLE
-string EDITABLE = EDITABLE
-string TICKING = TICKING
-string WAITING_FOR_TICK = WAITING_FOR_TICK
-string STOP_REQUESTED = STOP_REQUESTED
-string ERROR = ERROR
+with section("format"):  # noqa: F821
+    line_width = 99

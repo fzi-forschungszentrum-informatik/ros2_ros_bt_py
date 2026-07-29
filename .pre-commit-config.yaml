@@ -1,3 +1,31 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -18,37 +46,17 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-executables-have-shebangs
       - id: fix-byte-order-marker # Forbid UTF-8 byte-order markers
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.15
     hooks:
-      - id: black
-  - repo: https://github.com/pycqa/flake8
-    rev: "7.2.0" # pick a git hash / tag to point to
+      - id: ruff-check
+        args: [--config=ros_bt_py/pyproject.toml]
+      - id: ruff-format
+        args: [--config=ros_bt_py/pyproject.toml]
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
     hooks:
-      - id: flake8
-  - repo: local
-    hooks:
-      - id: ament_copyright
-        name: ament_copyright
-        description: Check if copyright notice is available in all files.
-        stages: [pre-commit]
-        entry: ament_copyright
-        language: system
-        exclude: "ros_bt_py/ros_bt_py/vendor/*"
-      - id: ament_xmllint
-        name: ament_xmllint
-        description: Static code analysis of xml files.
-        stages: [pre-commit]
-        entry: ament_xmllint
-        language: system
-        files: \.(xml)$
-      - id: ament_lint_cmake
-        name: ament_lint_cmake
-        description: Check format of CMakeLists.txt files.
-        stages: [pre-commit]
-        entry: ament_lint_cmake
-        language: system
-        files: CMakeLists\.txt$
+      - id: cmake-lint
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
@@ -64,3 +72,34 @@ repos:
             html/|
             Makefile
           )
+      - id: insert-license
+        name: Add license header (Python, CMake, YAML)
+        args:
+          - --license-filepath=LICENSE
+          - --comment-style=#
+          - --no-extra-eol
+          - --allow-past-years
+          - --use-current-year
+        types_or: [python, cmake, yaml]
+        exclude: ros_bt_py/ros_bt_py/vendor/
+      - id: insert-license
+        name: Add license header (ROS interfaces)
+        args:
+          - --license-filepath=LICENSE
+          - --comment-style=#
+          - --no-extra-eol
+          - --allow-past-years
+          - --use-current-year
+        files: \.(msg|srv|action)$
+        exclude: ros_bt_py/ros_bt_py/vendor/
+      - id: insert-license
+        name: Add license header (XML)
+        args:
+          - --license-filepath=LICENSE
+          - --comment-style=<!--||-->
+          - --no-extra-eol
+          - --insert-license-after-regex=<\?xml-model
+          - --allow-past-years
+          - --use-current-year
+        types: [xml]
+        exclude: ros_bt_py_web_gui/html/

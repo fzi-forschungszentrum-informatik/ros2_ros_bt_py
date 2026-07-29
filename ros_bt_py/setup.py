@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 #      notice, this list of conditions and the following disclaimer in the
 #      documentation and/or other materials provided with the distribution.
 #
-#    * Neither the name of the FZI Forschungszentrum Informatik nor the names of its
+#    * Neither the name of the copyright holder nor the names of its
 #      contributors may be used to endorse or promote products derived from
 #      this software without specific prior written permission.
 #
@@ -25,6 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 import os
 import xml.etree.ElementTree as ET
 from glob import glob
@@ -87,7 +88,7 @@ setup(
     maintainer_email=maintainer_email_str,
     description=description_str,
     license=license_str,
-    tests_require=["pytest", "pytest-cov"],
+    extras_require={"test": ["pytest", "pytest-cov"]},
     entry_points={
         "console_scripts": [
             "tree_node = ros_bt_py.tree_node:main",

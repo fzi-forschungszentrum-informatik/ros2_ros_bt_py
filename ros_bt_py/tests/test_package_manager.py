@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 #      notice, this list of conditions and the following disclaimer in the
 #      documentation and/or other materials provided with the distribution.
 #
-#    * Neither the name of the FZI Forschungszentrum Informatik nor the names of its
+#    * Neither the name of the copyright holder nor the names of its
 #      contributors may be used to endorse or promote products derived from
 #      this software without specific prior written permission.
 #
@@ -25,8 +25,10 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 import pytest
 
+import ros_bt_py.package_manager
 from ros_bt_py.data_types import StringType, RosMessageType
 from ros_bt_py.package_manager import PackageManager, to_message_type
 
@@ -42,6 +44,7 @@ class TestPackageManager:
 
     def test_data_type_to_message_type(self):
         message_type_msg = to_message_type(Header)
+        assert message_type_msg is not None
         assert message_type_msg.name == "std_msgs/msg/Header"
         assert message_type_msg.type == RosMessageType(Header).serialize_type()
 
@@ -53,3 +56,11 @@ class TestPackageManager:
         for field in message_type_msg.fields:
             assert field.key in fields_dict.keys()
             assert field.type == fields_dict[field.key]
+
+    def test_data_type_to_message_type_skips_uninstantiable_message(self, monkeypatch):
+        def raise_on_init(message):
+            raise TypeError("broken message constructor")
+
+        monkeypatch.setattr(ros_bt_py.package_manager, "RosMessageType", raise_on_init)
+
+        assert to_message_type(Header) is None

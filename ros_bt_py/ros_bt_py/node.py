@@ -1,4 +1,4 @@
-# Copyright 2023 FZI Forschungszentrum Informatik
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
 #      notice, this list of conditions and the following disclaimer in the
 #      documentation and/or other materials provided with the distribution.
 #
-#    * Neither the name of the FZI Forschungszentrum Informatik nor the names of its
+#    * Neither the name of the copyright holder nor the names of its
 #      contributors may be used to endorse or promote products derived from
 #      this software without specific prior written permission.
 #
@@ -25,6 +25,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 """Module defining the Node class and helper functions representing a node in the behavior tree."""
 
 from contextlib import contextmanager
@@ -640,7 +641,6 @@ class Node(abc.ABC):
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
 
         with report_state:
-
             error = None
 
             if self.state != BTNodeState.SHUTDOWN:
@@ -1219,7 +1219,7 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[type[N]], type[N]]:
 
         if inspect.isabstract(node_class):
             # Don't register abstract classes
-            rclpy.logging.get_logger(node_class.__name__).warn(
+            rclpy.logging.get_logger(node_class.__name__).warning(
                 f"Assigned NodeConfig to class {node_class.__name__}, but did not register "
                 f"the class because it does not implement all required methods. "
                 f"Missing methods: {', '.join(node_class.__abstractmethods__)}",
