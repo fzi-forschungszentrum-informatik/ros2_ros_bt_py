@@ -6,6 +6,10 @@
 
 # Welcome to ros_bt_py!
 
+| :boom: Main is currently unstable               |
+|:----------------------------|
+| In preparation for release 1.0.0 we are merging some major changes to the library on main. For a stable and running version a tag should be used until the tagged release of 1.0.0. |
+
 This is a [Behavior Tree](<https://en.wikipedia.org/wiki/Behavior_tree_(artificial_intelligence,_robotics_and_control)>) library meant to be an alternative to [BehaviorTree.cpp](https://www.behaviortree.dev/), [SMACH](http://wiki.ros.org/smach), [FlexBE](http://wiki.ros.org/flexbe) and the like.
 
 It includes a ReactJS-based web GUI and all the building blocks you need to build advanced mission
