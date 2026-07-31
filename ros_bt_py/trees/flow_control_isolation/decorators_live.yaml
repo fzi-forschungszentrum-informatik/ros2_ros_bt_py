@@ -1,0 +1,131 @@
+
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: decorators_live
+path: ''
+root_id: 10000000-0000-0000-0000-000000000001
+nodes:
+- module: ros_bt_py.nodes.parallel
+  node_class: ParallelFailureTolerance
+  max_children: -1
+  node_id: 10000000-0000-0000-0000-000000000001
+  name: Root
+  child_ids: [10000000-0000-0000-0000-000000000010, 10000000-0000-0000-0000-000000000020, 10000000-0000-0000-0000-000000000030, 10000000-0000-0000-0000-000000000040]
+  inputs:
+  - key: needed_successes
+    type: &int {type_identifier: 2, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '1', max_value: '9223372036854775807', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '4'
+  - key: tolerate_failures
+    type: *int
+    serialized_value: '4'
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreRunning
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000010
+  name: IgnoreRunning
+  child_ids: [10000000-0000-0000-0000-000000000011]
+  inputs:
+  - key: running_is_success
+    type: &bool {type_identifier: 1, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: 'true'
+  outputs: []
+  tree_ref: ''
+- {module: ros_bt_py.nodes.decorators, node_class: Optional, max_children: 1, node_id: 10000000-0000-0000-0000-000000000020, name: OptionalNotExecutable, child_ids: [10000000-0000-0000-0000-000000000021], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: RepeatAlways, max_children: 1, node_id: 10000000-0000-0000-0000-000000000030, name: WatchInputTicker, child_ids: [10000000-0000-0000-0000-000000000031], inputs: [], outputs: [], tree_ref: ''}
+- module: ros_bt_py.nodes.decorators
+  node_class: Watch
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000040
+  name: Watch
+  child_ids: [10000000-0000-0000-0000-000000000041]
+  inputs:
+  - key: watch
+    type: {type_identifier: 4, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: ''
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.constant
+  node_class: Constant
+  max_children: 0
+  node_id: 10000000-0000-0000-0000-000000000031
+  name: WatchInput
+  child_ids: []
+  inputs:
+  - key: constant_type
+    type: &generic {type_identifier: 9, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: ['{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: constant_value
+    type: &string {type_identifier: 13, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: constant_type, ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '"changed"'
+  outputs:
+  - key: constant
+    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: constant_type, ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: ''
+  tree_ref: ''
+- &topic
+  module: ros_bt_py.ros_nodes.topic
+  node_class: TopicSubscriber
+  max_children: 0
+  name: TopicChild
+  child_ids: []
+  inputs:
+  - key: topic_name
+    type: {type_identifier: 10, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 1, ros_msg_type: '', interface_id: 1}
+    serialized_value: '"/decorator_watch"'
+  - key: topic_type
+    type: {type_identifier: 11, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 1, ros_msg_type: '', interface_id: 1}
+    serialized_value: '"example_interfaces/msg/Empty"'
+  - key: reliable
+    type: &topic_bool {type_identifier: 1, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: 'false'
+  - key: transient_local
+    type: *topic_bool
+    serialized_value: 'false'
+  - key: depth
+    type: {type_identifier: 2, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: true, serialized_value_options: [], min_value: '0', max_value: '18446744073709551615', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '1'
+  outputs:
+  - key: message
+    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: topic_type, ros_interface_kind: 1, ros_msg_type: example_interfaces/msg/Empty, interface_id: 0}
+    serialized_value: ''
+  tree_ref: ''
+  node_id: 10000000-0000-0000-0000-000000000011
+- <<: *topic
+  node_id: 10000000-0000-0000-0000-000000000021
+- <<: *topic
+  node_id: 10000000-0000-0000-0000-000000000041
+data_wirings:
+- source: {node_id: 10000000-0000-0000-0000-000000000031, data_key: constant}
+  target: {node_id: 10000000-0000-0000-0000-000000000040, data_key: watch}
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

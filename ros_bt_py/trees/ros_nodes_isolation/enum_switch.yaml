@@ -1,0 +1,70 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: enum switch dispatch
+path: ''
+root_id: 30000000-0000-0000-0000-000000000001
+nodes:
+- module: ros_bt_py.ros_nodes.enum_switch
+  node_class: EnumSwitch
+  max_children: -1
+  node_id: 30000000-0000-0000-0000-000000000001
+  name: EnumSwitch
+  child_ids: [30000000-0000-0000-0000-000000000002]
+  inputs:
+  - key: ros_message_type
+    type: {type_identifier: 11, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 4, ros_msg_type: '', interface_id: 0}
+    serialized_value: '"ros_bt_py_interfaces/msg/EnumTest"'
+  - key: case
+    type: {type_identifier: 2, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: true, serialized_value_options: [], min_value: '0', max_value: '255', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '0'
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.constant
+  node_class: Constant
+  max_children: 0
+  node_id: 30000000-0000-0000-0000-000000000002
+  name: FOO
+  child_ids: []
+  inputs:
+  - key: constant_type
+    type: {type_identifier: 9, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: constant_value
+    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: constant_type, ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '"selected"'
+  outputs:
+  - key: constant
+    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: constant_type, ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: ''
+  tree_ref: ''
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

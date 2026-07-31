@@ -1,0 +1,101 @@
+
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: decorators
+path: ''
+root_id: 00000000-0000-0000-0000-000000000001
+nodes:
+- module: ros_bt_py.nodes.parallel
+  node_class: ParallelFailureTolerance
+  max_children: -1
+  node_id: 00000000-0000-0000-0000-000000000001
+  name: Root
+  child_ids: [00000000-0000-0000-0000-000000000010, 00000000-0000-0000-0000-000000000020, 00000000-0000-0000-0000-000000000030, 00000000-0000-0000-0000-000000000040, 00000000-0000-0000-0000-000000000060, 00000000-0000-0000-0000-000000000070, 00000000-0000-0000-0000-000000000080, 00000000-0000-0000-0000-000000000090, 00000000-0000-0000-0000-000000000100]
+  inputs:
+  - key: needed_successes
+    type: {type_identifier: 2, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '1', max_value: '9223372036854775807', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '9'
+  - key: tolerate_failures
+    type: {type_identifier: 2, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '0', max_value: '9223372036854775807', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '100'
+  outputs: []
+  tree_ref: ''
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreFailure, max_children: 1, node_id: 00000000-0000-0000-0000-000000000010, name: IgnoreFailure, child_ids: [00000000-0000-0000-0000-000000000011], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreSuccess, max_children: 1, node_id: 00000000-0000-0000-0000-000000000020, name: IgnoreSuccess, child_ids: [00000000-0000-0000-0000-000000000021], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: UntilSuccess, max_children: 1, node_id: 00000000-0000-0000-0000-000000000030, name: UntilSuccess, child_ids: [00000000-0000-0000-0000-000000000031], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: Inverter, max_children: 1, node_id: 00000000-0000-0000-0000-000000000040, name: Inverter, child_ids: [00000000-0000-0000-0000-000000000041], inputs: [], outputs: [], tree_ref: ''}
+- module: ros_bt_py.nodes.decorators
+  node_class: Repeat
+  max_children: 1
+  node_id: 00000000-0000-0000-0000-000000000060
+  name: Repeat
+  child_ids: [00000000-0000-0000-0000-000000000061]
+  inputs:
+  - key: num_repeats
+    type: {type_identifier: 2, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '1', max_value: '9223372036854775807', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '2'
+  outputs: []
+  tree_ref: ''
+- {module: ros_bt_py.nodes.decorators, node_class: RepeatAlways, max_children: 1, node_id: 00000000-0000-0000-0000-000000000070, name: RepeatAlways, child_ids: [00000000-0000-0000-0000-000000000071], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: RepeatUntilFail, max_children: 1, node_id: 00000000-0000-0000-0000-000000000080, name: RepeatUntilFail, child_ids: [00000000-0000-0000-0000-000000000081], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: RepeatIfFail, max_children: 1, node_id: 00000000-0000-0000-0000-000000000090, name: RepeatIfFail, child_ids: [00000000-0000-0000-0000-000000000091], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: Optional, max_children: 1, node_id: 00000000-0000-0000-0000-000000000100, name: OptionalExecutable, child_ids: [00000000-0000-0000-0000-000000000101], inputs: [], outputs: [], tree_ref: ''}
+- &failure
+  module: ros_bt_py.nodes.compare
+  node_class: Compare
+  max_children: 0
+  name: Child
+  child_ids: []
+  inputs: [{key: compare_type, type: &generic {type_identifier: 9, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: ['{"type": "int", "value": {"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}}'], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}, serialized_value: '{"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}'}, {key: a, type: &value {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: true, serialized_value_options: [], min_value: '-9223372036854775808', max_value: '9223372036854775807', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: compare_type, ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}, serialized_value: '1'}, {key: b, type: *value, serialized_value: '2'}]
+  outputs: []
+  tree_ref: ''
+  node_id: 00000000-0000-0000-0000-000000000011
+- <<: *failure
+  node_id: 00000000-0000-0000-0000-000000000021
+- <<: *failure
+  node_id: 00000000-0000-0000-0000-000000000041
+- <<: *failure
+  node_id: 00000000-0000-0000-0000-000000000081
+- &success
+  <<: *failure
+  node_id: 00000000-0000-0000-0000-000000000031
+  inputs: [{key: compare_type, type: *generic, serialized_value: '{"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}'}, {key: a, type: *value, serialized_value: '1'}, {key: b, type: *value, serialized_value: '1'}]
+- <<: *success
+  node_id: 00000000-0000-0000-0000-000000000061
+- <<: *success
+  node_id: 00000000-0000-0000-0000-000000000071
+- <<: *success
+  node_id: 00000000-0000-0000-0000-000000000091
+- <<: *success
+  node_id: 00000000-0000-0000-0000-000000000101
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

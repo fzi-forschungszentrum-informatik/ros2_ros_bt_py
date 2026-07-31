@@ -1,0 +1,124 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: format
+path: ''
+root_id: 30000000-0000-0000-0000-000000000001
+nodes:
+- module: ros_bt_py.nodes.sequence
+  node_class: Sequence
+  max_children: -1
+  node_id: 30000000-0000-0000-0000-000000000001
+  name: Sequence
+  child_ids:
+  - 30000000-0000-0000-0000-000000000002
+  - 30000000-0000-0000-0000-000000000003
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.format
+  node_class: FormatStringList
+  max_children: 0
+  node_id: 30000000-0000-0000-0000-000000000003
+  name: FormatGreetingList
+  child_ids: []
+  inputs:
+  - key: format_strings
+    type:
+      type_identifier: 5
+      value_type_identifier: [4]
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: [18446744073709550000]
+      iterable_strict_length: [false]
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '["value: {name}", "twice: {name}{name}"]'
+  - key: dict
+    type: *string_dict
+    serialized_value: '{"name": 3}'
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.format
+  node_class: FormatString
+  max_children: 0
+  node_id: 30000000-0000-0000-0000-000000000002
+  name: FormatGreeting
+  child_ids: []
+  inputs:
+  - key: format_string
+    type: &string
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"Hello {name!u}"'
+  - key: dict
+    type: &string_dict
+      type_identifier: 6
+      value_type_identifier: [2]
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-9223372036854775808'
+      max_value: '18446744073709551615'
+      string_max_length: 0
+      iterable_max_length: [18446744073709550000]
+      iterable_strict_length: [false]
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"name": 3}'
+  outputs: []
+  tree_ref: ''
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

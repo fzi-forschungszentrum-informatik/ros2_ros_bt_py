@@ -1,0 +1,621 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: getters
+path: ''
+root_id: 10000000-0000-0000-0000-000000000001
+nodes:
+- module: ros_bt_py.nodes.sequence
+  node_class: Sequence
+  max_children: -1
+  node_id: 10000000-0000-0000-0000-000000000001
+  name: Getters
+  child_ids:
+  - 10000000-0000-0000-0000-000000000010
+  - 10000000-0000-0000-0000-000000000110
+  - 10000000-0000-0000-0000-000000000020
+  - 10000000-0000-0000-0000-000000000120
+  - 10000000-0000-0000-0000-000000000030
+  - 10000000-0000-0000-0000-000000000130
+  - 10000000-0000-0000-0000-000000000040
+  - 10000000-0000-0000-0000-000000000140
+  - 10000000-0000-0000-0000-000000000011
+  - 10000000-0000-0000-0000-000000000021
+  - 10000000-0000-0000-0000-000000000031
+  - 10000000-0000-0000-0000-000000000041
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetListItem
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000010
+  name: GetListItem
+  child_ids:
+  - 10000000-0000-0000-0000-000000000014
+  inputs:
+  - key: list_type
+    type: &generic_string
+      type_identifier: 9
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options:
+      - '{"type": "bool", "value": {"type_identifier": 1}}'
+      - '{"type": "int", "value": {"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}}'
+      - '{"type": "float", "value": {"type_identifier": 3, "min_value": "-1.7976931348623157e+308", "max_value": "1.7976931348623157e+308"}}'
+      - '{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+      - '{"type": "bytes", "value": {"type_identifier": 7, "max_length": 1}}'
+      - '{"type": "list", "value": {"type_identifier": 5, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      - '{"type": "dict", "value": {"type_identifier": 6, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      - '{"type": "object", "value": {"type_identifier": 12, "ros_msg_type": "example_interfaces/msg/Empty"}}'
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: index
+    type: &index
+      type_identifier: 2
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '0'
+      max_value: '18446744073709551615'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '1'
+  - key: list
+    type: &string_list_ref
+      type_identifier: 14
+      value_type_identifier: [4]
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: [18446744073709550000]
+      iterable_strict_length: [false]
+      reference_target: list_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '["zero", "one"]'
+  - key: succeed_on_stale_data
+    type: &static_bool
+      type_identifier: 1
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: 'false'
+  outputs:
+  - key: item
+    type: &string_ref_output
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: list_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000014
+  name: SuccessfulGetterChild
+  child_ids: []
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetDictItem
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000020
+  name: GetDictItem
+  child_ids: []
+  inputs:
+  - key: value_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: key
+    type: &static_string
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"name"'
+  - key: dict
+    type: &string_dict_ref
+      type_identifier: 15
+      value_type_identifier: [4]
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: [18446744073709550000]
+      iterable_strict_length: [false]
+      reference_target: value_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"name": "Ada"}'
+  - key: succeed_on_stale_data
+    type: *static_bool
+    serialized_value: 'false'
+  outputs:
+  - key: value
+    type: *string_ref_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetMultipleDictItems
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000030
+  name: GetMultipleDictItems
+  child_ids: []
+  inputs:
+  - key: value_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: keys
+    type: &string_list
+      type_identifier: 5
+      value_type_identifier: [4]
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: [18446744073709550000]
+      iterable_strict_length: [false]
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '["first", "last"]'
+  - key: dict
+    type: *string_dict_ref
+    serialized_value: '{"first": "Ada", "last": "Lovelace"}'
+  - key: succeed_on_stale_data
+    type: *static_bool
+    serialized_value: 'false'
+  outputs:
+  - key: values
+    type: &string_list_output
+      type_identifier: 14
+      value_type_identifier: [4]
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: [18446744073709550000]
+      iterable_strict_length: [false]
+      reference_target: value_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetAttr
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000040
+  name: GetAttr
+  child_ids: []
+  inputs:
+  - key: object_type
+    type: &topic_type
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"std_msgs/msg/String"'
+  - key: attr_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: attr_name
+    type: *static_string
+    serialized_value: '"data"'
+  - key: object
+    type: &string_message_ref
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: object_type
+      ros_interface_kind: 1
+      ros_msg_type: std_msgs/msg/String
+      interface_id: 0
+    serialized_value: '{"data": "hello"}'
+  - key: succeed_on_stale_data
+    type: *static_bool
+    serialized_value: 'false'
+  outputs:
+  - key: attr
+    type: &attr_output
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: attr_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000011
+  name: IgnoreInvalidListItem
+  child_ids:
+  - 10000000-0000-0000-0000-000000000012
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetListItem
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000012
+  name: InvalidListItem
+  child_ids: []
+  inputs:
+  - key: list_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: index
+    type: *index
+    serialized_value: '1'
+  - key: list
+    type: *string_list_ref
+    serialized_value: '["only"]'
+  - key: succeed_on_stale_data
+    type: *static_bool
+    serialized_value: 'false'
+  outputs:
+  - key: item
+    type: *string_ref_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000021
+  name: IgnoreInvalidDictItem
+  child_ids:
+  - 10000000-0000-0000-0000-000000000022
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetDictItem
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000022
+  name: InvalidDictItem
+  child_ids: []
+  inputs:
+  - key: value_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: key
+    type: *static_string
+    serialized_value: '"missing"'
+  - key: dict
+    type: *string_dict_ref
+    serialized_value: '{"name": "Ada"}'
+  - key: succeed_on_stale_data
+    type: *static_bool
+    serialized_value: 'false'
+  outputs:
+  - key: value
+    type: *string_ref_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000031
+  name: IgnoreInvalidMultipleDictItems
+  child_ids:
+  - 10000000-0000-0000-0000-000000000032
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetMultipleDictItems
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000032
+  name: InvalidMultipleDictItems
+  child_ids: []
+  inputs:
+  - key: value_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: keys
+    type: *string_list
+    serialized_value: '["first", "missing"]'
+  - key: dict
+    type: *string_dict_ref
+    serialized_value: '{"first": "Ada"}'
+  - key: succeed_on_stale_data
+    type: *static_bool
+    serialized_value: 'false'
+  outputs:
+  - key: values
+    type: *string_list_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000041
+  name: IgnoreInvalidAttr
+  child_ids:
+  - 10000000-0000-0000-0000-000000000042
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.getters
+  node_class: GetAttr
+  max_children: 1
+  node_id: 10000000-0000-0000-0000-000000000042
+  name: InvalidAttr
+  child_ids: []
+  inputs:
+  - key: object_type
+    type: *topic_type
+    serialized_value: '"std_msgs/msg/String"'
+  - key: attr_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: attr_name
+    type: *static_string
+    serialized_value: '"missing"'
+  - key: object
+    type: *string_message_ref
+    serialized_value: '{"data": "hello"}'
+  - key: succeed_on_stale_data
+    type: *static_bool
+    serialized_value: 'false'
+  outputs:
+  - key: attr
+    type: *attr_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.passthrough_node
+  node_class: PassthroughNode
+  max_children: 0
+  node_id: 10000000-0000-0000-0000-000000000110
+  name: ListItemSink
+  child_ids: []
+  inputs:
+  - key: passthrough_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: in
+    type: &string_ref_input
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: passthrough_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  outputs:
+  - key: out
+    type: *string_ref_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.passthrough_node
+  node_class: PassthroughNode
+  max_children: 0
+  node_id: 10000000-0000-0000-0000-000000000120
+  name: DictItemSink
+  child_ids: []
+  inputs:
+  - key: passthrough_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: in
+    type: *string_ref_input
+    serialized_value: ''
+  outputs:
+  - key: out
+    type: *string_ref_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.passthrough_node
+  node_class: PassthroughNode
+  max_children: 0
+  node_id: 10000000-0000-0000-0000-000000000130
+  name: MultipleDictItemsSink
+  child_ids: []
+  inputs:
+  - key: passthrough_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 5, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+  - key: in
+    type: &string_list_ref_input
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: [18446744073709550000]
+      iterable_strict_length: [false]
+      reference_target: passthrough_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  outputs:
+  - key: out
+    type: *string_list_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.passthrough_node
+  node_class: PassthroughNode
+  max_children: 0
+  node_id: 10000000-0000-0000-0000-000000000140
+  name: AttrSink
+  child_ids: []
+  inputs:
+  - key: passthrough_type
+    type: *generic_string
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  - key: in
+    type: *string_ref_input
+    serialized_value: ''
+  outputs:
+  - key: out
+    type: *string_ref_output
+    serialized_value: ''
+  tree_ref: ''
+data_wirings:
+- source:
+    node_id: 10000000-0000-0000-0000-000000000010
+    data_key: item
+  target:
+    node_id: 10000000-0000-0000-0000-000000000110
+    data_key: in
+- source:
+    node_id: 10000000-0000-0000-0000-000000000020
+    data_key: value
+  target:
+    node_id: 10000000-0000-0000-0000-000000000120
+    data_key: in
+- source:
+    node_id: 10000000-0000-0000-0000-000000000030
+    data_key: values
+  target:
+    node_id: 10000000-0000-0000-0000-000000000130
+    data_key: in
+- source:
+    node_id: 10000000-0000-0000-0000-000000000040
+    data_key: attr
+  target:
+    node_id: 10000000-0000-0000-0000-000000000140
+    data_key: in
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []
