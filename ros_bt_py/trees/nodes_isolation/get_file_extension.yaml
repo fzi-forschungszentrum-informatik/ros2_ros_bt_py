@@ -1,0 +1,142 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+version: 1.0.0
+tree_id: 00000000-0000-0000-0000-000000000000
+name: get_file_extension
+path: ''
+root_id: 1d399f8c-0cfa-438d-8fe3-d3e668e81d52
+nodes:
+- module: ros_bt_py.nodes.sequence
+  node_class: Sequence
+  max_children: -1
+  node_id: 1d399f8c-0cfa-438d-8fe3-d3e668e81d52
+  name: Sequence
+  child_ids:
+  - 10f83a69-f2ca-4a7a-b4d5-f3f1f2f71d35
+  - a8422a58-3873-427e-bdbc-25d6fd2b40b3
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.format
+  node_class: GetFileExtension
+  max_children: 0
+  node_id: 10f83a69-f2ca-4a7a-b4d5-f3f1f2f71d35
+  name: GetFileExtension
+  child_ids: []
+  inputs:
+  - key: path
+    type: &string_static
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"/tmp/archive.tar.gz"'
+  outputs:
+  - key: filename
+    type: &string_output
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  - key: extension
+    type: *string_output
+    serialized_value: ''
+  tree_ref: ''
+- module: ros_bt_py.nodes.format
+  node_class: StringConcatenation
+  max_children: 0
+  node_id: a8422a58-3873-427e-bdbc-25d6fd2b40b3
+  name: Sink
+  child_ids: []
+  inputs:
+  - key: a
+    type: &string_dynamic
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: ''
+  - key: b
+    type: *string_dynamic
+    serialized_value: ''
+  outputs:
+  - key: formatted_string
+    type: *string_output
+    serialized_value: ''
+  tree_ref: ''
+data_wirings:
+- source:
+    node_id: 10f83a69-f2ca-4a7a-b4d5-f3f1f2f71d35
+    data_key: filename
+  target:
+    node_id: a8422a58-3873-427e-bdbc-25d6fd2b40b3
+    data_key: a
+- source:
+    node_id: 10f83a69-f2ca-4a7a-b4d5-f3f1f2f71d35
+    data_key: extension
+  target:
+    node_id: a8422a58-3873-427e-bdbc-25d6fd2b40b3
+    data_key: b
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

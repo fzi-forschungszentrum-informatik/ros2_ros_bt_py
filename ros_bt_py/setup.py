@@ -81,6 +81,10 @@ setup(
             os.path.join("share", package_name, "trees", "flow_control_isolation"),
             glob(os.path.join("trees", "flow_control_isolation", "*yaml")),
         ),
+        (
+            os.path.join("share", package_name, "trees", "nodes_isolation"),
+            glob(os.path.join("trees", "nodes_isolation", "*yaml")),
+        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
