@@ -208,9 +208,9 @@ def test_reconfigured_best_effort_volatile_publish(
         assert False, f"Reconfigured publisher was not discovered: {publishers}"
 
     qos_profile = publishers[0].qos_profile
+    # History and depth are not reliably available through graph discovery.
     assert qos_profile.reliability == QoSReliabilityPolicy.BEST_EFFORT
     assert qos_profile.durability == QoSDurabilityPolicy.VOLATILE
-    assert qos_profile.depth == 1
 
 
 # This marker name can be used for other tests to depend on,
