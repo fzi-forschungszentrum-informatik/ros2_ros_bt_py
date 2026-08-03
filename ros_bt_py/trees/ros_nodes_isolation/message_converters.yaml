@@ -57,7 +57,7 @@ nodes:
   outputs:
   - key: data
     type: &string_output {type_identifier: 4, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.ros_nodes.message_converters
   node_class: FieldsToMessage
@@ -71,11 +71,11 @@ nodes:
     serialized_value: '"example_interfaces/msg/String"'
   - key: data
     type: {type_identifier: 4, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: out
     type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: output_type, ros_interface_kind: 1, ros_msg_type: example_interfaces/msg/String, interface_id: 0}
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.ros_nodes.message_converters
   node_class: MessageToFields
@@ -89,11 +89,11 @@ nodes:
     serialized_value: '"example_interfaces/msg/String"'
   - key: in
     type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: input_type, ros_interface_kind: 1, ros_msg_type: example_interfaces/msg/String, interface_id: 0}
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: data
     type: *string_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
@@ -103,15 +103,15 @@ nodes:
   child_ids: []
   inputs:
   - key: passthrough_type
-    type: {type_identifier: 9, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    type: {type_identifier: 9, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: ['{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
     serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
   - key: in
     type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: passthrough_type, ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: out
     type: *string_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings:
 - source: {node_id: 20000000-0000-0000-0000-000000000002, data_key: data}

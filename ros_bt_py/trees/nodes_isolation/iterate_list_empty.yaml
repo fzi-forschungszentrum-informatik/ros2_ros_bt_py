@@ -60,7 +60,7 @@ nodes:
   outputs:
   - key: list_item
     type: {type_identifier: 13, allow_dynamic: true, reference_target: item_type}
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings: []
 tick_frequency_hz: 10.0

@@ -87,13 +87,13 @@ class IgnoreRunning(Decorator):
     """Return SUCCESS or FAILURE when the child returns RUNNING."""
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        for child in self.children:
-            return child.setup()
         match self.inputs.get_value_as("running_is_success", bool):
             case Err(e):
                 return Err(e)
             case Ok(b):
                 self._running_is_success = b
+        for child in self.children:
+            return child.setup()
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:

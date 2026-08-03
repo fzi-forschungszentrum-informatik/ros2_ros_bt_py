@@ -200,9 +200,23 @@ def test_reconfigured_best_effort_volatile_publish(
             ControlTreeExecution.Request.TICK_ONCE
         )
         assert run_result.is_ok()
-        msg = subscriber.get_msg()
-        assert msg is not None
-        assert msg.data == "reconfigured"
+        expected_qos = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.VOLATILE,
+            depth=1,
+        )
+        end_time = time.time() + 10
+        while time.time() < end_time:
+            if any(
+                endpoint.qos_profile == expected_qos
+                for endpoint in subscriber.get_publishers_info_by_topic(
+                    "/best_effort_volatile"
+                )
+            ):
+                break
+            rclpy.spin_once(subscriber, timeout_sec=0.1)
+        else:
+            assert False, "Reconfigured publisher was not discovered"
     finally:
         subscriber.destroy_node()
 

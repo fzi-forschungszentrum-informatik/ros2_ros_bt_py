@@ -73,7 +73,7 @@ nodes:
   outputs:
   - key: constant
     type: *int_reference
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.ros_nodes.subtree
   node_class: Subtree
@@ -88,14 +88,21 @@ nodes:
       allow_dynamic: false
       allow_static: true
       is_static: true
-    serialized_value: 'package://ros_bt_py/trees/ros_nodes_isolation/subtree_nested.yaml'
+      string_max_length: 18446744073709550000
+    serialized_value: '"package://ros_bt_py/trees/ros_nodes_isolation/subtree_nested.yaml"'
   - key: 10000000-0000-0000-0000-000000000003.in
-    type: *int_reference
-    serialized_value: ''
+    type: &dynamic_int
+      type_identifier: 2
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      min_value: '-9223372036854775808'
+      max_value: '9223372036854775807'
+    serialized_value: 'null'
   outputs:
   - key: 10000000-0000-0000-0000-000000000004.out
-    type: *int_reference
-    serialized_value: ''
+    type: *dynamic_int
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
@@ -108,12 +115,19 @@ nodes:
     type: *generic_int
     serialized_value: '{"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}'
   - key: in
-    type: *int_reference
-    serialized_value: ''
+    type: &passthrough_int_reference
+      type_identifier: 13
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      min_value: '-9223372036854775808'
+      max_value: '9223372036854775807'
+      reference_target: passthrough_type
+    serialized_value: 'null'
   outputs:
   - key: out
-    type: *int_reference
-    serialized_value: ''
+    type: *passthrough_int_reference
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings:
 - source:

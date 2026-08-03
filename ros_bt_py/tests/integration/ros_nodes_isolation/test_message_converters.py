@@ -57,11 +57,9 @@ def test_message_fields_round_trip(tree_control_node: TreeControlNode):
             assert len(data.wiring_data) == 3
             assert all(wiring.is_current for wiring in data.wiring_data)
             assert {
-                json.loads(wiring.serialized_data) for wiring in data.wiring_data
-            } == {
-                "round trip",
-                '{"data": "round trip"}',
-            }
+                json.dumps(json.loads(wiring.serialized_data), sort_keys=True)
+                for wiring in data.wiring_data
+            } == {'"round trip"', '{"data": "round trip"}'}
         case result:
             assert False, result.unwrap_err()
 
@@ -78,9 +76,8 @@ def test_message_converters_fail_without_required_data(
     tree_control_node: TreeControlNode, tree_file: str
 ):
     assert tree_control_node.load_tree(tree_file).is_ok()
-    assert tree_control_node.execute_tree(
-        ControlTreeExecution.Request.TICK_ONCE
-    ).is_ok()
+    result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
+    assert not result.is_ok()
 
     match tree_control_node.get_tree_state():
         case Ok(state):

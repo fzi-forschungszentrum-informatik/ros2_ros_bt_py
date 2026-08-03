@@ -72,7 +72,7 @@ nodes:
   outputs:
   - key: new_list
     type: {type_identifier: 14, allow_dynamic: true, reference_target: list_type}
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.setters
   node_class: SetDictItem
@@ -96,7 +96,7 @@ nodes:
   outputs:
   - key: new_object
     type: {type_identifier: 15, allow_dynamic: true, reference_target: attr_type}
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.list
   node_class: ListLength
@@ -114,7 +114,7 @@ nodes:
   outputs:
   - key: length
     type: {type_identifier: 2, allow_dynamic: true}
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.list
   node_class: InsertInList
@@ -138,7 +138,7 @@ nodes:
   outputs:
   - key: list
     type: {type_identifier: 14, allow_dynamic: true, reference_target: element_type}
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings: []
 tick_frequency_hz: 10.0

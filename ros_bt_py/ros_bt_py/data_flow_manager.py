@@ -39,7 +39,6 @@ if TYPE_CHECKING:
 
 from ros_bt_py_interfaces.msg import Wiring, WiringData
 
-
 Connection = NamedTuple(
     "Connection",
     [
@@ -80,6 +79,8 @@ class DataFlowManager:
     ) -> None:
         self.incoming_data = incoming_data
         self.outgoing_data = outgoing_data
+        self.nodes = {}
+        self.connections = {}
 
     def initialize(
         self,

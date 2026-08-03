@@ -88,4 +88,4 @@ def test_live_decorators(
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    verify_node_states(tree_control_node, {"Watch": BTNodeState.RUNNING})
+    verify_node_states(tree_control_node, {"Watch": BTNodeState.SUCCEEDED})

@@ -159,7 +159,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.decorators
   node_class: IgnoreFailure
@@ -222,7 +222,7 @@ nodes:
   outputs:
   - key: value
     type: *string_ref_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.getters
   node_class: GetMultipleDictItems
@@ -276,7 +276,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.getters
   node_class: GetAttr
@@ -348,7 +348,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.decorators
   node_class: IgnoreFailure
@@ -382,7 +382,7 @@ nodes:
   outputs:
   - key: item
     type: *string_ref_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.decorators
   node_class: IgnoreFailure
@@ -416,7 +416,7 @@ nodes:
   outputs:
   - key: value
     type: *string_ref_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.decorators
   node_class: IgnoreFailure
@@ -450,7 +450,7 @@ nodes:
   outputs:
   - key: values
     type: *string_list_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.decorators
   node_class: IgnoreFailure
@@ -487,7 +487,7 @@ nodes:
   outputs:
   - key: attr
     type: *attr_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
@@ -516,11 +516,11 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: out
     type: *string_ref_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
@@ -534,11 +534,11 @@ nodes:
     serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
   - key: in
     type: *string_ref_input
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: out
     type: *string_ref_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
@@ -567,11 +567,11 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: out
     type: *string_list_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
@@ -585,11 +585,11 @@ nodes:
     serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
   - key: in
     type: *string_ref_input
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: out
     type: *string_ref_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings:
 - source:

@@ -60,8 +60,7 @@ def test_subtree_nested_io_lifecycle_and_publication(
         structures = tree_control_node._tree_structure_msg.tree_structures  # type: ignore
     assert {structure.name for structure in structures} == {
         "subtree_outer",
-        "OuterSubtree",
-        "NestedSubtree",
+        "subtree_nested",
     }
 
     assert tree_control_node.set_publish_data(True).is_ok()

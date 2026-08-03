@@ -112,7 +112,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
@@ -164,7 +164,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   outputs:
   - key: out
     type:
@@ -183,7 +183,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings:
 - source:

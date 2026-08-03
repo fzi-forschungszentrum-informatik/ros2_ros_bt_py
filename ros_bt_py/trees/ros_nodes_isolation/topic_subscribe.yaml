@@ -147,7 +147,7 @@ nodes:
       ros_interface_kind: 1
       ros_msg_type: example_interfaces/msg/Empty
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings: []
 tick_frequency_hz: 10.0

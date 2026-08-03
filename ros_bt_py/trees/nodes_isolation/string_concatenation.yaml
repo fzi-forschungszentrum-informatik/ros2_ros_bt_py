@@ -89,7 +89,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.format
   node_class: StringConcatenation
@@ -115,14 +115,14 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   - key: b
     type: *string_static
     serialized_value: '"!"'
   outputs:
   - key: formatted_string
     type: *string_output
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings:
 - source:
