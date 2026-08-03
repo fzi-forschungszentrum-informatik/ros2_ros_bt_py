@@ -34,7 +34,7 @@ import pytest
 import rclpy
 from example_interfaces.msg import String
 from rclpy.node import Node
-from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
+from rclpy.qos import QoSDurabilityPolicy, QoSReliabilityPolicy
 
 from ros_bt_py_interfaces.msg import NodeIO
 from ros_bt_py_interfaces.srv import ControlTreeExecution, SetOptions
@@ -188,37 +188,29 @@ def test_reconfigured_best_effort_volatile_publish(
     assert future.done()
     assert future.result().success  # type: ignore
 
-    subscriber = FooSubscriber(
-        qos_profile=QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.VOLATILE,
-            depth=1,
-        )
-    )
-    try:
-        run_result = tree_control_node.execute_tree(
-            ControlTreeExecution.Request.TICK_ONCE
-        )
-        assert run_result.is_ok()
-        expected_qos = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            durability=QoSDurabilityPolicy.VOLATILE,
-            depth=1,
-        )
-        end_time = time.time() + 10
-        while time.time() < end_time:
-            if any(
-                endpoint.qos_profile == expected_qos
-                for endpoint in subscriber.get_publishers_info_by_topic(
-                    "/best_effort_volatile"
-                )
-            ):
-                break
-            rclpy.spin_once(subscriber, timeout_sec=0.1)
-        else:
-            assert False, "Reconfigured publisher was not discovered"
-    finally:
-        subscriber.destroy_node()
+    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
+    assert run_result.is_ok()
+
+    publishers = []
+    end_time = time.time() + 10
+    while time.time() < end_time:
+        publishers = [
+            endpoint
+            for endpoint in tree_control_node.get_publishers_info_by_topic(
+                "/best_effort_volatile"
+            )
+            if endpoint.topic_type == "example_interfaces/msg/String"
+        ]
+        if publishers:
+            break
+        rclpy.spin_once(tree_control_node, timeout_sec=0.1)
+    else:
+        assert False, f"Reconfigured publisher was not discovered: {publishers}"
+
+    qos_profile = publishers[0].qos_profile
+    assert qos_profile.reliability == QoSReliabilityPolicy.BEST_EFFORT
+    assert qos_profile.durability == QoSDurabilityPolicy.VOLATILE
+    assert qos_profile.depth == 1
 
 
 # This marker name can be used for other tests to depend on,

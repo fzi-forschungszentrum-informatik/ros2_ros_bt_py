@@ -82,8 +82,15 @@ nodes:
       reference_target: io_type
     serialized_value: 'null'
   - key: default
-    type: *int_reference
-    serialized_value: 'null'
+    type:
+      type_identifier: 13
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      min_value: '-9223372036854775808'
+      max_value: '9223372036854775807'
+      reference_target: io_type
+    serialized_value: '0'
   outputs:
   - key: out
     type: *int_reference
@@ -103,8 +110,15 @@ nodes:
     type: *int_reference
     serialized_value: 'null'
   - key: default
-    type: *int_reference
-    serialized_value: 'null'
+    type:
+      type_identifier: 13
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      min_value: '-9223372036854775808'
+      max_value: '9223372036854775807'
+      reference_target: io_type
+    serialized_value: '0'
   outputs:
   - key: out
     type: *int_reference

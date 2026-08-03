@@ -201,6 +201,14 @@ class Subtree(Leaf):
                 self.root = n
         if self.root is None:
             return Ok(BTNodeState.IDLE)
+
+        match self.manager.data_flow_manager.initialize(
+            self.manager.nodes, self.manager.wirings
+        ):
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(None):
+                pass
         setup_root_result = self.root.setup()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
@@ -212,6 +220,12 @@ class Subtree(Leaf):
         if not self.root:
             # TODO Should this be an Err() ??? same also above in setup
             return Ok(BTNodeState.BROKEN)
+
+        match self.manager.data_flow_manager.push_incoming_data():
+            case Err(e):
+                return Err(BehaviorTreeException(e))
+            case Ok(None):
+                pass
         tick_root_result = self.root.tick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
