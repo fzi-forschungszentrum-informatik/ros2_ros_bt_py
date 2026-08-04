@@ -239,6 +239,21 @@ class TreeControlNode(Node):
             rclpy.spin_once(self, timeout_sec=5)
         return Err("No tree structure with this id")
 
+    def wait_for_tree_name(
+        self, name: str, tree_id=uuid.UUID(int=0), wait_time=60
+    ) -> Result[TreeStructure, str]:
+        """Wait until the published structure has the requested name."""
+        ros_tree_id = uuid_to_ros(tree_id)
+        start_time = time.time()
+        while start_time + wait_time > time.time():
+            if self._tree_structure_msg is not None:
+                with self._tree_msg_lock:
+                    for structure in self._tree_structure_msg.tree_structures:
+                        if structure.tree_id == ros_tree_id and structure.name == name:
+                            return Ok(structure)
+            rclpy.spin_once(self, timeout_sec=0.1)
+        return Err(f"No tree structure named {name!r}")
+
     def get_tree_data(
         self, tree_id=uuid.UUID(int=0), wait_time=60
     ) -> Result[TreeData, str]:

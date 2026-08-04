@@ -81,7 +81,13 @@ jobs:
           BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
           ROSDEP_SKIP_KEYS: result-pip
-          AFTER_INSTALL_TARGET_DEPENDENCIES: 'if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" || [ "$ROS_DISTRO" == "lyrical" ]; then pip3 install --break-system-packages coverage[toml] result; else pip3 install coverage[toml] result; fi;'
+          AFTER_INSTALL_TARGET_DEPENDENCIES: >-
+            if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" ] || [ "$ROS_DISTRO" == "lyrical" ]; then
+              python3 -m pip install --break-system-packages --force-reinstall coverage[toml] result playwright==1.55.0 pytest-playwright==0.7.1;
+            else
+              python3 -m pip install --force-reinstall coverage[toml] result playwright==1.55.0 pytest-playwright==0.7.1;
+            fi;
+            python3 -m playwright install --with-deps chromium;
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
 
@@ -93,6 +99,7 @@ jobs:
           path: |
             .build/target_ws/build/ros_bt_py/pytest.xml
             .build/target_ws/build/**/*xunit.xml
+            .build/target_ws/**/test-results/**
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

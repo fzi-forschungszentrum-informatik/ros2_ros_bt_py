@@ -217,3 +217,43 @@ the complete integration suite after each stable batch. For any newly exposed
 production defect, preserve earlier passing work and report the node, fixture,
 expected state/data, actual state/data, and tree-node error rather than
 changing the node or suppressing the test.
+
+## Shipped Web UI Tests
+
+The `web_ui/` tests exercise the installed `ros_bt_py_web_gui` bundle in a real
+Chromium browser. They launch the real `tree_node`, HTTP server, and rosbridge,
+then verify both ROS-to-UI updates and UI-to-ROS commands. They do not import or
+test the Vue source code.
+
+Install the pinned browser dependencies from the repository root:
+
+```bash
+python3 -m pip install --break-system-packages -r ui_test_requirements.txt
+python3 -m playwright install chromium
+```
+
+On systems where Playwright does not provide a managed browser build, use an
+installed Chrome executable instead:
+
+```bash
+PLAYWRIGHT_BROWSER_CHANNEL=chrome pytest ros_bt_py/tests/integration/web_ui
+```
+
+Build without symlink installation so the test serves the installed bundle:
+
+```bash
+colcon build --packages-up-to ros_bt_py
+source install/setup.bash
+```
+
+Run the focused suite with Playwright diagnostics enabled:
+
+```bash
+pytest ros_bt_py/tests/integration/web_ui \
+  --tracing=retain-on-failure \
+  --screenshot=only-on-failure \
+  --output=test-results/web_ui
+```
+
+Use `--headed` while debugging locally. Failure traces can be opened with
+`python3 -m playwright show-trace test-results/web_ui/<test>/trace.zip`.
