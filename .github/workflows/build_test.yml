@@ -34,7 +34,11 @@ permissions:
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
   schedule:
     - cron: "04 23 * * *"
 
@@ -83,9 +87,9 @@ jobs:
           ROSDEP_SKIP_KEYS: result-pip
           AFTER_INSTALL_TARGET_DEPENDENCIES: >-
             if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" ] || [ "$ROS_DISTRO" == "lyrical" ]; then
-              python3 -m pip install --break-system-packages --force-reinstall coverage[toml] result playwright==1.55.0 pytest-playwright==0.7.1;
+              python3 -m pip install --break-system-packages --force-reinstall coverage[toml] playwright==1.55.0 pytest-playwright==0.7.1;
             else
-              python3 -m pip install --force-reinstall coverage[toml] result playwright==1.55.0 pytest-playwright==0.7.1;
+              python3 -m pip install --force-reinstall coverage[toml] playwright==1.55.0 pytest-playwright==0.7.1;
             fi;
             python3 -m playwright install --with-deps chromium;
           ENABLE_COVERAGE_TESTING: "true"
