@@ -51,8 +51,15 @@ jobs:
     continue-on-error: true
     runs-on: ubuntu-latest
     container: ros:${{ matrix.ros }}
+    env:
+      PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
     steps:
       - uses: actions/checkout@v4
+      - name: Cache pre-commit environments
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PRE_COMMIT_HOME }}
+          key: pre-commit-${{ matrix.ros }}-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install pre-commit
         run: |
           sudo apt-get update
@@ -66,6 +73,7 @@ jobs:
     needs: pre-commit
     env:
       ICI_BASEDIR: $GITHUB_WORKSPACE
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
     strategy:
       matrix:
         distro:
@@ -79,14 +87,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: playwright-${{ runner.os }}-${{ matrix.distro }}-${{ hashFiles('.github/workflows/build_test.yml') }}
       - uses: "ros-industrial/industrial_ci@master"
         env:
           ROS_DISTRO: ${{ matrix.distro }}
           BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
           ROSDEP_SKIP_KEYS: result-pip
+          ADDITIONAL_DEBS: python3-slugify
+          DOCKER_RUN_OPTS: >-
+            -v ${{ env.PLAYWRIGHT_BROWSERS_PATH }}:/ms-playwright
+            -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
           AFTER_INSTALL_TARGET_DEPENDENCIES: >-
-            apt-get update && apt-get install -y python3-slugify;
             PIP_SYSTEM_ARG="";
             PYTEST_BASE_URL_VERSION="2.1.0";
             PYTEST_PLAYWRIGHT_VERSION="0.7.1";
