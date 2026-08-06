@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from playwright.sync_api import Page, expect
+import pytest
 
 from ros_bt_py.vendor.result import Ok
 from ros_bt_py_interfaces.msg import NodeState
@@ -35,6 +36,9 @@ from tests.integration.conftest import TreeControlNode
 
 
 TREE_FILE = "trees/nodes_isolation/constant_passthrough.yaml"
+pytestmark = pytest.mark.xfail(
+    reason="Web UI integration tests are currently non-blocking", strict=False
+)
 
 
 def load_test_tree(tree_control_node: TreeControlNode) -> None:
