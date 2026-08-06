@@ -47,8 +47,7 @@ jobs:
     strategy:
       matrix:
         ros: [lyrical, kilted, jazzy]
-      fail-fast: false
-    continue-on-error: true
+      fail-fast: true
     runs-on: ubuntu-latest
     container: ros:${{ matrix.ros }}
     env:

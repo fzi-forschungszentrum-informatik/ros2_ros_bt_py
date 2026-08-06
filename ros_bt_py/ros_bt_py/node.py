@@ -425,7 +425,11 @@ class Node(abc.ABC):
                 BTNodeState.SHUTDOWN,
                 BTNodeState.BROKEN,
             ]:
-                return Err(BehaviorTreeException("Trying to tick uninitialized node!"))
+                return Err(
+                    BehaviorTreeException(
+                        f"Trying to tick node in invalid state {self.state}!"
+                    )
+                )
 
             # Check if any inputs are unset, if so return an error
             for key, container in self.node_config.inputs.items():
