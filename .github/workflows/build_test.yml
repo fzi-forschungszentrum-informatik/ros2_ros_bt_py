@@ -86,14 +86,17 @@ jobs:
           ROS_REPO: main
           ROSDEP_SKIP_KEYS: result-pip
           AFTER_INSTALL_TARGET_DEPENDENCIES: >-
+            apt-get update &&
+            apt-get install -y node-playwright python3-playwright chromium python3-slugify;
             if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" ] || [ "$ROS_DISTRO" == "lyrical" ]; then
-              python3 -m pip install --break-system-packages --force-reinstall coverage[toml] playwright==1.55.0 pytest-playwright==0.7.1;
+              python3 -m pip install --break-system-packages --force-reinstall coverage[toml];
+              python3 -m pip install --break-system-packages --no-deps --force-reinstall pytest-base-url pytest-playwright==0.7.1;
             else
               python3 -m pip install --force-reinstall coverage[toml] playwright==1.55.0 pytest-playwright==0.7.1;
             fi;
-            python3 -m playwright install --with-deps chromium;
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE: /usr/bin/chromium
 
       - name: Upload Test Results
         if: always()
