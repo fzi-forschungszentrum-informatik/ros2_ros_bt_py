@@ -86,17 +86,18 @@ jobs:
           ROS_REPO: main
           ROSDEP_SKIP_KEYS: result-pip
           AFTER_INSTALL_TARGET_DEPENDENCIES: >-
-            apt-get update &&
-            apt-get install -y node-playwright python3-playwright chromium python3-slugify;
+            apt-get update && apt-get install -y python3-slugify;
+            PIP_SYSTEM_ARG="";
             if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" ] || [ "$ROS_DISTRO" == "lyrical" ]; then
-              python3 -m pip install --break-system-packages --force-reinstall coverage[toml];
-              python3 -m pip install --break-system-packages --no-deps --force-reinstall pytest-base-url pytest-playwright==0.7.1;
-            else
-              python3 -m pip install --force-reinstall coverage[toml] playwright==1.55.0 pytest-playwright==0.7.1;
+              PIP_SYSTEM_ARG="--break-system-packages";
             fi;
+            python3 -m pip install ${PIP_SYSTEM_ARG} coverage[toml] result;
+            python3 -m pip install ${PIP_SYSTEM_ARG} --ignore-installed --no-deps playwright==1.55.0 pyee==13.0.1 'greenlet>=3.1.1,<4.0.0';
+            python3 -m pip install ${PIP_SYSTEM_ARG} --ignore-installed --no-deps pytest-base-url==2.1.0 pytest-playwright==0.7.1;
+            python3 -c 'import importlib.metadata as m; print("pytest", m.version("pytest")); print("playwright", m.version("playwright")); print("pytest-playwright", m.version("pytest-playwright"))';
+            python3 -m playwright install --with-deps chromium;
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
-          PLAYWRIGHT_CHROMIUM_EXECUTABLE: /usr/bin/chromium
 
       - name: Upload Test Results
         if: always()
