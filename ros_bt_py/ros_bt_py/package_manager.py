@@ -374,8 +374,8 @@ class PackageManager(object):
         response.storage_folders = self.tree_storage_directory_paths
         return response
 
-    @typechecked
     @staticmethod
+    @typechecked
     def get_available_nodes(
         request: GetAvailableNodes.Request, response: GetAvailableNodes.Response
     ) -> GetAvailableNodes.Response:
