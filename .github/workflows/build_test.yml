@@ -88,14 +88,22 @@ jobs:
           AFTER_INSTALL_TARGET_DEPENDENCIES: >-
             apt-get update && apt-get install -y python3-slugify;
             PIP_SYSTEM_ARG="";
+            PYTEST_BASE_URL_VERSION="2.1.0";
             if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" ] || [ "$ROS_DISTRO" == "lyrical" ]; then
               PIP_SYSTEM_ARG="--break-system-packages";
             fi;
+            if [ "$ROS_DISTRO" == "humble" ]; then
+              PYTEST_BASE_URL_VERSION="1.4.2";
+            fi;
             python3 -m pip install ${PIP_SYSTEM_ARG} coverage[toml] result;
             python3 -m pip install ${PIP_SYSTEM_ARG} --ignore-installed --no-deps playwright==1.55.0 pyee==13.0.1 'greenlet>=3.1.1,<4.0.0';
-            python3 -m pip install ${PIP_SYSTEM_ARG} --ignore-installed --no-deps pytest-base-url==2.1.0 pytest-playwright==0.7.1;
+            python3 -m pip install ${PIP_SYSTEM_ARG} --ignore-installed --no-deps pytest-base-url==${PYTEST_BASE_URL_VERSION} pytest-playwright==0.7.1;
             python3 -c 'import importlib.metadata as m; print("pytest", m.version("pytest")); print("playwright", m.version("playwright")); print("pytest-playwright", m.version("pytest-playwright"))';
-            python3 -m playwright install --with-deps chromium;
+            if [ "$ROS_DISTRO" == "lyrical" ]; then
+              PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64 python3 -m playwright install --with-deps chromium;
+            else
+              python3 -m playwright install --with-deps chromium;
+            fi;
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
 
