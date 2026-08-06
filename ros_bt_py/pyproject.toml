@@ -45,3 +45,10 @@ testpaths = [
     "tests",
 ]
 minversion = "6.0"
+
+[tool.mypy]
+check_untyped_defs = true
+follow_imports = "skip"
+ignore_missing_imports = true
+pretty = true
+show_error_codes = true
