@@ -54,7 +54,7 @@ jobs:
     env:
       PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache pre-commit environments
         uses: actions/cache@v5
         with:
@@ -74,6 +74,7 @@ jobs:
     env:
       ICI_BASEDIR: $GITHUB_WORKSPACE
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+      UI_ARTIFACT_PATH: ${{ github.workspace }}/.build/target_ws/test-results/web_ui
     strategy:
       matrix:
         distro:
@@ -86,7 +87,7 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Restore Playwright browsers
         id: playwright-cache
         uses: actions/cache/restore@v5
@@ -105,7 +106,7 @@ jobs:
           DOCKER_RUN_OPTS: >-
             -v ${{ env.PLAYWRIGHT_BROWSERS_PATH }}:/ms-playwright
             -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-            -e ROS_BT_PY_UI_ARTIFACT_DIR=/root/target_ws/test-results/web_ui
+            -e ROS_BT_PY_UI_ARTIFACT_DIR=${{ env.UI_ARTIFACT_PATH }}
           AFTER_INSTALL_TARGET_DEPENDENCIES: >-
             PIP_SYSTEM_ARG="";
             PYTEST_BASE_URL_VERSION="2.1.0";
@@ -129,11 +130,14 @@ jobs:
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
 
-      - name: Restore Playwright cache ownership
+      - name: Restore generated file ownership
         if: always()
         run: |
           if [ -d "${PLAYWRIGHT_BROWSERS_PATH}" ]; then
             sudo chown -R "$(id -u):$(id -g)" "${PLAYWRIGHT_BROWSERS_PATH}"
+          fi
+          if [ -d "${UI_ARTIFACT_PATH}" ]; then
+            sudo chown -R "$(id -u):$(id -g)" "${UI_ARTIFACT_PATH}"
           fi
 
       - name: Save Playwright browsers
@@ -145,21 +149,20 @@ jobs:
 
       - name: Upload UI test diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: UI Test Diagnostics (ROS ${{ matrix.distro }})
-          path: .build/target_ws/test-results/web_ui/**
+          path: ${{ env.UI_ARTIFACT_PATH }}
           if-no-files-found: warn
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Test Results (ROS ${{ matrix.distro }})
           path: |
             .build/target_ws/build/ros_bt_py/pytest.xml
             .build/target_ws/build/**/*xunit.xml
-            .build/target_ws/**/test-results/**
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
@@ -178,7 +181,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
