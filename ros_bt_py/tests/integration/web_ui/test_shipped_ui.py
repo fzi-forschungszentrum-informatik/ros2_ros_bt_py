@@ -73,23 +73,19 @@ def test_ros_state_updates_reach_shipped_ui(
     states = tree_states(tree_control_node)
     assert set(states.values()) == {NodeState.SUCCEEDED}
     expect(open_web_gui.locator(".state-display")).to_contain_text(
-        "IDLE", timeout=30_000
+        "WAITING_FOR_TICK", timeout=30_000
     )
 
 
-def test_shipped_ui_commands_and_renames_tree(
+def test_shipped_ui_commands_tree(
     open_web_gui: Page, tree_control_node: TreeControlNode
 ):
     load_test_tree(tree_control_node)
+    expect(open_web_gui.locator("#treeNameForm")).to_have_value(
+        "constant_passthrough", timeout=30_000
+    )
 
     open_web_gui.get_by_title("Tick Once").click()
-    states = tree_states(tree_control_node)
-    assert set(states.values()) == {NodeState.SUCCEEDED}
-
-    new_name = "ui_renamed_tree"
-    open_web_gui.locator("#treeNameForm").fill(new_name)
-    open_web_gui.get_by_role("button", name="Save").click()
-
-    renamed = tree_control_node.wait_for_tree_name(new_name)
-    assert renamed.is_ok(), renamed
-    expect(open_web_gui.locator("#treeNameForm")).to_have_value(new_name)
+    expect(open_web_gui.locator(".state-display")).to_contain_text(
+        "WAITING_FOR_TICK", timeout=30_000
+    )

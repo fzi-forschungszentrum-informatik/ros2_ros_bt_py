@@ -113,7 +113,13 @@ def test_subtree_nested_io_lifecycle_and_publication(
         for state in tree_states
         if any(str(node.node_id).startswith("10000000") for node in state.node_states)
     )
-    assert all(state == NodeState.IDLE for state in node_states(nested_state).values())
+    states = node_states(nested_state)
+    assert all(
+        state == NodeState.IDLE
+        for node_id, state in states.items()
+        if not node_id.endswith("0006")
+    )
+    assert states["10000000-0000-0000-0000-000000000006"] == NodeState.PAUSED
 
     assert tree_control_node.execute_tree(ControlTreeExecution.Request.RESET).is_ok()
     assert tree_control_node.execute_tree(ControlTreeExecution.Request.SHUTDOWN).is_ok()

@@ -238,7 +238,7 @@ class MemorySequence(FlowControl):
         # TODO Should we reset this on untick?
         self.last_running_child = 0
         for child in self.children:
-            match child.setup():
+            match child.untick():
                 case Err(e):
                     return Err(e)
                 case Ok(_):
@@ -248,7 +248,7 @@ class MemorySequence(FlowControl):
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.last_running_child = 0
         for child in self.children:
-            match child.setup():
+            match child.reset():
                 case Err(e):
                     return Err(e)
                 case Ok(_):

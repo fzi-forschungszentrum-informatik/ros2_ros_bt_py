@@ -39,6 +39,8 @@ library = [
 addopts = [
     "--import-mode=importlib",
     "--order-dependencies",
+    "--browser=chromium",
+    "--browser-channel=chrome"
 ]
 testpaths = [
     "tests",

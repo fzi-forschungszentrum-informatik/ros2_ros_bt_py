@@ -40,6 +40,7 @@ import time
 import domain_coordinator
 from playwright.sync_api import Page, expect
 import pytest
+from ros_bt_py_interfaces.srv import ControlTreeExecution
 
 
 ARTIFACT_ROOT = Path(os.environ.get("ROS_BT_PY_UI_ARTIFACT_DIR", "test-results/web_ui"))
@@ -166,6 +167,12 @@ def browser_diagnostics(page: Page, request: pytest.FixtureRequest):
     pytest.fail("Browser runtime failures:\n" + "\n".join(errors))
 
 
+@pytest.fixture(autouse=True)
+def reset_tree_execution(tree_control_node):
+    yield
+    tree_control_node.execute_tree(ControlTreeExecution.Request.SHUTDOWN)
+
+
 @pytest.fixture
 def open_web_gui(page: Page, web_gui_stack: subprocess.Popen, tree_control_node):
     """Open the shipped GUI and wait for its real ROS connection."""
@@ -186,16 +193,29 @@ def open_web_gui(page: Page, web_gui_stack: subprocess.Popen, tree_control_node)
     else:
         raise AssertionError("rosbridge websocket did not become available")
 
+    page.add_init_script(
+        "if (!window.localStorage.getItem('ros')) window.localStorage.clear()"
+    )
     page.goto(
         "http://127.0.0.1:8085/index.html",
         wait_until="domcontentloaded",
         timeout=30_000,
     )
+    settings_button = page.locator('button[data-bs-target="#settings"]')
+    settings_button.click()
+    expect(page.locator("#settings")).to_be_visible(timeout=30_000)
     page.locator("svg.connected, svg.messages-missing, svg.packages-missing").wait_for(
         state="visible", timeout=30_000
     )
-    namespace_select = page.locator("select").nth(1)
+    namespace_select = page.locator("#settings select").nth(1)
     expect(namespace_select).to_have_value("/BehaviorTreeNode/", timeout=30_000)
     namespace_select.select_option("/BehaviorTreeNode/")
+    namespace_select.dispatch_event("change")
+    page.reload(wait_until="domcontentloaded", timeout=30_000)
+    page.locator("svg.connected, svg.messages-missing, svg.packages-missing").wait_for(
+        state="visible", timeout=30_000
+    )
+    if page.locator("#settings").is_visible():
+        page.locator('button[data-bs-target="#settings"]').click()
 
     return page

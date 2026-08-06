@@ -74,7 +74,7 @@ def test_fallback_handles_empty_and_failed_children_before_success(
             "EmptyFallback": BTNodeState.FAILED,
             "AllFailedFallback": BTNodeState.FAILED,
             "Success": BTNodeState.SUCCEEDED,
-            "UntickedRunning": BTNodeState.IDLE,
+            "UntickedRunning": BTNodeState.PAUSED,
         },
     )
 
@@ -106,7 +106,7 @@ def test_parallel_reaches_threshold_and_auto_restarts(
             "Parallel": BTNodeState.SUCCEEDED,
             "SuccessOne": BTNodeState.SUCCEEDED,
             "SuccessTwo": BTNodeState.SUCCEEDED,
-            "UntickedRunning": BTNodeState.IDLE,
+            "UntickedRunning": BTNodeState.PAUSED,
         },
     )
 

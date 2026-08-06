@@ -218,8 +218,7 @@ class Subtree(Leaf):
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            # TODO Should this be an Err() ??? same also above in setup
-            return Ok(BTNodeState.BROKEN)
+            return Err(BehaviorTreeException("Subtree has no root node"))
 
         match self.manager.data_flow_manager.push_incoming_data():
             case Err(e):
@@ -239,8 +238,7 @@ class Subtree(Leaf):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         if not self.root:
-            # TODO Should this be an Err() ???
-            return Ok(BTNodeState.BROKEN)
+            return Err(BehaviorTreeException("Subtree has no root node"))
         untick_root_result = self.root.untick()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(

@@ -80,7 +80,7 @@ def test_sequence_explicit_untick_and_reset(
     execute(tree_control_node, ControlTreeExecution.Request.STOP)
     verify_node_states(
         tree_control_node,
-        {root_name: BTNodeState.IDLE, "RunningChild": BTNodeState.IDLE},
+        {root_name: BTNodeState.IDLE, "RunningChild": BTNodeState.PAUSED},
     )
 
     execute(tree_control_node, ControlTreeExecution.Request.TICK_ONCE)
@@ -101,6 +101,6 @@ def test_memory_sequence_returns_terminal_failure(tree_control_node: TreeControl
         {
             "MemorySequenceTerminalFailure": BTNodeState.FAILED,
             "Failure": BTNodeState.FAILED,
-            "UntickedRunning": BTNodeState.IDLE,
+            "UntickedRunning": BTNodeState.PAUSED,
         },
     )

@@ -272,13 +272,13 @@ class Retry(Decorator):
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._retry_count = 0
-        for child in self.children:
-            return child.setup()
         match self.inputs.get_value_as("num_retries", int):
             case Err(e):
                 return Err(e)
             case Ok(n):
                 self._retry_limit = n
+        for child in self.children:
+            return child.setup()
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -312,8 +312,12 @@ class Retry(Decorator):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            return child.untick()
-        return Ok(BTNodeState.IDLE)
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.PAUSED)
 
 
 @define_bt_node(
@@ -374,8 +378,12 @@ class Repeat(Decorator):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            return child.untick()
-        return Ok(BTNodeState.IDLE)
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.PAUSED)
 
 
 @define_bt_node(
@@ -480,8 +488,12 @@ class RepeatAlways(Decorator):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            return child.untick()
-        return Ok(BTNodeState.IDLE)
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.PAUSED)
 
 
 @define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=1))
@@ -525,8 +537,12 @@ class RepeatUntilFail(Decorator):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            return child.untick()
-        return Ok(BTNodeState.IDLE)
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.PAUSED)
 
 
 @define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=1))
@@ -570,8 +586,12 @@ class RepeatIfFail(Decorator):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            return child.untick()
-        return Ok(BTNodeState.IDLE)
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.PAUSED)
 
 
 @define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=1))

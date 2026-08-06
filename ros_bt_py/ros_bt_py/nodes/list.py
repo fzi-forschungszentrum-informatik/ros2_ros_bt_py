@@ -243,8 +243,12 @@ class IterateList(Decorator):
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         for child in self.children:
-            return child.untick()
-        return Ok(BTNodeState.IDLE)
+            match child.untick():
+                case Err(e):
+                    return Err(e)
+                case Ok(_):
+                    pass
+        return Ok(BTNodeState.PAUSED)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self.reset_counter()

@@ -84,4 +84,4 @@ class Wait(Leaf):
         return Ok(BTNodeState.IDLE)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        return Ok(BTNodeState.IDLE)
+        return Ok(BTNodeState.PAUSED)

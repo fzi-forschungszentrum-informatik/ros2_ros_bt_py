@@ -106,6 +106,7 @@ class ServiceBase(Leaf):
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._service_client: Optional[Client] = None
         self._service_request_future: Optional[Future] = None
+        self._input_request = None
 
         match self.inputs.get_value_as("wait_for_response_seconds", float):
             case Err(e):
@@ -136,16 +137,27 @@ class ServiceBase(Leaf):
             case Ok(b):
                 updated = b
         if updated:
-            match self.get_request():
-                case Err(e):
-                    return Err(e)
-                case Ok(r):
-                    self._input_request = r
             match self._do_reset():
                 case Err(e):
                     return Err(e)
                 case Ok(_):
                     pass
+            match self.get_request():
+                case Err(e):
+                    return Err(e)
+                case Ok(r):
+                    self._input_request = r
+
+        if (
+            self.state is BTNodeState.IDLE
+            and self._service_request_future is None
+            and self._input_request is None
+        ):
+            match self.get_request():
+                case Err(e):
+                    return Err(e)
+                case Ok(r):
+                    self._input_request = r
 
         if self._service_client is None:
             match self.inputs.get_value_as("service_name", str):
@@ -166,6 +178,7 @@ class ServiceBase(Leaf):
                 self._input_request
             )
             self._input_request = None
+            return Ok(BTNodeState.RUNNING)
 
         if self._service_request_future is None:
             return Ok(self.state)
@@ -204,6 +217,8 @@ class ServiceBase(Leaf):
         if self._service_request_future is not None:
             self._service_request_future.cancel()
         self._service_request_future = None
+        self._input_request = None
+        self._last_service_call_time = None
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:

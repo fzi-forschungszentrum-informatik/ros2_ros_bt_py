@@ -11,3 +11,4 @@ parameters.py
 build/
 log/
 install/
+test-results/
