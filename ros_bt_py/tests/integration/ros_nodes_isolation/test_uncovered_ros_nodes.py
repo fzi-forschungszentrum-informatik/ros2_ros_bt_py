@@ -65,11 +65,9 @@ def wait_for_service_server():
 
 
 def node_states(tree_control_node: TreeControlNode) -> dict[str, int]:
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            return {
-                node_state.node_id: node_state.state for node_state in state.node_states
-            }
+    match tree_control_node.get_node_states_by_name():
+        case Ok(states):
+            return states
         case result:
             assert False, result.unwrap_err()
 
@@ -86,17 +84,13 @@ def test_wait_for_service_times_out_with_simulated_time(
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    assert node_states(tree_control_node)["00000000-0000-0000-0000-000000000001"] == (
-        NodeState.RUNNING
-    )
+    assert node_states(tree_control_node)["WaitForService"] == NodeState.RUNNING
 
     time_control_node.set_time(12)
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    assert node_states(tree_control_node)["00000000-0000-0000-0000-000000000001"] == (
-        NodeState.FAILED
-    )
+    assert node_states(tree_control_node)["WaitForService"] == NodeState.FAILED
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
@@ -115,10 +109,7 @@ def test_wait_for_service_succeeds_when_service_is_available(
         assert tree_control_node.execute_tree(
             ControlTreeExecution.Request.TICK_ONCE
         ).is_ok()
-        if (
-            node_states(tree_control_node)["00000000-0000-0000-0000-000000000001"]
-            == NodeState.SUCCEEDED
-        ):
+        if node_states(tree_control_node)["WaitForService"] == NodeState.SUCCEEDED:
             return
         time.sleep(0.1)
     assert False, "WaitForService did not discover the available service"
@@ -138,23 +129,19 @@ def test_throttle_skips_child_until_interval_elapses(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
     states = node_states(tree_control_node)
-    assert states["00000000-0000-0000-0000-000000000010"] == NodeState.SUCCEEDED
-    assert states["00000000-0000-0000-0000-000000000011"] == NodeState.IDLE
+    assert states["Throttle"] == NodeState.SUCCEEDED
+    assert states["GetTimeNow"] == NodeState.IDLE
 
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    assert node_states(tree_control_node)["00000000-0000-0000-0000-000000000011"] == (
-        NodeState.IDLE
-    )
+    assert node_states(tree_control_node)["GetTimeNow"] == NodeState.IDLE
 
     time_control_node.set_time(12)
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    assert node_states(tree_control_node)["00000000-0000-0000-0000-000000000011"] == (
-        NodeState.IDLE
-    )
+    assert node_states(tree_control_node)["GetTimeNow"] == NodeState.IDLE
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
@@ -169,9 +156,7 @@ def test_get_time_now_uses_tree_node_clock(
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    assert node_states(tree_control_node)["00000000-0000-0000-0000-000000000020"] == (
-        NodeState.SUCCEEDED
-    )
+    assert node_states(tree_control_node)["GetTimeNow"] == NodeState.SUCCEEDED
 
 
 @pytest.mark.launch(fixture=standard_tree_node)
@@ -182,6 +167,4 @@ def test_ros_param_reads_tree_node_parameter(tree_control_node: TreeControlNode)
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    assert node_states(tree_control_node)["00000000-0000-0000-0000-000000000030"] == (
-        NodeState.SUCCEEDED
-    )
+    assert node_states(tree_control_node)["RosParam"] == NodeState.SUCCEEDED

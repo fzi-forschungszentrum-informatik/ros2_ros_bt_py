@@ -27,99 +27,296 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 version: 1.0.0
-tree_id: 00000000-0000-0000-0000-000000000000
+tree_id: 4e327e39-b0f6-52bf-90ab-2e0d60c2aaf4
 name: message converter round trip
 path: ''
-root_id: 20000000-0000-0000-0000-000000000001
+root_id: 0675399a-4b30-5aca-9b5c-240e3cb2b469
 nodes:
 - module: ros_bt_py.nodes.sequence
   node_class: Sequence
   max_children: -1
-  node_id: 20000000-0000-0000-0000-000000000001
+  node_id: 0675399a-4b30-5aca-9b5c-240e3cb2b469
   name: Sequence
-  child_ids: [20000000-0000-0000-0000-000000000002, 20000000-0000-0000-0000-000000000003, 20000000-0000-0000-0000-000000000004, 20000000-0000-0000-0000-000000000005]
+  child_ids:
+  - 9780d39a-5bc9-554b-a2a9-362bd6361750
+  - 5a305dd6-fe0c-5eeb-8c62-4057368f7a42
+  - ac3ec706-2a01-5ba8-884d-6b866b55b3cf
+  - 5471155a-da26-5886-8255-fc06d3558b40
   inputs: []
   outputs: []
   tree_ref: ''
 - module: ros_bt_py.ros_nodes.message_converters
   node_class: MessageToFields
   max_children: 0
-  node_id: 20000000-0000-0000-0000-000000000002
+  node_id: 9780d39a-5bc9-554b-a2a9-362bd6361750
   name: FirstMessageToFields
   child_ids: []
   inputs:
   - key: input_type
-    type: &string_message_type {type_identifier: 11, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 1, ros_msg_type: '', interface_id: 0}
+    type:
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '"example_interfaces/msg/String"'
   - key: in
-    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: input_type, ros_interface_kind: 1, ros_msg_type: example_interfaces/msg/String, interface_id: 0}
+    type:
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: input_type
+      ros_interface_kind: 1
+      ros_msg_type: example_interfaces/msg/String
+      interface_id: 0
     serialized_value: '{"data": "round trip"}'
   outputs:
   - key: data
-    type: &string_output {type_identifier: 4, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.ros_nodes.message_converters
   node_class: FieldsToMessage
   max_children: 0
-  node_id: 20000000-0000-0000-0000-000000000003
+  node_id: 5a305dd6-fe0c-5eeb-8c62-4057368f7a42
   name: FieldsToMessage
   child_ids: []
   inputs:
   - key: output_type
-    type: *string_message_type
+    type:
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '"example_interfaces/msg/String"'
   - key: data
-    type: {type_identifier: 4, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   outputs:
   - key: out
-    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: false, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: output_type, ros_interface_kind: 1, ros_msg_type: example_interfaces/msg/String, interface_id: 0}
+    type:
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: output_type
+      ros_interface_kind: 1
+      ros_msg_type: example_interfaces/msg/String
+      interface_id: 0
     serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.ros_nodes.message_converters
   node_class: MessageToFields
   max_children: 0
-  node_id: 20000000-0000-0000-0000-000000000004
+  node_id: ac3ec706-2a01-5ba8-884d-6b866b55b3cf
   name: SecondMessageToFields
   child_ids: []
   inputs:
   - key: input_type
-    type: *string_message_type
+    type:
+      type_identifier: 11
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 1
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '"example_interfaces/msg/String"'
   - key: in
-    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: input_type, ros_interface_kind: 1, ros_msg_type: example_interfaces/msg/String, interface_id: 0}
+    type:
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: input_type
+      ros_interface_kind: 1
+      ros_msg_type: example_interfaces/msg/String
+      interface_id: 0
     serialized_value: 'null'
   outputs:
   - key: data
-    type: *string_output
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.passthrough_node
   node_class: PassthroughNode
   max_children: 0
-  node_id: 20000000-0000-0000-0000-000000000005
+  node_id: 5471155a-da26-5886-8255-fc06d3558b40
   name: VerifyRoundTrip
   child_ids: []
   inputs:
   - key: passthrough_type
-    type: {type_identifier: 9, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: ['{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    type:
+      type_identifier: 9
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options:
+      - '{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
   - key: in
-    type: {type_identifier: 13, value_type_identifier: [], allow_dynamic: true, allow_static: true, is_static: false, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 18446744073709550000, iterable_max_length: [], iterable_strict_length: [], reference_target: passthrough_type, ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    type:
+      type_identifier: 13
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: passthrough_type
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   outputs:
   - key: out
-    type: *string_output
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   tree_ref: ''
 data_wirings:
-- source: {node_id: 20000000-0000-0000-0000-000000000002, data_key: data}
-  target: {node_id: 20000000-0000-0000-0000-000000000003, data_key: data}
-- source: {node_id: 20000000-0000-0000-0000-000000000003, data_key: out}
-  target: {node_id: 20000000-0000-0000-0000-000000000004, data_key: in}
-- source: {node_id: 20000000-0000-0000-0000-000000000004, data_key: data}
-  target: {node_id: 20000000-0000-0000-0000-000000000005, data_key: in}
+- source:
+    node_id: 9780d39a-5bc9-554b-a2a9-362bd6361750
+    data_key: data
+  target:
+    node_id: 5a305dd6-fe0c-5eeb-8c62-4057368f7a42
+    data_key: data
+- source:
+    node_id: 5a305dd6-fe0c-5eeb-8c62-4057368f7a42
+    data_key: out
+  target:
+    node_id: ac3ec706-2a01-5ba8-884d-6b866b55b3cf
+    data_key: in
+- source:
+    node_id: ac3ec706-2a01-5ba8-884d-6b866b55b3cf
+    data_key: data
+  target:
+    node_id: 5471155a-da26-5886-8255-fc06d3558b40
+    data_key: in
 tick_frequency_hz: 10.0
 public_inputs: []
 public_outputs: []

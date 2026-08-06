@@ -27,31 +27,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 version: 1.0.0
-tree_id: 00000000-0000-0000-0000-000000000000
+tree_id: b04603fd-a651-50c3-8e5c-86bbb333ac0e
 name: random_number
 path: ''
-root_id: 40000000-0000-0000-0000-000000000001
+root_id: 5d62296c-3f4c-550b-9740-cf5ef3131e57
 nodes:
 - module: ros_bt_py.nodes.sequence
   node_class: Sequence
   max_children: -1
-  node_id: 40000000-0000-0000-0000-000000000001
+  node_id: 5d62296c-3f4c-550b-9740-cf5ef3131e57
   name: Sequence
   child_ids:
-  - 40000000-0000-0000-0000-000000000002
-  - 40000000-0000-0000-0000-000000000003
+  - b8a728c8-adc3-5b23-a0ba-e48e05cf9227
+  - f6e81b70-78c5-54dd-85da-8d902210ac03
   inputs: []
   outputs: []
   tree_ref: ''
 - module: ros_bt_py.nodes.random_number
   node_class: RandomInt
   max_children: 0
-  node_id: 40000000-0000-0000-0000-000000000002
+  node_id: b8a728c8-adc3-5b23-a0ba-e48e05cf9227
   name: RandomInRange
   child_ids: []
   inputs:
   - key: min
-    type: &int
+    type:
       type_identifier: 2
       value_type_identifier: []
       allow_dynamic: true
@@ -69,32 +69,77 @@ nodes:
       interface_id: 0
     serialized_value: '4'
   - key: max
-    type: *int
+    type:
+      type_identifier: 2
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-9223372036854775808'
+      max_value: '9223372036854775807'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '8'
   outputs: []
   tree_ref: ''
 - module: ros_bt_py.nodes.decorators
   node_class: IgnoreFailure
   max_children: 1
-  node_id: 40000000-0000-0000-0000-000000000003
+  node_id: f6e81b70-78c5-54dd-85da-8d902210ac03
   name: IgnoreInvalidRange
   child_ids:
-  - 40000000-0000-0000-0000-000000000004
+  - ee82a37c-b48f-5b4a-85fb-cd877ebadd63
   inputs: []
   outputs: []
   tree_ref: ''
 - module: ros_bt_py.nodes.random_number
   node_class: RandomInt
   max_children: 0
-  node_id: 40000000-0000-0000-0000-000000000004
+  node_id: ee82a37c-b48f-5b4a-85fb-cd877ebadd63
   name: EqualBounds
   child_ids: []
   inputs:
   - key: min
-    type: *int
+    type:
+      type_identifier: 2
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-9223372036854775808'
+      max_value: '9223372036854775807'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '5'
   - key: max
-    type: *int
+    type:
+      type_identifier: 2
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '-9223372036854775808'
+      max_value: '9223372036854775807'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '5'
   outputs: []
   tree_ref: ''

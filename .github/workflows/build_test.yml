@@ -125,6 +125,13 @@ jobs:
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
 
+      - name: Restore Playwright cache ownership
+        if: always()
+        run: |
+          if [ -d "${PLAYWRIGHT_BROWSERS_PATH}" ]; then
+            sudo chown -R "$(id -u):$(id -g)" "${PLAYWRIGHT_BROWSERS_PATH}"
+          fi
+
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4

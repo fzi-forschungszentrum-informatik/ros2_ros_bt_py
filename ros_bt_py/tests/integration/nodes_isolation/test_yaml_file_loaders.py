@@ -36,25 +36,23 @@ from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
 FILE_NODE_STATES = {
-    "20000000-0000-0000-0000-000000000002": NodeState.SUCCEEDED,
-    "20000000-0000-0000-0000-000000000003": NodeState.SUCCEEDED,
-    "20000000-0000-0000-0000-000000000005": NodeState.FAILED,
-    "20000000-0000-0000-0000-000000000007": NodeState.FAILED,
-    "20000000-0000-0000-0000-000000000009": NodeState.FAILED,
+    "ValidList": NodeState.SUCCEEDED,
+    "ValidDict": NodeState.SUCCEEDED,
+    "MalformedYaml": NodeState.FAILED,
+    "WrongShape": NodeState.FAILED,
+    "MissingFile": NodeState.FAILED,
 }
 
 
 def assert_file_node_states(tree_control_node: TreeControlNode):
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            node_states = {
-                node_state.node_id: node_state.state for node_state in state.node_states
-            }
+    match tree_control_node.get_node_states_by_name():
+        case Ok(node_states):
+            pass
         case result:
             assert False, result.unwrap_err()
 
-    for node_id, expected_state in FILE_NODE_STATES.items():
-        assert node_states[node_id] == expected_state
+    for node_name, expected_state in FILE_NODE_STATES.items():
+        assert node_states[node_name] == expected_state
 
 
 @pytest.mark.launch(fixture=standard_tree_node)

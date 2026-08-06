@@ -26,17 +26,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 version: 1.0.0
-tree_id: 00000000-0000-0000-0000-000000000000
+tree_id: 2da5a7d8-ee63-54db-9e31-faa00bee77e1
 name: enum switch dispatch
 path: ''
-root_id: 30000000-0000-0000-0000-000000000001
+root_id: 92d88e9d-23c8-554d-8fe1-857e4bdba6fa
 nodes:
 - module: ros_bt_py.ros_nodes.enum_switch
   node_class: EnumSwitch
   max_children: -1
-  node_id: 30000000-0000-0000-0000-000000000001
+  node_id: 92d88e9d-23c8-554d-8fe1-857e4bdba6fa
   name: EnumSwitch
-  child_ids: [30000000-0000-0000-0000-000000000002]
+  child_ids: [5434f9f9-7b94-5551-8f95-48dc42f78731]
   inputs:
   - key: ros_message_type
     type: {type_identifier: 11, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '', max_value: '', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 4, ros_msg_type: '', interface_id: 0}
@@ -49,7 +49,7 @@ nodes:
 - module: ros_bt_py.nodes.constant
   node_class: Constant
   max_children: 0
-  node_id: 30000000-0000-0000-0000-000000000002
+  node_id: 5434f9f9-7b94-5551-8f95-48dc42f78731
   name: FOO
   child_ids: []
   inputs:

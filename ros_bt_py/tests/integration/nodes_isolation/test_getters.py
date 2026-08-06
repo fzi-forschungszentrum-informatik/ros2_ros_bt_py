@@ -37,11 +37,9 @@ from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
 def get_node_states(tree_control_node: TreeControlNode) -> dict[str, int]:
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            return {
-                node_state.node_id: node_state.state for node_state in state.node_states
-            }
+    match tree_control_node.get_node_states_by_name():
+        case Ok(states):
+            return states
         case result:
             assert False, result.unwrap_err()
 
@@ -62,21 +60,21 @@ def test_getter_nodes_extract_data_fail_on_invalid_lookups_and_forward_children(
     ).is_ok()
     states = get_node_states(tree_control_node)
 
-    for node_id in (
-        "10000000-0000-0000-0000-000000000014",
-        "10000000-0000-0000-0000-000000000010",
-        "10000000-0000-0000-0000-000000000020",
-        "10000000-0000-0000-0000-000000000030",
-        "10000000-0000-0000-0000-000000000040",
+    for node_name in (
+        "SuccessfulGetterChild",
+        "GetListItem",
+        "GetDictItem",
+        "GetMultipleDictItems",
+        "GetAttr",
     ):
-        assert states[node_id] == NodeState.SUCCEEDED
-    for node_id in (
-        "10000000-0000-0000-0000-000000000012",
-        "10000000-0000-0000-0000-000000000022",
-        "10000000-0000-0000-0000-000000000032",
-        "10000000-0000-0000-0000-000000000042",
+        assert states[node_name] == NodeState.SUCCEEDED
+    for node_name in (
+        "InvalidListItem",
+        "InvalidDictItem",
+        "InvalidMultipleDictItems",
+        "InvalidAttr",
     ):
-        assert states[node_id] == NodeState.FAILED
+        assert states[node_name] == NodeState.FAILED
 
     match tree_control_node.get_tree_data():
         case Ok(data):

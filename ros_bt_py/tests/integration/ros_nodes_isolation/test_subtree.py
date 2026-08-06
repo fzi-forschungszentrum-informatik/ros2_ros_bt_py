@@ -35,9 +35,10 @@ from ros_bt_py_interfaces.srv import ControlTreeExecution
 from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
-def node_states(tree_state):
+def node_states(tree_structure, tree_state):
+    name_by_id = {node.node_id: node.name for node in tree_structure.nodes}
     return {
-        str(node_state.node_id): node_state.state
+        name_by_id[node_state.node_id]: node_state.state
         for node_state in tree_state.node_states
     }
 
@@ -62,6 +63,9 @@ def test_subtree_nested_io_lifecycle_and_publication(
         "subtree_outer",
         "subtree_nested",
     }
+    nested_structure = next(
+        structure for structure in structures if structure.name == "subtree_nested"
+    )
 
     assert tree_control_node.set_publish_data(True).is_ok()
     assert tree_control_node.execute_tree(
@@ -76,15 +80,13 @@ def test_subtree_nested_io_lifecycle_and_publication(
     with tree_control_node._tree_msg_lock:
         tree_states = tree_control_node._tree_state_msg.tree_states  # type: ignore
     nested_state = next(
-        state
-        for state in tree_states
-        if any(str(node.node_id).startswith("10000000") for node in state.node_states)
+        state for state in tree_states if state.tree_id == nested_structure.tree_id
     )
-    states = node_states(nested_state)
-    assert states["10000000-0000-0000-0000-000000000003"] == NodeState.SUCCEEDED
-    assert states["10000000-0000-0000-0000-000000000004"] == NodeState.SUCCEEDED
-    assert states["10000000-0000-0000-0000-000000000005"] == NodeState.FAILED
-    assert states["10000000-0000-0000-0000-000000000006"] == NodeState.RUNNING
+    states = node_states(nested_structure, nested_state)
+    assert states["NestedInput"] == NodeState.SUCCEEDED
+    assert states["NestedOutput"] == NodeState.SUCCEEDED
+    assert states["DeliberateFailure"] == NodeState.FAILED
+    assert states["NestedWait"] == NodeState.RUNNING
 
     match tree_control_node.get_tree_data():
         case Err(e):
@@ -109,17 +111,15 @@ def test_subtree_nested_io_lifecycle_and_publication(
     with tree_control_node._tree_msg_lock:
         tree_states = tree_control_node._tree_state_msg.tree_states  # type: ignore
     nested_state = next(
-        state
-        for state in tree_states
-        if any(str(node.node_id).startswith("10000000") for node in state.node_states)
+        state for state in tree_states if state.tree_id == nested_structure.tree_id
     )
-    states = node_states(nested_state)
+    states = node_states(nested_structure, nested_state)
     assert all(
         state == NodeState.IDLE
-        for node_id, state in states.items()
-        if not node_id.endswith("0006")
+        for node_name, state in states.items()
+        if node_name != "NestedWait"
     )
-    assert states["10000000-0000-0000-0000-000000000006"] == NodeState.PAUSED
+    assert states["NestedWait"] == NodeState.PAUSED
 
     assert tree_control_node.execute_tree(ControlTreeExecution.Request.RESET).is_ok()
     assert tree_control_node.execute_tree(ControlTreeExecution.Request.SHUTDOWN).is_ok()
@@ -131,10 +131,9 @@ def test_subtree_nested_io_lifecycle_and_publication(
     with tree_control_node._tree_msg_lock:
         tree_states = tree_control_node._tree_state_msg.tree_states  # type: ignore
     nested_state = next(
-        state
-        for state in tree_states
-        if any(str(node.node_id).startswith("10000000") for node in state.node_states)
+        state for state in tree_states if state.tree_id == nested_structure.tree_id
     )
     assert all(
-        state == NodeState.SHUTDOWN for state in node_states(nested_state).values()
+        state == NodeState.SHUTDOWN
+        for state in node_states(nested_structure, nested_state).values()
     )

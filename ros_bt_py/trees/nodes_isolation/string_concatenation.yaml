@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 version: 1.0.0
-tree_id: 00000000-0000-0000-0000-000000000000
+tree_id: 08ad2496-2335-5edd-9368-035fb0d5a2d5
 name: string_concatenation
 path: ''
 root_id: 545af04c-242e-426a-89dd-d5fe40dbcf65
@@ -51,7 +51,7 @@ nodes:
   child_ids: []
   inputs:
   - key: a
-    type: &string_static
+    type:
       type_identifier: 4
       value_type_identifier: []
       allow_dynamic: true
@@ -69,11 +69,26 @@ nodes:
       interface_id: 0
     serialized_value: '"hello"'
   - key: b
-    type: *string_static
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '" world"'
   outputs:
   - key: formatted_string
-    type: &string_output
+    type:
       type_identifier: 4
       value_type_identifier: []
       allow_dynamic: true
@@ -117,11 +132,41 @@ nodes:
       interface_id: 0
     serialized_value: 'null'
   - key: b
-    type: *string_static
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: '"!"'
   outputs:
   - key: formatted_string
-    type: *string_output
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   tree_ref: ''
 data_wirings:

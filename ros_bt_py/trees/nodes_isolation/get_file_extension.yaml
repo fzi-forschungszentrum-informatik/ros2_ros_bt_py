@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 version: 1.0.0
-tree_id: 00000000-0000-0000-0000-000000000000
+tree_id: 18f567ed-1605-591f-b21b-965d20d81733
 name: get_file_extension
 path: ''
 root_id: 1d399f8c-0cfa-438d-8fe3-d3e668e81d52
@@ -51,7 +51,7 @@ nodes:
   child_ids: []
   inputs:
   - key: path
-    type: &string_static
+    type:
       type_identifier: 4
       value_type_identifier: []
       allow_dynamic: true
@@ -70,7 +70,7 @@ nodes:
     serialized_value: '"/tmp/archive.tar.gz"'
   outputs:
   - key: filename
-    type: &string_output
+    type:
       type_identifier: 4
       value_type_identifier: []
       allow_dynamic: true
@@ -88,7 +88,22 @@ nodes:
       interface_id: 0
     serialized_value: 'null'
   - key: extension
-    type: *string_output
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   tree_ref: ''
 - module: ros_bt_py.nodes.format
@@ -99,7 +114,7 @@ nodes:
   child_ids: []
   inputs:
   - key: a
-    type: &string_dynamic
+    type:
       type_identifier: 4
       value_type_identifier: []
       allow_dynamic: true
@@ -117,11 +132,41 @@ nodes:
       interface_id: 0
     serialized_value: 'null'
   - key: b
-    type: *string_dynamic
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   outputs:
   - key: formatted_string
-    type: *string_output
+    type:
+      type_identifier: 4
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: false
+      is_static: false
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
     serialized_value: 'null'
   tree_ref: ''
 data_wirings:

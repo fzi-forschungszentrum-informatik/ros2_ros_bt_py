@@ -34,11 +34,9 @@ from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
 def node_states(tree_control_node: TreeControlNode) -> dict[str, int]:
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            return {
-                node_state.node_id: node_state.state for node_state in state.node_states
-            }
+    match tree_control_node.get_node_states_by_name():
+        case Ok(states):
+            return states
         case result:
             assert False, result.unwrap_err()
 
@@ -56,8 +54,8 @@ def test_comparison_nodes_report_terminal_states(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
     states = node_states(tree_control_node)
-    assert states["10000000-0000-0000-0000-000000000001"] == NodeState.SUCCEEDED
-    assert states["10000000-0000-0000-0000-000000000002"] == NodeState.SUCCEEDED
-    assert states["10000000-0000-0000-0000-000000000003"] == NodeState.FAILED
-    assert states["10000000-0000-0000-0000-000000000004"] == NodeState.SUCCEEDED
-    assert states["10000000-0000-0000-0000-000000000005"] == NodeState.SUCCEEDED
+    assert states["Comparisons"] == NodeState.SUCCEEDED
+    assert states["IgnoreFailedCompare"] == NodeState.SUCCEEDED
+    assert states["UnequalCompare"] == NodeState.FAILED
+    assert states["EqualNewOnlyCompare"] == NodeState.SUCCEEDED
+    assert states["LessThanCompare"] == NodeState.SUCCEEDED

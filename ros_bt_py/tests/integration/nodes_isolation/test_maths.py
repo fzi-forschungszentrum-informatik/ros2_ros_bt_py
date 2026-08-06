@@ -45,11 +45,11 @@ def test_math_operations_report_success_and_invalid_input(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
 
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            states = {node.node_id: node.state for node in state.node_states}
+    match tree_control_node.get_node_states_by_name():
+        case Ok(states):
+            pass
         case result:
             assert False, result.unwrap_err()
 
-    assert states["20000000-0000-0000-0000-000000000002"] == NodeState.SUCCEEDED
-    assert states["20000000-0000-0000-0000-000000000003"] == NodeState.SUCCEEDED
+    assert states["Add"] == NodeState.SUCCEEDED
+    assert states["Negate"] == NodeState.SUCCEEDED

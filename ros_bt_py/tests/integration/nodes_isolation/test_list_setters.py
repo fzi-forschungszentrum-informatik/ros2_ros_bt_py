@@ -35,11 +35,9 @@ from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
 def _node_states(tree_control_node: TreeControlNode) -> dict[str, int]:
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            return {
-                node_state.node_id: node_state.state for node_state in state.node_states
-            }
+    match tree_control_node.get_node_states_by_name():
+        case Ok(states):
+            return states
         case result:
             assert False, result.unwrap_err()
 
@@ -58,13 +56,8 @@ def test_list_and_dictionary_transformations_succeed(
 
     node_states = _node_states(tree_control_node)
     assert all(
-        node_states[node_id] == NodeState.SUCCEEDED
-        for node_id in (
-            "30000000-0000-0000-0000-000000000002",
-            "30000000-0000-0000-0000-000000000003",
-            "30000000-0000-0000-0000-000000000004",
-            "30000000-0000-0000-0000-000000000005",
-        )
+        node_states[node_name] == NodeState.SUCCEEDED
+        for node_name in ("Append", "SetDictionaryItem", "Length", "Insert")
     )
 
 
@@ -79,8 +72,8 @@ def test_is_in_list_reports_success_and_failure(tree_control_node: TreeControlNo
     ).is_ok()
 
     node_states = _node_states(tree_control_node)
-    assert node_states["20000000-0000-0000-0000-000000000002"] == NodeState.SUCCEEDED
-    assert node_states["20000000-0000-0000-0000-000000000003"] == NodeState.FAILED
+    assert node_states["ContainsTwo"] == NodeState.SUCCEEDED
+    assert node_states["DoesNotContainFour"] == NodeState.FAILED
 
 
 @pytest.mark.launch(fixture=standard_tree_node)
@@ -93,10 +86,7 @@ def test_iterate_list_succeeds_for_an_empty_list(tree_control_node: TreeControlN
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
 
-    assert (
-        _node_states(tree_control_node)["40000000-0000-0000-0000-000000000001"]
-        == NodeState.SUCCEEDED
-    )
+    assert _node_states(tree_control_node)["EmptyIteration"] == NodeState.SUCCEEDED
 
 
 @pytest.mark.launch(fixture=standard_tree_node)
@@ -111,23 +101,18 @@ def test_iterate_list_propagates_child_failure_and_resets(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
     assert (
-        _node_states(tree_control_node)["50000000-0000-0000-0000-000000000001"]
-        == NodeState.RUNNING
+        _node_states(tree_control_node)["IterateUntilChildFails"] == NodeState.RUNNING
     )
 
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
-    assert (
-        _node_states(tree_control_node)["50000000-0000-0000-0000-000000000001"]
-        == NodeState.FAILED
-    )
+    assert _node_states(tree_control_node)["IterateUntilChildFails"] == NodeState.FAILED
 
     assert tree_control_node.execute_tree(ControlTreeExecution.Request.RESET).is_ok()
     assert tree_control_node.execute_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
     assert (
-        _node_states(tree_control_node)["50000000-0000-0000-0000-000000000001"]
-        == NodeState.RUNNING
+        _node_states(tree_control_node)["IterateUntilChildFails"] == NodeState.RUNNING
     )

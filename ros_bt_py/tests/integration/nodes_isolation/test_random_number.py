@@ -46,10 +46,10 @@ def test_random_int_reports_success_and_rejects_equal_bounds(
     assert result.is_err()
     assert "cannot be equal or greater" in result.unwrap_err()
 
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            states = {node.node_id: node.state for node in state.node_states}
+    match tree_control_node.get_node_states_by_name():
+        case Ok(states):
+            pass
         case result:
             assert False, result.unwrap_err()
 
-    assert states["40000000-0000-0000-0000-000000000002"] == NodeState.SUCCEEDED
+    assert states["RandomInRange"] == NodeState.SUCCEEDED

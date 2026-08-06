@@ -27,15 +27,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 version: 1.0.0
-tree_id: 00000000-0000-0000-0000-000000000000
+tree_id: 10724329-2432-55c0-9024-e932e984ce7c
 name: MemorySequence terminal failure isolation
 path: ''
-root_id: 64000000-0000-0000-0000-000000000001
+root_id: ea0d30f6-23b4-5015-b5ca-cbb42aac02cd
 nodes:
-- {module: ros_bt_py.nodes.sequence, node_class: MemorySequence, max_children: -1, node_id: 64000000-0000-0000-0000-000000000001, name: MemorySequenceTerminalFailure, child_ids: [64000000-0000-0000-0000-000000000002, 64000000-0000-0000-0000-000000000003], inputs: [], outputs: [], tree_ref: ''}
-- {module: ros_bt_py.nodes.decorators, node_class: IgnoreSuccess, max_children: 1, node_id: 64000000-0000-0000-0000-000000000002, name: Failure, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
-- {module: ros_bt_py.nodes.decorators, node_class: RepeatAlways, max_children: 1, node_id: 64000000-0000-0000-0000-000000000003, name: UntickedRunning, child_ids: [64000000-0000-0000-0000-000000000004], inputs: [], outputs: [], tree_ref: ''}
-- {module: ros_bt_py.nodes.decorators, node_class: IgnoreFailure, max_children: 1, node_id: 64000000-0000-0000-0000-000000000004, name: RunningLeaf, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.sequence, node_class: MemorySequence, max_children: -1, node_id: ea0d30f6-23b4-5015-b5ca-cbb42aac02cd, name: MemorySequenceTerminalFailure, child_ids: [159fd258-90b6-57af-bc9d-b5fc3adc95d0, 7ce6c8a4-a2c5-5302-ad5a-b23e7f9f19a6], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreSuccess, max_children: 1, node_id: 159fd258-90b6-57af-bc9d-b5fc3adc95d0, name: Failure, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: RepeatAlways, max_children: 1, node_id: 7ce6c8a4-a2c5-5302-ad5a-b23e7f9f19a6, name: UntickedRunning, child_ids: [2aa2c376-fc49-5796-9678-68caa0039733], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreFailure, max_children: 1, node_id: 2aa2c376-fc49-5796-9678-68caa0039733, name: RunningLeaf, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
 data_wirings: []
 tick_frequency_hz: 10.0
 public_inputs: []

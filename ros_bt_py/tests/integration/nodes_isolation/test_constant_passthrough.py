@@ -54,17 +54,15 @@ def test_constant_output_is_propagated_through_a_tree(
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
 
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            node_states = {
-                node_state.node_id: node_state.state for node_state in state.node_states
-            }
+    match tree_control_node.get_node_states_by_name():
+        case Ok(node_states):
+            pass
         case result:
             assert False, result.unwrap_err()
 
-    assert node_states["241790d8-4322-4711-8ff1-bc35edcac703"] == NodeState.SUCCEEDED
-    assert node_states["f04b74fa-adf1-40e6-9030-b5352a7be19a"] == NodeState.SUCCEEDED
-    assert node_states["d9ff2fee-051e-44af-a248-34b9c3e3c640"] == NodeState.SUCCEEDED
+    assert node_states["Sequence"] == NodeState.SUCCEEDED
+    assert node_states["Constant"] == NodeState.SUCCEEDED
+    assert node_states["Passthrough"] == NodeState.SUCCEEDED
 
     match tree_control_node.get_tree_data():
         case Ok(data):

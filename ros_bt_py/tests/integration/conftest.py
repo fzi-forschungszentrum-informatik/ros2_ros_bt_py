@@ -283,6 +283,37 @@ class TreeControlNode(Node):
             rclpy.spin_once(self, timeout_sec=5)
         return Err("No tree structure with this id")
 
+    def get_node_states_by_name(
+        self, tree_id=uuid.UUID(int=0), wait_time=60
+    ) -> Result[dict[str, int], str]:
+        """Return current node states keyed by stable node names."""
+        structure_result = self.get_tree_structure(tree_id, wait_time)
+        if structure_result.is_err():
+            return Err(structure_result.unwrap_err())
+        state_result = self.get_tree_state(tree_id, wait_time)
+        if state_result.is_err():
+            return Err(state_result.unwrap_err())
+
+        structure = structure_result.unwrap()
+        names = [node.name for node in structure.nodes]
+        if len(names) != len(set(names)):
+            return Err("Tree contains duplicate node names")
+        name_by_id = {node.node_id: node.name for node in structure.nodes}
+        state = state_result.unwrap()
+        missing_ids = {
+            node_state.node_id
+            for node_state in state.node_states
+            if node_state.node_id not in name_by_id
+        }
+        if missing_ids:
+            return Err(f"Tree structure is missing node IDs: {sorted(missing_ids)}")
+        return Ok(
+            {
+                name_by_id[node_state.node_id]: node_state.state
+                for node_state in state.node_states
+            }
+        )
+
 
 @pytest.fixture
 def tree_control_node():

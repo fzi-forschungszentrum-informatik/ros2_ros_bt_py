@@ -43,14 +43,14 @@ def test_enum_switch_dispatches_matching_child(tree_control_node: TreeControlNod
         ControlTreeExecution.Request.TICK_ONCE
     ).is_ok()
 
-    match tree_control_node.get_tree_state():
-        case Ok(state):
-            states = {node.node_id: node.state for node in state.node_states}
+    match tree_control_node.get_node_states_by_name():
+        case Ok(states):
+            pass
         case result:
             assert False, result.unwrap_err()
 
-    assert states["30000000-0000-0000-0000-000000000001"] == NodeState.SUCCEEDED
-    assert states["30000000-0000-0000-0000-000000000002"] == NodeState.SUCCEEDED
+    assert states["EnumSwitch"] == NodeState.SUCCEEDED
+    assert states["FOO"] == NodeState.SUCCEEDED
 
 
 @pytest.mark.launch(fixture=standard_tree_node)
