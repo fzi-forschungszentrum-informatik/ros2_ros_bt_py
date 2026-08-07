@@ -26,65 +26,59 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from threading import Lock, RLock, Thread
+from threading import RLock
 from unittest.mock import MagicMock
 
 from ros_bt_py.nodes.sequence import MemorySequence
-from ros_bt_py.tree_exec_manager import TreeExecManager
+from ros_bt_py.ros_helpers import uuid_to_ros
+from ros_bt_py.tree_edit_manager import TreeEditManager
 from ros_bt_py_interfaces.msg import TreeState, TreeStructure
-from ros_bt_py_interfaces.srv import ClearTree
+from ros_bt_py_interfaces.srv import RemoveNode
 
 
-def test_clear_nonempty_tree_does_not_deadlock():
-    manager = TreeExecManager.__new__(TreeExecManager)
-    manager._tree_lock = Lock()
+def make_manager(nodes, children):
+    manager = TreeEditManager.__new__(TreeEditManager)
     manager._edit_lock = RLock()
-    manager._tree_structure = TreeStructure(name="loaded tree", path="file://tree.yaml")
-    manager._tree_structure.data_wirings = []
     manager._tree_state = TreeState(state=TreeState.EDITABLE)
-    manager.ros_node = MagicMock()
-    root = MemorySequence()
-    manager.nodes = {root.node_id: root}
-    manager.logging_manager = MagicMock()
+    manager._tree_structure = TreeStructure(name="broken")
+    manager._tree_structure.data_wirings = []
+    manager.nodes = {node.node_id: node for node in nodes}
+    manager._children = children
     manager.subtree_manager = MagicMock()
-    manager.clear_diagnostics_name = MagicMock()
+    manager.logging_manager = MagicMock()
     manager.publish_structure = MagicMock()
-
-    responses = []
-    clear_thread = Thread(
-        target=lambda: responses.append(manager.clear(None, ClearTree.Response())),
-        daemon=True,
-    )
-    clear_thread.start()
-    clear_thread.join(timeout=1.0)
-
-    assert not clear_thread.is_alive(), "clearing a nonempty tree deadlocked"
-    assert responses[0].success
-    assert manager.nodes == {}
-    assert manager.name == "UNKNOWN TREE"
-    assert manager._tree_structure.path == ""
-    manager.logging_manager.set_tree_name.assert_called_once_with("UNKNOWN TREE")
+    return manager
 
 
-def test_clear_forest_does_not_require_a_root():
-    manager = TreeExecManager.__new__(TreeExecManager)
-    manager._tree_lock = Lock()
-    manager._edit_lock = RLock()
-    manager._tree_structure = TreeStructure(name="broken", path="file://broken.yaml")
-    manager._tree_structure.data_wirings = []
-    manager._tree_state = TreeState(state=TreeState.EDITABLE)
-    manager.ros_node = MagicMock()
-    manager._tree_data = MagicMock()
+def test_remove_node_repairs_a_forest():
     first = MemorySequence()
     second = MemorySequence()
-    manager.nodes = {first.node_id: first, second.node_id: second}
-    manager._children = {first.node_id: [], second.node_id: []}
-    manager.logging_manager = MagicMock()
-    manager.subtree_manager = MagicMock()
-    manager.clear_diagnostics_name = MagicMock()
-    manager.publish_structure = MagicMock()
+    manager = make_manager([first, second], {first.node_id: [], second.node_id: []})
 
-    response = manager.clear(None, ClearTree.Response())
+    response = manager.remove_node(
+        RemoveNode.Request(node_id=uuid_to_ros(first.node_id), remove_children=False),
+        RemoveNode.Response(),
+    )
+
+    assert response.success
+    assert manager.nodes == {second.node_id: second}
+    assert manager._children == {second.node_id: []}
+
+
+def test_remove_children_terminates_for_a_cycle():
+    first = MemorySequence()
+    second = MemorySequence()
+    manager = make_manager(
+        [first, second],
+        {first.node_id: [second.node_id], second.node_id: [first.node_id]},
+    )
+    first.children = [second]
+    second.children = [first]
+
+    response = manager.remove_node(
+        RemoveNode.Request(node_id=uuid_to_ros(first.node_id), remove_children=True),
+        RemoveNode.Response(),
+    )
 
     assert response.success
     assert manager.nodes == {}
