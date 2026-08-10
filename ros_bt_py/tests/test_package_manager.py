@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import pytest
+from unittest.mock import MagicMock
 
 import ros_bt_py.package_manager
 from ros_bt_py.data_types import StringType, RosMessageType
@@ -34,7 +35,7 @@ from ros_bt_py.package_manager import PackageManager, to_message_type
 
 from std_msgs.msg import Header
 from builtin_interfaces.msg import Time
-from ros_bt_py_interfaces.msg import NodeIO
+from ros_bt_py_interfaces.msg import MessageTypes, NodeIO, Packages
 
 
 class TestPackageManager:
@@ -64,3 +65,21 @@ class TestPackageManager:
         monkeypatch.setattr(ros_bt_py.package_manager, "RosMessageType", raise_on_init)
 
         assert to_message_type(Header) is None
+
+    def test_republish_lists_for_late_subscribers(self):
+        message_publisher = MagicMock()
+        package_publisher = MagicMock()
+        message_publisher.get_subscription_count.return_value = 1
+        package_publisher.get_subscription_count.return_value = 1
+        manager = PackageManager(
+            ["/tmp"],
+            publish_message_list_callback=message_publisher,
+            publish_packages_list_callback=package_publisher,
+        )
+        manager.message_types = MessageTypes()
+        manager.packages = Packages()
+
+        manager.republish_lists()
+
+        message_publisher.publish.assert_called_once_with(manager.message_types)
+        package_publisher.publish.assert_called_once_with(manager.packages)

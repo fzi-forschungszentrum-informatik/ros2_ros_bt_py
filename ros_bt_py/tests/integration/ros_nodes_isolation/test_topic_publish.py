@@ -26,41 +26,41 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import pytest
-
-from typing import Optional
-
-import rclpy
-from rclpy.node import Node
-from threading import Lock
 import time
+from threading import Lock
+from typing import Any
 
+import pytest
+import rclpy
 from example_interfaces.msg import String
+from rclpy.node import Node
+from rclpy.qos import QoSDurabilityPolicy, QoSReliabilityPolicy
 
-from ros_bt_py_interfaces.srv import ControlTreeExecution
-
+from ros_bt_py_interfaces.msg import NodeIO
+from ros_bt_py_interfaces.srv import ControlTreeExecution, SetOptions
+from ros_bt_py.vendor.result import Err, Ok
 from tests.integration.conftest import TreeControlNode, standard_tree_node
 
 
 class FooSubscriber(Node):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, qos_profile: Any = 1, *args, **kwargs) -> None:
         super().__init__("foo_subscriber", *args, **kwargs)
 
-        self._last_message: Optional[String] = None
+        self._last_message: String | None = None
         self._message_lock = Lock()
 
         _ = self.create_subscription(
             String,
             "/foo",
             self._callback,
-            1,
+            qos_profile,
         )
 
     def _callback(self, msg: String):
         with self._message_lock:
             self._last_message = msg
 
-    def get_msg(self, wait_time=10) -> Optional[String]:
+    def get_msg(self, wait_time=10) -> String | None:
         start_time = time.time()
         while start_time + wait_time > time.time():
             with self._message_lock:
@@ -103,7 +103,9 @@ def test_first_tick_msg_receive(
     assert run_result.is_ok()
 
     # We expect a message after the first tick
-    assert foo_subscriber.get_msg() is not None
+    msg = foo_subscriber.get_msg()
+    assert msg is not None
+    assert msg.data == "foobarbaz"
 
 
 @pytest.mark.launch(fixture=standard_tree_node)
@@ -140,6 +142,77 @@ def test_reset_msg_receive(
     assert foo_subscriber.get_msg() is not None
 
 
+@pytest.mark.launch(fixture=standard_tree_node)
+@pytest.mark.dependency(depends=["test_reset_msg_receive"])
+def test_reconfigured_best_effort_volatile_publish(
+    tree_control_node: TreeControlNode,
+):
+    test_tree_load(tree_control_node)
+
+    publisher = None
+    match tree_control_node.get_tree_structure():
+        case Err(e):
+            assert False, e
+        case Ok(structure):
+            publisher = structure.nodes[0]
+    assert publisher is not None
+
+    replacement_values = {
+        "topic_name": '"/best_effort_volatile"',
+        "reliable": "false",
+        "transient_local": "false",
+        "message": '{"data": "reconfigured"}',
+    }
+    set_options_client = tree_control_node.create_client(
+        SetOptions,
+        "/BehaviorTreeNode/set_options",
+    )
+    assert set_options_client.wait_for_service(timeout_sec=10)
+    request = SetOptions.Request(
+        node_id=publisher.node_id,
+        rename_node=False,
+        new_name="",
+        inputs=[
+            NodeIO(
+                key=input_.key,
+                type=input_.type,
+                serialized_value=replacement_values.get(
+                    input_.key, input_.serialized_value
+                ),
+            )
+            for input_ in publisher.inputs
+        ],
+    )
+    future = set_options_client.call_async(request)
+    rclpy.spin_until_future_complete(tree_control_node, future, timeout_sec=10)
+    assert future.done()
+    assert future.result().success  # type: ignore
+
+    run_result = tree_control_node.execute_tree(ControlTreeExecution.Request.TICK_ONCE)
+    assert run_result.is_ok()
+
+    publishers = []
+    end_time = time.time() + 10
+    while time.time() < end_time:
+        publishers = [
+            endpoint
+            for endpoint in tree_control_node.get_publishers_info_by_topic(
+                "/best_effort_volatile"
+            )
+            if endpoint.topic_type == "example_interfaces/msg/String"
+        ]
+        if publishers:
+            break
+        rclpy.spin_once(tree_control_node, timeout_sec=0.1)
+    else:
+        assert False, f"Reconfigured publisher was not discovered: {publishers}"
+
+    qos_profile = publishers[0].qos_profile
+    # History and depth are not reliably available through graph discovery.
+    assert qos_profile.reliability == QoSReliabilityPolicy.BEST_EFFORT
+    assert qos_profile.durability == QoSDurabilityPolicy.VOLATILE
+
+
 # This marker name can be used for other tests to depend on,
 #   in case they rely on this node to work properly.
 # NOTE The dependencies for this test should be set in a way
@@ -147,7 +220,7 @@ def test_reset_msg_receive(
 @pytest.mark.dependency(
     name="TopicPublisher",
     depends=[
-        "test_reset_msg_receive",
+        "test_reconfigured_best_effort_volatile_publish",
     ],
 )
 def test_confirm_node_function():

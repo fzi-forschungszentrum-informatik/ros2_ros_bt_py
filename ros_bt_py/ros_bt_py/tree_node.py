@@ -262,6 +262,9 @@ class TreeNode(Node):
         )
 
         self.package_manager.publish_message_list()
+        self.package_lists_republish_timer = self.create_timer(
+            1.0, self.package_manager.republish_lists
+        )
         self.get_logger().info("initialized package manager")
 
     @typechecked

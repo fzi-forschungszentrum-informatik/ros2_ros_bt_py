@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 version: 1.0.0
-tree_id: 00000000-0000-0000-0000-000000000000
+tree_id: f0e154ae-504b-528c-9149-6259520d2828
 name: UNKNOWN TREE
 path: ''
 root_id: 9474388a-ff1e-408c-a7a3-aa411900ce44
@@ -111,7 +111,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   - key: message
     type:
       type_identifier: 4
@@ -129,7 +129,7 @@ nodes:
       ros_interface_kind: 0
       ros_msg_type: ''
       interface_id: 0
-    serialized_value: ''
+    serialized_value: 'null'
   tree_ref: ''
 data_wirings: []
 tick_frequency_hz: 10.0

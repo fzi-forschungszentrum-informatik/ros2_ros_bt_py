@@ -506,7 +506,7 @@ class TreeEditManager(TreeExecManager):
         # (i.e. `root.setup()` will be called before anything that
         # needs the node to be set up)
         node_msg = node.to_structure_msg()
-        node_msg.inputs = new_inputs.values()
+        node_msg.inputs = list(new_inputs.values())
         if request.rename_node:
             node_msg.name = request.new_name
         match self.instantiate_node_from_msg(node_msg, ros_node=self.ros_node):

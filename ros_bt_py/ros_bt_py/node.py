@@ -341,7 +341,7 @@ class Node(abc.ABC):
         you can use those values in your implementation of
         :meth:`_do_setup`
 
-        Sets the state of the node to IDLE or BROKEN.
+        Sets the state of the node to IDLE.
 
         :returns: Returns a result object with the new state or the error message.
         """
@@ -378,6 +378,15 @@ class Node(abc.ABC):
                 case Ok(s):
                     self.state = s
 
+            match self.check_if_in_invalid_state(
+                allowed_states=[BTNodeState.IDLE],
+                action_name="setup()",
+            ):
+                case Err(e):
+                    return Err(e)
+                case Ok(None):
+                    pass
+
         return Ok(self.state)
 
     @abc.abstractmethod
@@ -411,8 +420,16 @@ class Node(abc.ABC):
             report_tick = self.debug_manager.report_tick(self)
 
         with report_tick:
-            if self.state is BTNodeState.UNINITIALIZED:
-                return Err(BehaviorTreeException("Trying to tick uninitialized node!"))
+            if self.state in [
+                BTNodeState.UNINITIALIZED,
+                BTNodeState.SHUTDOWN,
+                BTNodeState.BROKEN,
+            ]:
+                return Err(
+                    BehaviorTreeException(
+                        f"Trying to tick node in invalid state {self.state}!"
+                    )
+                )
 
             # Check if any inputs are unset, if so return an error
             for key, container in self.node_config.inputs.items():
@@ -511,7 +528,11 @@ class Node(abc.ABC):
             report_state = self.debug_manager.report_state(self, "UNTICK")
 
         with report_state:
-            if self.state is BTNodeState.UNINITIALIZED:
+            if self.state in [
+                BTNodeState.UNINITIALIZED,
+                BTNodeState.SHUTDOWN,
+                BTNodeState.BROKEN,
+            ]:
                 return Err(
                     BehaviorTreeException("Trying to untick uninitialized node!")
                 )
@@ -569,7 +590,11 @@ class Node(abc.ABC):
             report_state = self.debug_manager.report_state(self, "RESET")
 
         with report_state:
-            if self.state is BTNodeState.UNINITIALIZED:
+            if self.state in [
+                BTNodeState.UNINITIALIZED,
+                BTNodeState.SHUTDOWN,
+                BTNodeState.BROKEN,
+            ]:
                 return Err(BehaviorTreeException("Trying to reset uninitialized node!"))
 
             if self.state is BTNodeState.SHUTDOWN:
@@ -650,6 +675,15 @@ class Node(abc.ABC):
                         error = e
                     case Ok(s):
                         self.state = s
+
+                match self.check_if_in_invalid_state(
+                    allowed_states=[BTNodeState.SHUTDOWN],
+                    action_name="shutdown()",
+                ):
+                    case Err(e):
+                        return Err(e)
+                    case Ok(None):
+                        pass
 
             for child in self.children:
                 match child.shutdown():

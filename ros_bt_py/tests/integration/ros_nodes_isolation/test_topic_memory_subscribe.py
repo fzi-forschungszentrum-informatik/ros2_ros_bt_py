@@ -80,6 +80,19 @@ def test_tree_load(
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
+def test_shutdown_before_first_tick(
+    tree_control_node: TreeControlNode,
+    time_control_node: TimeControlNode,
+):
+    test_tree_load(tree_control_node, time_control_node)
+
+    shutdown_result = tree_control_node.execute_tree(
+        ControlTreeExecution.Request.SHUTDOWN
+    )
+    assert shutdown_result.is_ok()
+
+
+@pytest.mark.launch(fixture=sim_time_tree_node)
 @pytest.mark.dependency(depends=["test_tree_load"])
 def test_first_tick_running(
     tree_control_node: TreeControlNode,

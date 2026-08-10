@@ -34,7 +34,11 @@ permissions:
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+    branches:
+      - main
   schedule:
     - cron: "04 23 * * *"
 
@@ -43,10 +47,18 @@ jobs:
     strategy:
       matrix:
         ros: [lyrical, kilted, jazzy]
+      fail-fast: true
     runs-on: ubuntu-latest
     container: ros:${{ matrix.ros }}
+    env:
+      PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - name: Cache pre-commit environments
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.PRE_COMMIT_HOME }}
+          key: pre-commit-${{ matrix.ros }}-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install pre-commit
         run: |
           sudo apt-get update
@@ -60,6 +72,8 @@ jobs:
     needs: pre-commit
     env:
       ICI_BASEDIR: $GITHUB_WORKSPACE
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+      UI_ARTIFACT_PATH: ${{ github.workspace }}/.build/target_ws/test-results/web_ui
     strategy:
       matrix:
         distro:
@@ -67,23 +81,82 @@ jobs:
           - jazzy
           - kilted
           - lyrical
+      fail-fast: false
+    continue-on-error: true
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: playwright-${{ runner.os }}-${{ matrix.distro }}-1.55.0-headless
+          restore-keys: |
+            playwright-${{ runner.os }}-${{ matrix.distro }}-
       - uses: "ros-industrial/industrial_ci@master"
         env:
           ROS_DISTRO: ${{ matrix.distro }}
           BASEDIR: ${{ github.workspace }}/.build
           ROS_REPO: main
           ROSDEP_SKIP_KEYS: result-pip
-          AFTER_INSTALL_TARGET_DEPENDENCIES: 'if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" || "$ROS_DISTRO" == "lyrical" ]; then pip3 install --break-system-packages coverage[toml] result; else pip3 install coverage[toml] result; fi;'
+          ADDITIONAL_DEBS: python3-slugify
+          DOCKER_RUN_OPTS: >-
+            -v ${{ env.PLAYWRIGHT_BROWSERS_PATH }}:/ms-playwright
+            -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+            -e ROS_BT_PY_UI_ARTIFACT_DIR=${{ env.UI_ARTIFACT_PATH }}
+          AFTER_INSTALL_TARGET_DEPENDENCIES: >-
+            PIP_SYSTEM_ARG="";
+            PYTEST_BASE_URL_VERSION="2.1.0";
+            PYTEST_PLAYWRIGHT_VERSION="0.7.1";
+            if [ "$ROS_DISTRO" == "jazzy" ] || [ "$ROS_DISTRO" == "kilted" ] || [ "$ROS_DISTRO" == "lyrical" ]; then
+              PIP_SYSTEM_ARG="--break-system-packages";
+            fi;
+            if [ "$ROS_DISTRO" == "humble" ]; then
+              PYTEST_BASE_URL_VERSION="1.4.2";
+              PYTEST_PLAYWRIGHT_VERSION="0.5.2";
+            fi;
+            python3 -m pip install ${PIP_SYSTEM_ARG} coverage[toml] result;
+            python3 -m pip install ${PIP_SYSTEM_ARG} --ignore-installed --no-deps playwright==1.55.0 pyee==13.0.1 'greenlet>=3.1.1,<4.0.0';
+            python3 -m pip install ${PIP_SYSTEM_ARG} --ignore-installed --no-deps pytest-base-url==${PYTEST_BASE_URL_VERSION} pytest-playwright==${PYTEST_PLAYWRIGHT_VERSION};
+            python3 -c 'import importlib.metadata as m; print("pytest", m.version("pytest")); print("playwright", m.version("playwright")); print("pytest-playwright", m.version("pytest-playwright"))';
+            if [ "$ROS_DISTRO" == "lyrical" ]; then
+              PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64 python3 -m playwright install --with-deps --only-shell chromium;
+            else
+              python3 -m playwright install --with-deps --only-shell chromium;
+            fi;
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
 
+      - name: Restore generated file ownership
+        if: always()
+        run: |
+          if [ -d "${PLAYWRIGHT_BROWSERS_PATH}" ]; then
+            sudo chown -R "$(id -u):$(id -g)" "${PLAYWRIGHT_BROWSERS_PATH}"
+          fi
+          if [ -d "${UI_ARTIFACT_PATH}" ]; then
+            sudo chown -R "$(id -u):$(id -g)" "${UI_ARTIFACT_PATH}"
+          fi
+
+      - name: Save Playwright browsers
+        if: always() && steps.playwright-cache.outcome == 'success' && steps.playwright-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
+
+      - name: Upload UI test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: UI Test Diagnostics (ROS ${{ matrix.distro }})
+          path: ${{ env.UI_ARTIFACT_PATH }}
+          if-no-files-found: warn
+
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Test Results (ROS ${{ matrix.distro }})
           path: |
@@ -107,7 +180,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 

@@ -32,6 +32,7 @@ from rclpy.utilities import ament_index_python
 import yaml
 
 from ros_bt_py.vendor.result import Result, Ok, Err
+from typing import Optional
 
 from ros_bt_py.data_types import (
     BoolType,
@@ -108,7 +109,7 @@ class YamlList(Leaf):
     """
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self._previous_load = False
+        self._cached_result: Optional[BTNodeState] = None
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -118,10 +119,10 @@ class YamlList(Leaf):
             case Ok(b):
                 updated = b
         if updated:
-            self._previous_load = False
+            self._cached_result = None
 
-        if self._previous_load:
-            return Ok(self.state)
+        if self._cached_result is not None:
+            return Ok(self._cached_result)
 
         match self.inputs.get_value_as("file_path", str):
             case Err(e):
@@ -149,16 +150,17 @@ class YamlList(Leaf):
             case Ok(None):
                 pass
 
-        self._previous_load = True
         if outputs["load_success"]:
-            return Ok(BTNodeState.SUCCEEDED)
-        return Ok(BTNodeState.FAILED)
+            self._cached_result = BTNodeState.SUCCEEDED
+        else:
+            self._cached_result = BTNodeState.FAILED
+        return Ok(self._cached_result)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self._previous_load = False
+        self._cached_result = None
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -189,7 +191,7 @@ class YamlDict(Leaf):
     """
 
     def _do_setup(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self._previous_load = False
+        self._cached_result: Optional[BTNodeState] = None
         return Ok(BTNodeState.IDLE)
 
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -199,11 +201,11 @@ class YamlDict(Leaf):
             case Ok(b):
                 updated = b
         if updated:
-            self._previous_load = False
+            self._cached_result = None
 
         # If we have previously tried to load this file, there's nothing to do
-        if self._previous_load:
-            return Ok(self.state)
+        if self._cached_result is not None:
+            return Ok(self._cached_result)
 
         match self.inputs.get_value_as("file_path", str):
             case Err(e):
@@ -230,16 +232,17 @@ class YamlDict(Leaf):
             case Ok(None):
                 pass
 
-        self._previous_load = True
         if outputs["load_success"]:
-            return Ok(BTNodeState.SUCCEEDED)
-        return Ok(BTNodeState.FAILED)
+            self._cached_result = BTNodeState.SUCCEEDED
+        else:
+            self._cached_result = BTNodeState.FAILED
+        return Ok(self._cached_result)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return Ok(BTNodeState.IDLE)
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
-        self._previous_load = False
+        self._cached_result = None
         return Ok(BTNodeState.IDLE)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:

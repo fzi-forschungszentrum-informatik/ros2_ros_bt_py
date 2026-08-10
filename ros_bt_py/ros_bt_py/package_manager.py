@@ -116,6 +116,8 @@ class PackageManager(object):
 
         self.message_list_pub = publish_message_list_callback
         self.packages_list_pub = publish_packages_list_callback
+        self.message_types = None
+        self.packages = None
 
     def save_tree_to_path(
         self, request: SaveTree.Request, response: SaveTree.Response
@@ -243,6 +245,7 @@ class PackageManager(object):
             for action in package_actions:
                 message_types.actions.append(package + "/" + action)
 
+        self.message_types = message_types
         self.message_list_pub.publish(message_types)
 
     def publish_packages_list(self):
@@ -263,7 +266,23 @@ class PackageManager(object):
                 package_msg.path = prefix
                 list_of_packages.packages.append(package_msg)
 
+        self.packages = list_of_packages
         self.packages_list_pub.publish(list_of_packages)
+
+    def republish_lists(self):
+        """Republish cached lists for volatile rosbridge subscriptions."""
+        if (
+            self.message_list_pub is not None
+            and self.message_types is not None
+            and self.message_list_pub.get_subscription_count() > 0
+        ):
+            self.message_list_pub.publish(self.message_types)
+        if (
+            self.packages_list_pub is not None
+            and self.packages is not None
+            and self.packages_list_pub.get_subscription_count() > 0
+        ):
+            self.packages_list_pub.publish(self.packages)
 
     def get_id(self):
         self.item_id += 1
@@ -355,8 +374,8 @@ class PackageManager(object):
         response.storage_folders = self.tree_storage_directory_paths
         return response
 
-    @typechecked
     @staticmethod
+    @typechecked
     def get_available_nodes(
         request: GetAvailableNodes.Request, response: GetAvailableNodes.Response
     ) -> GetAvailableNodes.Response:

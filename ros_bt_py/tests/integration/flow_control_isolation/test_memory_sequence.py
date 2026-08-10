@@ -110,6 +110,30 @@ def test_second_tick_running(
 
 
 @pytest.mark.launch(fixture=sim_time_tree_node)
+@pytest.mark.dependency(depends=["test_first_tick_running"])
+def test_stop_after_first_tick(
+    tree_control_node: TreeControlNode,
+    time_control_node: TimeControlNode,
+):
+    test_first_tick_running(tree_control_node, time_control_node)
+
+    stop_result = tree_control_node.execute_tree(ControlTreeExecution.Request.STOP)
+    assert stop_result.is_ok()
+
+
+@pytest.mark.launch(fixture=sim_time_tree_node)
+@pytest.mark.dependency(depends=["test_first_tick_running"])
+def test_reset_after_first_tick(
+    tree_control_node: TreeControlNode,
+    time_control_node: TimeControlNode,
+):
+    test_first_tick_running(tree_control_node, time_control_node)
+
+    reset_result = tree_control_node.execute_tree(ControlTreeExecution.Request.RESET)
+    assert reset_result.is_ok()
+
+
+@pytest.mark.launch(fixture=sim_time_tree_node)
 @pytest.mark.dependency(depends=["test_second_tick_running"])
 def test_third_tick_running(
     tree_control_node: TreeControlNode,

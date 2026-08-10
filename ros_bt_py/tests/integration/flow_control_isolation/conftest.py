@@ -76,6 +76,15 @@ class MultiPublishNode(Node):
                 depth=1,
             ),
         )
+        self.watch_publisher = self.create_publisher(
+            Empty,
+            "/decorator_watch",
+            QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                depth=1,
+            ),
+        )
 
     def publish_topic_1(self):
         self.publisher_1.publish(Empty())
@@ -85,6 +94,9 @@ class MultiPublishNode(Node):
 
     def publish_topic_3(self):
         self.publisher_3.publish(Empty())
+
+    def publish_watch_topic(self):
+        self.watch_publisher.publish(Empty())
 
 
 @pytest.fixture

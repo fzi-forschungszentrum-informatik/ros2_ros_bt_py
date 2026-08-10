@@ -169,10 +169,11 @@ class TopicSubscriber(Leaf):
 
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._msg = None
-        if self._subscriber is None:
+        subscriber = getattr(self, "_subscriber", None)
+        if subscriber is None:
             return Ok(BTNodeState.IDLE)
         # Unsubscribe from the topic so we don't receive further updates
-        if not self.ros_node.destroy_subscription(self._subscriber):
+        if not self.ros_node.destroy_subscription(subscriber):
             error_msg = "Failed to destroy subscription"
             self.logwarn(error_msg)
             return Err(BehaviorTreeException(error_msg))
@@ -371,10 +372,11 @@ class TopicMemorySubscriber(Leaf):
     def _do_reset(self) -> Result[BTNodeState, BehaviorTreeException]:
         self._msg = None
         self._msg_timestamp = None
-        if self._subscriber is None:
+        subscriber = getattr(self, "_subscriber", None)
+        if subscriber is None:
             return Ok(BTNodeState.IDLE)
         # Unsubscribe from the topic so we don't receive further updates
-        if not self.ros_node.destroy_subscription(self._subscriber):
+        if not self.ros_node.destroy_subscription(subscriber):
             error_msg = "Failed to destroy subscription"
             self.logwarn(error_msg)
             return Err(BehaviorTreeException(error_msg))

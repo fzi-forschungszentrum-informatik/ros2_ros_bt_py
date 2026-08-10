@@ -7,3 +7,10 @@ ros_bt_py/capabilities/
 .coverage
 parameters.py
 .codegraph/
+
+build/
+log/
+install/
+test-results/
+.playwright-cli/
+*.md

@@ -1,0 +1,337 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+version: 1.0.0
+tree_id: 93ba4340-c438-5def-b189-6108ffd49ad7
+name: yaml_file_loaders
+path: ''
+root_id: ef8c9544-21e7-5692-8a9a-d3e2b8fb4ee7
+nodes:
+- module: ros_bt_py.nodes.sequence
+  node_class: Sequence
+  max_children: -1
+  node_id: ef8c9544-21e7-5692-8a9a-d3e2b8fb4ee7
+  name: FileLoaders
+  child_ids:
+  - 4f23cf86-4f2d-5b09-981f-6e96c5046166
+  - aadab34e-77fd-524a-b6ee-44bdafdf5802
+  - 6e57e62c-3f3b-5744-b9a5-6f304870927f
+  - 38df20a4-f843-5b3e-8184-63c1906c8b7e
+  - 68918a45-e78b-57af-b4ef-36776c161ba7
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.file
+  node_class: YamlList
+  max_children: 0
+  node_id: 4f23cf86-4f2d-5b09-981f-6e96c5046166
+  name: ValidList
+  child_ids: []
+  inputs:
+  - key: file_path
+    type:
+      type_identifier: 8
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"package://ros_bt_py/test_data/file_nodes/list.yaml"'
+  - key: element_type
+    type:
+      type_identifier: 9
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options:
+      - '{"type": "bool", "value": {"type_identifier": 1}}'
+      - '{"type": "int", "value": {"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}}'
+      - '{"type": "float", "value": {"type_identifier": 3, "min_value": "-1.7976931348623157e+308", "max_value": "1.7976931348623157e+308"}}'
+      - '{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+      - '{"type": "list", "value": {"type_identifier": 5, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      - '{"type": "dict", "value": {"type_identifier": 6, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.file
+  node_class: YamlDict
+  max_children: 0
+  node_id: aadab34e-77fd-524a-b6ee-44bdafdf5802
+  name: ValidDict
+  child_ids: []
+  inputs:
+  - key: file_path
+    type:
+      type_identifier: 8
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"package://ros_bt_py/test_data/file_nodes/dict.yaml"'
+  - key: element_type
+    type:
+      type_identifier: 9
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options:
+      - '{"type": "bool", "value": {"type_identifier": 1}}'
+      - '{"type": "int", "value": {"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}}'
+      - '{"type": "float", "value": {"type_identifier": 3, "min_value": "-1.7976931348623157e+308", "max_value": "1.7976931348623157e+308"}}'
+      - '{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+      - '{"type": "list", "value": {"type_identifier": 5, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      - '{"type": "dict", "value": {"type_identifier": 6, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 6e57e62c-3f3b-5744-b9a5-6f304870927f
+  name: IgnoreMalformedYaml
+  child_ids:
+  - 514bfd37-0d85-5032-a4fe-8c6cdfdf3e13
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.file
+  node_class: YamlList
+  max_children: 0
+  node_id: 514bfd37-0d85-5032-a4fe-8c6cdfdf3e13
+  name: MalformedYaml
+  child_ids: []
+  inputs:
+  - key: file_path
+    type:
+      type_identifier: 8
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"package://ros_bt_py/test_data/file_nodes/malformed.yaml"'
+  - key: element_type
+    type:
+      type_identifier: 9
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options:
+      - '{"type": "bool", "value": {"type_identifier": 1}}'
+      - '{"type": "int", "value": {"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}}'
+      - '{"type": "float", "value": {"type_identifier": 3, "min_value": "-1.7976931348623157e+308", "max_value": "1.7976931348623157e+308"}}'
+      - '{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+      - '{"type": "list", "value": {"type_identifier": 5, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      - '{"type": "dict", "value": {"type_identifier": 6, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 38df20a4-f843-5b3e-8184-63c1906c8b7e
+  name: IgnoreWrongShape
+  child_ids:
+  - c77733ea-a908-566e-b069-9ba80438a3c3
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.file
+  node_class: YamlList
+  max_children: 0
+  node_id: c77733ea-a908-566e-b069-9ba80438a3c3
+  name: WrongShape
+  child_ids: []
+  inputs:
+  - key: file_path
+    type:
+      type_identifier: 8
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"package://ros_bt_py/test_data/file_nodes/dict.yaml"'
+  - key: element_type
+    type:
+      type_identifier: 9
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options:
+      - '{"type": "bool", "value": {"type_identifier": 1}}'
+      - '{"type": "int", "value": {"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}}'
+      - '{"type": "float", "value": {"type_identifier": 3, "min_value": "-1.7976931348623157e+308", "max_value": "1.7976931348623157e+308"}}'
+      - '{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+      - '{"type": "list", "value": {"type_identifier": 5, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      - '{"type": "dict", "value": {"type_identifier": 6, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.decorators
+  node_class: IgnoreFailure
+  max_children: 1
+  node_id: 68918a45-e78b-57af-b4ef-36776c161ba7
+  name: IgnoreMissingFile
+  child_ids:
+  - fab36c00-92be-5239-826d-992e72c3e42f
+  inputs: []
+  outputs: []
+  tree_ref: ''
+- module: ros_bt_py.nodes.file
+  node_class: YamlList
+  max_children: 0
+  node_id: fab36c00-92be-5239-826d-992e72c3e42f
+  name: MissingFile
+  child_ids: []
+  inputs:
+  - key: file_path
+    type:
+      type_identifier: 8
+      value_type_identifier: []
+      allow_dynamic: true
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: ''
+      max_value: ''
+      string_max_length: 18446744073709550000
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '"package://ros_bt_py/test_data/file_nodes/missing.yaml"'
+  - key: element_type
+    type:
+      type_identifier: 9
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options:
+      - '{"type": "bool", "value": {"type_identifier": 1}}'
+      - '{"type": "int", "value": {"type_identifier": 2, "min_value": "-9223372036854775808", "max_value": "9223372036854775807"}}'
+      - '{"type": "float", "value": {"type_identifier": 3, "min_value": "-1.7976931348623157e+308", "max_value": "1.7976931348623157e+308"}}'
+      - '{"type": "str", "value": {"type_identifier": 4, "max_length": 18446744073709550000}}'
+      - '{"type": "list", "value": {"type_identifier": 5, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      - '{"type": "dict", "value": {"type_identifier": 6, "max_length": 18446744073709550000, "strict_length": false, "element_type": {"type_identifier": 1}}}'
+      min_value: ''
+      max_value: ''
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '{"type_identifier": 4, "max_length": 18446744073709550000}'
+  outputs: []
+  tree_ref: ''
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

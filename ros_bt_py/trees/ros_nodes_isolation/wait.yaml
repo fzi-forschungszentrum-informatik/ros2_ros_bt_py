@@ -1,0 +1,65 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+version: 1.0.0
+tree_id: d74662b1-23da-5d88-b84e-3ce42b3fc0ba
+name: wait
+path: ''
+root_id: 0f9ab946-21a2-427a-b001-7bb165ed1553
+nodes:
+- module: ros_bt_py.ros_nodes.wait
+  node_class: Wait
+  max_children: 0
+  node_id: 0f9ab946-21a2-427a-b001-7bb165ed1553
+  name: Wait
+  child_ids: []
+  inputs:
+  - key: seconds_to_wait
+    type:
+      type_identifier: 3
+      value_type_identifier: []
+      allow_dynamic: false
+      allow_static: true
+      is_static: true
+      serialized_value_options: []
+      min_value: '0.0'
+      max_value: '1.7976931348623157e+308'
+      string_max_length: 0
+      iterable_max_length: []
+      iterable_strict_length: []
+      reference_target: ''
+      ros_interface_kind: 0
+      ros_msg_type: ''
+      interface_id: 0
+    serialized_value: '1.5'
+  outputs: []
+  tree_ref: ''
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

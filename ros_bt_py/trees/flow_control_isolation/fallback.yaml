@@ -1,0 +1,46 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+version: 1.0.0
+tree_id: 252f070f-7715-53ca-ba20-e143468597d9
+name: Fallback isolation
+path: ''
+root_id: 6100d191-08d8-531c-a187-7cdd6bba873e
+nodes:
+- {module: ros_bt_py.nodes.fallback, node_class: Fallback, max_children: -1, node_id: 6100d191-08d8-531c-a187-7cdd6bba873e, name: Fallback, child_ids: [2ce0af24-3cea-50ff-b183-82b905da956e, 8d033352-acf1-5d11-a631-1c214959d638, 6b4c7d6a-4098-5086-91c7-ad9b82d468b8, 51601924-ff8e-5af3-9e7e-a69f3bbf7375], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.fallback, node_class: Fallback, max_children: -1, node_id: 2ce0af24-3cea-50ff-b183-82b905da956e, name: EmptyFallback, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.fallback, node_class: Fallback, max_children: -1, node_id: 8d033352-acf1-5d11-a631-1c214959d638, name: AllFailedFallback, child_ids: [942a4dc8-295c-56b5-a9c2-f569c23fdebd, 0531aa87-a541-571a-b902-998fb21a5a83], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreFailure, max_children: 1, node_id: 6b4c7d6a-4098-5086-91c7-ad9b82d468b8, name: Success, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreSuccess, max_children: 1, node_id: 942a4dc8-295c-56b5-a9c2-f569c23fdebd, name: FailureOne, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreSuccess, max_children: 1, node_id: 0531aa87-a541-571a-b902-998fb21a5a83, name: FailureTwo, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: RepeatAlways, max_children: 1, node_id: 51601924-ff8e-5af3-9e7e-a69f3bbf7375, name: UntickedRunning, child_ids: [6ba404ee-f593-5d86-8993-527a51ba8837], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreFailure, max_children: 1, node_id: 6ba404ee-f593-5d86-8993-527a51ba8837, name: RunningLeaf, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []

@@ -54,6 +54,8 @@ from ros_bt_py.vendor.result import Result, Ok, Err
 from ros_bt_py.ros_helpers import uuid_to_ros
 
 from ros_bt_py_interfaces.msg import (
+    TreeData,
+    TreeDataList,
     TreeState,
     TreeStructure,
     TreeStateList,
@@ -65,6 +67,7 @@ from ros_bt_py_interfaces.srv import (
 )
 
 from rosgraph_msgs.msg import Clock
+from std_srvs.srv import SetBool
 
 
 # This function specifies the processes to be run for our test.
@@ -129,6 +132,7 @@ class TreeControlNode(Node):
         self._tree_msg_lock = Lock()
         self._tree_structure_msg: Optional[TreeStructureList] = None
         self._tree_state_msg: Optional[TreeStateList] = None
+        self._tree_data_msg: Optional[TreeDataList] = None
 
         self.load_tree_client = self.create_client(
             LoadTreeFromPath,
@@ -137,6 +141,10 @@ class TreeControlNode(Node):
         self.execute_tree_client = self.create_client(
             ControlTreeExecution,
             "/BehaviorTreeNode/control_tree_execution",
+        )
+        self.set_publish_data_client = self.create_client(
+            SetBool,
+            "/BehaviorTreeNode/debug/set_publish_data",
         )
         self.tree_structure_subscription = self.create_subscription(
             TreeStructureList,
@@ -150,6 +158,12 @@ class TreeControlNode(Node):
             self._new_tree_state_msg,
             1,
         )
+        self.tree_data_subscription = self.create_subscription(
+            TreeDataList,
+            "/BehaviorTreeNode/tree_data_list",
+            self._new_tree_data_msg,
+            1,
+        )
 
     def _new_tree_structure_msg(self, msg: TreeStructureList):
         with self._tree_msg_lock:
@@ -159,7 +173,15 @@ class TreeControlNode(Node):
         with self._tree_msg_lock:
             self._tree_state_msg = msg
 
+    def _new_tree_data_msg(self, msg: TreeDataList):
+        with self._tree_msg_lock:
+            self._tree_data_msg = msg
+
     def load_tree(self, tree_file: str, wait_time=30) -> Result[None, str]:
+        with self._tree_msg_lock:
+            self._tree_structure_msg = None
+            self._tree_state_msg = None
+            self._tree_data_msg = None
         load_req = LoadTreeFromPath.Request(
             path=f"package://ros_bt_py/{tree_file}",
             permissive=False,
@@ -174,6 +196,17 @@ class TreeControlNode(Node):
             return Ok(None)
         else:
             return Err(load_future.result().error_message)  # type: ignore
+
+    def set_publish_data(self, enabled: bool, wait_time=30) -> Result[None, str]:
+        if not self.set_publish_data_client.wait_for_service(timeout_sec=wait_time):
+            return Err("Set publish data server not available")
+        future = self.set_publish_data_client.call_async(SetBool.Request(data=enabled))
+        rclpy.spin_until_future_complete(self, future, timeout_sec=wait_time)
+        if not future.done():
+            return Err("Set publish data request did not complete")
+        if future.result().success:  # type: ignore
+            return Ok(None)
+        return Err(future.result().message)  # type: ignore
 
     def execute_tree(self, tree_action: int, wait_time=30) -> Result[None, str]:
         run_req = ControlTreeExecution.Request(
@@ -206,6 +239,35 @@ class TreeControlNode(Node):
             rclpy.spin_once(self, timeout_sec=5)
         return Err("No tree structure with this id")
 
+    def wait_for_tree_name(
+        self, name: str, tree_id=uuid.UUID(int=0), wait_time=60
+    ) -> Result[TreeStructure, str]:
+        """Wait until the published structure has the requested name."""
+        ros_tree_id = uuid_to_ros(tree_id)
+        start_time = time.time()
+        while start_time + wait_time > time.time():
+            if self._tree_structure_msg is not None:
+                with self._tree_msg_lock:
+                    for structure in self._tree_structure_msg.tree_structures:
+                        if structure.tree_id == ros_tree_id and structure.name == name:
+                            return Ok(structure)
+            rclpy.spin_once(self, timeout_sec=0.1)
+        return Err(f"No tree structure named {name!r}")
+
+    def get_tree_data(
+        self, tree_id=uuid.UUID(int=0), wait_time=60
+    ) -> Result[TreeData, str]:
+        ros_tree_id = uuid_to_ros(tree_id)
+        start_time = time.time()
+        while start_time + wait_time > time.time():
+            if self._tree_data_msg is not None:
+                with self._tree_msg_lock:
+                    for data in self._tree_data_msg.tree_data:
+                        if data.tree_id == ros_tree_id:
+                            return Ok(data)
+            rclpy.spin_once(self, timeout_sec=5)
+        return Err("No tree data with this id")
+
     def get_tree_state(
         self, tree_id=uuid.UUID(int=0), wait_time=60
     ) -> Result[TreeState, str]:
@@ -220,6 +282,37 @@ class TreeControlNode(Node):
                             return Ok(state)
             rclpy.spin_once(self, timeout_sec=5)
         return Err("No tree structure with this id")
+
+    def get_node_states_by_name(
+        self, tree_id=uuid.UUID(int=0), wait_time=60
+    ) -> Result[dict[str, int], str]:
+        """Return current node states keyed by stable node names."""
+        structure_result = self.get_tree_structure(tree_id, wait_time)
+        if structure_result.is_err():
+            return Err(structure_result.unwrap_err())
+        state_result = self.get_tree_state(tree_id, wait_time)
+        if state_result.is_err():
+            return Err(state_result.unwrap_err())
+
+        structure = structure_result.unwrap()
+        names = [node.name for node in structure.nodes]
+        if len(names) != len(set(names)):
+            return Err("Tree contains duplicate node names")
+        name_by_id = {node.node_id: node.name for node in structure.nodes}
+        state = state_result.unwrap()
+        missing_ids = {
+            node_state.node_id
+            for node_state in state.node_states
+            if node_state.node_id not in name_by_id
+        }
+        if missing_ids:
+            return Err(f"Tree structure is missing node IDs: {sorted(missing_ids)}")
+        return Ok(
+            {
+                name_by_id[node_state.node_id]: node_state.state
+                for node_state in state.node_states
+            }
+        )
 
 
 @pytest.fixture

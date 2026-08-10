@@ -1,0 +1,57 @@
+# Copyright (c) 2026 FZI Forschungszentrum Informatik
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    * Neither the name of the copyright holder nor the names of its
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+version: 1.0.0
+tree_id: a412430f-41b4-5d21-b082-0e56fb253997
+name: ParallelFailureTolerance isolation
+path: ''
+root_id: 6a2034e7-7db5-5f8b-9208-72365f6d80a4
+nodes:
+- module: ros_bt_py.nodes.parallel
+  node_class: ParallelFailureTolerance
+  max_children: -1
+  node_id: 6a2034e7-7db5-5f8b-9208-72365f6d80a4
+  name: ParallelFailureTolerance
+  child_ids: [6fb2fd83-b8e6-563f-9710-ae1cf7d33cf7, 7b17b8a5-f0c2-5c96-b875-2359f8d05829, d7750aa3-f569-57e2-86ce-8ce801b2ee49]
+  inputs:
+  - key: needed_successes
+    type: {type_identifier: 2, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '1', max_value: '18446744073709551615', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '2'
+  - key: tolerate_failures
+    type: {type_identifier: 2, value_type_identifier: [], allow_dynamic: false, allow_static: true, is_static: true, serialized_value_options: [], min_value: '0', max_value: '18446744073709551615', string_max_length: 0, iterable_max_length: [], iterable_strict_length: [], reference_target: '', ros_interface_kind: 0, ros_msg_type: '', interface_id: 0}
+    serialized_value: '1'
+  outputs: []
+  tree_ref: ''
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreSuccess, max_children: 1, node_id: 6fb2fd83-b8e6-563f-9710-ae1cf7d33cf7, name: ToleratedFailure, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreFailure, max_children: 1, node_id: 7b17b8a5-f0c2-5c96-b875-2359f8d05829, name: Success, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: RepeatAlways, max_children: 1, node_id: d7750aa3-f569-57e2-86ce-8ce801b2ee49, name: Running, child_ids: [874d6c03-776b-5e49-9313-9ae3ac85e868], inputs: [], outputs: [], tree_ref: ''}
+- {module: ros_bt_py.nodes.decorators, node_class: IgnoreFailure, max_children: 1, node_id: 874d6c03-776b-5e49-9313-9ae3ac85e868, name: RunningLeaf, child_ids: [], inputs: [], outputs: [], tree_ref: ''}
+data_wirings: []
+tick_frequency_hz: 10.0
+public_inputs: []
+public_outputs: []
