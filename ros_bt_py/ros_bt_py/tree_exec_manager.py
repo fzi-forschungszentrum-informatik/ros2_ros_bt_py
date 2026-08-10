@@ -356,6 +356,8 @@ class TreeExecManager:
 
         self.nodes: Dict[uuid.UUID, Node] = {}
 
+        self._children: Dict[uuid.UUID, list[uuid.UUID]] = {}
+
         self._edit_lock = RLock()
         # Stop the tick thread after a single tick
         self._once: bool = False
@@ -462,6 +464,13 @@ class TreeExecManager:
     def get_logger(self) -> LoggingManager:
         return self.logging_manager
 
+    def _sync_children(self) -> None:
+        """Mirror the current runtime links for topology diagnostics."""
+        self._children = {
+            node_id: [child.node_id for child in node.children]
+            for node_id, node in self.nodes.items()
+        }
+
     def set_diagnostics_name(self) -> None:
         """
         Set the tree name for ROS diagnostics.
@@ -469,6 +478,7 @@ class TreeExecManager:
         If the BT has a name, this name will published in diagnostics.
         Otherwise, the root name of the tree is used.
         """
+        root = None
         if self.name:
             self.diagnostic_status.name = os.path.splitext(self.name)[0]
             return
@@ -580,13 +590,19 @@ class TreeExecManager:
 
         if nodes exist, but either no root or multiple roots are
         found.
+
+        Uses the manager-owned _children adjacency list to determine
+        root nodes (nodes not in any child's list).
         """
-        # TODO This case being an Ok causes a lot of extra checks down the line
-        #   Maybe reevaluate if that makes sense.
+        self._sync_children()
         if not self.nodes:
             return Ok(None)
-        # Find root node
-        possible_roots = [node for node in self.nodes.values() if not node.parent]
+        all_child_ids: set[uuid.UUID] = set()
+        for child_list in self._children.values():
+            all_child_ids.update(child_list)
+        possible_roots = [
+            node for node in self.nodes.values() if node.node_id not in all_child_ids
+        ]
 
         if len(possible_roots) > 1:
             return Err(
@@ -597,7 +613,7 @@ class TreeExecManager:
         if not possible_roots:
             return Err(
                 TreeTopologyError(
-                    f'All nodes in tree "{self.name} have parents. You have '
+                    f'All nodes in tree "{self.name}" have parents. You have '
                     "made a cycle, which makes the tree impossible to run!"
                 )
             )
@@ -740,31 +756,24 @@ class TreeExecManager:
     def clear(
         self, request: Optional[ClearTree.Request], response: ClearTree.Response
     ) -> ClearTree.Response:
-        response.success = False
-        root_result = self.find_root()
-        if root_result.is_err():
-            self.get_logger().warn(f"Could not find root {root_result.unwrap_err()}")
-            response.error_message = str(root_result.unwrap_err())
-            response.success = False
-            return response
-        root = root_result.unwrap()
-        if not root:
-            # No root, no problems
-            response.success = True
-            return response
-        if root.state not in [BTNodeState.UNINITIALIZED, BTNodeState.SHUTDOWN]:
-            self.get_logger().error("Please shut down the tree before clearing it")
-            response.success = False
-            response.error_message = "Please shut down the tree before clearing it"
-            return response
-
+        # Clearing is a repair/destructive edit.  The edit-service decorator
+        # already prevents it while execution is active, so root discovery
+        # must not make clearing malformed topology impossible.
         self.nodes = {}
+        self._children = {}
         with self._tree_lock:
             # These reassignments makes the typing happy,
             #   because they ensure that `.append .extent .remove ...` exists
             self.wirings = []
             self._tree_structure.path = ""
+            self._tree_structure.root_id = uuid_to_ros(uuid.UUID(int=0))
+            self._tree_structure.public_inputs = []
+            self._tree_structure.public_outputs = []
         self.name = "UNKNOWN TREE"
+        self.state = TreeState.EDITABLE
+        self._tree_state.node_states = []
+        if hasattr(self, "_tree_data"):
+            self._tree_data.wiring_data = []
         self.subtree_manager.clear_subtrees()
         self.clear_diagnostics_name()
         response.success = True
@@ -835,8 +844,12 @@ class TreeExecManager:
 
         tree = load_response.tree
 
-        # Clear existing tree, then replace it with the message's contents
-        self.clear(None, ClearTree.Response())
+        # Clear existing tree, then replace it with the message's contents.
+        clear_response = self.clear(None, ClearTree.Response())
+        if not clear_response.success:
+            response.success = False
+            response.error_message = clear_response.error_message
+            return response
         # First just add all nodes to the tree, then restore tree structure
         for node in tree.nodes:
             match self.instantiate_node_from_msg(
@@ -868,6 +881,9 @@ class TreeExecManager:
                         return response
                     case Ok(_):
                         pass
+
+        for n in self.nodes.values():
+            self._children[n.node_id] = [c.node_id for c in n.children]
 
         # All nodes are added, now do the wiring
         updated_wirings = []
@@ -945,10 +961,19 @@ class TreeExecManager:
 
         find_root_result = self.find_root()
         if find_root_result.is_err():
-            response.success = False
-            response.error_message = (
-                f"Failed to determine tree root:{str(find_root_result.unwrap_err())}"
+            # A malformed editable/error tree has no runtime root to shut down.
+            # Recovery must still be possible, so discard derived links and
+            # return to the editable state.
+            self.get_logger().warn(
+                f"Could not determine tree root during shutdown: "
+                f"{find_root_result.unwrap_err()}"
             )
+            for node in self.nodes.values():
+                node.parent = None
+                node.children = []
+            self.state = TreeState.EDITABLE
+            response.tree_state = self.state
+            response.success = True
             return response
         root = find_root_result.unwrap()
         if root:
@@ -1341,6 +1366,7 @@ class TreeExecManager:
         node_instance = node_result.unwrap()
 
         self.nodes[node_instance.node_id] = node_instance
+        self._children.setdefault(node_instance.node_id, [])
 
         return Ok(node_instance)
 

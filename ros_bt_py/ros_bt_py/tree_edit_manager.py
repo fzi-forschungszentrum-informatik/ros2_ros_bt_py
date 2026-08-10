@@ -128,7 +128,7 @@ class TreeEditManager(TreeExecManager):
         Add the node in this request to the tree.
 
         The `node_id` from the request is discarded and a new one is randomly generated.
-        The actual is that the node is assigned is included in the response.
+        The actual id that the node is assigned is included in the response.
 
         :param ros_bt_py_msgs.srv.AddNodeAtIndexRequest request:
             A request describing the node to add.
@@ -168,7 +168,7 @@ class TreeEditManager(TreeExecManager):
                 # Remove node from tree
                 self.remove_node(
                     request=RemoveNode.Request(
-                        node_name=instance.name, remove_children=False
+                        node_id=uuid_to_ros(instance.node_id), remove_children=False
                     ),
                     response=RemoveNode.Response(),
                 )
@@ -205,7 +205,7 @@ class TreeEditManager(TreeExecManager):
             # Remove node from tree to restore state before insertion attempt
             self.remove_node(
                 request=RemoveNode.Request(
-                    node_name=instance.name, remove_children=False
+                    node_id=uuid_to_ros(instance.node_id), remove_children=False
                 ),
                 response=RemoveNode.Response(),
             )
@@ -229,11 +229,21 @@ class TreeEditManager(TreeExecManager):
             # Then remove the node from the tree
             self.remove_node(
                 request=RemoveNode.Request(
-                    node_name=instance.name, remove_children=False
+                    node_id=uuid_to_ros(instance.node_id), remove_children=False
                 ),
                 response=RemoveNode.Response(),
             )
             return response
+
+        if parent_node_id != uuid.UUID(int=0):
+            if parent_node_id not in self._children:
+                self._children[parent_node_id] = []
+            self._children[parent_node_id].append(instance.node_id)
+        if instance.node_id not in self._children:
+            self._children[instance.node_id] = []
+        for child_id in request.node.child_ids:
+            if child_id in self.nodes:
+                self._children[instance.node_id].append(child_id)
 
         return response
 
@@ -276,59 +286,57 @@ class TreeEditManager(TreeExecManager):
             )
             return response
 
-        target_node = self.nodes[node_id]
-
-        node_ids_to_remove = {target_node.node_id}
+        self._sync_children()
+        node_ids_to_remove = {node_id}
         if request.remove_children:
-            for child in target_node.get_children_recursive():
-                node_ids_to_remove.add(child.node_id)
+            pending = [node_id]
+            while pending:
+                current_id = pending.pop()
+                for child_id in self._children.get(current_id, []):
+                    if child_id in self.nodes and child_id not in node_ids_to_remove:
+                        node_ids_to_remove.add(child_id)
+                        pending.append(child_id)
 
-        # Unwire wirings that have removed nodes as source or target
-        unwire_response = self.unwire_data(
-            request=WireNodeData.Request(
-                wirings=[
-                    wiring
-                    for wiring in self._tree_structure.data_wirings
-                    if any(
-                        [
-                            wiring_has_id(wiring, node_id)
-                            for node_id in node_ids_to_remove
-                        ]
-                    )
-                ]
-            ),
-            response=WireNodeData.Response(),
-        )
-        if not unwire_response.success:
-            response.success = False
-            response.error_message = (
-                f"Failed to unwire nodes for removal: {unwire_response.error_message}"
+        # Deletion is deliberately more permissive than explicit unwiring:
+        # stale wiring records must not prevent removing the node that fixes them.
+        removed_wirings = [
+            wiring
+            for wiring in self.wirings
+            if any(
+                wiring_has_id(wiring, removed_id) for removed_id in node_ids_to_remove
             )
-            return response
+        ]
+        self.wirings = [
+            wiring for wiring in self.wirings if wiring not in removed_wirings
+        ]
+        for wiring in removed_wirings:
+            if self.validate_wiring(wiring).is_err():
+                self.get_logger().warn(
+                    f"Discarded stale wiring while removing nodes: {wiring}"
+                )
 
-        # Remove nodes in the reverse order they were added to the
-        # list, i.e. the "deepest" ones first. This ensures that the
-        # parent we refer to in the error message still exists.
+        # Remove references from every surviving adjacency list.  This also
+        # repairs multiple-parent and cyclic editable graphs without traversal.
+        for parent_id, children in self._children.items():
+            if parent_id not in node_ids_to_remove:
+                self._children[parent_id] = [
+                    child_id
+                    for child_id in children
+                    if child_id not in node_ids_to_remove
+                ]
+                self.nodes[parent_id].children = [
+                    child
+                    for child in self.nodes[parent_id].children
+                    if child.node_id not in node_ids_to_remove
+                ]
 
-        for n_id in reversed(list(node_ids_to_remove)):
-            r_node = self.nodes[n_id]
-
-            # If we have a parent, remove the node from that parent
-            # TODO Why this convoluted double lookup, the `parent` reference should be good?
-            if (
-                r_node.parent is not None and r_node.parent.node_id in self.nodes  # type: ignore
-            ):
-                self.nodes[r_node.parent.node_id].remove_child(r_node.node_id)  # type: ignore
-            del self.nodes[r_node.node_id]
-
-        # This is moved down here, because setting the parent to None breaks the unwire
-        if not request.remove_children:
-            # If we're not removing the children, at least set their parent to None
-            for child in target_node.children:
-                child.parent = None
-
-        for n_id in node_ids_to_remove:
-            self.subtree_manager.remove_subtree(n_id)
+        for removed_id in node_ids_to_remove:
+            if removed_id in self.nodes:
+                self.nodes[removed_id].parent = None
+                self.nodes[removed_id].children = []
+            self._children.pop(removed_id, None)
+            self.nodes.pop(removed_id, None)
+            self.subtree_manager.remove_subtree(removed_id)
 
         response.success = True
         return response
@@ -443,6 +451,10 @@ class TreeEditManager(TreeExecManager):
         # Add the new node to self.nodes
         del self.nodes[old_node.node_id]
         self.nodes[new_node.node_id] = new_node
+        self._children.pop(old_node.node_id, None)
+        self._children[new_node.node_id] = [
+            child.node_id for child in new_node.children
+        ]
 
         rewire_resp = self.wire_data(
             request=wire_request, response=WireNodeData.Response()
@@ -485,6 +497,7 @@ class TreeEditManager(TreeExecManager):
             return response
 
         node = self.nodes[node_id]
+        self._sync_children()
 
         # Because options are used at construction time, we need to
         # construct a new node with the new options.
@@ -590,6 +603,7 @@ class TreeEditManager(TreeExecManager):
 
         # Add the new node to self.nodes
         self.nodes[node_id] = new_node
+        self._children[node_id] = [child.node_id for child in new_node.children]
 
         self.wire_data(request=wire_request, response=WireNodeData.Response())
 
@@ -608,6 +622,8 @@ class TreeEditManager(TreeExecManager):
                     return response
                 case Ok(_):
                     pass
+
+        self._sync_children()
 
         # We made it!
         response.success = True
@@ -656,6 +672,7 @@ class TreeEditManager(TreeExecManager):
                     case Ok(_):
                         pass
 
+            self._sync_children()
             response.success = True
             return response
 
@@ -678,20 +695,18 @@ class TreeEditManager(TreeExecManager):
             )
             return response
 
-        # If the new parent is part of the moved node's subtree, we'd
-        # get a cycle, so check for that and fail if true!
-        match node.get_subtree_msg():
-            case Err(e):
-                response.success = False
-                response.error_message = (
-                    f"Could not generate subtree msg from {node.name}: {str(e)}"
-                )
-                return response
-            case Ok(s_m):
-                subtree_msg = s_m
-        if new_parent.node_id in [
-            subtree_node.name for subtree_node in subtree_msg[0].nodes
-        ]:
+        # If the new parent is in the moved node's descendant set, attaching
+        # it would create a cycle.  Use the editable adjacency graph rather
+        # than recursive Node serialization so malformed graphs stay bounded.
+        descendants = set()
+        pending = list(self._children.get(node_id, []))
+        while pending:
+            descendant_id = pending.pop()
+            if descendant_id in descendants:
+                continue
+            descendants.add(descendant_id)
+            pending.extend(self._children.get(descendant_id, []))
+        if new_parent.node_id in descendants:
             response.success = False
             response.error_message = (
                 f"Cannot move node {node.name} to new parent node {new_parent.name}. "
@@ -722,6 +737,7 @@ class TreeEditManager(TreeExecManager):
             case Ok(_):
                 pass
 
+        self._sync_children()
         response.success = True
         return response
 
@@ -973,7 +989,6 @@ class TreeEditManager(TreeExecManager):
 
         match self.nodes[root_id].get_subtree_msg():
             case Err(e):
-                response.subtree = False
                 response.error_message = (
                     f"Error retrieving subtree rooted at {request.root_id}: {str(e)}"
                 )
