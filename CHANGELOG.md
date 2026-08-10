@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Support Humble pytest with Playwright by @Oberacda
+- Add shipped Web UI integration coverage by @Oberacda
+- Add additonal integration tests. by @Oberacda
+- Add integration tests for constant, wait, concatenation nodes. by @Oberacda
 - Add stability warning. by @Oberacda
 - Add lyrical target. by @Oberacda
 - Add data flow test
@@ -32,6 +36,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Make web ui test optional. by @Oberacda
+- Fix playwright screenshots are now stored. by @Oberacda
+- Upload playwright cache on failure. by @Oberacda
+- Cache CI dependencies by @Oberacda
+- Update Web-GUI to 8.0.1 by @Oberacda
+- Fix playwright installation, by @Oberacda
+- Install Playwright from apt packages by @Oberacda
+- Disable non-main CI triggers by @Oberacda
+- Dont stop on first fail. by @Oberacda
+- Update test to fix some issues. by @Oberacda
 - Update license headers. by @Oberacda
 - Update license headers. by @Oberacda
 - Update configs by @Oberacda
@@ -92,6 +106,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Fix error reporting for invalid states. by @Oberacda
+- Use real UUIDs for test fixtures. by @Oberacda
+- Invalid typecheck annotator for humble. by @Oberacda
+- Fix Playwright setup across ROS distros by @Oberacda
+- Correct node lifecycle handling and UI tests by @Oberacda
+- Republish package metadata to late subscribers by @Oberacda
+- Avoid deadlock when clearing trees by @Oberacda
+- Handle uninitialized topic subscriptions by @Oberacda
+- Handle ROS 2 CI compatibility issues by @Oberacda
+- Fix subtree tests. by @Oberacda
+- Missing [ by @Oberacda
 - Restore pytest execution on lyrical by @Oberacda
 - Fix formatting. by @Oberacda
 - Fix small issues. by @Oberacda
@@ -108,6 +133,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #258 from fzi-forschungszentrum-informatik/fb_add_integration_tests by @Oberacda in [#258](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/258)
+- Merge pull request #261 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.1 by @Oberacda in [#261](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/261)
 - Merge pull request #257 from fzi-forschungszentrum-informatik/fb_update_workflows by @Oberacda in [#257](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/257)
 - Merge pull request #254 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.0 by @Oberacda in [#254](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/254)
 - Merge pull request #249 from Doomse/node-data-rework by @Oberacda in [#249](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/249)
