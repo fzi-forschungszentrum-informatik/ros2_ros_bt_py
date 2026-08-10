@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Add timeouts for CI jobs. by @Oberacda
 - Apply suggestion from @nspielbau by @Oberacda
 - Make web ui test optional. by @Oberacda
 - Fix playwright screenshots are now stored. by @Oberacda
