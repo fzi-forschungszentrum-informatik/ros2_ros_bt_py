@@ -63,11 +63,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pre-commit
+        timeout-minutes: 5
       - name: Run pre-commit
         run: |
           . /opt/ros/${{ matrix.ros }}/setup.sh
           git config --global --add safe.directory $(pwd)
           pre-commit run --all
+        timeout-minutes: 10
   industrial_ci:
     needs: pre-commit
     env:
@@ -128,6 +130,7 @@ jobs:
             fi;
           ENABLE_COVERAGE_TESTING: "true"
           PIP_BREAK_SYSTEM_PACKAGES: "1"
+        timeout-minutes: 20
 
       - name: Restore generated file ownership
         if: always()
