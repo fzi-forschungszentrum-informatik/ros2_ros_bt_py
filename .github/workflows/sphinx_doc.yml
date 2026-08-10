@@ -32,6 +32,9 @@ on:
   push:
     branches:
         - main
+  pull_request:
+    branches:
+        - main
 
 permissions:
   contents: write
@@ -40,16 +43,31 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: jazzy
+      - name: Install ROS dependencies
+        run: |
+          sudo apt-get update
+          rosdep update
+          rosdep install --from-paths . --ignore-src -r -y
+      - name: Build ROS packages
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --packages-up-to ros_bt_py
+          source install/setup.bash
+      - uses: actions/setup-python@v5
       - name: Install dependencies
         run: |
-          pip install sphinx sphinx_rtd_theme myst_parser sphinx-autodoc-typehints furo
+          python -m pip install sphinx sphinx_rtd_theme myst_parser sphinx-autodoc-typehints furo
       - name: Sphinx build
         working-directory: ./ros_bt_py/doc
         run: |
+          source ../../install/setup.bash
           sphinx-build -b html source _build
       - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           publish_branch: gh-pages
