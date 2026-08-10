@@ -128,7 +128,7 @@ class TreeEditManager(TreeExecManager):
         Add the node in this request to the tree.
 
         The `node_id` from the request is discarded and a new one is randomly generated.
-        The actual is that the node is assigned is included in the response.
+        The actual id that the node is assigned is included in the response.
 
         :param ros_bt_py_msgs.srv.AddNodeAtIndexRequest request:
             A request describing the node to add.
