@@ -80,6 +80,7 @@ class ServiceBase(Leaf):
 
     _service_type: type
     _service_client: Optional[Client] = None
+    _service_request_future: Optional[Future] = None
 
     # Returns the service request message that should be send to the service.
     @abc.abstractmethod
