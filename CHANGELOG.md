@@ -110,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Preserve memory fallback child on untick by @Oberacda
 - Clear stale parent references when removing nodes by @Oberacda
 - Allow editing malformed trees by @Oberacda
 - Fix error reporting for invalid states. by @Oberacda
@@ -139,6 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #268 from fzi-forschungszentrum-informatik/fix/252-memory-fallback-untick by @Oberacda in [#268](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/268)
 - Merge pull request #271 from fzi-forschungszentrum-informatik/fix/270-stale-parent by @Oberacda in [#271](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/271)
 - Merge pull request #269 from fzi-forschungszentrum-informatik/fix/250-doc-workflow by @Oberacda in [#269](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/269)
 - Merge pull request #263 from fzi-forschungszentrum-informatik/fb_allow_edits_in_broken_trees by @Oberacda in [#263](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/263)
