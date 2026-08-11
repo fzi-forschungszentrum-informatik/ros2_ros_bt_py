@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Update Web-GUI to 8.0.2 by @Oberacda
 - Resolve documentation dependencies with rosdep by @Oberacda
 - Build ROS packages before documentation by @Oberacda
 - Add timeouts for CI jobs. by @Oberacda
@@ -140,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #267 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.2 by @Oberacda in [#267](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/267)
 - Merge pull request #268 from fzi-forschungszentrum-informatik/fix/252-memory-fallback-untick by @Oberacda in [#268](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/268)
 - Merge pull request #271 from fzi-forschungszentrum-informatik/fix/270-stale-parent by @Oberacda in [#271](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/271)
 - Merge pull request #269 from fzi-forschungszentrum-informatik/fix/250-doc-workflow by @Oberacda in [#269](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/269)
