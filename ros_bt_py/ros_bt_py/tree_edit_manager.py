@@ -75,7 +75,12 @@ class TreeEditManager(TreeExecManager):
             cycle_candidates = [starting_id]
             current_node = self.nodes[starting_id]
             while current_node.parent:
-                current_node = self.nodes[current_node.parent.node_id]
+                parent_id = current_node.parent.node_id
+                if parent_id not in self.nodes:
+                    # Editable trees can contain stale runtime references.
+                    safe_node_ids.extend(cycle_candidates)
+                    break
+                current_node = self.nodes[parent_id]
                 cycle_candidates.append(current_node.node_id)
                 if current_node.node_id == starting_id:
                     nodes_in_cycles.extend(cycle_candidates)
@@ -329,6 +334,14 @@ class TreeEditManager(TreeExecManager):
                     for child in self.nodes[parent_id].children
                     if child.node_id not in node_ids_to_remove
                 ]
+
+        for node in self.nodes.values():
+            if (
+                node.node_id not in node_ids_to_remove
+                and node.parent is not None
+                and node.parent.node_id in node_ids_to_remove
+            ):
+                node.parent = None
 
         for removed_id in node_ids_to_remove:
             if removed_id in self.nodes:
