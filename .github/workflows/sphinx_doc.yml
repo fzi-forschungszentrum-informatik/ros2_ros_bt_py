@@ -50,8 +50,9 @@ jobs:
       - name: Install ROS dependencies
         run: |
           sudo apt-get update
+          source /opt/ros/jazzy/setup.bash
           rosdep update
-          rosdep install --from-paths . --ignore-src -r -y
+          rosdep install --rosdistro jazzy --from-paths . --ignore-src -r -y
       - name: Build ROS packages
         run: |
           source /opt/ros/jazzy/setup.bash
