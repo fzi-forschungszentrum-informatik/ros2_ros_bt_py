@@ -111,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Handle service shutdown before first tick by @Oberacda
 - Preserve memory fallback child on untick by @Oberacda
 - Clear stale parent references when removing nodes by @Oberacda
 - Allow editing malformed trees by @Oberacda
@@ -141,6 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #265 from fzi-forschungszentrum-informatik/fix/262-service-shutdown by @Oberacda in [#265](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/265)
 - Merge pull request #267 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.2 by @Oberacda in [#267](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/267)
 - Merge pull request #268 from fzi-forschungszentrum-informatik/fix/252-memory-fallback-untick by @Oberacda in [#268](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/268)
 - Merge pull request #271 from fzi-forschungszentrum-informatik/fix/270-stale-parent by @Oberacda in [#271](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/271)
