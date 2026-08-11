@@ -1314,7 +1314,7 @@ class RosMessageType(RosContainer):
                     config = d
             config["message_type"] = message_type
             return Ok(config)
-        except AttributeError:
+        except (AttributeError, ImportError, ValueError):
             return Err(f"Cannot find message type '{msg.ros_msg_type}'")
 
     def is_compatible(
