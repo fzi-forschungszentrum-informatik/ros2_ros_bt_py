@@ -65,6 +65,34 @@ def test_remove_node_repairs_a_forest():
     assert manager._children == {second.node_id: []}
 
 
+def test_remove_node_orphans_surviving_children():
+    parent = MemorySequence()
+    child = MemorySequence()
+    parent.add_child(child)
+    manager = make_manager(
+        [parent, child], {parent.node_id: [child.node_id], child.node_id: []}
+    )
+
+    response = manager.remove_node(
+        RemoveNode.Request(node_id=uuid_to_ros(parent.node_id), remove_children=False),
+        RemoveNode.Response(),
+    )
+
+    assert response.success
+    assert manager.nodes == {child.node_id: child}
+    assert child.parent is None
+    assert manager._children == {child.node_id: []}
+
+
+def test_find_nodes_in_cycles_ignores_dangling_parent():
+    node = MemorySequence()
+    deleted_parent = MemorySequence()
+    node.parent = deleted_parent
+    manager = make_manager([node], {node.node_id: []})
+
+    assert manager.find_nodes_in_cycles() == []
+
+
 def test_remove_children_terminates_for_a_cycle():
     first = MemorySequence()
     second = MemorySequence()
