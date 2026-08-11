@@ -237,9 +237,8 @@ class MemoryFallback(FlowControl):
     The *Memory* part of the node means that after a child returns
     RUNNING, the execution will start at that same child on the next
     tick. This means that changes in the previous nodes' outcomes will
-    not influence the execution of later children until either a) this
-    node receives an `untick()` or b) the sequence returns SUCCEEDED
-    or FAILED as described above.
+    not influence the execution of later children until the node is
+    reset or returns SUCCEEDED or FAILED as described above.
 
     *Special case:*
 
@@ -301,8 +300,6 @@ class MemoryFallback(FlowControl):
         return Ok(BTNodeState.FAILED)
 
     def _do_untick(self) -> Result[BTNodeState, BehaviorTreeException]:
-        # TODO Should we really reset this on untick?
-        self.last_running_child = 0
         for child in self.children:
             match child.untick():
                 case Err(e):
