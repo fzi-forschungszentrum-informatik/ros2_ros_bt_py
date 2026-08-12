@@ -37,7 +37,16 @@ from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
 
-@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
+@define_bt_node(
+    NodeConfig(
+        inputs={
+            "io_type": GenericType(),
+            "in": ReferenceType("io_type", is_static=False),
+        },
+        outputs={"out": ReferenceType("io_type")},
+        max_children=0,
+    )
+)
 class IO(Leaf):
     """
     Base class for IO nodes in the tree.
@@ -71,16 +80,7 @@ class IO(Leaf):
         return Ok(BTNodeState.IDLE)
 
 
-@define_bt_node(
-    NodeConfig(
-        inputs={
-            "io_type": GenericType(),
-            "in": ReferenceType("io_type", is_static=False),
-        },
-        outputs={"out": ReferenceType("io_type")},
-        max_children=0,
-    )
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
 class IOInput(IO):
     """
     Explicitly marks the input of a subtree.
@@ -92,16 +92,7 @@ class IOInput(IO):
         pass
 
 
-@define_bt_node(
-    NodeConfig(
-        inputs={
-            "io_type": GenericType(),
-            "in": ReferenceType("io_type", is_static=False),
-        },
-        outputs={"out": ReferenceType("io_type")},
-        max_children=0,
-    )
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
 class IOOutput(IO):
     """
     Explicitly marks the output of a subtree.
