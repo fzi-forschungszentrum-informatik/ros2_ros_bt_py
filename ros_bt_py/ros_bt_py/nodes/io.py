@@ -37,17 +37,7 @@ from ros_bt_py.node import Leaf, define_bt_node
 from ros_bt_py.node_config import NodeConfig
 
 
-@define_bt_node(
-    NodeConfig(
-        inputs={
-            "io_type": GenericType(),
-            "in": ReferenceType("io_type"),
-            "default": ReferenceType("io_type"),
-        },
-        outputs={"out": ReferenceType("io_type")},
-        max_children=0,
-    )
-)
+@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
 class IO(Leaf):
     """
     Base class for IO nodes in the tree.
@@ -67,7 +57,6 @@ class IO(Leaf):
     def _do_tick(self) -> Result[BTNodeState, BehaviorTreeException]:
         return (
             self.inputs.get_value("in")
-            .or_else(lambda _: self.inputs.get_value("default"))
             .and_then(lambda val: self.outputs.set_value("out", val))
             .map(lambda _: BTNodeState.SUCCEEDED)
         )
@@ -82,24 +71,43 @@ class IO(Leaf):
         return Ok(BTNodeState.IDLE)
 
 
-@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
+@define_bt_node(
+    NodeConfig(
+        inputs={
+            "io_type": GenericType(),
+            "in": ReferenceType("io_type", is_static=False),
+        },
+        outputs={"out": ReferenceType("io_type")},
+        max_children=0,
+    )
+)
 class IOInput(IO):
     """
     Explicitly marks the input of a subtree.
 
-    If no input is connected to `in`, the value provided via the `default` input is used.
+    The value from the `in` input is passed through to the `out` output.
     """
 
     def _abstract_flag(self):
         pass
 
 
-@define_bt_node(NodeConfig(inputs={}, outputs={}, max_children=0))
+@define_bt_node(
+    NodeConfig(
+        inputs={
+            "io_type": GenericType(),
+            "in": ReferenceType("io_type", is_static=False),
+        },
+        outputs={"out": ReferenceType("io_type")},
+        max_children=0,
+    )
+)
 class IOOutput(IO):
     """
     Explicitly marks the output of a subtree.
 
-    If no input is connected to `in`, the value provided via the `default` input is used.
+    The value from the `in` input is passed through to the `out` output.
+    It always receives data from within the subtree.
     """
 
     def _abstract_flag(self):
