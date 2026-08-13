@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adds support for the `bytes` type in [#223](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/223)
 
 ### Changed
+- Keep shared IO node configuration by @Oberacda
 - Update Web-GUI to 8.0.2 by @Oberacda
 - Resolve documentation dependencies with rosdep by @Oberacda
 - Build ROS packages before documentation by @Oberacda
@@ -111,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Correct IO node regression coverage by @Oberacda
 - Handle service shutdown before first tick by @Oberacda
 - Preserve memory fallback child on untick by @Oberacda
 - Clear stale parent references when removing nodes by @Oberacda
@@ -142,6 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #273 from fzi-forschungszentrum-informatik/fix/121-io-output-default-values by @Oberacda in [#273](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/273)
 - Merge pull request #265 from fzi-forschungszentrum-informatik/fix/262-service-shutdown by @Oberacda in [#265](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/265)
 - Merge pull request #267 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.2 by @Oberacda in [#267](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/267)
 - Merge pull request #268 from fzi-forschungszentrum-informatik/fix/252-memory-fallback-untick by @Oberacda in [#268](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/268)
@@ -156,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge branch 'main' into node-data-rework
 
 ### Removed
+- Remove IO node default inputs by @Oberacda
 - Remove usage of typing.Self for compatibility with python 3.10
 - Remove outdated unit tests and test trees
 - Remove node config versioning
