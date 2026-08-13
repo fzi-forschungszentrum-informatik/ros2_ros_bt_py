@@ -1,0 +1,672 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search &mdash; ros_bt_py 0.1.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="shortcut icon" href="_static/ros_bt_py.ico"/>
+    
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=a58bc63e"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="#" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ros_bt_py
+              <img src="_static/ros_bt_py_128.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="#" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#installing-from-binary-packages">Installing from binary packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#installing-from-source">Installing from source</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#running-ros-bt-py">Running ros_bt_py</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#launch-options">Launch Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#stand-alone-web-interface">Stand-alone Web Interface</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basic_tutorial.html">Basic Tutorial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#starting-up-ros-bt-py">Starting up ros_bt_py</a></li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#examining-the-interface">Examining the Interface</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#menu-bars">Menu Bars</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#package-loader">Package Loader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#node-list">Node List</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#editor-window">Editor Window</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#node-menu">Node Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#writing-your-first-bt">Writing your first BT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#make-sure-the-tree-is-not-currently-running">1. Make sure the Tree is not currently running</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#add-a-control-flow-node">2. Add a control flow node</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#add-a-leaf-node-to-the-tree">3. Add a leaf node to the tree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#modify-the-constant-node">4. Modify the Constant node</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#add-a-second-constant-and-a-processing-step">5. Add a second Constant and a processing step</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#connecting-the-data-wirings">6. Connecting the Data Wirings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#run-the-finished-tree">7. Run the finished tree</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#working-with-bt-py">Working with bt_py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#tree-execution">Tree Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#nodes">Nodes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#data-graph">Data Graph</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#working-with-larger-trees">Working with larger trees</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#understanding-flow-control">Understanding Flow Control</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#basic-control-flows">Basic Control Flows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#advanced-control-flows">Advanced Control Flows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#regarding-memory">Regarding Memory</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#writing-a-more-complex-bt">Writing a more complex BT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#adding-a-branching-path">1. Adding a branching path</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#introducing-randomized-outputs">2. Introducing randomized Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#using-subtrees">Using Subtrees</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#subtree-i-o">Subtree I/O</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#using-a-subtree-in-our-example-tree">Using a Subtree in our example tree</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="basic_tutorial.html#using-ros-interfaces-with-ros-bt-py">Using ROS Interfaces with ros_bt_py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#building-and-processing-messages">Building and processing messages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#topics">Topics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="basic_tutorial.html#services-and-actions">Services and Actions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="advanced_tutorial.html">Advanced Tutorial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="advanced_tutorial.html#using-optionrefs">Using OptionRefs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="advanced_tutorial.html#defining-optionrefs-in-the-nodeconfig">Defining OptionRefs in the NodeConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="node_creation.html">Creating Nodes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data_types.html">Node Data Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data_types.html#available-data-types">Available Data Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_types.html#value-access">Value Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_types.html#value-serialization">Value Serialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data_types.html#generic-data-types">Generic data types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="creating_a_node_class_package.html">Creating a Node Class package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="creating_a_node_class_package.html#package-creation">Package Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating_a_node_class_package.html#example-package">Example Package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="creating_node_classes.html">Creating Node Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#create-a-new-class">1. Create a new class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#fill-in-the-nodeconfig">2. Fill in the NodeConfig</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#implement-the-do-methods">3. Implement the <code class="code docutils literal notranslate"><span class="pre">_do_</span></code> methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating_node_classes.html#test-your-node">4. Test your node!</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing_node_classes.html">Testing Node Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#creating-a-test-folder-and-unit-test-script">Creating a Test Folder and Unit Test Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#running-your-unit-tests">Running your Unit Tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#adding-your-unit-tests-to-cmakelists-txt">Adding your Unit Tests to CMakeLists.txt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#adding-your-unit-tests-to-setup-py">Adding your Unit Tests to setup.py</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing_node_classes.html#running-tests-via-colcon">Running Tests via colcon</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration &amp; Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced_launch_configuration.html">Advanced Launch Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="advanced_launch_configuration.html#using-custom-node-classes-in-a-project">Using Custom Node Classes in a Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="advanced_launch_configuration.html#other-important-launch-arguments">Other Important Launch Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utility_functions.html">Utility Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utility_functions.html#what">What?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="utility_functions.html#why">Why?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="utility_functions.html#how">How?</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.node">ros_bt_py.node module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node.Decorator"><code class="docutils literal notranslate"><span class="pre">Decorator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node.FlowControl"><code class="docutils literal notranslate"><span class="pre">FlowControl</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node.Leaf"><code class="docutils literal notranslate"><span class="pre">Leaf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node.Node"><code class="docutils literal notranslate"><span class="pre">Node</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.add_child"><code class="docutils literal notranslate"><span class="pre">Node.add_child()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.add_extra_inputs"><code class="docutils literal notranslate"><span class="pre">Node.add_extra_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.add_extra_outputs"><code class="docutils literal notranslate"><span class="pre">Node.add_extra_outputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.calculate_utility"><code class="docutils literal notranslate"><span class="pre">Node.calculate_utility()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.check_if_in_invalid_state"><code class="docutils literal notranslate"><span class="pre">Node.check_if_in_invalid_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.data_flow_manager"><code class="docutils literal notranslate"><span class="pre">Node.data_flow_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.debug_manager"><code class="docutils literal notranslate"><span class="pre">Node.debug_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.from_msg"><code class="docutils literal notranslate"><span class="pre">Node.from_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.get_child_index"><code class="docutils literal notranslate"><span class="pre">Node.get_child_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.get_children_recursive"><code class="docutils literal notranslate"><span class="pre">Node.get_children_recursive()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.get_logger"><code class="docutils literal notranslate"><span class="pre">Node.get_logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.get_subtree_msg"><code class="docutils literal notranslate"><span class="pre">Node.get_subtree_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.has_ros_node"><code class="docutils literal notranslate"><span class="pre">Node.has_ros_node</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.log_errors"><code class="docutils literal notranslate"><span class="pre">Node.log_errors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.logdebug"><code class="docutils literal notranslate"><span class="pre">Node.logdebug()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.logerr"><code class="docutils literal notranslate"><span class="pre">Node.logerr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.logfatal"><code class="docutils literal notranslate"><span class="pre">Node.logfatal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.logging_manager"><code class="docutils literal notranslate"><span class="pre">Node.logging_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.loginfo"><code class="docutils literal notranslate"><span class="pre">Node.loginfo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.logwarn"><code class="docutils literal notranslate"><span class="pre">Node.logwarn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.node_classes"><code class="docutils literal notranslate"><span class="pre">Node.node_classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.remove_child"><code class="docutils literal notranslate"><span class="pre">Node.remove_child()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.reset"><code class="docutils literal notranslate"><span class="pre">Node.reset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.ros_node"><code class="docutils literal notranslate"><span class="pre">Node.ros_node</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.setup"><code class="docutils literal notranslate"><span class="pre">Node.setup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.shutdown"><code class="docutils literal notranslate"><span class="pre">Node.shutdown()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.state"><code class="docutils literal notranslate"><span class="pre">Node.state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.subtree_manager"><code class="docutils literal notranslate"><span class="pre">Node.subtree_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.tick"><code class="docutils literal notranslate"><span class="pre">Node.tick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.to_state_msg"><code class="docutils literal notranslate"><span class="pre">Node.to_state_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.to_structure_msg"><code class="docutils literal notranslate"><span class="pre">Node.to_structure_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node.Node.untick"><code class="docutils literal notranslate"><span class="pre">Node.untick()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node.define_bt_node"><code class="docutils literal notranslate"><span class="pre">define_bt_node()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node.increment_name"><code class="docutils literal notranslate"><span class="pre">increment_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node.load_node_module"><code class="docutils literal notranslate"><span class="pre">load_node_module()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.data_types">ros_bt_py.data_types module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.BoolType"><code class="docutils literal notranslate"><span class="pre">BoolType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.BoolType.is_compatible"><code class="docutils literal notranslate"><span class="pre">BoolType.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.BoolType.serialize_type"><code class="docutils literal notranslate"><span class="pre">BoolType.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.BoolType.type_identifier"><code class="docutils literal notranslate"><span class="pre">BoolType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.BuiltinContainer"><code class="docutils literal notranslate"><span class="pre">BuiltinContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.BuiltinContainer.set_value"><code class="docutils literal notranslate"><span class="pre">BuiltinContainer.set_value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.BytesType"><code class="docutils literal notranslate"><span class="pre">BytesType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.BytesType.max_length"><code class="docutils literal notranslate"><span class="pre">BytesType.max_length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.BytesType.type_identifier"><code class="docutils literal notranslate"><span class="pre">BytesType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer"><code class="docutils literal notranslate"><span class="pre">DataContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.allow_dynamic"><code class="docutils literal notranslate"><span class="pre">DataContainer.allow_dynamic</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.allow_static"><code class="docutils literal notranslate"><span class="pre">DataContainer.allow_static</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.deserialize_value"><code class="docutils literal notranslate"><span class="pre">DataContainer.deserialize_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.flag_updated"><code class="docutils literal notranslate"><span class="pre">DataContainer.flag_updated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.from_msg"><code class="docutils literal notranslate"><span class="pre">DataContainer.from_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.get_runtime_type"><code class="docutils literal notranslate"><span class="pre">DataContainer.get_runtime_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.get_value"><code class="docutils literal notranslate"><span class="pre">DataContainer.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.get_value_as"><code class="docutils literal notranslate"><span class="pre">DataContainer.get_value_as()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.has_value"><code class="docutils literal notranslate"><span class="pre">DataContainer.has_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.is_compatible"><code class="docutils literal notranslate"><span class="pre">DataContainer.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.is_static"><code class="docutils literal notranslate"><span class="pre">DataContainer.is_static</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.is_updated"><code class="docutils literal notranslate"><span class="pre">DataContainer.is_updated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.reset_updated"><code class="docutils literal notranslate"><span class="pre">DataContainer.reset_updated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.reset_value"><code class="docutils literal notranslate"><span class="pre">DataContainer.reset_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.serialize_type"><code class="docutils literal notranslate"><span class="pre">DataContainer.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.serialize_value"><code class="docutils literal notranslate"><span class="pre">DataContainer.serialize_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.set_value"><code class="docutils literal notranslate"><span class="pre">DataContainer.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DataContainer.type_identifier"><code class="docutils literal notranslate"><span class="pre">DataContainer.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.DictType"><code class="docutils literal notranslate"><span class="pre">DictType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DictType.set_value"><code class="docutils literal notranslate"><span class="pre">DictType.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.DictType.type_identifier"><code class="docutils literal notranslate"><span class="pre">DictType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.FloatType"><code class="docutils literal notranslate"><span class="pre">FloatType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.FloatType.lower_limit"><code class="docutils literal notranslate"><span class="pre">FloatType.lower_limit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.FloatType.set_value"><code class="docutils literal notranslate"><span class="pre">FloatType.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.FloatType.type_identifier"><code class="docutils literal notranslate"><span class="pre">FloatType.type_identifier</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.FloatType.upper_limit"><code class="docutils literal notranslate"><span class="pre">FloatType.upper_limit</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.GenericType"><code class="docutils literal notranslate"><span class="pre">GenericType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.GenericType.get_value_field"><code class="docutils literal notranslate"><span class="pre">GenericType.get_value_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.GenericType.is_compatible"><code class="docutils literal notranslate"><span class="pre">GenericType.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.GenericType.serialize_type"><code class="docutils literal notranslate"><span class="pre">GenericType.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.GenericType.set_value"><code class="docutils literal notranslate"><span class="pre">GenericType.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.GenericType.type_identifier"><code class="docutils literal notranslate"><span class="pre">GenericType.type_identifier</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.GenericType.valid_types"><code class="docutils literal notranslate"><span class="pre">GenericType.valid_types</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.IntType"><code class="docutils literal notranslate"><span class="pre">IntType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IntType.lower_limit"><code class="docutils literal notranslate"><span class="pre">IntType.lower_limit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IntType.type_identifier"><code class="docutils literal notranslate"><span class="pre">IntType.type_identifier</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IntType.upper_limit"><code class="docutils literal notranslate"><span class="pre">IntType.upper_limit</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableContainer"><code class="docutils literal notranslate"><span class="pre">IterableContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableContainer.is_compatible"><code class="docutils literal notranslate"><span class="pre">IterableContainer.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableContainer.max_length"><code class="docutils literal notranslate"><span class="pre">IterableContainer.max_length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableContainer.serialize_type"><code class="docutils literal notranslate"><span class="pre">IterableContainer.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableContainer.set_value"><code class="docutils literal notranslate"><span class="pre">IterableContainer.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableContainer.strict_length"><code class="docutils literal notranslate"><span class="pre">IterableContainer.strict_length</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableReferenceContainer"><code class="docutils literal notranslate"><span class="pre">IterableReferenceContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableReferenceContainer.max_length"><code class="docutils literal notranslate"><span class="pre">IterableReferenceContainer.max_length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.IterableReferenceContainer.strict_length"><code class="docutils literal notranslate"><span class="pre">IterableReferenceContainer.strict_length</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.ListType"><code class="docutils literal notranslate"><span class="pre">ListType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ListType.set_value"><code class="docutils literal notranslate"><span class="pre">ListType.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ListType.type_identifier"><code class="docutils literal notranslate"><span class="pre">ListType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer"><code class="docutils literal notranslate"><span class="pre">NumericContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer.is_compatible"><code class="docutils literal notranslate"><span class="pre">NumericContainer.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer.lower_limit"><code class="docutils literal notranslate"><span class="pre">NumericContainer.lower_limit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer.max_value"><code class="docutils literal notranslate"><span class="pre">NumericContainer.max_value</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer.min_value"><code class="docutils literal notranslate"><span class="pre">NumericContainer.min_value</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer.serialize_type"><code class="docutils literal notranslate"><span class="pre">NumericContainer.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer.set_value"><code class="docutils literal notranslate"><span class="pre">NumericContainer.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.NumericContainer.upper_limit"><code class="docutils literal notranslate"><span class="pre">NumericContainer.upper_limit</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.PathType"><code class="docutils literal notranslate"><span class="pre">PathType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.PathType.set_value"><code class="docutils literal notranslate"><span class="pre">PathType.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.PathType.type_identifier"><code class="docutils literal notranslate"><span class="pre">PathType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.flag_updated"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.flag_updated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.get_runtime_type"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.get_runtime_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.get_value"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.has_value"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.has_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.is_compatible"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.is_updated"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.is_updated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.reset_updated"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.reset_updated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.reset_value"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.reset_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.serialize_type"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.set_type_map"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.set_type_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceContainer.set_value"><code class="docutils literal notranslate"><span class="pre">ReferenceContainer.set_value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceDictType"><code class="docutils literal notranslate"><span class="pre">ReferenceDictType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceDictType.type_identifier"><code class="docutils literal notranslate"><span class="pre">ReferenceDictType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceListType"><code class="docutils literal notranslate"><span class="pre">ReferenceListType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceListType.type_identifier"><code class="docutils literal notranslate"><span class="pre">ReferenceListType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceType"><code class="docutils literal notranslate"><span class="pre">ReferenceType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.ReferenceType.type_identifier"><code class="docutils literal notranslate"><span class="pre">ReferenceType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosActionName"><code class="docutils literal notranslate"><span class="pre">RosActionName</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosActionName.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosActionName.interface_kind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosActionType"><code class="docutils literal notranslate"><span class="pre">RosActionType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosActionType.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosActionType.interface_kind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosComponentType"><code class="docutils literal notranslate"><span class="pre">RosComponentType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosComponentType.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosComponentType.interface_kind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosContainer"><code class="docutils literal notranslate"><span class="pre">RosContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosContainer.from_msg"><code class="docutils literal notranslate"><span class="pre">RosContainer.from_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosContainer.interface_id"><code class="docutils literal notranslate"><span class="pre">RosContainer.interface_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosContainer.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosContainer.interface_kind</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosContainer.is_compatible"><code class="docutils literal notranslate"><span class="pre">RosContainer.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosContainer.serialize_type"><code class="docutils literal notranslate"><span class="pre">RosContainer.serialize_type()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessage"><code class="docutils literal notranslate"><span class="pre">RosMessage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessage.get_fields_and_field_types"><code class="docutils literal notranslate"><span class="pre">RosMessage.get_fields_and_field_types()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType"><code class="docutils literal notranslate"><span class="pre">RosMessageType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType.get_element_fields"><code class="docutils literal notranslate"><span class="pre">RosMessageType.get_element_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosMessageType.interface_kind</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType.is_compatible"><code class="docutils literal notranslate"><span class="pre">RosMessageType.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType.message_type"><code class="docutils literal notranslate"><span class="pre">RosMessageType.message_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType.serialize_type"><code class="docutils literal notranslate"><span class="pre">RosMessageType.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType.set_value"><code class="docutils literal notranslate"><span class="pre">RosMessageType.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosMessageType.type_identifier"><code class="docutils literal notranslate"><span class="pre">RosMessageType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosNameContainer"><code class="docutils literal notranslate"><span class="pre">RosNameContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosNameContainer.type_identifier"><code class="docutils literal notranslate"><span class="pre">RosNameContainer.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosServiceName"><code class="docutils literal notranslate"><span class="pre">RosServiceName</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosServiceName.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosServiceName.interface_kind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosServiceType"><code class="docutils literal notranslate"><span class="pre">RosServiceType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosServiceType.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosServiceType.interface_kind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTopicName"><code class="docutils literal notranslate"><span class="pre">RosTopicName</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTopicName.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosTopicName.interface_kind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTopicType"><code class="docutils literal notranslate"><span class="pre">RosTopicType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTopicType.interface_kind"><code class="docutils literal notranslate"><span class="pre">RosTopicType.interface_kind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTypeContainer"><code class="docutils literal notranslate"><span class="pre">RosTypeContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTypeContainer.get_value_field"><code class="docutils literal notranslate"><span class="pre">RosTypeContainer.get_value_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTypeContainer.set_value"><code class="docutils literal notranslate"><span class="pre">RosTypeContainer.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.RosTypeContainer.type_identifier"><code class="docutils literal notranslate"><span class="pre">RosTypeContainer.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringContainer"><code class="docutils literal notranslate"><span class="pre">StringContainer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringContainer.is_compatible"><code class="docutils literal notranslate"><span class="pre">StringContainer.is_compatible()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringContainer.max_length"><code class="docutils literal notranslate"><span class="pre">StringContainer.max_length</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringContainer.serialize_type"><code class="docutils literal notranslate"><span class="pre">StringContainer.serialize_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringContainer.set_value"><code class="docutils literal notranslate"><span class="pre">StringContainer.set_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringContainer.valid_values"><code class="docutils literal notranslate"><span class="pre">StringContainer.valid_values</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringType"><code class="docutils literal notranslate"><span class="pre">StringType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.StringType.type_identifier"><code class="docutils literal notranslate"><span class="pre">StringType.type_identifier</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.TypeContainerMixin"><code class="docutils literal notranslate"><span class="pre">TypeContainerMixin</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_types.TypeContainerMixin.get_value_field"><code class="docutils literal notranslate"><span class="pre">TypeContainerMixin.get_value_field()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.deserialize_class"><code class="docutils literal notranslate"><span class="pre">deserialize_class()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.deserialize_type_map_value"><code class="docutils literal notranslate"><span class="pre">deserialize_type_map_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.get_iotype_for_dict"><code class="docutils literal notranslate"><span class="pre">get_iotype_for_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.get_iotype_for_msg"><code class="docutils literal notranslate"><span class="pre">get_iotype_for_msg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.get_message_field_io_type"><code class="docutils literal notranslate"><span class="pre">get_message_field_io_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.match_dict_to_valid_types"><code class="docutils literal notranslate"><span class="pre">match_dict_to_valid_types()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.register_io_type"><code class="docutils literal notranslate"><span class="pre">register_io_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.serialize_class"><code class="docutils literal notranslate"><span class="pre">serialize_class()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.serialize_type_map"><code class="docutils literal notranslate"><span class="pre">serialize_type_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_types.serialize_type_map_value"><code class="docutils literal notranslate"><span class="pre">serialize_type_map_value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.node_config">ros_bt_py.node_config module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeConfig"><code class="docutils literal notranslate"><span class="pre">NodeConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeConfig.copy"><code class="docutils literal notranslate"><span class="pre">NodeConfig.copy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeConfig.extend"><code class="docutils literal notranslate"><span class="pre">NodeConfig.extend()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeDataMap"><code class="docutils literal notranslate"><span class="pre">NodeDataMap</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeInputMap"><code class="docutils literal notranslate"><span class="pre">NodeInputMap</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeInputMap.any_updated"><code class="docutils literal notranslate"><span class="pre">NodeInputMap.any_updated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeInputMap.get_value"><code class="docutils literal notranslate"><span class="pre">NodeInputMap.get_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeInputMap.get_value_as"><code class="docutils literal notranslate"><span class="pre">NodeInputMap.get_value_as()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeOutputMap"><code class="docutils literal notranslate"><span class="pre">NodeOutputMap</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeOutputMap.set_multiple_values"><code class="docutils literal notranslate"><span class="pre">NodeOutputMap.set_multiple_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.node_config.NodeOutputMap.set_value"><code class="docutils literal notranslate"><span class="pre">NodeOutputMap.set_value()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.helpers">ros_bt_py.helpers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState"><code class="docutils literal notranslate"><span class="pre">BTNodeState</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.ASSIGNED"><code class="docutils literal notranslate"><span class="pre">BTNodeState.ASSIGNED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.BROKEN"><code class="docutils literal notranslate"><span class="pre">BTNodeState.BROKEN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.FAILED"><code class="docutils literal notranslate"><span class="pre">BTNodeState.FAILED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.IDLE"><code class="docutils literal notranslate"><span class="pre">BTNodeState.IDLE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.PAUSED"><code class="docutils literal notranslate"><span class="pre">BTNodeState.PAUSED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.RUNNING"><code class="docutils literal notranslate"><span class="pre">BTNodeState.RUNNING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.SHUTDOWN"><code class="docutils literal notranslate"><span class="pre">BTNodeState.SHUTDOWN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.SUCCEEDED"><code class="docutils literal notranslate"><span class="pre">BTNodeState.SUCCEEDED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.UNASSIGNED"><code class="docutils literal notranslate"><span class="pre">BTNodeState.UNASSIGNED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.helpers.BTNodeState.UNINITIALIZED"><code class="docutils literal notranslate"><span class="pre">BTNodeState.UNINITIALIZED</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.helpers.float_limits_dict"><code class="docutils literal notranslate"><span class="pre">float_limits_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.helpers.int_limits_dict"><code class="docutils literal notranslate"><span class="pre">int_limits_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.helpers.rgetattr"><code class="docutils literal notranslate"><span class="pre">rgetattr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.helpers.rsetattr"><code class="docutils literal notranslate"><span class="pre">rsetattr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.ros_helpers">ros_bt_py.ros_helpers module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.get_interface_name"><code class="docutils literal notranslate"><span class="pre">get_interface_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.get_message_constant_fields"><code class="docutils literal notranslate"><span class="pre">get_message_constant_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.publish_message_channels"><code class="docutils literal notranslate"><span class="pre">publish_message_channels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.ros_to_uuid"><code class="docutils literal notranslate"><span class="pre">ros_to_uuid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.uuid_to_ros"><code class="docutils literal notranslate"><span class="pre">uuid_to_ros()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.ros_helpers.wiring_has_id"><code class="docutils literal notranslate"><span class="pre">wiring_has_id()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.exceptions">ros_bt_py.exceptions module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.AssignmentException"><code class="docutils literal notranslate"><span class="pre">AssignmentException</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.BehaviorTreeException"><code class="docutils literal notranslate"><span class="pre">BehaviorTreeException</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.MigrationException"><code class="docutils literal notranslate"><span class="pre">MigrationException</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.MissingParentError"><code class="docutils literal notranslate"><span class="pre">MissingParentError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.NodeConfigError"><code class="docutils literal notranslate"><span class="pre">NodeConfigError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.NodeStateError"><code class="docutils literal notranslate"><span class="pre">NodeStateError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.exceptions.TreeTopologyError"><code class="docutils literal notranslate"><span class="pre">TreeTopologyError</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.tree_exec_manager">ros_bt_py.tree_exec_manager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager"><code class="docutils literal notranslate"><span class="pre">TreeExecManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.clear"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.clear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.clear_diagnostics_name"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.clear_diagnostics_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.control_execution"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.control_execution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.data_flow_manager"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.data_flow_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.data_to_msg"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.data_to_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.debug_manager"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.debug_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.diagnostic_callback"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.diagnostic_callback()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.find_root"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.find_root()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.get_logger"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.get_logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.instantiate_node_from_msg"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.instantiate_node_from_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.load_tree"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.load_tree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.load_tree_from_path"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.load_tree_from_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.logging_manager"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.logging_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.name"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.publish_data"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.publish_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.publish_state"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.publish_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.publish_structure"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.publish_structure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.reload_tree"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.reload_tree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.root_id"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.root_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.set_diagnostics_name"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.set_diagnostics_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.set_publish_data"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.set_publish_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.set_publish_subtrees"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.set_publish_subtrees()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.state"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.state_to_msg"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.state_to_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.structure_to_msg"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.structure_to_msg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.subtree_manager"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.subtree_manager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.tick"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.tick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.tick_frequency_hz"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.tick_frequency_hz</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.tick_report_exceptions"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.tick_report_exceptions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.tree_id"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.tree_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.validate_wiring"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.validate_wiring()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.TreeExecManager.wirings"><code class="docutils literal notranslate"><span class="pre">TreeExecManager.wirings</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.is_edit_service"><code class="docutils literal notranslate"><span class="pre">is_edit_service()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.load_tree_from_file"><code class="docutils literal notranslate"><span class="pre">load_tree_from_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.tree_exec_manager.parse_tree_yaml"><code class="docutils literal notranslate"><span class="pre">parse_tree_yaml()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.tree_edit_manager">ros_bt_py.tree_edit_manager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager"><code class="docutils literal notranslate"><span class="pre">TreeEditManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.add_node"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.add_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.add_node_at_index"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.add_node_at_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.change_tree_name"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.change_tree_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.find_nodes_in_cycles"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.find_nodes_in_cycles()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.generate_subtree"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.generate_subtree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.get_subtree"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.get_subtree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.morph_node"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.morph_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.move_node"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.move_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.remove_node"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.remove_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.replace_node"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.replace_node()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.set_options"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.set_options()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.unwire_data"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.unwire_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.TreeEditManager.wire_data"><code class="docutils literal notranslate"><span class="pre">TreeEditManager.wire_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.get_error_message"><code class="docutils literal notranslate"><span class="pre">get_error_message()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.tree_edit_manager.get_success"><code class="docutils literal notranslate"><span class="pre">get_success()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.data_flow_manager">ros_bt_py.data_flow_manager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.Connection"><code class="docutils literal notranslate"><span class="pre">Connection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.Connection.source_key"><code class="docutils literal notranslate"><span class="pre">Connection.source_key</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.Connection.target_id"><code class="docutils literal notranslate"><span class="pre">Connection.target_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.Connection.target_key"><code class="docutils literal notranslate"><span class="pre">Connection.target_key</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager"><code class="docutils literal notranslate"><span class="pre">DataFlowManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.connections"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.connections</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.get_wiring_data"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.get_wiring_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.incoming_data"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.incoming_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.initialize"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.nodes"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.nodes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.outgoing_data"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.outgoing_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.push_incoming_data"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.push_incoming_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.data_flow_manager.DataFlowManager.push_outputs"><code class="docutils literal notranslate"><span class="pre">DataFlowManager.push_outputs()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.logging_manager">ros_bt_py.logging_manager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager"><code class="docutils literal notranslate"><span class="pre">LoggingManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.debug"><code class="docutils literal notranslate"><span class="pre">LoggingManager.debug()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.error"><code class="docutils literal notranslate"><span class="pre">LoggingManager.error()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.fatal"><code class="docutils literal notranslate"><span class="pre">LoggingManager.fatal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.get_ros_log_name"><code class="docutils literal notranslate"><span class="pre">LoggingManager.get_ros_log_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.get_ros_logger"><code class="docutils literal notranslate"><span class="pre">LoggingManager.get_ros_logger()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.info"><code class="docutils literal notranslate"><span class="pre">LoggingManager.info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.log"><code class="docutils literal notranslate"><span class="pre">LoggingManager.log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.log_level_inactive"><code class="docutils literal notranslate"><span class="pre">LoggingManager.log_level_inactive()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.set_min_log_level"><code class="docutils literal notranslate"><span class="pre">LoggingManager.set_min_log_level()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.set_tree_id"><code class="docutils literal notranslate"><span class="pre">LoggingManager.set_tree_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.set_tree_name"><code class="docutils literal notranslate"><span class="pre">LoggingManager.set_tree_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.logging_manager.LoggingManager.warn"><code class="docutils literal notranslate"><span class="pre">LoggingManager.warn()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-ros_bt_py.debug_manager">ros_bt_py.debug_manager module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager"><code class="docutils literal notranslate"><span class="pre">DebugManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager.report_state"><code class="docutils literal notranslate"><span class="pre">DebugManager.report_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager.report_tick"><code class="docutils literal notranslate"><span class="pre">DebugManager.report_tick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#ros_bt_py.debug_manager.DebugManager.set_collect_node_diagnostics"><code class="docutils literal notranslate"><span class="pre">DebugManager.set_collect_node_diagnostics()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ros_bt_py</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Search</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <noscript>
+  <div id="fallback" class="admonition warning">
+    <p class="last">
+      Please activate JavaScript to enable the search functionality.
+    </p>
+  </div>
+  </noscript>
+
+  
+  <div id="search-results">
+  
+  </div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, FZI Forschungszentrum Informatik.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+  <script>
+    jQuery(function() { Search.loadIndex("searchindex.js"); });
+  </script>
+  
+  <script id="searchindexloader"></script>
+   
+
+
+</body>
+</html>
