@@ -112,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set_options unwire and rewire data in [#225](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/225)
 
 ### Fixed
+- Handle invalid ROS message types by @Oberacda
 - Correct IO node regression coverage by @Oberacda
 - Handle service shutdown before first tick by @Oberacda
 - Preserve memory fallback child on untick by @Oberacda
@@ -144,6 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting. by @Oberacda
 
 ### Merged
+- Merge pull request #272 from fzi-forschungszentrum-informatik/fix/236-invalid-ros-message-type by @Oberacda in [#272](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/272)
 - Merge pull request #273 from fzi-forschungszentrum-informatik/fix/121-io-output-default-values by @Oberacda in [#273](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/273)
 - Merge pull request #265 from fzi-forschungszentrum-informatik/fix/262-service-shutdown by @Oberacda in [#265](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/265)
 - Merge pull request #267 from fzi-forschungszentrum-informatik/update-web-gui-to-8.0.2 by @Oberacda in [#267](https://github.com/fzi-forschungszentrum-informatik/ros2_ros_bt_py/pull/267)
