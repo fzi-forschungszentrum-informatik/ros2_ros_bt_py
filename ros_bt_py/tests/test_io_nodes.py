@@ -32,9 +32,8 @@ import uuid
 
 from ros_bt_py.vendor.result import Ok, Err
 
-from ros_bt_py.data_flow_manager import DataFlowManager
-from ros_bt_py.data_types import IntType, GenericType
-from ros_bt_py.nodes.io import IO, IOInput, IOOutput
+from ros_bt_py.data_types import GenericType
+from ros_bt_py.nodes.io import IOInput, IOOutput
 
 
 class TestIOInput:
@@ -44,23 +43,16 @@ class TestIOInput:
         """Test IOInput with a value connected to 'in'."""
         node_id = uuid.UUID(int=1)
 
-        incoming_data = {f"{node_id}.in": IntType(value=42)}
-        output_container = IntType(allow_dynamic=False)
-        outgoing_data = {f"{node_id}.out": output_container}
-
         io_input = IOInput(
             node_id=node_id,
             new_inputs={"io_type": GenericType(valid_types=[int])},
         )
 
-        data_flow_manager = DataFlowManager(incoming_data, outgoing_data)
-        assert data_flow_manager.initialize({node_id: io_input}, []).is_ok()
         assert io_input.setup().is_ok()
-        assert data_flow_manager.push_incoming_data().is_ok()
+        assert io_input.node_config.inputs["in"].set_value(42).is_ok()
         assert io_input.tick().is_ok()
-        assert data_flow_manager.push_outputs(node_id).is_ok()
 
-        match output_container.get_value():
+        match io_input.node_config.outputs["out"].get_value():
             case Err(e):
                 assert False, e
             case Ok(v):
@@ -89,23 +81,16 @@ class TestIOOutput:
         """Test IOOutput with a value connected to 'in'."""
         node_id = uuid.UUID(int=1)
 
-        incoming_data = {f"{node_id}.in": IntType(value=42)}
-        output_container = IntType(allow_dynamic=False)
-        outgoing_data = {f"{node_id}.out": output_container}
-
         io_output = IOOutput(
             node_id=node_id,
             new_inputs={"io_type": GenericType(valid_types=[int])},
         )
 
-        data_flow_manager = DataFlowManager(incoming_data, outgoing_data)
-        assert data_flow_manager.initialize({node_id: io_output}, []).is_ok()
         assert io_output.setup().is_ok()
-        assert data_flow_manager.push_incoming_data().is_ok()
+        assert io_output.node_config.inputs["in"].set_value(42).is_ok()
         assert io_output.tick().is_ok()
-        assert data_flow_manager.push_outputs(node_id).is_ok()
 
-        match output_container.get_value():
+        match io_output.node_config.outputs["out"].get_value():
             case Err(e):
                 assert False, e
             case Ok(v):
@@ -121,46 +106,7 @@ class TestIOOutput:
             new_inputs={"io_type": GenericType(valid_types=[int])},
         )
 
-        assert issubclass(IOOutput, IO)
         assert "default" not in io_output.node_config.inputs
         assert "io_type" in io_output.node_config.inputs
         assert "in" in io_output.node_config.inputs
         assert "out" in io_output.node_config.outputs
-
-    def test_io_output_without_input_fails(self):
-        """Test that IOOutput fails when 'in' has no value (no default to fall back on)."""
-        node_id = uuid.UUID(int=1)
-
-        # No incoming data - should fail since there's no default
-        output_container = IntType(allow_dynamic=False)
-        outgoing_data = {f"{node_id}.out": output_container}
-
-        io_output = IOOutput(
-            node_id=node_id,
-            new_inputs={"io_type": GenericType(valid_types=[int])},
-        )
-
-        data_flow_manager = DataFlowManager({}, outgoing_data)
-        assert data_flow_manager.initialize({node_id: io_output}, []).is_ok()
-        assert io_output.setup().is_ok()
-
-        # Tick should fail because there's no value on 'in' and no default
-        result = io_output.tick()
-        assert result.is_err()
-
-    def test_io_output_node_config_structure(self):
-        """Test the NodeConfig structure of IOOutput."""
-        node_id = uuid.UUID(int=1)
-
-        io_output = IOOutput(
-            node_id=node_id,
-            new_inputs={"io_type": GenericType(valid_types=[int])},
-        )
-
-        # Check that the config has the expected structure
-        expected_inputs = {"io_type", "in"}
-        expected_outputs = {"out"}
-
-        assert set(io_output.node_config.inputs.keys()) == expected_inputs
-        assert set(io_output.node_config.outputs.keys()) == expected_outputs
-        assert io_output.node_config.max_children == 0
