@@ -25,9 +25,9 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-import inspect
 import os
 import re
+import sys
 import uuid
 
 from typing import Callable, Optional
@@ -122,17 +122,20 @@ class LoggingManager:
         if node_id is not None:
             log_message.node_id = uuid_to_ros(node_id)
 
-        stack = inspect.stack()
-        print(stack)
-        if stacklevel < 0 or stacklevel >= len(stack):
-            frame = stack[-1]
-        else:
-            frame = stack[stacklevel]
+        try:
+            if stacklevel < 0:
+                raise ValueError
+            frame = sys._getframe(stacklevel)
+        except ValueError:
+            # stacklevel out of range (or negative): fall back to the
+            # outermost frame, matching the old inspect.stack()[-1] behavior.
+            frame = sys._getframe(0)
+            while frame.f_back is not None:
+                frame = frame.f_back
 
-        log_message.file = os.path.abspath(frame.filename)
-        log_message.function = frame.function
-        log_message.line = frame.lineno
-        print(log_message)
+        log_message.file = os.path.abspath(frame.f_code.co_filename)
+        log_message.function = frame.f_code.co_name
+        log_message.line = frame.f_lineno
 
         if self.publish_log_callback is not None:
             self.publish_log_callback(log_message)

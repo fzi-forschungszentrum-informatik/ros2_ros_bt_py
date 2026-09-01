@@ -92,7 +92,7 @@ class GetConstListItem(Decorator):
                 # would raise an error
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -168,7 +168,7 @@ class GetListItem(Decorator):
                 # would raise an error
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -233,7 +233,7 @@ class GetDictItem(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -301,7 +301,7 @@ class GetMultipleDictItems(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -366,7 +366,7 @@ class GetDictItemFromKey(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -442,7 +442,7 @@ class GetAttr(Decorator):
             if self.options["succeed_on_stale_data"]:
                 return Ok(BTNodeState.SUCCEEDED)
             else:
-                self.loginfo("No new data since last tick!")
+                self.logdebug("No new data since last tick!")
                 return Ok(BTNodeState.RUNNING)
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
