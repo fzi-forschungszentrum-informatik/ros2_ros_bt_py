@@ -934,6 +934,8 @@ class TreeManager:
                 )
                 self.tree_structure.tick_frequency_hz = 10.0
 
+            if self.rate is not None:
+                self.ros_node.destroy_rate(self.rate)
             self.rate = self.ros_node.create_rate(
                 frequency=self.tree_structure.tick_frequency_hz
             )
@@ -1141,6 +1143,8 @@ class TreeManager:
             # Use provided tick frequency, if any
             if request.tick_frequency_hz != 0:
                 self.tree_structure.tick_frequency_hz = request.tick_frequency_hz
+                if self.rate is not None:
+                    self.ros_node.destroy_rate(self.rate)
                 self.rate = self.ros_node.create_rate(
                     frequency=self.tree_structure.tick_frequency_hz
                 )
@@ -1149,6 +1153,8 @@ class TreeManager:
                     "Loaded tree had frequency 0Hz. Defaulting to 10Hz"
                 )
                 self.tree_structure.tick_frequency_hz = 10.0
+                if self.rate is not None:
+                    self.ros_node.destroy_rate(self.rate)
                 self.rate = self.ros_node.create_rate(
                     frequency=self.tree_structure.tick_frequency_hz
                 )
