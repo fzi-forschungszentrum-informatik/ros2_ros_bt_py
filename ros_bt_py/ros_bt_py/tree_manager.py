@@ -112,13 +112,6 @@ from std_msgs.msg import Float64
 
 from rclpy_message_converter import message_converter
 
-# command value -> constant name, e.g. {3: "TICK_UNTIL_RESULT"}, for debug logging
-_CONTROL_COMMAND_NAMES = {
-    getattr(ControlTreeExecution.Request, name): name
-    for name in dir(ControlTreeExecution.Request)
-    if name.isupper()
-}
-
 
 def is_edit_service(func):
     """
@@ -1268,12 +1261,11 @@ class TreeManager:
         stop or reset the entire tree.
 
         """
-        command_name = _CONTROL_COMMAND_NAMES.get(request.command, request.command)
-        self.get_logger().debug(f"control_execution: received command {command_name}")
+        self.get_logger().debug(f"control_execution: received command {request.command}")
         with self._edit_lock:
             response = self._control_execution(request, response)
         self.get_logger().debug(
-            f"control_execution: finished command {command_name}, "
+            f"control_execution: finished command {request.command}, "
             f"success={response.success}, tree_state={response.tree_state}"
         )
         return response
