@@ -31,7 +31,10 @@ from typeguard import typechecked
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.exceptions import InvalidHandle
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import (
+    MutuallyExclusiveCallbackGroup,
+    ReentrantCallbackGroup,
+)
 from rclpy.logging import get_logger
 from rclpy.node import Node
 from rclpy.qos import (
@@ -346,11 +349,15 @@ class TreeNode(Node):
             callback=self.tree_manager.unwire_data,
             callback_group=self.tree_manager_service_callback_group,
         )
+        # Control commands must not interleave with each other, and they block
+        # while joining the tick thread - so they get their own mutually
+        # exclusive group rather than sharing the reentrant one.
+        self.control_tree_execution_callback_group = MutuallyExclusiveCallbackGroup()
         self.control_tree_execution_service = self.create_service(
             ControlTreeExecution,
             "~/control_tree_execution",
             callback=self.tree_manager.control_execution,
-            callback_group=self.tree_manager_service_callback_group,
+            callback_group=self.control_tree_execution_callback_group,
         )
         self.get_available_nodes_service = self.create_service(
             GetAvailableNodes,

@@ -729,6 +729,9 @@ class TreeManager:
                 self.publish_tick_frequency(tick_frequency_msg)
             self.rate.sleep()
 
+        # Announce the result of the final tick before unticking clears the node
+        # states. NOTE: this thread stays alive inside the tree until untick()
+        # returns, so control_execution() must not trust self.state alone.
         self.state = TreeState.IDLE
         self.publish_state()
 
@@ -1224,17 +1227,6 @@ class TreeManager:
 
         """
         response.success = False
-        if self._tick_thread is not None:
-            is_idle = self.state == TreeState.IDLE
-            if is_idle and self._tick_thread.is_alive():
-                self._tick_thread.join(0.5)
-                if self._tick_thread.is_alive():
-                    response.success = False
-                    response.error_message = (
-                        "Tried to join tick thread with " "Tree state IDLE, but failed!"
-                    )
-                    self.publish_state()
-                    return response
 
         # Make a new tick thread if there isn't one or the old one has been
         # successfully joined.
@@ -1284,9 +1276,13 @@ class TreeManager:
             ControlTreeExecution.Request.STOP,
             ControlTreeExecution.Request.SHUTDOWN,
         ]:
-            if tree_state == TreeState.TICKING:
+            # self.state goes IDLE before the tick thread unticks the tree, so a
+            # live tick thread - not the state - is what says "still running".
+            # Touching any node before it is joined races its teardown.
+            if tree_state == TreeState.TICKING or self._tick_thread.is_alive():
 
-                self.state = TreeState.STOP_REQUESTED
+                if tree_state == TreeState.TICKING:
+                    self.state = TreeState.STOP_REQUESTED
                 # Four times the allowed period should be plenty of time to
                 # finish the current tick, if the tree has not stopped by then
                 # we're in deep trouble.
@@ -1347,26 +1343,32 @@ class TreeManager:
                     root.untick()
                     state = root.state
                     if state in [BTNodeState.IDLE, BTNodeState.PAUSED]:
-                        response.tree_state = TreeState.IDLE
+                        self.state = TreeState.IDLE
+                        response.tree_state = self.state
                         response.success = True
                     else:
-                        response.tree_state = TreeState.ERROR
+                        self.state = TreeState.ERROR
+                        response.tree_state = self.state
                         response.success = False
                         self.get_logger().error(
                             f"Root node ({str(root)}) state after unticking is neither "
                             f"IDLE nor PAUSED, but {state}"
                         )
                         response.error_message = "Failed to untick root node."
+                        self.publish_state()
                         return response
                 else:
                     self.get_logger().info("Unticking a tree with no nodes.")
-                    response.tree_state = TreeState.IDLE
+                    self.state = TreeState.IDLE
+                    response.tree_state = self.state
                     response.success = True
 
             else:
                 self.get_logger().info(
                     "Received stop command, but tree was not running"
                 )
+                response.tree_state = tree_state
+                response.success = True
 
             self.publish_state()
 

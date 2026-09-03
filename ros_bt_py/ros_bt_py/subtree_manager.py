@@ -96,7 +96,8 @@ class SubtreeManager(object):
         with self._lock:
             if not self._publish_subtrees:
                 return []
-            full_list = [deepcopy(tree) for tree in self.subtree_states.values()]
+            # Entries are already private snapshots (see add_subtree_state).
+            full_list = list(self.subtree_states.values())
             for manager in self.nested_subtree_managers.values():
                 full_list.extend(manager.get_subtree_states())
             return full_list
@@ -117,8 +118,10 @@ class SubtreeManager(object):
             self.subtree_structures[node_id] = subtree_msg
 
     def add_subtree_state(self, node_id: uuid.UUID, subtree_msg: TreeState):
+        # TreeManager.state_to_msg() hands out its live message, so snapshot it
+        # here - otherwise the stored "state" keeps changing under the reader.
         with self._lock:
-            self.subtree_states[node_id] = subtree_msg
+            self.subtree_states[node_id] = deepcopy(subtree_msg)
 
     def add_subtree_data(self, node_id: uuid.UUID, subtree_msg: TreeData):
         with self._lock:

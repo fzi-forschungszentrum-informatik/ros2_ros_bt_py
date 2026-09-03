@@ -251,3 +251,14 @@ class TestSubtreeManager:
 
     def test_check_publish_subtrees_true(self, subtree_manager: SubtreeManager):
         assert subtree_manager.publish_subtrees
+
+    def test_add_subtree_state_snapshots_the_message(
+        self, subtree_manager: SubtreeManager
+    ):
+        """TreeManager.state_to_msg() hands out its live message, so we must copy."""
+        live_msg = TreeState(tree_id=uuid_to_ros(uuid.UUID(int=42)), state="TICKING")
+        subtree_manager.add_subtree_state(uuid.UUID(int=42), live_msg)
+
+        live_msg.state = "EDITABLE"
+
+        assert subtree_manager.get_subtree_states()[0].state == "TICKING"
