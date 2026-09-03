@@ -27,6 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """Regression tests: edits must not run while the tree is executing."""
 import threading
+import time
+import uuid
 from unittest.mock import MagicMock
 
 import pytest
@@ -110,6 +112,50 @@ def test_load_tree_aborts_when_the_tree_cannot_be_cleared(
 
     assert not response.success
     assert "Please shut down the tree before clearing it" in response.error_message
+
+
+def test_stop_still_reaches_a_tree_that_ticks_forever(
+    manager: TreeManager, monkeypatch
+):
+    """Holding the edit lock must not lock the user out of their own STOP.
+
+    A TICK_PERIODICALLY tree never stops on its own, so STOP is the only way
+    out. It has to get through the lock and join the tick thread.
+    """
+    monkeypatch.setattr("ros_bt_py.tree_manager.ok", lambda *args, **kwargs: True)
+
+    ticking = threading.Event()
+
+    def tick_until_stop_requested():
+        ticking.set()
+        while manager.state != TreeState.STOP_REQUESTED:
+            time.sleep(0.005)
+        manager.state = TreeState.IDLE
+
+    monkeypatch.setattr(manager, "tick_report_exceptions", tick_until_stop_requested)
+
+    root = MagicMock()
+    root.node_id = uuid.uuid4()
+    root.parent = None
+    manager.nodes = {root.node_id: root}
+
+    start = manager.control_execution(
+        ControlTreeExecution.Request(
+            command=ControlTreeExecution.Request.TICK_PERIODICALLY
+        ),
+        ControlTreeExecution.Response(),
+    )
+    assert start.success
+    assert ticking.wait(timeout=5), "tick thread never started"
+
+    stop = manager.control_execution(
+        ControlTreeExecution.Request(command=ControlTreeExecution.Request.STOP),
+        ControlTreeExecution.Response(),
+    )
+
+    assert stop.success, stop.error_message
+    assert stop.tree_state == TreeState.IDLE
+    assert not manager._tick_thread.is_alive()
 
 
 def test_control_execution_holds_the_edit_lock(manager: TreeManager):
