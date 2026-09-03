@@ -275,7 +275,7 @@ def get_field_values_and_types(
         if match_length:
             max_len = int(match_length[1])
     else:
-        rclpy.logging.get_logger("package_manager").warn(
+        rclpy.logging.get_logger("package_manager").warning(
             f"Unidentified built-in type {field_type}"
         )
 

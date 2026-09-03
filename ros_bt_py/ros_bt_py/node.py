@@ -156,7 +156,7 @@ def define_bt_node(node_config: NodeConfig) -> Callable[[type[N]], type[N]]:
 
         if inspect.isabstract(node_class):
             # Don't register abstract classes
-            rclpy.logging.get_logger(node_class.__name__).warn(
+            rclpy.logging.get_logger(node_class.__name__).warning(
                 f"Assigned NodeData to class {node_class.__name__}, but did not register "
                 f"the class because it does not implement all required methods. "
                 f"Missing methods: {', '.join(node_class.__abstractmethods__)}",

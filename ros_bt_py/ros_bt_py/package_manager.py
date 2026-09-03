@@ -175,7 +175,7 @@ class PackageManager(object):
         Uses a similar strategy to rosmsg/rossrv to detect message/service files.
         """
         if self.message_list_pub is None:
-            rclpy.logging.get_logger("package_manager").warn(
+            rclpy.logging.get_logger("package_manager").warning(
                 "No callback for publishing message list data provided."
             )
             return
@@ -226,7 +226,7 @@ class PackageManager(object):
                 try:
                     return obj.tolist()
                 except AttributeError:
-                    rclpy.logging.get_logger("package_manager").warn(
+                    rclpy.logging.get_logger("package_manager").warning(
                         f"Object of type {obj.__class__.__name__} can't be serialized properly"
                     )
                     return str(obj)
@@ -264,7 +264,7 @@ class PackageManager(object):
 
     def publish_packages_list(self):
         if self.packages_list_pub is None:
-            rclpy.logging.get_logger("package_manager").warn(
+            rclpy.logging.get_logger("package_manager").warning(
                 "No callback for publishing packages list data provided."
             )
             return
