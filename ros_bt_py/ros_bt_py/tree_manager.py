@@ -130,15 +130,29 @@ def is_edit_service(func):
 
     @wraps(func)
     def service_handler(self: "TreeManager", request: Any, response: Any, **kwds):
-        tree_state = self.state
-        if tree_state != TreeState.EDITABLE:
-            response.success = False
-            response.error_message = (
-                f"Cannot edit tree in state {tree_state}."
-                f"You need to shut down the tree to enable editing."
-            )
-            return response
+        # Both checks belong under the lock: control_execution() takes the same
+        # lock, so a check made outside of it can be arbitrarily stale by the
+        # time this handler gets its turn - that is how a queued load_tree
+        # rebuilt self.nodes underneath an already ticking tree.
         with self._edit_lock:
+            tree_state = self.state
+            if tree_state != TreeState.EDITABLE:
+                response.success = False
+                response.error_message = (
+                    f"Cannot edit tree in state {tree_state}."
+                    f"You need to shut down the tree to enable editing."
+                )
+                return response
+            # The tree can advertise a settled state while the tick thread is
+            # still inside it (see TreeManager.tick()), so the thread - not the
+            # state - is what says whether the tree is still running.
+            if self._tick_thread is not None and self._tick_thread.is_alive():
+                response.success = False
+                response.error_message = (
+                    "Cannot edit tree while it is still running. "
+                    "You need to shut down the tree to enable editing."
+                )
+                return response
             return func(self, request, response, **kwds)
 
     return service_handler
@@ -873,8 +887,17 @@ class TreeManager:
                 return response
 
         try:
-            # Clear existing tree, then replace it with the message's contents
-            self.clear(None, ClearTree.Response())
+            # Clear existing tree, then replace it with the message's contents.
+            # If the tree cannot be cleared we must not load into it - the new
+            # nodes would simply be added alongside the old ones.
+            clear_response = self.clear(None, ClearTree.Response())
+            if not clear_response.success:
+                response.success = False
+                response.error_message = (
+                    "Failed to clear tree before loading: "
+                    f"{clear_response.error_message}"
+                )
+                return response
             # First just add all nodes to the tree, then restore tree structure
             for node in tree.nodes:
                 match self.instantiate_node_from_msg(
@@ -1211,13 +1234,18 @@ class TreeManager:
             return response
 
     @typechecked
-    def control_execution(  # noqa: C901
+    def control_execution(
         self,
         request: ControlTreeExecution.Request,
         response: ControlTreeExecution.Response,
     ) -> ControlTreeExecution.Response:
         """
-        Control tree execution.
+        Control tree execution, holding the edit lock for the whole command.
+
+        Control commands start and stop the tick thread, so they must not
+        interleave with tree edits - or with each other. `_edit_lock` is an
+        RLock and the tick thread never takes it, so joining that thread while
+        holding it is safe.
 
         :param ros_bt_py_msgs.srv.ControlTreeExecutionRequest request:
 
@@ -1226,6 +1254,15 @@ class TreeManager:
         stop or reset the entire tree.
 
         """
+        with self._edit_lock:
+            return self._control_execution(request, response)
+
+    @typechecked
+    def _control_execution(  # noqa: C901
+        self,
+        request: ControlTreeExecution.Request,
+        response: ControlTreeExecution.Response,
+    ) -> ControlTreeExecution.Response:
         response.success = False
 
         # Make a new tick thread if there isn't one or the old one has been
