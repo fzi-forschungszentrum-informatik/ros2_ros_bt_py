@@ -520,6 +520,7 @@ def main(argv=None):
 
     rclpy.init(args=argv)
     tree_node = TreeNode(node_name="BehaviorTreeNode")
+    tree_node.get_logger().set_level(rclpy.logging.LoggingSeverity.DEBUG)
     param_listener = tree_node_parameters.ParamListener(tree_node)
     params = param_listener.get_params()
     tree_node.init_publisher()

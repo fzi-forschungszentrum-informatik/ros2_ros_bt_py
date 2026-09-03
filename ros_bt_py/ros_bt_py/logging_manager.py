@@ -49,7 +49,7 @@ rcutils_logger._internal_callers.append(__file__)
 @typechecked
 class LoggingManager:
     # Log levels are meant to be universal, therefore we assign them at the class level
-    _min_log_level: int = BTLogMessage.INFO
+    _min_log_level: int = BTLogMessage.DEBUG
 
     def __init__(
         self,

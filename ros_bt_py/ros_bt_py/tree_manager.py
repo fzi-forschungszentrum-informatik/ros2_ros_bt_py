@@ -112,6 +112,13 @@ from std_msgs.msg import Float64
 
 from rclpy_message_converter import message_converter
 
+# command value -> constant name, e.g. {3: "TICK_UNTIL_RESULT"}, for debug logging
+_CONTROL_COMMAND_NAMES = {
+    getattr(ControlTreeExecution.Request, name): name
+    for name in dir(ControlTreeExecution.Request)
+    if name.isupper()
+}
+
 
 def is_edit_service(func):
     """
@@ -643,6 +650,13 @@ class TreeManager:
             self._last_error = f"{tick_result.unwrap_err()}"
             self.state = TreeState.ERROR
             self.publish_state()
+
+        root = self.find_root().unwrap_or(None)
+        self.get_logger().debug(
+            f"tick thread finished: tree_state={self.state}, "
+            f"root={root.name if root else None} "
+            f"(root_state={root.state if root else None})"
+        )
 
     @typechecked
     def tick(
@@ -1254,8 +1268,15 @@ class TreeManager:
         stop or reset the entire tree.
 
         """
+        command_name = _CONTROL_COMMAND_NAMES.get(request.command, request.command)
+        self.get_logger().debug(f"control_execution: received command {command_name}")
         with self._edit_lock:
-            return self._control_execution(request, response)
+            response = self._control_execution(request, response)
+        self.get_logger().debug(
+            f"control_execution: finished command {command_name}, "
+            f"success={response.success}, tree_state={response.tree_state}"
+        )
+        return response
 
     @typechecked
     def _control_execution(  # noqa: C901
