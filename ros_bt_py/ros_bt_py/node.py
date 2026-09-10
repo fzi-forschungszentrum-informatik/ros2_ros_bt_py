@@ -353,6 +353,7 @@ class Node(object, metaclass=NodeMeta):
         debug_manager: Optional[DebugManager] = None,
         subtree_manager: Optional[SubtreeManager] = None,
         logging_manager: Optional[LoggingManager] = None,
+        permissive: bool = False,
     ) -> None:
         """
         Prepare class members.
@@ -400,6 +401,7 @@ class Node(object, metaclass=NodeMeta):
         self.debug_manager: Optional[DebugManager] = debug_manager
         self.subtree_manager: Optional[SubtreeManager] = subtree_manager
         self.logging_manager: Optional[LoggingManager] = logging_manager
+        self.permissive = permissive
 
         if not self._node_config:
             raise NodeConfigError("Missing node_config, cannot initialize!")
@@ -815,27 +817,19 @@ class Node(object, metaclass=NodeMeta):
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
         with report_state:
-            error_result = None
             if self.state == BTNodeState.SHUTDOWN:
-                self.state = BTNodeState.SHUTDOWN
-                # Call shutdown on all children - this should only set
-                # their state to shutdown
-                for child in self.children:
-                    shutdown_result = child.shutdown()
-                    if shutdown_result.is_err():
-                        self.logwarn(
-                            f"Node {child.name} raised the following error during shutdown"
-                            "Continuing to shutdown other nodes"
-                            f"{shutdown_result.unwrap_err()}"
-                        )
-                        error_result = shutdown_result
+                return Ok(self.state)
 
-            shutdown_result = self._do_shutdown()
-            if shutdown_result.is_ok():
-                self.state = shutdown_result.unwrap()
+            error_result = None
+            if self.state == BTNodeState.UNINITIALIZED:
+                self.state = BTNodeState.SHUTDOWN
             else:
-                self.state = BTNodeState.BROKEN
-                error_result = shutdown_result
+                shutdown_result = self._do_shutdown()
+                if shutdown_result.is_ok():
+                    self.state = shutdown_result.unwrap()
+                else:
+                    self.state = BTNodeState.BROKEN
+                    error_result = shutdown_result
 
             for child in self.children:
                 shutdown_result = child.shutdown()
@@ -1424,7 +1418,6 @@ class Node(object, metaclass=NodeMeta):
 
         # Instantiate node - this shouldn't do anything yet, since we don't
         # call setup()
-        node_class.permissive = permissive
         try:
             node_instance = node_class(
                 node_id=node_id,
@@ -1434,6 +1427,7 @@ class Node(object, metaclass=NodeMeta):
                 debug_manager=debug_manager,
                 subtree_manager=subtree_manager,
                 logging_manager=logging_manager,
+                permissive=permissive,
             )
         except BehaviorTreeException as ex:
             return Err(ex)

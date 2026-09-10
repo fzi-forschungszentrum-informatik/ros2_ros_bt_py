@@ -31,6 +31,7 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
+from rclpy.time import Time
 
 from ros_bt_py_interfaces.msg import TreeState
 from ros_bt_py_interfaces.srv import ControlTreeExecution
@@ -75,7 +76,9 @@ def test_shutdown_waits_for_a_tick_thread_that_is_still_unticking(
         return Ok(BTNodeState.IDLE)
 
     def record_shutdown():
-        tick_thread_alive_during_shutdown.append(manager._tick_thread.is_alive())
+        tick_thread = manager._tick_thread
+        assert tick_thread is not None
+        tick_thread_alive_during_shutdown.append(tick_thread.is_alive())
         return Ok(BTNodeState.SHUTDOWN)
 
     root = make_root()
@@ -152,3 +155,93 @@ def test_stop_while_waiting_for_tick_applies_the_state(manager: TreeManager):
     assert response.success
     assert response.tree_state == TreeState.IDLE
     assert manager.state == TreeState.IDLE
+
+
+def test_destroy_releases_manager_resources_once():
+    ros_node = MagicMock()
+    diagnostic_timer = MagicMock()
+    ros_node.create_timer.return_value = diagnostic_timer
+    manager = TreeManager(
+        ros_node=ros_node,
+        logging_manager=MagicMock(),
+        publish_diagnostic_callback=MagicMock(),
+    )
+    rate = manager.rate
+    root = make_root()
+    root.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {root.node_id: root}
+
+    manager.destroy()
+    manager.destroy()
+
+    root.shutdown.assert_called_once()
+    ros_node.destroy_rate.assert_called_once_with(rate)
+    ros_node.destroy_timer.assert_called_once_with(diagnostic_timer)
+
+
+def test_setup_and_shutdown_initializes_before_cleaning_up(manager: TreeManager):
+    root = make_root(BTNodeState.UNINITIALIZED)
+
+    def setup():
+        root.state = BTNodeState.IDLE
+        return Ok(BTNodeState.IDLE)
+
+    root.setup.side_effect = setup
+    root.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {root.node_id: root}
+
+    response = manager.control_execution(
+        ControlTreeExecution.Request(
+            command=ControlTreeExecution.Request.SETUP_AND_SHUTDOWN
+        ),
+        ControlTreeExecution.Response(),
+    )
+
+    assert response.success
+    root.setup.assert_called_once()
+    root.shutdown.assert_called_once()
+
+
+def test_tick_reports_measured_frequency_and_overruns():
+    ros_node = MagicMock()
+    publish_frequency = MagicMock()
+    manager = TreeManager(
+        ros_node=ros_node,
+        logging_manager=MagicMock(),
+        publish_tick_frequency_callback=publish_frequency,
+    )
+    manager.rate = MagicMock()
+    ros_node.get_clock.return_value.now.side_effect = [
+        Time(seconds=0),
+        Time(seconds=2),
+        Time(seconds=2),
+    ]
+    root = make_root()
+    root.tick.side_effect = [Ok(BTNodeState.RUNNING), Ok(BTNodeState.SUCCEEDED)]
+    root.untick.return_value = Ok(BTNodeState.IDLE)
+    manager.nodes = {root.node_id: root}
+    manager._stop_after_result = True
+
+    result = manager.tick()
+
+    assert result.is_ok()
+    manager.get_logger().warning.assert_called_once()
+    assert publish_frequency.call_args.args[0].data == pytest.approx(9.05)
+
+
+def test_clear_removes_subtrees_before_publishing(manager: TreeManager, monkeypatch):
+    root = make_root(BTNodeState.UNINITIALIZED)
+    manager.nodes = {root.node_id: root}
+    manager.subtree_manager = MagicMock()
+    call_order = []
+    manager.subtree_manager.clear_subtrees.side_effect = lambda: call_order.append(
+        "clear_subtrees"
+    )
+    monkeypatch.setattr(
+        manager, "publish_structure", lambda: call_order.append("publish_structure")
+    )
+
+    response = manager.clear(None, MagicMock())
+
+    assert response.success
+    assert call_order == ["clear_subtrees", "publish_structure"]

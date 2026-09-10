@@ -343,13 +343,16 @@ class Subtree(Leaf):
         return reset_root_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        if not self.root:
-            return Ok(BTNodeState.SHUTDOWN)
-        shutdown_root_result = self.root.shutdown()
+        shutdown_root_result = Ok(BTNodeState.SHUTDOWN)
+        if self.root:
+            shutdown_root_result = self.root.shutdown()
+        destroy_result = self.manager.destroy()
         if self.subtree_manager:
             self.subtree_manager.add_subtree_state(
                 self.node_id, self.manager.state_to_msg()
             )
+        if destroy_result.is_err():
+            return Err(destroy_result.unwrap_err())
         return shutdown_root_result
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:

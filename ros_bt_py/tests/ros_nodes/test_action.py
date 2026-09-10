@@ -240,8 +240,8 @@ class TestAction:
 
     def test_node_reset_shutdown(self, setup_mocks):
         action_node = setup_mocks["action_node"]
-        running_goal_future_mock = setup_mocks["running_goal_future_mock"]
         ac_instance_mock = setup_mocks["ac_instance_mock"]
+        running_goal_future_mock = setup_mocks["running_goal_future_mock"]
         feedback_cb_mock = setup_mocks["feedback_cb_mock"]
 
         self.node_setup(action_node)
@@ -266,6 +266,7 @@ class TestAction:
 
         action_node.shutdown()
         assert action_node.state == NodeState.SHUTDOWN
+        ac_instance_mock.destroy.assert_called_once()
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
 

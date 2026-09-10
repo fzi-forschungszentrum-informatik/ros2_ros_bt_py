@@ -52,7 +52,6 @@ from ros_bt_py_interfaces.msg import (
     MessageChannels,
     TreeStructure,
     TreeStructureList,
-    TreeState,
     TreeStateList,
     TreeDataList,
     MessageTypes,
@@ -89,8 +88,6 @@ from std_srvs.srv import SetBool
 
 from ros_bt_py.tree_manager import (
     TreeManager,
-    get_success,
-    get_error_message,
     get_available_nodes,
 )
 from ros_bt_py.debug_manager import DebugManager
@@ -498,44 +495,38 @@ class TreeNode(Node):
     @typechecked
     def shutdown(self) -> None:
         """Shut down tree node in a safe way."""
-        if self.tree_manager.state not in [
-            TreeState.IDLE,
-            TreeState.EDITABLE,
-            TreeState.ERROR,
-        ]:
-            self.get_logger().info("Shutting down Behavior Tree")
-            response = self.tree_manager.control_execution(
-                ControlTreeExecution.Request(
-                    command=ControlTreeExecution.Request.SHUTDOWN
-                ),
-                ControlTreeExecution.Response(),
+        if not hasattr(self, "tree_manager"):
+            return
+        self.get_logger().info("Shutting down Behavior Tree")
+        destroy_result = self.tree_manager.destroy()
+        if destroy_result.is_err():
+            self.get_logger().error(
+                f"Failed to shut down Behavior Tree: {destroy_result.unwrap_err()}"
             )
-            if not get_success(response):
-                self.get_logger().error(
-                    f"Failed to shut down Behavior Tree: {get_error_message(response)}"
-                )
 
 
 def main(argv=None):
 
     rclpy.init(args=argv)
-    tree_node = TreeNode(node_name="BehaviorTreeNode")
-    param_listener = tree_node_parameters.ParamListener(tree_node)
-    params = param_listener.get_params()
-    tree_node.init_publisher()
-    tree_node.init_package_manager(params=params)
-    tree_node.init_tree_manager(params=params)
-    tree_node.load_default_tree(params=params)
-    tree_node.init_channels_publisher()
-
-    # NOTE This print statement is used by integration tests
-    #   to determine when testing can begin
-    # DO NOT MODIFY THIS
-    print("Finished starting tree node")
-
-    executor = MultiThreadedExecutor(num_threads=3)
-    executor.add_node(tree_node)
+    tree_node = None
+    executor = None
     try:
+        tree_node = TreeNode(node_name="BehaviorTreeNode")
+        param_listener = tree_node_parameters.ParamListener(tree_node)
+        params = param_listener.get_params()
+        tree_node.init_publisher()
+        tree_node.init_package_manager(params=params)
+        tree_node.init_tree_manager(params=params)
+        tree_node.load_default_tree(params=params)
+        tree_node.init_channels_publisher()
+
+        # NOTE This print statement is used by integration tests
+        #   to determine when testing can begin
+        # DO NOT MODIFY THIS
+        print("Finished starting tree node")
+
+        executor = MultiThreadedExecutor(num_threads=3)
+        executor.add_node(tree_node)
         while rclpy.ok():
             try:
                 executor.spin()
@@ -543,6 +534,15 @@ def main(argv=None):
                 get_logger("tree_node").error("Rclpy InvalidHandle Error, resuming")
     except KeyboardInterrupt:
         get_logger("tree_node").fatal("Shutting down rclpy!")
+    finally:
+        if tree_node is not None:
+            tree_node.shutdown()
+        if executor is not None:
+            executor.shutdown()
+        if tree_node is not None:
+            tree_node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

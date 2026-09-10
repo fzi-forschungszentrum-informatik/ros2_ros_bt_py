@@ -42,6 +42,7 @@ import rclpy.logging
 from rclpy.utilities import ok
 import rclpy.node
 from rclpy.duration import Duration
+from rclpy.timer import Rate, Timer
 
 import yaml
 import yaml.scanner
@@ -448,7 +449,9 @@ class TreeManager:
         self.tree_structure.public_node_data = []
         self.tree_structure.name = self.name
         self.tree_structure.tick_frequency_hz = tick_frequency_hz
-        self.rate = self.ros_node.create_rate(self.tree_structure.tick_frequency_hz)
+        self.rate: Optional[Rate] = self.ros_node.create_rate(
+            self.tree_structure.tick_frequency_hz
+        )
 
         self.tree_state = TreeState(tree_id=uuid_to_ros(self.tree_id))
 
@@ -463,6 +466,8 @@ class TreeManager:
 
         self.state = TreeState.EDITABLE
         self._tick_thread: Optional[Thread] = None
+        self._diagnostic_timer: Optional[Timer] = None
+        self._destroyed = False
 
         # Skip if module_list is empty or None
         if module_list:
@@ -474,7 +479,7 @@ class TreeManager:
         self.publish_data()
 
         if self.publish_diagnostic is not None:
-            self.ros_node.create_timer(
+            self._diagnostic_timer = self.ros_node.create_timer(
                 1.0 / diagnostics_frequency, self.diagnostic_callback
             )
 
@@ -524,6 +529,42 @@ class TreeManager:
     def clear_diagnostics_name(self) -> None:
         """Clear the name for ROS diagnostics."""
         self.diagnostic_status.name = ""
+
+    @typechecked
+    def destroy(self) -> Result[None, BehaviorTreeException]:
+        """Release resources owned by this manager exactly once."""
+        error: Optional[BehaviorTreeException] = None
+        with self._edit_lock:
+            if self._destroyed:
+                return Ok(None)
+            self._destroyed = True
+            if self._tick_thread and self._tick_thread.is_alive():
+                if self.state == TreeState.TICKING:
+                    self.state = TreeState.STOP_REQUESTED
+                self._tick_thread.join()
+
+            root_result = self.find_root()
+            if root_result.is_err():
+                error = root_result.unwrap_err()
+            else:
+                root = root_result.unwrap()
+                if root:
+                    shutdown_result = root.shutdown()
+                    if shutdown_result.is_err():
+                        error = shutdown_result.unwrap_err()
+
+            self.subtree_manager.clear_subtrees()
+
+            if self.rate is not None:
+                self.ros_node.destroy_rate(self.rate)
+                self.rate = None
+            if self._diagnostic_timer is not None:
+                self.ros_node.destroy_timer(self._diagnostic_timer)
+                self._diagnostic_timer = None
+
+        if error is not None:
+            return Err(error)
+        return Ok(None)
 
     def diagnostic_callback(self) -> None:
         if self.publish_diagnostic is None:
@@ -732,14 +773,18 @@ class TreeManager:
             # We know that Time - Time = Duration
             tick_rate = self.tree_structure.tick_frequency_hz
 
-            if (1 / tick_rate) > (duration.nanoseconds * 1e9):
+            tick_duration_seconds = duration.nanoseconds / 1e9
+            if tick_duration_seconds > (1 / tick_rate):
                 self.get_logger().warning(
                     "Tick took longer than set period, cannot tick at "
                     f"{self.tree_structure.tick_frequency_hz:.2f} Hz"
                 )
 
             self.tick_sliding_window.pop(0)
-            self.tick_sliding_window.append(duration.nanoseconds * 1e9)
+            if tick_duration_seconds > 0:
+                self.tick_sliding_window.append(1 / tick_duration_seconds)
+            else:
+                self.tick_sliding_window.append(tick_rate)
             tick_frequency_avg = sum(self.tick_sliding_window) / len(
                 self.tick_sliding_window
             )
@@ -748,6 +793,8 @@ class TreeManager:
                 tick_frequency_msg = Float64()
                 tick_frequency_msg.data = tick_frequency_avg
                 self.publish_tick_frequency(tick_frequency_msg)
+            if self.rate is None:
+                return Err(BehaviorTreeException("Tree manager has been destroyed"))
             self.rate.sleep()
 
         # Announce the result of the final tick before unticking clears the node
@@ -828,8 +875,8 @@ class TreeManager:
                 tree_id=uuid_to_ros(self.tree_id), state=TreeState.EDITABLE
             )
             self.tree_data = TreeData(tree_id=uuid_to_ros(self.tree_id))
-        self.publish_structure()
         self.subtree_manager.clear_subtrees()
+        self.publish_structure()
         self.clear_diagnostics_name()
         response.success = True
         return response
@@ -1317,6 +1364,23 @@ class TreeManager:
                 self.publish_state()
                 return response
             root = find_root_result.unwrap()
+
+            if root and root.state in (BTNodeState.UNINITIALIZED, BTNodeState.SHUTDOWN):
+                setup_result = root.setup()
+                if setup_result.is_err():
+                    response.success = False
+                    response.error_message = (
+                        "Failed to set up tree: " f"{setup_result.unwrap_err()}"
+                    )
+                    response.tree_state = self.state
+                    self.publish_state()
+                    return response
+                if root.state != BTNodeState.IDLE:
+                    response.success = False
+                    response.error_message = "Tree not in idle state after setup"
+                    response.tree_state = self.state
+                    self.publish_state()
+                    return response
 
             response.tree_state = tree_state
             # shutdown the tree after the setup and shutdown request
@@ -2764,40 +2828,42 @@ class TreeManager:
             debug_manager=DebugManager(ros_node=self.ros_node),
         )
 
-        load_response = LoadTree.Response()
-        load_response = manager.load_tree(
-            request=LoadTree.Request(tree=whole_tree),
-            response=load_response,
-        )
+        try:
+            load_response = LoadTree.Response()
+            load_response = manager.load_tree(
+                request=LoadTree.Request(tree=whole_tree),
+                response=load_response,
+            )
 
-        if load_response.success:
-            for node_id in nodes_to_remove:
-                manager.remove_node(
-                    RemoveNode.Request(node_id=node_id, remove_children=False),
-                    RemoveNode.Response(),
-                )
-            root_result = manager.find_root()
-            if root_result.is_err():
-                response.success = False
-                response.error_message = (
-                    "Could not determine new subtree root: "
-                    f"{str(root_result.unwrap_err())}"
-                )
+            if load_response.success:
+                for node_id in nodes_to_remove:
+                    manager.remove_node(
+                        RemoveNode.Request(node_id=node_id, remove_children=False),
+                        RemoveNode.Response(),
+                    )
+                root_result = manager.find_root()
+                if root_result.is_err():
+                    response.success = False
+                    response.error_message = (
+                        "Could not determine new subtree root: "
+                        f"{str(root_result.unwrap_err())}"
+                    )
+                    return response
+                root = root_result.unwrap()
+                if not root:
+                    self.get_logger().info("No nodes in tree")
+                else:
+                    manager.tree_structure.root_id = uuid_to_ros(root.node_id)
+                response.success = True
+                response.tree = manager.structure_to_msg()
                 return response
-            root = root_result.unwrap()
-            if not root:
-                self.get_logger().info("No nodes in tree")
-            else:
-                manager.tree_structure.root_id = uuid_to_ros(root.node_id)
-            response.success = True
-            response.tree = manager.structure_to_msg()
-            return response
-        else:
             response.success = False
             response.error_message = (
                 "Could not load tree into the new subtree" + load_response.error_message
             )
             return response
+        finally:
+            manager.destroy()
 
     #########################
     # Service Handlers Done #

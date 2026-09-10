@@ -141,6 +141,8 @@ class ActionForSetType(Leaf):
 
     _action_available: bool = True
 
+    _ac: Optional[ActionClient] = None
+
     @abc.abstractmethod
     def set_action_attributes(self):
         """Set all important action attributes."""
@@ -338,6 +340,8 @@ class ActionForSetType(Leaf):
 
     def _do_tick_send_new_goal(self) -> Result[BTNodeState, BehaviorTreeException]:
         """Tick to request the execution of a new goal on the action server."""
+        if self._ac is None:
+            return Err(BehaviorTreeException("Action client is not initialized"))
         self._new_goal_request_future = self._ac.send_goal_async(
             goal=self._input_goal, feedback_callback=self._feedback_cb
         )
@@ -459,11 +463,13 @@ class ActionForSetType(Leaf):
         return untick_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        # nothing to do beyond what's done in reset
         reset_result = self._do_reset()
         self._action_available = False
         if reset_result.is_err():
             return reset_result
+        if self._ac is not None:
+            self._ac.destroy()
+            self._ac = None
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
@@ -865,11 +871,13 @@ class Action(Leaf):
         return untick_result
 
     def _do_shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
-        # nothing to do beyond what's done in reset
         reset_result = self._do_reset()
         self._action_available = False
         if reset_result.is_err():
             return reset_result
+        if self._ac is not None:
+            self._ac.destroy()
+            self._ac = None
         return Ok(BTNodeState.SHUTDOWN)
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
