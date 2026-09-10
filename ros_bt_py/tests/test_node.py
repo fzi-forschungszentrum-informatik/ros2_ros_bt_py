@@ -39,7 +39,7 @@ constructed.
 """
 import uuid
 from typing import ClassVar, Dict
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import rclpy
@@ -193,6 +193,36 @@ class TestShutdownOfUninitializedNode:
         assert parent.do_shutdown_calls == 1
         assert child.do_shutdown_calls == 1
         shutdown.assert_not_called()
+
+    def test_repeated_shutdown_revisits_a_child_left_broken(self):
+        """A child whose own shutdown failed must be revisited on retry, not skipped."""
+        parent = ShutdownSpy()
+        child = MagicMock()
+        child.state = BTNodeState.UNINITIALIZED
+        child.name = "child"
+
+        def fail_once():
+            if child.shutdown.call_count == 1:
+                child.state = BTNodeState.BROKEN
+                return Err(BehaviorTreeException("boom"))
+            child.state = BTNodeState.SHUTDOWN
+            return Ok(BTNodeState.SHUTDOWN)
+
+        child.shutdown.side_effect = fail_once
+        parent.children.append(child)
+        parent.setup()
+
+        first_result = parent.shutdown()
+        assert first_result.is_err()
+        assert parent.state == BTNodeState.SHUTDOWN
+        assert child.state == BTNodeState.BROKEN
+
+        second_result = parent.shutdown()
+
+        assert child.shutdown.call_count == 2
+        assert second_result.is_ok()
+        assert child.state == BTNodeState.SHUTDOWN
+        assert parent.do_shutdown_calls == 1, "parent must not be re-shut-down"
 
 
 class TestPermissiveLoadingIsInstanceLocal:

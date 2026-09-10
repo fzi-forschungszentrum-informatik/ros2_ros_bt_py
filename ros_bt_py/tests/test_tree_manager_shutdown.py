@@ -27,6 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 """Regression tests for the tree state machine around stop/shutdown."""
 import threading
+import time
 import uuid
 from unittest.mock import MagicMock
 
@@ -36,9 +37,10 @@ from rclpy.time import Time
 from ros_bt_py_interfaces.msg import TreeState
 from ros_bt_py_interfaces.srv import ControlTreeExecution
 
+from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.tree_manager import TreeManager
-from ros_bt_py.vendor.result import Ok
+from ros_bt_py.vendor.result import Err, Ok
 
 
 @pytest.fixture
@@ -179,6 +181,38 @@ def test_destroy_releases_manager_resources_once():
     ros_node.destroy_timer.assert_called_once_with(diagnostic_timer)
 
 
+def test_destroy_does_not_hang_when_tick_thread_never_exits(
+    manager: TreeManager, monkeypatch
+):
+    """destroy() must give up on a stuck tick thread instead of blocking forever."""
+    ok_calls = {"n": 0}
+
+    def fake_ok(*args, **kwargs):
+        ok_calls["n"] += 1
+        return ok_calls["n"] < 3
+
+    monkeypatch.setattr("ros_bt_py.tree_manager.ok", fake_ok)
+    manager.tree_structure.tick_frequency_hz = 1000.0
+
+    stuck = threading.Event()
+
+    def never_exits():
+        stuck.set()
+        time.sleep(10)
+
+    manager._tick_thread = threading.Thread(target=never_exits, daemon=True)
+    manager._tick_thread.start()
+    assert stuck.wait(timeout=5)
+    manager.state = TreeState.TICKING
+
+    start = time.monotonic()
+    result = manager.destroy()
+    elapsed = time.monotonic() - start
+
+    assert result.is_err()
+    assert elapsed < 2.0
+
+
 def test_setup_and_shutdown_initializes_before_cleaning_up(manager: TreeManager):
     root = make_root(BTNodeState.UNINITIALIZED)
 
@@ -200,6 +234,48 @@ def test_setup_and_shutdown_initializes_before_cleaning_up(manager: TreeManager)
     assert response.success
     root.setup.assert_called_once()
     root.shutdown.assert_called_once()
+
+
+def test_setup_and_shutdown_cleans_up_after_failed_setup(manager: TreeManager):
+    """A failing setup must still release whatever earlier setup already allocated."""
+    root = make_root(BTNodeState.UNINITIALIZED)
+    root.setup.return_value = Err(BehaviorTreeException("boom"))
+    root.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {root.node_id: root}
+
+    response = manager.control_execution(
+        ControlTreeExecution.Request(
+            command=ControlTreeExecution.Request.SETUP_AND_SHUTDOWN
+        ),
+        ControlTreeExecution.Response(),
+    )
+
+    root.shutdown.assert_called_once()
+    assert not response.success
+    assert "boom" in response.error_message
+
+
+def test_setup_and_shutdown_revalidates_a_broken_root(manager: TreeManager):
+    """A root left BROKEN from a prior cycle must be re-validated, not skipped."""
+    root = make_root(BTNodeState.BROKEN)
+
+    def setup():
+        root.state = BTNodeState.IDLE
+        return Ok(BTNodeState.IDLE)
+
+    root.setup.side_effect = setup
+    root.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {root.node_id: root}
+
+    response = manager.control_execution(
+        ControlTreeExecution.Request(
+            command=ControlTreeExecution.Request.SETUP_AND_SHUTDOWN
+        ),
+        ControlTreeExecution.Response(),
+    )
+
+    root.setup.assert_called_once()
+    assert response.success
 
 
 def test_tick_reports_measured_frequency_and_overruns():

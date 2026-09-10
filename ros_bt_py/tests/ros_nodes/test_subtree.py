@@ -27,9 +27,10 @@
 """Regression tests for nested subtree manager cleanup."""
 from unittest.mock import MagicMock
 
+from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_nodes.subtree import Subtree
-from ros_bt_py.vendor.result import Ok
+from ros_bt_py.vendor.result import Err, Ok
 
 
 def test_subtree_shutdown_destroys_nested_tree_manager():
@@ -44,3 +45,31 @@ def test_subtree_shutdown_destroys_nested_tree_manager():
 
     assert result.is_ok()
     subtree.manager.destroy.assert_called_once()
+
+
+def test_subtree_shutdown_does_not_shutdown_root_directly():
+    """manager.destroy() already shuts the root down; a direct call double-destroys it."""
+    subtree = Subtree.__new__(Subtree)
+    subtree.root = MagicMock()
+    subtree.manager = MagicMock()
+    subtree.manager.destroy.return_value = Ok(None)
+    subtree.subtree_manager = None
+
+    subtree._do_shutdown()
+
+    subtree.root.shutdown.assert_not_called()
+
+
+def test_subtree_shutdown_surfaces_manager_destroy_error():
+    subtree = Subtree.__new__(Subtree)
+    subtree.root = MagicMock()
+    subtree.manager = MagicMock()
+    subtree.manager.destroy.return_value = Err(
+        BehaviorTreeException("root shutdown failed")
+    )
+    subtree.subtree_manager = None
+
+    result = subtree._do_shutdown()
+
+    assert result.is_err()
+    assert "root shutdown failed" in str(result.unwrap_err())

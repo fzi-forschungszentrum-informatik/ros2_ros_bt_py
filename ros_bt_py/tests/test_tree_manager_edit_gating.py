@@ -158,6 +158,29 @@ def test_stop_still_reaches_a_tree_that_ticks_forever(
     assert not manager._tick_thread.is_alive()
 
 
+def test_load_tree_is_rejected_after_destroy(manager: TreeManager):
+    """A manager that has released its resources must reject further edits."""
+    manager.destroy()
+
+    response = manager.load_tree(LoadTree.Request(), LoadTree.Response())
+
+    assert not response.success
+    assert "destroyed" in response.error_message
+
+
+def test_control_execution_is_rejected_after_destroy(manager: TreeManager):
+    """A manager that has released its resources must reject control commands."""
+    manager.destroy()
+
+    response = manager.control_execution(
+        ControlTreeExecution.Request(command=ControlTreeExecution.Request.DO_NOTHING),
+        ControlTreeExecution.Response(),
+    )
+
+    assert not response.success
+    assert "destroyed" in response.error_message
+
+
 def test_control_execution_holds_the_edit_lock(manager: TreeManager):
     """No edit service can get in while a control command is being handled."""
     acquired_from_another_thread = []

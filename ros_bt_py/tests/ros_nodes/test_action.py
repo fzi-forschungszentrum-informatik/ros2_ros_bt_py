@@ -29,7 +29,7 @@ import pytest
 import unittest.mock as mock
 
 from example_interfaces.action import Fibonacci
-from ros_bt_py.ros_nodes.action import Action
+from ros_bt_py.ros_nodes.action import Action, ActionStates
 from rclpy.time import Time
 from ros_bt_py_interfaces.msg import NodeState, UtilityBounds
 from ros_bt_py.exceptions import BehaviorTreeException
@@ -269,6 +269,43 @@ class TestAction:
         ac_instance_mock.destroy.assert_called_once()
 
         feedback_cb_mock.assert_called_once_with(feedback_mock)
+
+    def test_shutdown_waits_for_pending_cancel_before_destroying_client(
+        self, setup_mocks
+    ):
+        """A goal cancelled during shutdown must finish before the client is torn down."""
+        action_node = setup_mocks["action_node"]
+        ac_instance_mock = setup_mocks["ac_instance_mock"]
+        running_goal_handle_mock = setup_mocks["running_goal_handle_mock"]
+        self.node_setup(action_node)
+
+        cancel_future = mock.Mock()
+        cancel_future.done.return_value = False
+        running_goal_handle_mock.cancel_goal_async.return_value = cancel_future
+
+        action_node._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
+        action_node._running_goal_handle = running_goal_handle_mock
+
+        call_order = []
+        ac_instance_mock.destroy.side_effect = lambda: call_order.append("destroyed")
+
+        with mock.patch("rclpy.spin_until_future_complete") as spin_mock:
+            spin_mock.side_effect = lambda *args, **kwargs: call_order.append("waited")
+            action_node.shutdown()
+
+        spin_mock.assert_called_once()
+        assert spin_mock.call_args.args[1] is cancel_future
+        assert call_order == ["waited", "destroyed"]
+
+    def test_send_new_goal_errors_when_client_is_not_initialized(self, setup_mocks):
+        """Matches ActionForSetType: an uninitialized client is a hard error, not BROKEN."""
+        action_node = setup_mocks["action_node"]
+        self.node_setup(action_node)
+        action_node._ac = None
+
+        result = action_node._do_tick_send_new_goal()
+
+        assert result.is_err()
 
     def test_node_reset(self, setup_mocks):
         action_node = setup_mocks["action_node"]

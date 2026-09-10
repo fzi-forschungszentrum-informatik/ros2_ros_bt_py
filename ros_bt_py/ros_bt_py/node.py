@@ -817,13 +817,15 @@ class Node(object, metaclass=NodeMeta):
         if self.debug_manager:
             report_state = self.debug_manager.report_state(self, "SHUTDOWN")
         with report_state:
-            if self.state == BTNodeState.SHUTDOWN:
+            if self.state == BTNodeState.SHUTDOWN and all(
+                child.state == BTNodeState.SHUTDOWN for child in self.children
+            ):
                 return Ok(self.state)
 
             error_result = None
             if self.state == BTNodeState.UNINITIALIZED:
                 self.state = BTNodeState.SHUTDOWN
-            else:
+            elif self.state != BTNodeState.SHUTDOWN:
                 shutdown_result = self._do_shutdown()
                 if shutdown_result.is_ok():
                     self.state = shutdown_result.unwrap()

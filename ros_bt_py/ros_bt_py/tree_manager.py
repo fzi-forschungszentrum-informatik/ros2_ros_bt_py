@@ -136,6 +136,10 @@ def is_edit_service(func):
         # time this handler gets its turn - that is how a queued load_tree
         # rebuilt self.nodes underneath an already ticking tree.
         with self._edit_lock:
+            if self._destroyed:
+                response.success = False
+                response.error_message = "Tree manager has been destroyed."
+                return response
             tree_state = self.state
             if tree_state != TreeState.EDITABLE:
                 response.success = False
@@ -541,17 +545,26 @@ class TreeManager:
             if self._tick_thread and self._tick_thread.is_alive():
                 if self.state == TreeState.TICKING:
                     self.state = TreeState.STOP_REQUESTED
-                self._tick_thread.join()
+                period = 1.0 / self.tree_structure.tick_frequency_hz
+                while self._tick_thread.is_alive() and ok():
+                    self._tick_thread.join(period * 4.0)
+                if self._tick_thread.is_alive():
+                    error = BehaviorTreeException(
+                        "Tried to join tick thread while destroying tree manager, "
+                        "but failed!"
+                    )
 
-            root_result = self.find_root()
-            if root_result.is_err():
-                error = root_result.unwrap_err()
-            else:
-                root = root_result.unwrap()
-                if root:
-                    shutdown_result = root.shutdown()
-                    if shutdown_result.is_err():
-                        error = shutdown_result.unwrap_err()
+            # Touching any node before the tick thread is joined races its teardown.
+            if error is None:
+                root_result = self.find_root()
+                if root_result.is_err():
+                    error = root_result.unwrap_err()
+                else:
+                    root = root_result.unwrap()
+                    if root:
+                        shutdown_result = root.shutdown()
+                        if shutdown_result.is_err():
+                            error = shutdown_result.unwrap_err()
 
             self.subtree_manager.clear_subtrees()
 
@@ -1325,12 +1338,17 @@ class TreeManager:
     ) -> ControlTreeExecution.Response:
         response.success = False
 
+        if self._destroyed:
+            response.error_message = "Tree manager has been destroyed."
+            return response
+
         # Make a new tick thread if there isn't one or the old one has been
         # successfully joined.
         if self._tick_thread is None or not self._tick_thread.is_alive():
             self._tick_thread = Thread(target=self.tick_report_exceptions)
 
         tree_state = self.state
+        setup_error_message = None
 
         # Check for error state and abort if command is not SHUTDOWN -
         # if it is, we fall through to the if below and shut down the
@@ -1365,25 +1383,23 @@ class TreeManager:
                 return response
             root = find_root_result.unwrap()
 
-            if root and root.state in (BTNodeState.UNINITIALIZED, BTNodeState.SHUTDOWN):
+            if root and root.state in (
+                BTNodeState.UNINITIALIZED,
+                BTNodeState.SHUTDOWN,
+                BTNodeState.BROKEN,
+            ):
                 setup_result = root.setup()
                 if setup_result.is_err():
-                    response.success = False
-                    response.error_message = (
+                    setup_error_message = (
                         "Failed to set up tree: " f"{setup_result.unwrap_err()}"
                     )
-                    response.tree_state = self.state
-                    self.publish_state()
-                    return response
-                if root.state != BTNodeState.IDLE:
-                    response.success = False
-                    response.error_message = "Tree not in idle state after setup"
-                    response.tree_state = self.state
-                    self.publish_state()
-                    return response
+                elif root.state != BTNodeState.IDLE:
+                    setup_error_message = "Tree not in idle state after setup"
 
             response.tree_state = tree_state
-            # shutdown the tree after the setup and shutdown request
+            # Shut down the tree after the setup and shutdown request, whether or
+            # not setup succeeded, so anything a partial setup already allocated
+            # still gets released.
             request.command = ControlTreeExecution.Request.SHUTDOWN
 
         if request.command in [
@@ -1490,6 +1506,18 @@ class TreeManager:
             if request.command == ControlTreeExecution.Request.SHUTDOWN:
                 response = self._control_execution_shutdown(request, response)
                 self.publish_state()
+
+            # A SETUP_AND_SHUTDOWN that failed to set up must still report that
+            # failure, even though the shutdown above may have succeeded.
+            if setup_error_message is not None:
+                if response.success:
+                    response.error_message = setup_error_message
+                else:
+                    response.error_message = (
+                        f"{setup_error_message} (additionally failed to shut down: "
+                        f"{response.error_message})"
+                    )
+                response.success = False
 
         elif request.command == ControlTreeExecution.Request.TICK_ONCE:
             response = self._control_execution_tick_once(request, response)
