@@ -200,6 +200,8 @@ class LoggingManager:
                 stacklevel=stacklevel,
             )
 
+    warning = warn
+
     def error(
         self,
         msg: str,

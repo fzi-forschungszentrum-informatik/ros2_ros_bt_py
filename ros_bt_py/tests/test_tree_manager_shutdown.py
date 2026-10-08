@@ -34,11 +34,12 @@ from unittest.mock import MagicMock
 import pytest
 from rclpy.time import Time
 
-from ros_bt_py_interfaces.msg import TreeState
+from ros_bt_py_interfaces.msg import NodeState, TreeState
 from ros_bt_py_interfaces.srv import ControlTreeExecution
 
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.logging_manager import LoggingManager
 from ros_bt_py.tree_manager import TreeManager
 from ros_bt_py.vendor.result import Err, Ok
 
@@ -321,3 +322,54 @@ def test_clear_removes_subtrees_before_publishing(manager: TreeManager, monkeypa
 
     assert response.success
     assert call_order == ["clear_subtrees", "publish_structure"]
+
+
+def test_warning_uses_the_real_logging_adapter():
+    ros_node = MagicMock()
+    logger = LoggingManager(ros_node=ros_node)
+
+    logger.warning("Tick exceeded its period", internal=True)
+
+    ros_node.get_logger().warning.assert_called_once_with("Tick exceeded its period")
+
+
+def test_raised_tick_error_is_published_and_one_shutdown_recovers(manager: TreeManager):
+    root = make_root()
+    root.tick.side_effect = RuntimeError("tick exploded")
+    root.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {root.node_id: root}
+    published_states = []
+    manager.publish_tree_state = lambda msg: published_states.append(
+        msg.tree_states[-1].state
+    )
+    root.to_state_msg.return_value = NodeState()
+    manager.state = TreeState.TICKING
+
+    manager.tick_report_exceptions()
+
+    assert manager.state == TreeState.ERROR
+    assert "tick exploded" in manager._last_error
+    assert TreeState.ERROR in published_states
+    response = manager.control_execution(
+        ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN),
+        ControlTreeExecution.Response(),
+    )
+    assert response.success
+    assert manager.state == TreeState.EDITABLE
+    root.shutdown.assert_called_once()
+
+
+def test_one_shutdown_cleans_up_a_dead_worker_in_ticking_state(manager: TreeManager):
+    root = make_root()
+    root.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {root.node_id: root}
+    manager.state = TreeState.TICKING
+
+    response = manager.control_execution(
+        ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN),
+        ControlTreeExecution.Response(),
+    )
+
+    assert response.success
+    assert manager.state == TreeState.EDITABLE
+    root.shutdown.assert_called_once()

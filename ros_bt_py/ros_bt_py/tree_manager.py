@@ -688,7 +688,10 @@ class TreeManager:
 
     def tick_report_exceptions(self) -> None:
         """Wrap :meth:`TreeManager.tick()` and catch *all* errors."""
-        tick_result = self.tick()
+        try:
+            tick_result = self.tick()
+        except Exception as exc:
+            tick_result = Err(BehaviorTreeException(f"{type(exc).__name__}: {exc}"))
 
         if tick_result.is_err():
             self.get_logger().error(
@@ -1119,6 +1122,7 @@ class TreeManager:
         self.state = TreeState.EDITABLE
         response.tree_state = self.state
         response.success = True
+        response.error_message = ""
         return response
 
     @typechecked
@@ -1321,7 +1325,9 @@ class TreeManager:
         stop or reset the entire tree.
 
         """
-        self.get_logger().debug(f"control_execution: received command {request.command}")
+        self.get_logger().debug(
+            f"control_execution: received command {request.command}"
+        )
         with self._edit_lock:
             response = self._control_execution(request, response)
         self.get_logger().debug(
@@ -1448,7 +1454,8 @@ class TreeManager:
                     )
                     response.success = False
                     self.get_logger().error(response.error_message)
-                    return response
+                    if request.command != ControlTreeExecution.Request.SHUTDOWN:
+                        return response
                 else:
                     response.error_message = (
                         f"Successfully stopped ticking, but tree state is "
@@ -1456,7 +1463,8 @@ class TreeManager:
                     )
                     response.success = False
                     self.get_logger().error(response.error_message)
-                    return response
+                    if request.command != ControlTreeExecution.Request.SHUTDOWN:
+                        return response
 
             elif tree_state == TreeState.WAITING_FOR_TICK:
                 find_root_result = self.find_root()
@@ -2941,7 +2949,9 @@ class TreeManager:
             else:
                 self.tree_structure.nodes = []
         else:
-            self.get_logger().warning(f"Strange topology {str(root_result.unwrap_err())}")
+            self.get_logger().warning(
+                f"Strange topology {str(root_result.unwrap_err())}"
+            )
             # build a tree_structure out of this strange topology,
             # so the user can fix it in the editor
             self.tree_structure.nodes = [
