@@ -263,6 +263,12 @@ def load_tree_from_file(
                 return response
             tree = response.tree
             tree.path = request.tree.path
+            if not tree.nodes:
+                response.success = False
+                response.error_message = (
+                    f'Tree file "{request.tree.path}" contains no nodes'
+                )
+                return response
 
     response.success = True
     response.tree = tree
@@ -622,7 +628,18 @@ class TreeManager:
             if error is None:
                 root_result = self.find_root()
                 if root_result.is_err():
-                    error = root_result.unwrap_err()
+                    # A malformed tree (multi-root or cyclic) still owns its
+                    # nodes, so shut every one of them down instead of the root.
+                    shutdown_errors = []
+                    for node in list(self.nodes.values()):
+                        node_shutdown = node.shutdown()
+                        if node_shutdown.is_err():
+                            shutdown_errors.append(str(node_shutdown.unwrap_err()))
+                    if shutdown_errors:
+                        error = BehaviorTreeException(
+                            "Failed to shut down malformed tree: "
+                            f"{'; '.join(shutdown_errors)}"
+                        )
                 else:
                     root = root_result.unwrap()
                     if root:
@@ -680,10 +697,13 @@ class TreeManager:
         """Sleep at the configured ROS rate unless a stop woke the worker."""
         if self.state == TreeState.STOP_REQUESTED:
             return Ok(None)
-        if self.rate is None:
+        # Bind the rate locally: destroy_rate() may null self.rate from a
+        # service thread between the check and the sleep.
+        rate = self.rate
+        if rate is None:
             return Err(BehaviorTreeException("Tree manager has been destroyed"))
         try:
-            self.rate.sleep()
+            rate.sleep()
         except (RuntimeError, rclpy.exceptions.ROSInterruptException):
             if self.state != TreeState.STOP_REQUESTED:
                 raise
@@ -1322,11 +1342,18 @@ class TreeManager:
             # Give the tick thread some time to finish
             self._tick_thread.join((1.0 / self.tree_structure.tick_frequency_hz) * 4.0)
             # If we're debugging or setting up (and ROS is not
-            # shutting down), keep sleepin until the thread
-            # finishes
+            # shutting down), keep sleeping until the thread
+            # finishes, but no longer than the join deadline
+            deadline = time.monotonic() + _TICK_JOIN_TIMEOUT_S
             while self._tick_thread.is_alive() and ok():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0.0:
+                    break
                 self._tick_thread.join(
-                    (1.0 / self.tree_structure.tick_frequency_hz) * 4.0
+                    min(
+                        remaining,
+                        (1.0 / self.tree_structure.tick_frequency_hz) * 4.0,
+                    )
                 )
             if self._tick_thread.is_alive():
                 response.success = False
@@ -1412,6 +1439,10 @@ class TreeManager:
                 self.rate = self.ros_node.create_rate(
                     frequency=self.tree_structure.tick_frequency_hz
                 )
+            # A timed-out stop can leave the rate destroyed; without a rate
+            # the worker would fail on its first sleep.
+            if self.rate is None:
+                self._ensure_rate()
             self._tick_thread.start()
             response.success = True
             response.tree_state = TreeState.TICKING

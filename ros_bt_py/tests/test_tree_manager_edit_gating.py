@@ -41,7 +41,11 @@ from ros_bt_py_interfaces.srv import (
     MigrateTree,
 )
 
-from ros_bt_py.tree_manager import TreeManager, validate_tree_topology
+from ros_bt_py.tree_manager import (
+    TreeManager,
+    load_tree_from_file,
+    validate_tree_topology,
+)
 from ros_bt_py.exceptions import BehaviorTreeException
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.nodes.sequence import Sequence
@@ -320,3 +324,29 @@ def test_failed_load_cleanup_can_be_retried_by_shutdown(
     assert shutdown_response.success
     assert manager.state == TreeState.EDITABLE
     assert constructed.shutdown.call_count == 2
+
+
+def test_load_tree_from_file_rejects_zero_node_files(tmp_path):
+    """A tree file that parses to zero nodes must fail fast, not loop forever."""
+    empty_tree = tmp_path / "empty_tree.yaml"
+    empty_tree.write_text(
+        "name: empty_tree\n"
+        "path: ''\n"
+        "nodes: []\n"
+        "tick_frequency_hz: 10.0\n"
+        "version: 0.7.0\n"
+    )
+    request = MigrateTree.Request()
+    request.tree.path = f"file://{empty_tree}"
+
+    results = []
+
+    def load():
+        results.append(load_tree_from_file(request, MigrateTree.Response()))
+
+    caller = threading.Thread(target=load, daemon=True)
+    caller.start()
+    caller.join(3)
+    assert not caller.is_alive(), "load_tree_from_file loops on zero-node files"
+    assert not results[0].success
+    assert "no nodes" in results[0].error_message.lower()

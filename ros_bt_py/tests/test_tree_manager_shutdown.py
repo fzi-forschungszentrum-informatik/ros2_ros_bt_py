@@ -32,6 +32,7 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
+from rclpy.clock import Clock
 from rclpy.time import Time
 
 from ros_bt_py_interfaces.msg import NodeState, TreeState
@@ -426,3 +427,88 @@ def test_destroy_retries_failed_node_cleanup(manager: TreeManager):
     assert root.shutdown.call_count == 2
     assert manager.destroy().is_ok()
     assert root.shutdown.call_count == 2
+
+
+def test_tick_once_join_is_bounded(manager: TreeManager, monkeypatch):
+    """TICK_ONCE must give up joining a stuck worker within the join deadline."""
+    monkeypatch.setattr("ros_bt_py.tree_manager.ok", lambda *args, **kwargs: True)
+    monkeypatch.setattr("ros_bt_py.tree_manager._TICK_JOIN_TIMEOUT_S", 0.2)
+
+    release_tick = threading.Event()
+
+    def blocking_tick():
+        release_tick.wait(timeout=10)
+        return Ok(BTNodeState.SUCCEEDED)
+
+    root = make_root()
+    root.tick.side_effect = blocking_tick
+    manager.nodes = {root.node_id: root}
+    manager.tree_structure.tick_frequency_hz = 10.0
+
+    results = []
+
+    def tick_once():
+        results.append(
+            manager._control_execution_tick_once(
+                ControlTreeExecution.Request(
+                    command=ControlTreeExecution.Request.TICK_ONCE
+                ),
+                ControlTreeExecution.Response(),
+            )
+        )
+
+    caller = threading.Thread(target=tick_once)
+    caller.start()
+    caller.join(2)
+    assert not caller.is_alive(), "TICK_ONCE joins the worker unbounded"
+    assert results[0].success is False
+    release_tick.set()
+    if manager._tick_thread is not None:
+        manager._tick_thread.join(3)
+
+
+def test_tick_multiple_recreates_a_missing_rate(manager: TreeManager, monkeypatch):
+    """A TICK command must not start a worker that cannot sleep.
+
+    A timed-out stop leaves the rate destroyed; the next TICK_PERIODICALLY
+    must recreate it instead of dooming the worker to an error sleep."""
+    monkeypatch.setattr("ros_bt_py.tree_manager.ok", lambda *args, **kwargs: True)
+    # tick() measures tick durations via the node clock; a real clock keeps
+    # that math valid while the mocked node returns no usable timestamps.
+    manager.ros_node.get_clock.return_value = Clock()
+    root = make_root()
+    root.tick.return_value = Ok(BTNodeState.RUNNING)
+    root.untick.return_value = Ok(BTNodeState.IDLE)
+    manager.nodes = {root.node_id: root}
+    manager.tree_structure.tick_frequency_hz = 10.0
+    manager.rate = None
+
+    response = manager.control_execution(
+        ControlTreeExecution.Request(
+            command=ControlTreeExecution.Request.TICK_PERIODICALLY
+        ),
+        ControlTreeExecution.Response(),
+    )
+    assert response.success
+    assert manager.rate is not None, "worker would fail on its first sleep"
+
+    stop_response = manager.control_execution(
+        ControlTreeExecution.Request(command=ControlTreeExecution.Request.STOP),
+        ControlTreeExecution.Response(),
+    )
+    assert stop_response.success
+
+
+def test_destroy_shuts_down_malformed_trees(manager: TreeManager):
+    """destroy() must release node resources even when find_root() fails."""
+    orphan_a = make_root()
+    orphan_a.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    orphan_b = make_root()
+    orphan_b.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {orphan_a.node_id: orphan_a, orphan_b.node_id: orphan_b}
+
+    result = manager.destroy()
+
+    assert result.is_ok()
+    orphan_a.shutdown.assert_called_once()
+    orphan_b.shutdown.assert_called_once()
