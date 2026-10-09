@@ -186,13 +186,7 @@ def test_destroy_does_not_hang_when_tick_thread_never_exits(
     manager: TreeManager, monkeypatch
 ):
     """destroy() must give up on a stuck tick thread instead of blocking forever."""
-    ok_calls = {"n": 0}
-
-    def fake_ok(*args, **kwargs):
-        ok_calls["n"] += 1
-        return ok_calls["n"] < 3
-
-    monkeypatch.setattr("ros_bt_py.tree_manager.ok", fake_ok)
+    monkeypatch.setattr("ros_bt_py.tree_manager._TICK_JOIN_TIMEOUT_S", 0.05)
     manager.tree_structure.tick_frequency_hz = 1000.0
 
     stuck = threading.Event()
@@ -211,7 +205,7 @@ def test_destroy_does_not_hang_when_tick_thread_never_exits(
     elapsed = time.monotonic() - start
 
     assert result.is_err()
-    assert elapsed < 2.0
+    assert elapsed < 1.0
 
 
 def test_setup_and_shutdown_initializes_before_cleaning_up(manager: TreeManager):
@@ -373,3 +367,62 @@ def test_one_shutdown_cleans_up_a_dead_worker_in_ticking_state(manager: TreeMana
     assert response.success
     assert manager.state == TreeState.EDITABLE
     root.shutdown.assert_called_once()
+
+
+@pytest.mark.parametrize("command", ["shutdown", "destroy"])
+def test_stuck_worker_has_a_wall_time_deadline_and_can_be_retried(
+    manager: TreeManager, monkeypatch, command
+):
+    monkeypatch.setattr("ros_bt_py.tree_manager.ok", lambda: True)
+    monkeypatch.setattr(
+        "ros_bt_py.tree_manager._TICK_JOIN_TIMEOUT_S", 0.05, raising=False
+    )
+    release = threading.Event()
+    manager._tick_thread = threading.Thread(target=release.wait)
+    manager._tick_thread.start()
+    manager.state = TreeState.TICKING
+    root = make_root()
+    root.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.nodes = {root.node_id: root}
+    # Even the unfixed implementation must eventually leave this test.
+    watchdog = threading.Timer(0.6, release.set)
+    watchdog.start()
+
+    def shut_down():
+        if command == "destroy":
+            return manager.destroy().is_ok()
+        return manager.control_execution(
+            ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN),
+            ControlTreeExecution.Response(),
+        ).success
+
+    try:
+        start = time.monotonic()
+        assert not shut_down()
+        assert time.monotonic() - start < 0.4
+        root.shutdown.assert_not_called()
+        release.set()
+        if manager._tick_thread.is_alive():
+            manager._tick_thread.join(1)
+        assert shut_down()
+        root.shutdown.assert_called_once()
+    finally:
+        release.set()
+        if manager._tick_thread.is_alive():
+            manager._tick_thread.join(1)
+        watchdog.cancel()
+
+
+def test_destroy_retries_failed_node_cleanup(manager: TreeManager):
+    root = make_root()
+    root.shutdown.side_effect = [
+        Err(BehaviorTreeException("cleanup pending")),
+        Ok(BTNodeState.SHUTDOWN),
+    ]
+    manager.nodes = {root.node_id: root}
+
+    assert manager.destroy().is_err()
+    assert manager.destroy().is_ok()
+    assert root.shutdown.call_count == 2
+    assert manager.destroy().is_ok()
+    assert root.shutdown.call_count == 2

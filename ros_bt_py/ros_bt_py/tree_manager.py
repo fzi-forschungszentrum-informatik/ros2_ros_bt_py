@@ -28,6 +28,7 @@
 from importlib import metadata
 import inspect
 import os
+import time
 import uuid
 from copy import deepcopy
 from functools import wraps
@@ -112,6 +113,9 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from std_msgs.msg import Float64
 
 from rclpy_message_converter import message_converter
+
+
+_TICK_JOIN_TIMEOUT_S = 5.0
 
 
 def is_edit_service(func):
@@ -472,6 +476,7 @@ class TreeManager:
         self._tick_thread: Optional[Thread] = None
         self._diagnostic_timer: Optional[Timer] = None
         self._destroyed = False
+        self._cleanup_complete = False
 
         # Skip if module_list is empty or None
         if module_list:
@@ -536,23 +541,17 @@ class TreeManager:
 
     @typechecked
     def destroy(self) -> Result[None, BehaviorTreeException]:
-        """Release resources owned by this manager exactly once."""
+        """Close the manager and retry resource cleanup until it succeeds."""
         error: Optional[BehaviorTreeException] = None
         with self._edit_lock:
-            if self._destroyed:
+            if self._cleanup_complete:
                 return Ok(None)
             self._destroyed = True
-            if self._tick_thread and self._tick_thread.is_alive():
-                if self.state == TreeState.TICKING:
-                    self.state = TreeState.STOP_REQUESTED
-                period = 1.0 / self.tree_structure.tick_frequency_hz
-                while self._tick_thread.is_alive() and ok():
-                    self._tick_thread.join(period * 4.0)
-                if self._tick_thread.is_alive():
-                    error = BehaviorTreeException(
-                        "Tried to join tick thread while destroying tree manager, "
-                        "but failed!"
-                    )
+            if not self._stop_tick_thread(recreate_rate=False):
+                error = BehaviorTreeException(
+                    "Tried to join tick thread while destroying tree manager, "
+                    "but timed out!"
+                )
 
             # Touching any node before the tick thread is joined races its teardown.
             if error is None:
@@ -566,17 +565,63 @@ class TreeManager:
                         if shutdown_result.is_err():
                             error = shutdown_result.unwrap_err()
 
-            self.subtree_manager.clear_subtrees()
-
-            if self.rate is not None:
-                self.ros_node.destroy_rate(self.rate)
-                self.rate = None
+            if error is None:
+                self.subtree_manager.clear_subtrees()
             if self._diagnostic_timer is not None:
                 self.ros_node.destroy_timer(self._diagnostic_timer)
                 self._diagnostic_timer = None
 
+            if error is None:
+                self._cleanup_complete = True
+
         if error is not None:
             return Err(error)
+        return Ok(None)
+
+    def _destroy_rate(self) -> None:
+        """Destroy the current rate, waking any thread blocked in Rate.sleep()."""
+        if self.rate is not None:
+            self.ros_node.destroy_rate(self.rate)
+            self.rate = None
+
+    def _ensure_rate(self) -> None:
+        if self.rate is None:
+            self.rate = self.ros_node.create_rate(
+                frequency=self.tree_structure.tick_frequency_hz
+            )
+
+    def _stop_tick_thread(self, recreate_rate: bool) -> bool:
+        """Request a stop and wait no longer than the wall-clock deadline."""
+        thread = self._tick_thread
+        if not recreate_rate:
+            self._destroy_rate()
+        if thread is not None and thread.is_alive():
+            if self.state == TreeState.TICKING:
+                self.state = TreeState.STOP_REQUESTED
+            self._destroy_rate()
+            deadline = time.monotonic() + _TICK_JOIN_TIMEOUT_S
+            while thread.is_alive():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0.0:
+                    break
+                thread.join(min(remaining, 0.1))
+
+        stopped = thread is None or not thread.is_alive()
+        if stopped and recreate_rate and not self._destroyed:
+            self._ensure_rate()
+        return stopped
+
+    def _sleep_until_next_tick(self) -> Result[None, BehaviorTreeException]:
+        """Sleep at the configured ROS rate unless a stop woke the worker."""
+        if self.state == TreeState.STOP_REQUESTED:
+            return Ok(None)
+        if self.rate is None:
+            return Err(BehaviorTreeException("Tree manager has been destroyed"))
+        try:
+            self.rate.sleep()
+        except (RuntimeError, rclpy.exceptions.ROSInterruptException):
+            if self.state != TreeState.STOP_REQUESTED:
+                raise
         return Ok(None)
 
     def diagnostic_callback(self) -> None:
@@ -809,9 +854,9 @@ class TreeManager:
                 tick_frequency_msg = Float64()
                 tick_frequency_msg.data = tick_frequency_avg
                 self.publish_tick_frequency(tick_frequency_msg)
-            if self.rate is None:
-                return Err(BehaviorTreeException("Tree manager has been destroyed"))
-            self.rate.sleep()
+            sleep_result = self._sleep_until_next_tick()
+            if sleep_result.is_err():
+                return sleep_result
 
         # Announce the result of the final tick before unticking clears the node
         # states. NOTE: this thread stays alive inside the tree until untick()
@@ -1417,31 +1462,13 @@ class TreeManager:
             # Touching any node before it is joined races its teardown.
             if tree_state == TreeState.TICKING or self._tick_thread.is_alive():
 
-                if tree_state == TreeState.TICKING:
-                    self.state = TreeState.STOP_REQUESTED
-                # Four times the allowed period should be plenty of time to
-                # finish the current tick, if the tree has not stopped by then
-                # we're in deep trouble.
-                if self._tick_thread.is_alive():
-                    # Give the tick thread some time to finish
-                    self._tick_thread.join(
-                        (1.0 / self.tree_structure.tick_frequency_hz) * 4.0
+                if not self._stop_tick_thread(recreate_rate=True):
+                    response.success = False
+                    response.error_message = (
+                        "Tried to join tick thread after requesting stop, "
+                        "but timed out!"
                     )
-
-                    # If we're debugging or setting up (and ROS is not
-                    # shutting down), keep sleeping until the thread
-                    # finishes
-                    while self._tick_thread.is_alive() and ok():
-                        self._tick_thread.join(
-                            (1.0 / self.tree_structure.tick_frequency_hz) * 4.0
-                        )
-                    if self._tick_thread.is_alive():
-                        response.success = False
-                        response.error_message = (
-                            "Tried to join tick thread after requesting "
-                            "stop, but failed!"
-                        )
-                        return response
+                    return response
 
                 state_after_joining = self.state
                 if state_after_joining == TreeState.IDLE:
