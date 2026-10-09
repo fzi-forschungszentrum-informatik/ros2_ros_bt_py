@@ -444,6 +444,87 @@ class TestAction:
         assert action_node.shutdown().is_ok()
         ac_instance_mock.destroy.assert_called_once()
 
+    def test_failed_retention_is_consumed_on_next_tick(self, setup_mocks):
+        """An internally failed goal retention must not pin the node in RUNNING."""
+        action_node = setup_mocks["action_node"]
+        ac_instance_mock = setup_mocks["ac_instance_mock"]
+        self.node_setup(action_node)
+
+        failed_request = RclpyFuture()
+        failed_request.set_exception(RuntimeError("acceptance exploded"))
+        action_node._shutdown_goal_request_future = failed_request
+
+        self.create_and_set_input_goal(action_node)
+        first_tick = action_node.tick()
+
+        assert first_tick.is_ok()
+        assert action_node._shutdown_cleanup_error is None
+        ac_instance_mock.send_goal_async.assert_called_once()
+
+    def test_stale_cleanup_error_does_not_block_shutdown_retry(self, setup_mocks):
+        """A shutdown that failed on a retention error must stay retryable."""
+        action_node = setup_mocks["action_node"]
+        ac_instance_mock = setup_mocks["ac_instance_mock"]
+        self.node_setup(action_node)
+
+        failed_request = RclpyFuture()
+        failed_request.set_exception(RuntimeError("acceptance exploded"))
+        action_node._shutdown_goal_request_future = failed_request
+
+        first_result = action_node.shutdown()
+        assert first_result.is_err()
+        assert "acceptance exploded" in str(first_result.unwrap_err())
+        ac_instance_mock.destroy.assert_not_called()
+
+        second_result = action_node.shutdown()
+        assert second_result.is_ok()
+        ac_instance_mock.destroy.assert_called_once()
+        assert action_node._ac is None
+
+    def test_rejected_cancel_at_runtime_waits_for_terminal_result(self, setup_mocks):
+        """A cancel rejected because the goal terminated concurrently must fall
+        through to waiting for the terminal result instead of erroring the tree."""
+        action_node = setup_mocks["action_node"]
+        running_goal_handle_mock = setup_mocks["running_goal_handle_mock"]
+        running_goal_future_mock = setup_mocks["running_goal_future_mock"]
+        self.node_setup(action_node)
+
+        rejected_cancel = RclpyFuture()
+        rejected_response = mock.Mock(goals_canceling=[])
+        rejected_cancel.set_result(rejected_response)
+        running_goal_handle_mock.cancel_goal_async.return_value = rejected_cancel
+
+        action_node._internal_state = ActionStates.WAITING_FOR_GOAL_CANCELLATION
+        action_node._cancel_goal_future = rejected_cancel
+        action_node._running_goal_handle = running_goal_handle_mock
+        action_node._running_goal_future = running_goal_future_mock
+
+        result = action_node._do_tick_wait_for_cancel_complete()
+
+        assert result.is_ok()
+        assert action_node._internal_state == ActionStates.WAITING_FOR_ACTION_COMPLETE
+        assert action_node._goal_cancel_requested is False
+
+    def test_shutdown_retry_bounds_cancel_goal_exceptions(self, setup_mocks):
+        """A cancel_goal_async that raises during the shutdown retry must be a
+        bounded error, never an uncaught exception."""
+        action_node = setup_mocks["action_node"]
+        running_goal_handle_mock = setup_mocks["running_goal_handle_mock"]
+        running_goal_future_mock = setup_mocks["running_goal_future_mock"]
+        self.node_setup(action_node)
+
+        running_goal_future_mock.done.return_value = False
+        action_node._shutdown_goal_handle = running_goal_handle_mock
+        action_node._shutdown_result_future = running_goal_future_mock
+        running_goal_handle_mock.cancel_goal_async.side_effect = RuntimeError(
+            "cancel exploded"
+        )
+
+        result = action_node.shutdown()
+
+        assert result.is_err()
+        assert "cancel exploded" in str(result.unwrap_err())
+
     def test_send_new_goal_errors_when_client_is_not_initialized(self, setup_mocks):
         """Matches ActionForSetType: an uninitialized client is a hard error, not BROKEN."""
         action_node = setup_mocks["action_node"]

@@ -120,7 +120,17 @@ def _previous_goal_is_running(node) -> bool:
     if request_future is not None and request_future.done():
         _cancel_accepted_goal(node, request_future)
     if node._shutdown_cleanup_error is not None:
-        return True
+        # Consume the failed retention instead of pinning the node in RUNNING
+        # forever; the tick proceeds with a fresh goal from a clean slate.
+        node.logwarn(
+            f"Discarding failed goal retention: {node._shutdown_cleanup_error}"
+        )
+        node._shutdown_cleanup_error = None
+        node._shutdown_goal_request_future = None
+        node._shutdown_goal_handle = None
+        node._shutdown_result_future = None
+        node._shutdown_cancel_future = None
+        return False
     if (
         node._shutdown_goal_request_future is not None
         and not node._shutdown_goal_request_future.done()
@@ -159,15 +169,23 @@ def _shutdown_action_client(
     if not _wait_for_future(request_future, deadline):
         return Err(BehaviorTreeException("Timed out waiting for goal acceptance"))
     _cancel_accepted_goal(node, request_future)
-    if node._shutdown_cleanup_error is not None:
-        return Err(BehaviorTreeException(str(node._shutdown_cleanup_error)))
+    cleanup_error = node._shutdown_cleanup_error
+    node._shutdown_cleanup_error = None
+    if cleanup_error is not None:
+        # A stale error must not fail every retry, only the attempt it arose in.
+        return Err(BehaviorTreeException(str(cleanup_error)))
     if (
         node._shutdown_cancel_future is None
         and node._shutdown_goal_handle is not None
         and node._shutdown_result_future is not None
         and not node._shutdown_result_future.done()
     ):
-        node._shutdown_cancel_future = node._shutdown_goal_handle.cancel_goal_async()
+        try:
+            node._shutdown_cancel_future = (
+                node._shutdown_goal_handle.cancel_goal_async()
+            )
+        except Exception as exc:
+            return Err(BehaviorTreeException(str(exc)))
     if not _wait_for_future(node._shutdown_cancel_future, deadline):
         return Err(BehaviorTreeException("Timed out waiting for goal cancellation"))
     cancel_error = _cancel_error(node._shutdown_cancel_future)
@@ -461,10 +479,14 @@ class ActionForSetType(Leaf):
         if self._cancel_goal_future.done():
             cancel_error = _cancel_error(self._cancel_goal_future)
             if cancel_error is not None:
+                # A rejected cancel usually means the goal terminated
+                # concurrently; wait for its result instead of erroring.
+                self.logwarn(f"Goal cancellation failed: {cancel_error}")
                 self._cancel_goal_future = None
                 self._shutdown_cancel_future = None
                 self._goal_cancel_requested = False
-                return Err(BehaviorTreeException(cancel_error))
+                self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
+                return Ok(BTNodeState.RUNNING)
             self.loginfo("Goal cancellation accepted, waiting for terminal result")
             self._cancel_goal_future = None
             self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
@@ -875,10 +897,14 @@ class Action(Leaf):
         if self._cancel_goal_future.done():
             cancel_error = _cancel_error(self._cancel_goal_future)
             if cancel_error is not None:
+                # A rejected cancel usually means the goal terminated
+                # concurrently; wait for its result instead of erroring.
+                self.logwarn(f"Goal cancellation failed: {cancel_error}")
                 self._cancel_goal_future = None
                 self._shutdown_cancel_future = None
                 self._goal_cancel_requested = False
-                return Err(BehaviorTreeException(cancel_error))
+                self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
+                return Ok(BTNodeState.RUNNING)
             self.loginfo("Goal cancellation accepted, waiting for terminal result")
             self._cancel_goal_future = None
             self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
