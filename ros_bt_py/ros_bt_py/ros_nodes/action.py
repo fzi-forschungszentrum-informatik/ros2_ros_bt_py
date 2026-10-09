@@ -84,6 +84,7 @@ def _cancel_accepted_goal(node, request_future) -> None:
             goal_handle = request_future.result()
             if goal_handle is None:
                 return
+            node._shutdown_goal_handle = goal_handle
             node._shutdown_result_future = goal_handle.get_result_async()
             node._shutdown_cancel_future = goal_handle.cancel_goal_async()
         except Exception as exc:
@@ -104,6 +105,7 @@ def _retain_pending_goal_request(node) -> None:
 def _retain_running_goal(node) -> Result[None, BehaviorTreeException]:
     if node._running_goal_handle is None:
         return Ok(None)
+    node._shutdown_goal_handle = node._running_goal_handle
     node._shutdown_result_future = node._running_goal_future
     if node._shutdown_cancel_future is None:
         try:
@@ -128,9 +130,24 @@ def _previous_goal_is_running(node) -> bool:
     if result_future is not None and not result_future.done():
         return True
     if result_future is not None:
+        node._shutdown_goal_handle = None
         node._shutdown_result_future = None
         node._shutdown_cancel_future = None
     return False
+
+
+def _cancel_error(cancel_future) -> Optional[str]:
+    if cancel_future is None:
+        return None
+    if cancel_future.cancelled() is True:
+        return "Goal cancellation request was cancelled"
+    try:
+        response = cancel_future.result()
+    except Exception as exc:
+        return f"Goal cancellation failed: {exc}"
+    if hasattr(response, "goals_canceling") and not response.goals_canceling:
+        return "Action server rejected goal cancellation"
+    return None
 
 
 def _shutdown_action_client(
@@ -144,13 +161,29 @@ def _shutdown_action_client(
     _cancel_accepted_goal(node, request_future)
     if node._shutdown_cleanup_error is not None:
         return Err(BehaviorTreeException(str(node._shutdown_cleanup_error)))
+    if (
+        node._shutdown_cancel_future is None
+        and node._shutdown_goal_handle is not None
+        and node._shutdown_result_future is not None
+        and not node._shutdown_result_future.done()
+    ):
+        node._shutdown_cancel_future = node._shutdown_goal_handle.cancel_goal_async()
     if not _wait_for_future(node._shutdown_cancel_future, deadline):
         return Err(BehaviorTreeException("Timed out waiting for goal cancellation"))
+    cancel_error = _cancel_error(node._shutdown_cancel_future)
+    if (
+        cancel_error is not None
+        and node._shutdown_result_future is not None
+        and not node._shutdown_result_future.done()
+    ):
+        node._shutdown_cancel_future = None
+        return Err(BehaviorTreeException(cancel_error))
     if not _wait_for_future(node._shutdown_result_future, deadline):
         return Err(BehaviorTreeException("Timed out waiting for action result"))
     if ac is not None:
         ac.destroy()
     node._shutdown_goal_request_future = None
+    node._shutdown_goal_handle = None
     node._shutdown_cancel_future = None
     node._shutdown_result_future = None
     return Ok(None)
@@ -294,6 +327,7 @@ class ActionForSetType(Leaf):
 
         self._cancel_goal_future = None
         self._shutdown_goal_request_future = None
+        self._shutdown_goal_handle = None
         self._shutdown_cancel_future = None
         self._shutdown_result_future = None
         self._shutdown_cleanup_error = None
@@ -349,6 +383,7 @@ class ActionForSetType(Leaf):
                 self._running_goal_handle = None
                 self._running_goal_future = None
                 self._active_goal = None
+                self._goal_cancel_requested = False
 
                 self._internal_state = ActionStates.FINISHED
 
@@ -373,6 +408,7 @@ class ActionForSetType(Leaf):
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
+            self._goal_cancel_requested = False
 
             self._internal_state = ActionStates.FINISHED
 
@@ -423,20 +459,16 @@ class ActionForSetType(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
+            cancel_error = _cancel_error(self._cancel_goal_future)
+            if cancel_error is not None:
+                self._cancel_goal_future = None
+                self._shutdown_cancel_future = None
+                self._goal_cancel_requested = False
+                return Err(BehaviorTreeException(cancel_error))
             self.loginfo("Goal cancellation accepted, waiting for terminal result")
             self._cancel_goal_future = None
             self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
             return Ok(BTNodeState.RUNNING)
-        if self._cancel_goal_future.cancelled():
-            self.logdebug("Goal cancellation was cancelled!")
-
-            self._cancel_goal_future = None
-            self._running_goal_handle = None
-            self._running_goal_future = None
-            self._active_goal = None
-
-            self._internal_state = ActionStates.FINISHED
-            return Ok(BTNodeState.FAILED)
         return Ok(BTNodeState.RUNNING)
 
     def _do_tick_send_new_goal(self) -> Result[BTNodeState, BehaviorTreeException]:
@@ -698,6 +730,7 @@ class Action(Leaf):
 
         self._cancel_goal_future = None
         self._shutdown_goal_request_future = None
+        self._shutdown_goal_handle = None
         self._shutdown_cancel_future = None
         self._shutdown_result_future = None
         self._shutdown_cleanup_error = None
@@ -756,6 +789,7 @@ class Action(Leaf):
                 self._running_goal_handle = None
                 self._running_goal_future = None
                 self._active_goal = None
+                self._goal_cancel_requested = False
 
                 self._internal_state = ActionStates.FINISHED
 
@@ -784,6 +818,7 @@ class Action(Leaf):
             self._running_goal_handle = None
             self._running_goal_future = None
             self._active_goal = None
+            self._goal_cancel_requested = False
 
             self._internal_state = ActionStates.FINISHED
 
@@ -838,20 +873,16 @@ class Action(Leaf):
             return Ok(BTNodeState.BROKEN)
 
         if self._cancel_goal_future.done():
+            cancel_error = _cancel_error(self._cancel_goal_future)
+            if cancel_error is not None:
+                self._cancel_goal_future = None
+                self._shutdown_cancel_future = None
+                self._goal_cancel_requested = False
+                return Err(BehaviorTreeException(cancel_error))
             self.loginfo("Goal cancellation accepted, waiting for terminal result")
             self._cancel_goal_future = None
             self._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
             return Ok(BTNodeState.RUNNING)
-        if self._cancel_goal_future.cancelled():
-            self.logdebug("Goal cancellation was cancelled!")
-
-            self._cancel_goal_future = None
-            self._running_goal_handle = None
-            self._running_goal_future = None
-            self._active_goal = None
-
-            self._internal_state = ActionStates.FINISHED
-            return Ok(BTNodeState.FAILED)
         return Ok(BTNodeState.RUNNING)
 
     def _do_tick_send_new_goal(self) -> Result[BTNodeState, BehaviorTreeException]:

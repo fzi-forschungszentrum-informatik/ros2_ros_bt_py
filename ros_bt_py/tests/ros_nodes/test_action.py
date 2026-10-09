@@ -408,6 +408,42 @@ class TestAction:
         ac_instance_mock.destroy.assert_called_once()
         assert action_node._ac is None
 
+    def test_shutdown_retries_rejected_goal_cancellation(self, setup_mocks):
+        action_node = setup_mocks["action_node"]
+        ac_instance_mock = setup_mocks["ac_instance_mock"]
+        running_goal_handle_mock = setup_mocks["running_goal_handle_mock"]
+        running_goal_future_mock = setup_mocks["running_goal_future_mock"]
+        self.node_setup(action_node)
+
+        rejected_cancel = RclpyFuture()
+        rejected_response = mock.Mock(goals_canceling=[])
+        rejected_cancel.set_result(rejected_response)
+        accepted_cancel = RclpyFuture()
+        accepted_cancel.set_result("accepted")
+        running_goal_handle_mock.cancel_goal_async.side_effect = [
+            rejected_cancel,
+            accepted_cancel,
+        ]
+        running_goal_future_mock.done.return_value = False
+        action_node._internal_state = ActionStates.WAITING_FOR_ACTION_COMPLETE
+        action_node._running_goal_handle = running_goal_handle_mock
+        action_node._running_goal_future = running_goal_future_mock
+
+        first_result = action_node.shutdown()
+
+        assert first_result.is_err()
+        assert "rejected" in str(first_result.unwrap_err()).lower()
+        ac_instance_mock.destroy.assert_not_called()
+
+        with mock.patch("ros_bt_py.ros_nodes.action._SHUTDOWN_CANCEL_TIMEOUT_S", 0.05):
+            second_result = action_node.shutdown()
+        assert second_result.is_err()
+        assert running_goal_handle_mock.cancel_goal_async.call_count == 2
+
+        running_goal_future_mock.done.return_value = True
+        assert action_node.shutdown().is_ok()
+        ac_instance_mock.destroy.assert_called_once()
+
     def test_send_new_goal_errors_when_client_is_not_initialized(self, setup_mocks):
         """Matches ActionForSetType: an uninitialized client is a hard error, not BROKEN."""
         action_node = setup_mocks["action_node"]
