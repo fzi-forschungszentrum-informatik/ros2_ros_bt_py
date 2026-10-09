@@ -177,8 +177,10 @@ def _shutdown_action_client(
     if (
         node._shutdown_cancel_future is None
         and node._shutdown_goal_handle is not None
-        and node._shutdown_result_future is not None
-        and not node._shutdown_result_future.done()
+        and (
+            node._shutdown_result_future is None
+            or not node._shutdown_result_future.done()
+        )
     ):
         try:
             node._shutdown_cancel_future = (

@@ -525,6 +525,27 @@ class TestAction:
         assert result.is_err()
         assert "cancel exploded" in str(result.unwrap_err())
 
+    def test_shutdown_cancels_a_retained_goal_without_result_future(self, setup_mocks):
+        """A retained goal handle whose result future is missing must still be
+        cancelled before the client is destroyed."""
+        action_node = setup_mocks["action_node"]
+        running_goal_handle_mock = setup_mocks["running_goal_handle_mock"]
+        ac_instance_mock = setup_mocks["ac_instance_mock"]
+        self.node_setup(action_node)
+
+        # Retention lost the result future (e.g. get_result_async() raised)
+        action_node._shutdown_goal_handle = running_goal_handle_mock
+        action_node._shutdown_result_future = None
+        cancel_future = RclpyFuture()
+        running_goal_handle_mock.cancel_goal_async.return_value = cancel_future
+        cancel_future.set_result("canceled")
+
+        result = action_node.shutdown()
+
+        assert result.is_ok()
+        running_goal_handle_mock.cancel_goal_async.assert_called_once()
+        ac_instance_mock.destroy.assert_called_once()
+
     def test_send_new_goal_errors_when_client_is_not_initialized(self, setup_mocks):
         """Matches ActionForSetType: an uninitialized client is a hard error, not BROKEN."""
         action_node = setup_mocks["action_node"]
