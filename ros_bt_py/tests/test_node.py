@@ -253,9 +253,7 @@ class TestPermissiveLoadingIsInstanceLocal:
 
     def test_strict_from_msg_after_permissive_from_msg_is_strict(self, ros_node):
         bad_msg = make_structure(PermissiveProbe, self.BAD_OPTIONS)
-        permissive_result = Node.from_msg(
-            bad_msg, ros_node=ros_node, permissive=True
-        )
+        permissive_result = Node.from_msg(bad_msg, ros_node=ros_node, permissive=True)
         assert permissive_result.is_ok()
 
         strict_result = Node.from_msg(bad_msg, ros_node=ros_node, permissive=False)
