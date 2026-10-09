@@ -279,9 +279,15 @@ When running a tree the Top Bar gives you multiple execution modes to choose fro
   This will not change the Tree State and should only be called while IDLE.
   Data in the tree as well as the Node States of the tree nodes will be reset.
 * **Shutdown:**
-  Halt and shut down the tree completely.
-  This is your get out of jail free card.
-  Use this to get into EDITABLE to edit your tree from any other Tree State.
+  Halt the tree and release resources owned by its nodes. Reaching ``IDLE`` after
+  **Tick Until Result** does not release those resources; wait for a successful
+  Shutdown response before loading or editing the next tree.
+
+  Shutdown waits at most five seconds for the tick worker. If stopping the worker
+  or cleaning up a node fails, the tree remains non-editable and the response
+  reports the error. Resolve the underlying operation and retry Shutdown; failed
+  cleanup is retained and is not reported as successful on a later call unless it
+  actually completes.
 
 Nodes
 =====
