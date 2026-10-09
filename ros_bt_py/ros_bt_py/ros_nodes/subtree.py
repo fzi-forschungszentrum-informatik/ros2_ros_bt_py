@@ -116,8 +116,20 @@ class Subtree(Leaf):
             logging_manager=self.subtree_logging_manager,
         )
 
-        match self.load_subtree():
+        try:
+            load_result = self.load_subtree()
+        except Exception:
+            self.manager.destroy()
+            raise
+
+        match load_result:
             case Err(e):
+                destroy_result = self.manager.destroy()
+                if destroy_result.is_err():
+                    raise BehaviorTreeException(
+                        f"{e} (additionally failed to clean up subtree: "
+                        f"{destroy_result.unwrap_err()})"
+                    )
                 raise e
             case Ok(None):
                 pass
@@ -353,6 +365,18 @@ class Subtree(Leaf):
         if destroy_result.is_err():
             return Err(destroy_result.unwrap_err())
         return Ok(BTNodeState.SHUTDOWN)
+
+    def shutdown(self) -> Result[BTNodeState, BehaviorTreeException]:
+        """Release the nested manager even if this node was never set up."""
+        if self.state != BTNodeState.UNINITIALIZED:
+            return super().shutdown()
+
+        shutdown_result = self._do_shutdown()
+        if shutdown_result.is_err():
+            self.state = BTNodeState.BROKEN
+            return shutdown_result
+        self.state = shutdown_result.unwrap()
+        return shutdown_result
 
     def _do_calculate_utility(self) -> Result[UtilityBounds, BehaviorTreeException]:
         find_root_result = self.manager.find_root()

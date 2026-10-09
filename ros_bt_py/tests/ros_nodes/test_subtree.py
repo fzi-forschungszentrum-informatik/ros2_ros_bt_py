@@ -11,23 +11,28 @@
 #      documentation and/or other materials provided with the distribution.
 #
 #    * Neither the name of the FZI Forschungszentrum Informatik nor the names of its
-#      contributors may be used to endorse products derived from this software
-#      without specific prior written permission.
+#      contributors may be used to endorse or promote products derived from
+#      this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-# USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
-# THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 """Regression tests for nested subtree manager cleanup."""
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+import rclpy
+from rclpy.context import Context
 
 from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.custom_types import FilePath
 from ros_bt_py.helpers import BTNodeState
 from ros_bt_py.ros_nodes.subtree import Subtree
 from ros_bt_py.vendor.result import Err, Ok
@@ -73,3 +78,95 @@ def test_subtree_shutdown_surfaces_manager_destroy_error():
 
     assert result.is_err()
     assert "root shutdown failed" in str(result.unwrap_err())
+
+
+def make_uninitialized_subtree(manager):
+    subtree = Subtree.__new__(Subtree)
+    subtree._state = BTNodeState.UNINITIALIZED
+    subtree.name = "Subtree"
+    subtree.debug_manager = None
+    subtree.logging_manager = None
+    subtree.children = []
+    subtree.manager = manager
+    subtree.subtree_manager = None
+    return subtree
+
+
+def test_uninitialized_subtree_shutdown_releases_constructor_resources():
+    manager = MagicMock()
+    manager.destroy.return_value = Ok(None)
+    subtree = make_uninitialized_subtree(manager)
+
+    result = subtree.shutdown()
+
+    assert result.is_ok()
+    assert subtree.state == BTNodeState.SHUTDOWN
+    manager.destroy.assert_called_once()
+
+
+def test_uninitialized_subtree_retries_failed_cleanup():
+    manager = MagicMock()
+    manager.destroy.side_effect = [
+        Err(BehaviorTreeException("cleanup pending")),
+        Ok(None),
+    ]
+    subtree = make_uninitialized_subtree(manager)
+
+    assert subtree.shutdown().is_err()
+    assert subtree.state == BTNodeState.BROKEN
+    assert subtree.shutdown().is_ok()
+    assert subtree.state == BTNodeState.SHUTDOWN
+    assert manager.destroy.call_count == 2
+
+
+def test_subtree_constructor_cleans_up_manager_when_loading_raises():
+    manager = MagicMock()
+    manager.destroy.return_value = Ok(None)
+    ros_node = MagicMock()
+
+    with patch(
+        "ros_bt_py.ros_nodes.subtree.TreeManager", return_value=manager
+    ), patch.object(
+        Subtree, "load_subtree", side_effect=BehaviorTreeException("load exploded")
+    ):
+        try:
+            Subtree(
+                options={
+                    "subtree_path": FilePath(path="unused"),
+                    "use_io_nodes": False,
+                },
+                ros_node=ros_node,
+            )
+        except BehaviorTreeException as exc:
+            assert "load exploded" in str(exc)
+        else:
+            raise AssertionError("constructor did not propagate load failure")
+
+    manager.destroy.assert_called_once()
+
+
+def test_uninitialized_subtree_does_not_leak_its_rate_timer():
+    context = Context()
+    context.init(domain_id=174)
+    ros_node = rclpy.create_node(
+        "uninitialized_subtree_cleanup", context=context, enable_rosout=False
+    )
+    initial_timers = len(list(ros_node.timers))
+    try:
+        subtree = Subtree(
+            options={
+                "subtree_path": FilePath(
+                    path="package://ros_bt_py/trees/pub_sub_test.yaml"
+                ),
+                "use_io_nodes": False,
+            },
+            ros_node=ros_node,
+        )
+        assert subtree.state == BTNodeState.UNINITIALIZED
+        assert len(list(ros_node.timers)) == initial_timers + 1
+
+        assert subtree.shutdown().is_ok()
+        assert len(list(ros_node.timers)) == initial_timers
+    finally:
+        ros_node.destroy_node()
+        context.shutdown()
