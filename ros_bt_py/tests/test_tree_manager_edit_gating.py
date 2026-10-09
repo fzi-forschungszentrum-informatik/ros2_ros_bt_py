@@ -41,7 +41,11 @@ from ros_bt_py_interfaces.srv import (
     MigrateTree,
 )
 
-from ros_bt_py.tree_manager import TreeManager
+from ros_bt_py.tree_manager import TreeManager, validate_tree_topology
+from ros_bt_py.exceptions import BehaviorTreeException
+from ros_bt_py.helpers import BTNodeState
+from ros_bt_py.nodes.sequence import Sequence
+from ros_bt_py.vendor.result import Err, Ok
 
 
 @pytest.fixture
@@ -198,10 +202,121 @@ def test_control_execution_holds_the_edit_lock(manager: TreeManager):
     manager._control_execution = check_lock
 
     manager.control_execution(
-        ControlTreeExecution.Request(
-            command=ControlTreeExecution.Request.DO_NOTHING
-        ),
+        ControlTreeExecution.Request(command=ControlTreeExecution.Request.DO_NOTHING),
         ControlTreeExecution.Response(),
     )
 
     assert acquired_from_another_thread == [False]
+
+
+def migrate_to(tree):
+    response = MigrateTree.Response(success=True)
+    response.tree = tree
+    return response
+
+
+def test_invalid_topology_is_rejected_before_the_current_tree_is_cleared(
+    manager: TreeManager, monkeypatch
+):
+    current_root = MagicMock()
+    current_root.node_id = uuid.uuid4()
+    current_root.parent = None
+    current_root.state = BTNodeState.UNINITIALIZED
+    manager.nodes = {current_root.node_id: current_root}
+    invalid_tree = TreeStructure(
+        nodes=[
+            Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg(),
+            Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg(),
+        ]
+    )
+    monkeypatch.setattr(
+        "ros_bt_py.tree_manager.load_tree_from_file",
+        lambda request, response: migrate_to(invalid_tree),
+    )
+
+    response = manager.load_tree(LoadTree.Request(), LoadTree.Response())
+
+    assert not response.success
+    assert "root" in response.error_message.lower()
+    assert manager.nodes == {current_root.node_id: current_root}
+
+
+@pytest.mark.parametrize("invalid_kind", ["duplicate", "missing_child", "cycle"])
+def test_tree_topology_validation_rejects_malformed_messages(invalid_kind):
+    first = Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg()
+    second = Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg()
+    if invalid_kind == "duplicate":
+        second.node_id = first.node_id
+    elif invalid_kind == "missing_child":
+        first.child_ids = [str(uuid.uuid4())]
+    else:
+        first.child_ids = [second.node_id]
+        second.child_ids = [first.node_id]
+
+    result = validate_tree_topology(TreeStructure(nodes=[first, second]))
+
+    assert result.is_err()
+
+
+def test_failed_partial_load_cleans_constructed_nodes(
+    manager: TreeManager, monkeypatch
+):
+    root_msg = Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg()
+    child_msg = Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg()
+    root_msg.child_ids = [child_msg.node_id]
+    tree = TreeStructure(nodes=[root_msg, child_msg])
+    monkeypatch.setattr(
+        "ros_bt_py.tree_manager.load_tree_from_file",
+        lambda request, response: migrate_to(tree),
+    )
+    constructed = MagicMock()
+    constructed.node_id = uuid.UUID(root_msg.node_id)
+    constructed.parent = None
+    constructed.shutdown.return_value = Ok(BTNodeState.SHUTDOWN)
+    manager.instantiate_node_from_msg = MagicMock(
+        side_effect=[Ok(constructed), Err(BehaviorTreeException("construction failed"))]
+    )
+
+    response = manager.load_tree(LoadTree.Request(), LoadTree.Response())
+
+    assert not response.success
+    assert "construction failed" in response.error_message
+    constructed.shutdown.assert_called_once()
+    assert manager.nodes == {}
+    assert manager.state == TreeState.EDITABLE
+
+
+def test_failed_load_cleanup_can_be_retried_by_shutdown(
+    manager: TreeManager, monkeypatch
+):
+    root_msg = Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg()
+    child_msg = Sequence(node_id=uuid.uuid4(), ros_node=MagicMock()).to_structure_msg()
+    root_msg.child_ids = [child_msg.node_id]
+    tree = TreeStructure(nodes=[root_msg, child_msg])
+    monkeypatch.setattr(
+        "ros_bt_py.tree_manager.load_tree_from_file",
+        lambda request, response: migrate_to(tree),
+    )
+    constructed = MagicMock()
+    constructed.node_id = uuid.UUID(root_msg.node_id)
+    constructed.parent = None
+    constructed.shutdown.side_effect = [
+        Err(BehaviorTreeException("cleanup pending")),
+        Ok(BTNodeState.SHUTDOWN),
+    ]
+    manager.instantiate_node_from_msg = MagicMock(
+        side_effect=[Ok(constructed), Err(BehaviorTreeException("construction failed"))]
+    )
+
+    load_response = manager.load_tree(LoadTree.Request(), LoadTree.Response())
+
+    assert not load_response.success
+    assert "cleanup pending" in load_response.error_message
+    assert manager.state == TreeState.ERROR
+    shutdown_response = manager.control_execution(
+        ControlTreeExecution.Request(command=ControlTreeExecution.Request.SHUTDOWN),
+        ControlTreeExecution.Response(),
+    )
+    assert shutdown_response.success
+    assert manager.state == TreeState.EDITABLE
+    assert constructed.shutdown.call_count == 2

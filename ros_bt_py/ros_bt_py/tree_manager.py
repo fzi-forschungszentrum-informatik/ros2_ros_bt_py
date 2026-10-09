@@ -269,6 +269,71 @@ def load_tree_from_file(
     return response
 
 
+def validate_tree_topology(tree: TreeStructure) -> Result[None, TreeTopologyError]:
+    """Validate topology without constructing nodes or changing the active tree."""
+    if not tree.nodes:
+        return Ok(None)
+
+    children_by_node: Dict[uuid.UUID, List[uuid.UUID]] = {}
+    parent_counts: Dict[uuid.UUID, int] = {}
+    for node in tree.nodes:
+        node_id_result = ros_to_uuid(node.node_id)
+        if node_id_result.is_err():
+            return Err(TreeTopologyError(str(node_id_result.unwrap_err())))
+        node_id = node_id_result.unwrap()
+        if node_id in children_by_node:
+            return Err(TreeTopologyError(f"Duplicate node id {node.node_id}"))
+        children_by_node[node_id] = []
+        parent_counts[node_id] = 0
+
+    for node in tree.nodes:
+        node_id = ros_to_uuid(node.node_id).unwrap()
+        for child_msg_id in node.child_ids:
+            child_id_result = ros_to_uuid(child_msg_id)
+            if child_id_result.is_err():
+                return Err(TreeTopologyError(str(child_id_result.unwrap_err())))
+            child_id = child_id_result.unwrap()
+            if child_id not in children_by_node:
+                return Err(
+                    TreeTopologyError(
+                        f"Node {node.node_id} references missing child {child_msg_id}"
+                    )
+                )
+            parent_counts[child_id] += 1
+            if parent_counts[child_id] > 1:
+                return Err(
+                    TreeTopologyError(f"Node {child_msg_id} has multiple parents")
+                )
+            children_by_node[node_id].append(child_id)
+
+    roots = [node_id for node_id, count in parent_counts.items() if count == 0]
+    if len(roots) != 1:
+        return Err(
+            TreeTopologyError(f"Tree must have exactly one root, found {len(roots)}")
+        )
+
+    visited: set[uuid.UUID] = set()
+    visiting: set[uuid.UUID] = set()
+
+    def visit(node_id: uuid.UUID) -> bool:
+        if node_id in visiting:
+            return False
+        if node_id in visited:
+            return True
+        visiting.add(node_id)
+        if not all(visit(child_id) for child_id in children_by_node[node_id]):
+            return False
+        visiting.remove(node_id)
+        visited.add(node_id)
+        return True
+
+    if not visit(roots[0]):
+        return Err(TreeTopologyError("Tree contains a cycle"))
+    if len(visited) != len(children_by_node):
+        return Err(TreeTopologyError("Tree is disconnected or contains a cycle"))
+    return Ok(None)
+
+
 @typechecked
 def get_available_nodes(
     request: GetAvailableNodes.Request, response: GetAvailableNodes.Response
@@ -898,6 +963,38 @@ class TreeManager:
     # Service Handlers #
     ####################
 
+    def _reset_failed_load(self, load_error: str) -> str:
+        """Clean nodes constructed by a failed load and restore an empty tree."""
+        cleanup_errors = []
+        for node in list(self.nodes.values()):
+            shutdown_result = node.shutdown()
+            if shutdown_result.is_err():
+                cleanup_errors.append(str(shutdown_result.unwrap_err()))
+
+        if cleanup_errors:
+            self.state = TreeState.ERROR
+            return (
+                f"{load_error} (additionally failed to clean up loaded nodes: "
+                f"{'; '.join(cleanup_errors)})"
+            )
+
+        self.nodes = {}
+        with self._tree_lock:
+            self.tree_structure = TreeStructure(
+                tree_id=uuid_to_ros(self.tree_id),
+                name="",
+                tick_frequency_hz=self.tree_structure.tick_frequency_hz,
+            )
+            self.tree_structure.data_wirings = []
+            self.tree_structure.public_node_data = []
+            self.tree_state = TreeState(
+                tree_id=uuid_to_ros(self.tree_id), state=TreeState.EDITABLE
+            )
+            self.tree_data = TreeData(tree_id=uuid_to_ros(self.tree_id))
+        self.subtree_manager.clear_subtrees()
+        self.clear_diagnostics_name()
+        return load_error
+
     @is_edit_service
     @typechecked
     def clear(
@@ -1001,7 +1098,19 @@ class TreeManager:
 
                 return response
 
+        topology_result = validate_tree_topology(tree)
+        if topology_result.is_err():
+            response.success = False
+            response.error_message = str(topology_result.unwrap_err())
+            return response
+
         try:
+
+            def fail_load(error_message: str) -> LoadTree.Response:
+                response.success = False
+                response.error_message = self._reset_failed_load(error_message)
+                return response
+
             # Clear existing tree, then replace it with the message's contents.
             # If the tree cannot be cleared we must not load into it - the new
             # nodes would simply be added alongside the old ones.
@@ -1021,9 +1130,7 @@ class TreeManager:
                     permissive=request.permissive,
                 ):
                     case Err(e):
-                        response.success = False
-                        response.error_message = str(e)
-                        return response
+                        return fail_load(str(e))
                     case Ok(node):
                         self.nodes[node.node_id] = node
 
@@ -1033,16 +1140,12 @@ class TreeManager:
                 for c_id in node.child_ids:
                     match ros_to_uuid(c_id):
                         case Err(e):
-                            response.success = False
-                            response.error_message = e
-                            return response
+                            return fail_load(str(e))
                         case Ok(u):
                             child_id = u
                     match self.nodes[node_id].add_child(self.nodes[child_id]):
                         case Err(e):
-                            response.success = False
-                            response.error_message = str(e)
-                            return response
+                            return fail_load(str(e))
                         case Ok(_):
                             pass
 
@@ -1053,9 +1156,7 @@ class TreeManager:
                 response=wire_response,
             )
             if not get_success(wire_response):
-                response.success = False
-                response.error_message = get_error_message(wire_response)
-                return response
+                return fail_load(get_error_message(wire_response))
 
             updated_wirings = []
             for wiring in tree.data_wirings:
@@ -1105,6 +1206,8 @@ class TreeManager:
             if self.publish_diagnostic is None:
                 self.set_diagnostics_name()
             return response
+        except Exception as exc:
+            return fail_load(f"{type(exc).__name__}: {exc}")
         finally:
             self.publish_structure()
 
@@ -1148,12 +1251,21 @@ class TreeManager:
 
         find_root_result = self.find_root()
         if find_root_result.is_err():
-            response.success = False
-            response.error_message = (
-                "Failed to determine tree root:" f"{str(find_root_result.unwrap_err())}"
-            )
-            return response
-        root = find_root_result.unwrap()
+            cleanup_errors = []
+            for node in list(self.nodes.values()):
+                shutdown_result = node.shutdown()
+                if shutdown_result.is_err():
+                    cleanup_errors.append(str(shutdown_result.unwrap_err()))
+            if cleanup_errors:
+                response.success = False
+                response.error_message = (
+                    "Failed to shut down malformed tree: "
+                    f"{'; '.join(cleanup_errors)}"
+                )
+                return response
+            root = None
+        else:
+            root = find_root_result.unwrap()
         if root:
             shutdown_result = root.shutdown()
             if shutdown_result.is_err():
